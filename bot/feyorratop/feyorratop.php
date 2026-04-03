@@ -25,6 +25,7 @@ while (true) {
         if ($l['ok']) {
             taskPrintCenter('logged in', 'ok');
             $dash = $l['html'];
+            var_dump($dash); die;
             break;
         }
         
@@ -32,7 +33,7 @@ while (true) {
         taskPrintCenter('logging in', 'err');
         $_0 = Net::C("$host/login", 'GET', null, $cookieFile, [], '', $userAgent, false, false, $ip);
         if (empty($_0)) continue;
-        var_dump($_0); die;
+        #var_dump($_0); die;
         $f = xScraper::payload($_0)[0];
         $pa = $f['payload'];
         
