@@ -1,0 +1,7 @@
+*.tmp
+
+credentials
+**/credentials
+
+cookie
+**/cookie

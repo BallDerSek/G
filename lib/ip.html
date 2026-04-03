@@ -1,0 +1,98 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Fingerprint + Proxy Test</title>
+</head>
+<body>
+<pre id="out">initialize</pre>
+
+<script>
+async function fp() {
+  function canvasFP(){
+    const c=document.createElement('canvas');
+    const x=c.getContext('2d');
+    x.textBaseline='top';
+    x.font="14px Arial";
+    x.fillText('fingerprint_test',2,2);
+    return c.toDataURL();
+  }
+
+  function webglFP(){
+    try{
+      const c=document.createElement('canvas');
+      const gl=c.getContext('webgl')||c.getContext('experimental-webgl');
+      if(!gl) return {vendor:"unknown",renderer:"unknown"};
+      const dbg=gl.getExtension('WEBGL_debug_renderer_info');
+      if(!dbg) return {vendor:"unknown",renderer:"unknown"};
+      return {
+        vendor: gl.getParameter(dbg.UNMASKED_VENDOR_WEBGL),
+        renderer: gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL)
+      };
+    }catch(e){
+      return {vendor:"unknown",renderer:"unknown"};
+    }
+  }
+
+  async function audioFP(){
+    try{
+      const ctx=new (window.OfflineAudioContext||window.webkitOfflineAudioContext)(1,44100,44100);
+      const osc=ctx.createOscillator();
+      const comp=ctx.createDynamicsCompressor();
+      osc.type='triangle';
+      osc.frequency.setValueAtTime(10000, ctx.currentTime);
+      osc.connect(comp); comp.connect(ctx.destination);
+      osc.start(0); ctx.startRendering();
+      return await new Promise(res=>{
+        ctx.oncomplete=ev=>{
+          const d=ev.renderedBuffer.getChannelData(0);
+          let sum=0; for(let i=0;i<d.length;i++) sum+=Math.abs(d[i]);
+          res(String(sum));
+        };
+      });
+    }catch(e){
+      return "unknown";
+    }
+  }
+
+  return {
+    userAgent: navigator.userAgent,
+    platform: navigator.platform,
+    language: navigator.language,
+    timezoneOffset: new Date().getTimezoneOffset(),
+    canvas: canvasFP(),
+    webgl: webglFP(),
+    audio: await audioFP(),
+    deviceMemory: navigator.deviceMemory || "unknown",
+    hardwareConcurrency: navigator.hardwareConcurrency || "unknown"
+  };
+}
+
+async function j(url){
+  const r = await fetch(url, {cache:'no-store'});
+  return await r.json();
+}
+
+async function run(){
+  const out=document.getElementById('out');
+  out.textContent='running...';
+  try{
+    const f = await fp();
+    const ip = await j('https://api.ipify.org?format=json');
+    const geo = await j('https://ipinfo.io/json');
+
+    out.textContent = JSON.stringify({
+      fingerprint: f,
+      ipify: ip,
+      ipinfo: geo
+    }, null, 2);
+  }catch(e){
+    out.textContent='Error: '+(e && e.message ? e.message : String(e));
+  }
+}
+
+setTimeout(run, 1000);
+</script>
+</body>
+</html>

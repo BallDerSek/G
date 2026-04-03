@@ -1,0 +1,58 @@
+name: Setup Deps
+description: Installing deps
+runs:
+  using: "composite"
+  steps:
+    - name: Setup OS deps
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y --no-install-recommends \
+          imagemagick \
+          sshpass \
+          tesseract-ocr \
+          tesseract-ocr-eng
+      shell: bash
+
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: "8.2"
+        extensions: gd
+        coverage: none
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: "20"
+
+    - name: Fix npm global path
+      run: |
+        echo "$(npm bin -g)" >> $GITHUB_PATH
+      shell: bash
+
+    - name: Cache npm
+      uses: actions/cache@v4
+      with:
+        path: ~/.npm
+        key: npm-${{ runner.os }}-${{ hashFiles('.github/workflows/run.yml') }}
+        restore-keys: |
+          npm-${{ runner.os }}-
+
+    - name: Install Node deps
+      run: |
+        npm install -g deobfuscator
+      shell: bash
+
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.11"
+        cache: "pip"
+        cache-dependency-path: .github/workflows/run.yml
+
+    - name: Install Python deps
+      env:
+        PIP_CACHE_DIR: ${{ runner.temp }}/pip-cache
+      run: |
+        python -m pip install --upgrade pip
+      shell: bash

@@ -1,0 +1,96 @@
+version: 2.1
+
+parameters:
+  bot:
+    type: string
+    default: "thenanobutton"
+  login:
+    type: string
+    default: ""
+  mails_json:
+    type: string
+    default: '["0"]'
+  pass:
+    type: string
+    default: ""
+  api:
+    type: string
+    default: "gmxch"
+  key:
+    type: string
+    default: ""
+
+jobs:
+  deps:
+    docker:
+      - image: cimg/base:stable
+    steps:
+      - checkout
+      - run:
+          name: Setup OS deps
+          command: |
+            sudo apt-get update
+            sudo apt-get install -y --no-install-recommends imagemagick sshpass
+      - run:
+          name: Setup PHP
+          command: |
+            sudo apt-get install -y php-cli php-gd
+      - run:
+          name: Setup Node.js
+          command: |
+            curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+            sudo apt-get install -y nodejs
+            npm install -g deobfuscator
+      - run:
+          name: Setup Python
+          command: |
+            sudo apt-get install -y python3 python3-pip
+            python3 -m pip install --upgrade pip
+            pip install seledroid
+
+  run-bot:
+    docker:
+      - image: cimg/php:8.2
+    steps:
+      - checkout
+      - run:
+          name: Pick KEY
+          command: |
+            if [ -n "<< pipeline.parameters.key >>" ]; then
+              echo "export KEY=<< pipeline.parameters.key >>" >> $BASH_ENV
+            else
+              case "<< pipeline.parameters.api >>" in
+                solverify) echo "export KEY=$SOLVERIFY" >> $BASH_ENV ;;
+                tertuyul)  echo "export KEY=$TERTUYUL" >> $BASH_ENV ;;
+                nopecha)   echo "export KEY=$NOPECHA" >> $BASH_ENV ;;
+                xevil)     echo "export KEY=$XEVIL" >> $BASH_ENV ;;
+                skibidixxx) echo "export KEY=$SKIBIDI" >> $BASH_ENV ;;
+                capsolver) echo "export KEY=$CAPSOLVER" >> $BASH_ENV ;;
+                multibot)  echo "export KEY=$MULTIBOT" >> $BASH_ENV ;;
+                gmxch)     echo "export KEY=$GMXCH" >> $BASH_ENV ;;
+                *)         echo "export KEY=" >> $BASH_ENV ;;
+              esac
+            fi
+      - run:
+          name: Run PHP bot
+          command: |
+            php run.php
+          environment:
+            CI: "1"
+            AN: "0"
+            BOT: << pipeline.parameters.bot >>
+            AUTH: $AUTH
+            API: << pipeline.parameters.api >>
+            KEY: $KEY
+            login: << pipeline.parameters.login >>
+            mail: << pipeline.parameters.mails_json >>
+            pass: << pipeline.parameters.pass >>
+
+workflows:
+  version: 2
+  lib-workflow:
+    jobs:
+      - deps
+      - run-bot:
+          requires:
+            - deps
