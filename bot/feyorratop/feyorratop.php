@@ -57,6 +57,7 @@ while (true) {
         $po = array_merge($pa, $ca, $cre);
         
         $ve = Net::C($f['url'], 'POST', $po, $cookieFile, [], "$host/login", $userAgent, false, false, $ip);
+        var_dump($ve); die;
         _put('ver.html', $ve);
         #die;
         
