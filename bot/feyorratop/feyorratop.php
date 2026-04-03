@@ -32,6 +32,7 @@ while (true) {
         taskPrintCenter('logging in', 'err');
         $_0 = Net::C("$host/login", 'GET', null, $cookieFile, [], '', $userAgent);
         if (empty($_0)) continue;
+        var_dump($_0); die;
         $f = xScraper::payload($_0)[0];
         $pa = $f['payload'];
         
