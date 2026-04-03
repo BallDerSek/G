@@ -30,7 +30,7 @@ while (true) {
         
         @unlink($cookieFile);
         taskPrintCenter('logging in', 'err');
-        $_0 = Net::C("$host/login", 'GET', null, $cookieFile, [], '', $userAgent);
+        $_0 = Net::C("$host/login", 'GET', null, $cookieFile, [], '', $userAgent, false, false, $ip);
         if (empty($_0)) continue;
         var_dump($_0); die;
         $f = xScraper::payload($_0)[0];
@@ -55,9 +55,9 @@ while (true) {
         $cre = ['email' => $mail, 'password' => $pass];
         $po = array_merge($pa, $ca, $cre);
         
-        $ve = Net::C($f['url'], 'POST', $po, $cookieFile, [], "$host/login", $userAgent);
+        $ve = Net::C($f['url'], 'POST', $po, $cookieFile, [], "$host/login", $userAgent, false, false, $ip);
         _put('ver.html', $ve);
-        die;
+        #die;
         
     } while (empty($dash));
     
