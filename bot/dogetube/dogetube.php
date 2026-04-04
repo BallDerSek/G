@@ -35,8 +35,8 @@ while (true) {
                 $needName = filter_var($lo['needName'], FILTER_VALIDATE_BOOLEAN);
                 if ($needName) {
                     Net::C($host.$r,'GET', null, $cookieFile, [], '', $userAgent);
-                    #$t = tK($api, $userAgent);
-                    $t = _cd('token');
+                    $t = tK($api, $userAgent);
+                    #$t = _cd('token');
                     $lo = json_decode(Net::X($host.'/api/auth/otp/send', 'POST', ['email' => $login, 'hCaptchaToken' => $t, 'name' => strstr($login, '@', true)], $cookieFile, [], $host."/auth", $userAgent, true) ?: '', true);
                     print_r($lo);
                 } else {
@@ -52,7 +52,7 @@ while (true) {
     
     $_fee = Net::X($host.'/api/feed', 'GET', null, $cookieFile, headers('', $host."/app", $domain), '', $userAgent, true) ?: '';
     $_fe  = json_decode($_fee, true);
-    print_r($_fe); 
+    #print_r($_fe); 
 
     if (strlen($_fee) > 100 && isset($_fe['items'])) {
         foreach ($_fe['items'] as $item) {
@@ -62,6 +62,7 @@ while (true) {
             styler("wait: $sec", fn() => _sle($sec));
 
             $cla = json_decode(Net::X($host.'/api/feed/reward', 'POST', ['contentId' => $content, 'watchedSeconds' => $sec], $cookieFile, headers('', $host."/app", $domain), '', $userAgent, true) ?: '', true);
+            var_dump($cla);
             #print_r($cla);
             if (empty($cla)) continue;
             if (isset($cla['ok']) && !empty($cla['balance'])) {
@@ -69,6 +70,42 @@ while (true) {
             }
         }
     }
+
+    if (empty($_fe['items']) && empty($_fe['nextOffset'])) {
+        logx('err', 'daily limit');
+        
+        while (true) {
+            $_pay = json_decode(Net::X($host.'/api/wallet/me', 'GET', null, $cookieFile, headers('', $host."/app/payouts", $domain), '', $userAgent, true) ?: '', true); 
+            
+            if (!empty($_pay) && isset($_pay['balance'])) {
+                $currentBal = (float)$_pay['balance'];
+
+                if ($currentBal < 1.1) {
+                    break; 
+                }
+                
+                $wallet = _cd($login.'::wallet');
+                $amount = $currentBal;
+                
+                logx('info', "mencoba withdraw $amount ke $wallet");
+                
+                $_wd = json_decode(Net::X($host.'/api/wallet/withdraw', 'POST', ['amount' => $amount, 'address' => $wallet], $cookieFile, headers('', $host."/app/payouts", $domain), '', $userAgent, true) ?: '', true);
+                
+                if (!empty($_wd) && isset($_wd['trackId'])) {
+                    logx('ok', "ID: {$_wd['trackId']} | $wallet::$amount");
+                    exit(0);
+                } else {
+                    logx('err', json_encode($_wd));
+                    break;
+                }
+            } else {
+                break;
+            }
+        }
+        exit(20);
+    }
+
+    
 }
 
 
@@ -78,7 +115,7 @@ function tK($api, $ua) {
         logx('err', 'undefined provider'); exit(1);
     }
     
-    while (($t = $api->token('5c6afbd6-b434-4a74-880c-27103632b59c', 'https://doge.tube', 'hc', ['userAgent'=>$ua, 'proxy' => ''])) === false);
+    while (($t = $api->token('5c6afbd6-b434-4a74-880c-27103632b59c', 'https://doge.tube', 'hc', ['userAgent'=>$ua, 'proxy' => '', 'invisible' => 1])) === false);
     if ($t === null) exit(1);
     
     return $t;
@@ -114,11 +151,3 @@ function _cd($key = 'code') {
 tes:
 var_dump(tk($api, $userAgent));
 
-
-/*
-POST /api/wallet/withdraw HTTP/2
-
-referer: https://doge.tube/app/payouts
-
-{"address":"DGrtQTXnaXBX1WDoHLS2XkKeS7C9SZGCvU","amount":1.004}
-*/
