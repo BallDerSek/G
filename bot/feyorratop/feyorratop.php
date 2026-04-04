@@ -17,6 +17,7 @@ banner();
 login:
 
 $dash = null;
+$register = false;
 while (true) {
     
     do {
@@ -25,7 +26,7 @@ while (true) {
         if ($l['ok']) {
             taskPrintCenter('logged in', 'ok');
             $dash = $l['html'];
-            var_dump($dash); die;
+            #var_dump($dash); die;
             break;
         }
         
@@ -57,11 +58,28 @@ while (true) {
         $po = array_merge($pa, $ca, $cre);
         
         $ve = Net::C($f['url'], 'POST', $po, $cookieFile, [], "$host/login", $userAgent, false, false, $ip);
-        var_dump($ve); die;
-        _put('ver.html', $ve);
-        #die;
+        $alertt = xScraper::xpath($ve, "//div[contains(@class, 'alert-danger')]");
+        if (!empty($alertt)) {
+            $msg = $alertt[0]; 
+            if (str_contains($msg, 'nvalid Credential')) {
+                logx('err', $msg);
+                $register = true;
+                break 2;
+            }
+            #print_r($alertt);
+            logx('', $msg);
+            die;
+        }
         
     } while (empty($dash));
+    
+    #_put('dash.html', $dash); 
+    if (str_contains($dash, 'confirm your email')) {
+        logx('info', 'check email');
+        $_re = Net::C("$host/dashboard/resend", 'GET', null, $cookieFile, [], $host.'/dashboard', $userAgent, false, false, $ip);
+        Net::C(_cd($mail), 'GET', null, $cookieFile, [], $host.'/dashboard', $userAgent, false, false, $ip);
+        continue;
+    }
     
     $claim = false;
     do {
@@ -277,8 +295,33 @@ while (true) {
 }
 
 
-
-
+if ($register) {
+    @unlink($cookieFile);
+    $po_ = null;
+    while (true) {
+        $_0 = Net::C("$host/register", 'GET', null, $cookieFile, [], '', $userAgent, false, false, $ip);
+        if (!empty($_0)) {
+            #_put('0.html', $_0);
+            $f = xScraper::payload($_0)[0];
+            $pa = $f['payload'];
+            #print_r($f);
+            $c = capt::cha($_0);
+            $t = tK(getKeys($api), $host, $c['keys'][0], $c['type'], $userAgent);
+            $ca = ['cf-turnstile-response' => $t, 'g-recaptcha-response' => $t];
+            $cre = ['email' => $mail, 'password' => $pass, 'confirm_password' => $pass];
+            $po_ = array_merge($pa, $ca, $cre);
+            break;
+        }
+    }
+    if (!empty($po_)) {
+        #print_r($po_);
+        $_1 = Net::C($f['url'], 'POST', $po_, $cookieFile, [], $host.'/register', $userAgent, false, false, $ip);
+        #_put('1.html', $_1);
+    }
+    
+    
+}
+goto login;
 
 
 
@@ -354,3 +397,30 @@ function tK($api, $host, $key, $type, $ua) {
     
     return $t;
 }
+
+function _cd($key = 'code') {
+    $baseUrl = getenv('DG');
+    if (!$baseUrl) {
+        return _rl("$key: ");
+    }
+
+    $url = rtrim($baseUrl, '/') . '/get';
+    $deadline = time() + 600;
+
+    $payload = ['type' => $key];
+
+    while (time() < $deadline) {
+        logx('info', "checking $key");
+        $html = Net::X($url, 'POST', $payload, null, [], '', null, true);
+        if ($html !== false) {
+            if (preg_match('/^' . preg_quote($key, '/') . '=(.+)$/m', trim($html), $m)) {
+                return trim($m[1]);
+            }
+        }
+        unset($html);
+        sleep(5);
+    }
+
+    logx('err', "Timeout: $key");
+    exit(1);
+}}
