@@ -38,7 +38,7 @@ while (true) {
                     $t = tK($api, $userAgent);
                     #$t = _cd('token');
                     $lo = json_decode(Net::X($host.'/api/auth/otp/send', 'POST', ['email' => $login, 'hCaptchaToken' => $t, 'name' => strstr($login, '@', true)], $cookieFile, [], $host."/auth", $userAgent, true) ?: '', true);
-                    print_r($lo);
+                    #print_r($lo);
                 } else {
                     @unlink($cookieFile);
                     continue;
@@ -62,7 +62,7 @@ while (true) {
             styler("wait: $sec", fn() => _sle($sec));
 
             $cla = json_decode(Net::X($host.'/api/feed/reward', 'POST', ['contentId' => $content, 'watchedSeconds' => $sec], $cookieFile, headers('', $host."/app", $domain), '', $userAgent, true) ?: '', true);
-            var_dump($cla);
+            #var_dump($cla);
             #print_r($cla);
             if (empty($cla)) continue;
             if (isset($cla['ok']) && !empty($cla['balance'])) {
