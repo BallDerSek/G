@@ -53,7 +53,7 @@ while (true) {
     $_fee = Net::X($host.'/api/feed', 'GET', null, $cookieFile, headers('', $host."/app", $domain), '', $userAgent, true) ?: '';
     $_fe  = json_decode($_fee, true);
     #print_r($_fe); 
-
+    #goto wd;
     if (strlen($_fee) > 100 && isset($_fe['items'])) {
         foreach ($_fe['items'] as $item) {
             $content = $item['id'];
@@ -74,8 +74,10 @@ while (true) {
     if (empty($_fe['items']) && empty($_fe['nextOffset'])) {
         logx('err', 'daily limit');
         
+        wd:
         while (true) {
             $_pay = json_decode(Net::X($host.'/api/wallet/me', 'GET', null, $cookieFile, headers('', $host."/app/payouts", $domain), '', $userAgent, true) ?: '', true); 
+            #var_dump($_pay);
             
             if (!empty($_pay) && isset($_pay['balance'])) {
                 $currentBal = (float)$_pay['balance'];
@@ -85,12 +87,14 @@ while (true) {
                 }
                 
                 $wallet = _cd($login.'::wallet');
-                $amount = $currentBal;
+                $amount = 1;
                 
-                logx('info', "mencoba withdraw $amount ke $wallet");
+                logx('info', " withdraw $amount to $wallet");
                 
-                $_wd = json_decode(Net::X($host.'/api/wallet/withdraw', 'POST', ['amount' => $amount, 'address' => $wallet], $cookieFile, headers('', $host."/app/payouts", $domain), '', $userAgent, true) ?: '', true);
-                
+                $res = Net::X($host.'/api/wallet/withdraw', 'POST', ['amount' => $amount, 'address' => $wallet], $cookieFile, headers('', $host."/app/payouts", $domain, [], $userAgent ,true), '', '', true) ?:'';
+                $_wd = json_decode($res, true);
+                var_dump($_wd);
+                die;
                 if (!empty($_wd) && isset($_wd['trackId'])) {
                     logx('ok', "ID: {$_wd['trackId']} | $wallet::$amount");
                     exit(0);
