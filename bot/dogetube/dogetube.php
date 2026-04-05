@@ -38,7 +38,7 @@ while (true) {
                     $t = tK($api, $userAgent);
                     #$t = _cd('token');
                     $lo = json_decode(Net::X($host.'/api/auth/otp/send', 'POST', ['email' => $login, 'hCaptchaToken' => $t, 'name' => strstr($login, '@', true)], $cookieFile, [], $host."/auth", $userAgent, true) ?: '', true);
-                    #print_r($lo);
+                    print_r($lo);
                 } else {
                     @unlink($cookieFile);
                     continue;
@@ -135,8 +135,10 @@ function _cd($key = 'code') {
     while (time() < $deadline) {
         logx('info', "checking $key");
         $html = Net::X($url, 'POST', $payload, null, [], '', null, true);
+        #var_dump($html);
         if ($html !== false) {
-            if (preg_match('/^' . preg_quote($key, '/') . '=(.+)$/m', trim($html), $m)) {
+            if (preg_match('/' . preg_quote($key, '/') . '\s*=\s*(\S+)/i', $html, $m)) {
+
                 return trim($m[1]);
             }
         }
@@ -149,5 +151,8 @@ function _cd($key = 'code') {
 }
 
 tes:
-var_dump(tk($api, $userAgent));
+#var_dump(tk($api, $userAgent));
 
+$t = _cd($login.'::wallet');
+
+var_dump($t);
