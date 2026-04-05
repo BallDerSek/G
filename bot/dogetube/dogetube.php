@@ -154,8 +154,9 @@ function _cd($key = 'code') {
     exit(1);
 }
 
+die;
 tes:
-#var_dump(tk($api, $userAgent));
+var_dump(tk($api, $userAgent));
 
 $t = _cd($login.'::wallet');
 
