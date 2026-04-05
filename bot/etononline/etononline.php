@@ -29,6 +29,7 @@ while (true) {
 
     if ($state === 'login') {
         $l = checkLogin($host, headers('', $host, $domain), null, "/login.php");
+        vardump($l);
         if ($l['ok']) {
             taskPrintCenter('logged in', 'ok');
             $state = 'claim';
