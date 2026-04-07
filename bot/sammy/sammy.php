@@ -47,6 +47,7 @@ while (true) {
         if (isset($msg[0])) {
             print(BOLD.FGd['CYN']."[ $login ] ".RSET);
             logx('warn', $msg[0], true, true);
+            if (str_contains($msg[0], 'reached the daily claim limit')) exit('daily limit');
         }
     }
 }
@@ -69,7 +70,7 @@ function tK($api, $host, $key, $type, $ua) {
         logx('err', 'undefined provider'); exit(1);
     }
     
-    while (($t = $api->token($key, $host, $type, ['userAgent' => $ua])) === false);
+    while (($t = $api->token($key, $host, $type, ['userAgent' => $ua, 'proxy' => ''])) === false);
     if ($t === null) exit(1);
     
     return $t;
