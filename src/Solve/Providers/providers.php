@@ -86,7 +86,7 @@ class skibidixxx extends Provider {
     protected function res_api($jobId) {
         $start = time();
         do {
-            _sle(2);
+            _sle(10);
             $r = json_decode(
                 Net::C($this->baseUrl."/res.php", "GET", ["apikey" => $this->apiKey, "id"  => $jobId]) ?: ''
             , true);
@@ -175,7 +175,7 @@ class tertuyul extends Provider {
     protected function res_api($jobId) {
         $start = time();
         do {
-            _sle(2); 
+            _sle(10); 
             $r = json_decode(
                 Net::C($this->baseUrl."/res.php", "GET", ["key" => $this->apiKey, "id"  => $jobId, "json"=> 1]) ?: ''
                 , true);
