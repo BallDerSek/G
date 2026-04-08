@@ -30,7 +30,8 @@ while (true) {
     
     print_r($pa);
     $_1 = Net::C($host, 'POST', $pa, $cookieFile, [], $host.$r, $userAgent);
-    _put('1.html', $_1);
+    var_dump($_1);
+    #_put('1.html', $_1);
     if (!empty($_1)) {
         $_suc = xScraper::xPath($_1, "//div[contains(@class,'alert-success')]");
         $_err = xScraper::xPath($_1, "//div[contains(@class,'alert-error')]");
