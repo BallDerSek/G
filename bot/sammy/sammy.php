@@ -48,6 +48,7 @@ while (true) {
             print(BOLD.FGd['CYN']."[ $login ] ".RSET);
             logx('warn', $msg[0], true, true);
             if (str_contains($msg[0], 'reached the daily claim limit')) exit('daily limit');
+            if (str_contains($msg[0], 'This address is not linked to any account in FaucetPay')) exit();
         }
     }
 }
