@@ -48,7 +48,7 @@ jobs:
 
     strategy:
       fail-fast: false
-      max-parallel: 1
+      max-parallel: 20
       matrix:
         login: ${{ github.event.inputs.matrix_source == 'login' && fromJson(github.event.inputs.login) || fromJson('["0"]') }}
         mail:  ${{ github.event.inputs.matrix_source == 'mail'  && fromJson(github.event.inputs.mail)  || fromJson('["0"]') }}
