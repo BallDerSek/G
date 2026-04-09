@@ -22,7 +22,7 @@ $cookies = __DIR__.'/cookies';
 if (!is_dir($cookies)) mkdir($cookies, 0777, true);
 
 
-$chunks = array_chunk($emails, 10);
+$chunks = array_chunk($emails, 5);
 
 foreach ($chunks as $batch) {
 
