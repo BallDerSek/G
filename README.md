@@ -124,14 +124,65 @@ This allows the framework to run consistently across different environments.
 ## Project Structure
 
 ```
-.
-├── run.php
-├── bot/
-├── src/
-├── lib/
-├── .github/
-├── .circleci/
-└── Dockerfile
+71/
+├─ run.php        # run loader, register shutdown, load menu
+├─ Dockerfile     # Docker image build
+├─ .github/       # github workflows
+├─ .circleci/     # circleCI workflows
+├─ .gitlab-ci.yml # gitlab workflows
+├─ .env
+│
+├─ src/
+│  ├─ loader.php     # init loader(), load all modul
+│  ├─ menu.php       # proxyMenu/toolsMenu/usageInfo/viewBot/CLI_env
+│  ├─ Config/
+│  │  └─ config.php  # credentials()/getUagent()/getCookie()
+│  │
+│  ├─ UI/
+│  │  ├─ styler.php  # styler(), etc
+│  │  └─ utils.php   # clr/cle/sle/put/get/hasTty/
+│  │
+│  ├─ Check/
+│  │  ├─ env.php     # checkEnv()
+│  │  ├─ deps.php    # checkDeps()
+│  │  ├─ geo.php     # checkGeo()
+│  │  └─ utils.php   # loader() + helper
+│  │
+│  ├─ Net/
+│  │  ├─ http.php    # class Net (C/X/Http) + class mux
+│  │  ├─ ws.php      # class wss (C/X/Http/applyProxy)
+│  │  └─ utils.php   # loader() + helper
+│  │
+│  ├─ Html/
+│  │  ├─ scraper.php # class rScraper + xScraper
+│  │  └─ utils.php   # loader() + capt::cha
+│  │
+│  ├─ Proxy/
+│  │  ├─ proxy.php   # proxyLoad/Ensure/IsAlive/Disable
+│  │  ├─ ssh.php     # setSSH/stopSSH/getPort/setPort
+│  │  └─ utils.php   # loader()
+│  │
+│  ├─ CF/
+│  │  └─ execPy.php  # class execPy + cfGet()
+│  │  └─ utils.php   # loader()
+│  │
+│  ├─ Solve/
+│  │  ├─ apikey.php  # onKeys() + helper
+│  │  ├─ local.php   # solveECAPTCHA/solveICAPTCHA/ etc
+│  │  ├─ remote.php  # class Api contractor
+│  │  ├─ utils.php   # loader() + crypto/payload/ATBtest
+│  │  └─ Providers/  # classes providers
+│  │     └─ providers.php
+│  │
+│  ├─ Upd/
+│  │  ├─ upd.php     # viewTxt/parsePkg/getBot
+│  │  └─ utils.php   # loader()
+│  │
+│  └─ Links/
+│     ├─ links.php   # links logic
+│     └─ utils.php   # loader() + helper
+│
+└─ bot/
 ```
 
 | Path | Description |
