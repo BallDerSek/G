@@ -1,7 +1,4 @@
 *.tmp
-
 credentials
-**/credentials
-
-cookie
-**/cookie
+cookie*
+openssl.php

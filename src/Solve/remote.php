@@ -9,8 +9,8 @@ if (!defined('ROOT')) exit;
 #Direct API Request 
 
 final class Api { #contractor
-    public const PX_AUTH = 'gamamoch-rotate:playernoob@p.webshare.io:80';
-    public const PX_TYPE = 'socks5';
+    public const PX_AUTH = '';
+    public const PX_TYPE = '';
     public const PROXY = self::PX_TYPE . '://' . self::PX_AUTH;
 
     public const KEY = [
@@ -52,12 +52,14 @@ final class Api { #contractor
             'cft' => [
                 'k'=>'siteKey','url'=>'domain','api'=>'cloudflare', 'defaults' => ['method' => 'turnstile']
                 ],
+/*
             'hc' => [
                 'k'=>'siteKey','url'=>'domain','api'=>'hcaptcha'
                 ],
             'rc2' => [
                 'k'=>'siteKey','url'=>'domain','api'=>'recaptcha', 'defaults' => ['method' => 'v2']
                 ],
+*/
             'rc3' => [
                 'k'=>'siteKey','url'=>'domain','api'=>'recaptcha', 'defaults' => ['method' => 'v3']
                 ],
@@ -414,12 +416,21 @@ final class Api { #contractor
     ];
     
     public static function errType($msgOrCode) {
-        $code = trim(strtok($msgOrCode, " \t-")); 
+        $msg = trim($msgOrCode); 
         foreach (self::ERR as $type => $codes) {
-            if (in_array($code, $codes, true)) return $type;
+            if (in_array($msg, $codes, true)) {
+                return $type;
+            }
+
+        /*
+        foreach ($codes as $c) {
+            if (stripos($msg, $c) !== false) return $type;
         }
-        return false;
+        */
     }
+    return false;
+}
+
     
 } 
 
@@ -454,7 +465,7 @@ abstract class Provider {
                 break;
             }
         }
-        return false;
+        return null;
     }
 
     public function token($siteKey, $siteUrl, $type, array $extraParams = []) {

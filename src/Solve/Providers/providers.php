@@ -74,7 +74,7 @@ class skibidixxx extends Provider {
         $s = json_decode(
             Net::X($this->baseUrl."/in.php", "POST", array_merge(["apikey" => $this->apiKey, "methods" => $method], $params), null, [], '', null, true) ?: ''
             , true);
-
+#var_dump($s);
         if (!is_array($s) || ($s["status"] ?? 0) != 1) {
             throw new Exception(is_array($s) ? ($s["request"] ?? 'unknown') : 'unknown');
         }
@@ -206,6 +206,41 @@ class tertuyul extends Provider {
             return $result['url'];
         });
     }
+    
+    public function bct($path) {
+        $path = rtrim($path, '/');
+        $mainFile = $path . '/main.png';
+        
+        if (!file_exists($mainFile)) return false;
+        
+        $params = [
+            'main' => base64_encode(file_get_contents($mainFile))
+        ];
+
+        $optFiles = glob($path . '/opt_*.png');
+        foreach ($optFiles as $file) {
+            if (preg_match('/opt_(\d+)\.png/', $file, $m)) {
+                $params[$m[1]] = base64_encode(file_get_contents($file));
+            }
+        }
+
+        $res = $this->run('bitcotask', $params);
+
+        @unlink($mainFile);
+        foreach ($optFiles as $file) {
+            @unlink($file);
+        }
+        @unlink($path . '/cap.json'); 
+
+        if (!$res) return false;
+
+        if (strpos($res, ':') !== false) {
+            $parts = explode(':', $res);
+            return end($parts);
+        }
+
+        return $res;
+    }
 
     /** info saldo */
     public function getInfo(): bool {
@@ -250,7 +285,7 @@ class multibot extends Provider {
     protected function res_api($jobId) {
         $start = time();
         do {
-            _sle(2); 
+            _sle(10); 
             $r = 
                 Net::C($this->baseUrl."/res.php", "GET", ["key" => $this->apiKey, "id" => $jobId, "action"=> 'get']) ?: '';
             if (str_starts_with($r, 'OK|')) 

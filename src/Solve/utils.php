@@ -268,7 +268,9 @@ function rsResponse($jsFile, $x, $y, $timestamp, $ua, $_img = null) {
     $delay = rand(2, 5); 
     
     if (!preg_match('/btoa\((.*?)\)/s', $jsContent, $matches)) return false;
+    print_r($matches);
     $rawVars = explode(',', str_replace(['+', "'", '"', ' ', "\n", "\r"], '', $matches[1]));
+    print_r($rawVars);
     
     if (stripos($ua, 'Windows') !== false) {
         $platform = 'Win32';
@@ -332,7 +334,7 @@ function rsResponse($jsFile, $x, $y, $timestamp, $ua, $_img = null) {
             $payloadArray[] = 0;
         }
     }
-    #print_r($payloadArray);
+    print_r($payloadArray);
     return base64_encode(implode(',', $payloadArray));
 }
 

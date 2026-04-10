@@ -26,6 +26,7 @@ function styler($text, callable $task) {
     if (!animate()) {
         echo "\r"; _clr();
         echo $text; fflush(STDOUT);
+        echo "\n"; _clr();
         return $task();
     }
 
@@ -38,6 +39,7 @@ function spinner($text, callable $task) {
     if (!animate()) {
         echo "\r"; _clr();
         echo $text; fflush(STDOUT);
+        echo "\n"; _clr();
         return $task();
     }
 
@@ -84,6 +86,7 @@ function underline($text, callable $task) {
     if (!animate()) {
         echo "\r"; _clr();
         echo $text; fflush(STDOUT);
+        echo "\n"; _clr();
         return $task();
     }
     
@@ -125,6 +128,7 @@ function loading($text, callable $task) {
     if (!animate()) {
         echo "\r"; _clr();
         echo $text; fflush(STDOUT);
+        echo "\n"; _clr();
         return $task();
     }
     
@@ -165,6 +169,7 @@ function gradient($text, callable $task) {
     if (!animate()) {
         echo "\r"; _clr();
         echo $text; fflush(STDOUT);
+        echo "\n"; _clr();
         return $task();
     }
     
@@ -346,7 +351,6 @@ function taskPrintCenter($text, $level='') {
     echo "\033[?25h";
     fflush(STDOUT);
 }
-
 
 function blogx($i="", $msg="\n", $n=true, $b=false) {
     if (!outTty()) return logx($i, $msg, $n, $b);

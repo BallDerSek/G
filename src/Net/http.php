@@ -520,3 +520,15 @@ function headers($o = '', $r = '', $h = '', array $cookie = [], $ua_param = '', 
 
     return $head;
 }
+
+function headers0(array $cookie = []) {
+    $head = [];
+    if (!empty($cookie)) {
+        $pairs = [];
+        foreach ($cookie as $k => $v) {
+            $pairs[] = "$k=$v";
+        }
+        $head[] = "Cookie: " . implode('; ', $pairs);
+    }
+    return $head;
+}

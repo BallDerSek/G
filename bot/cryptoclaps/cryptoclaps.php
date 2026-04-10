@@ -12,11 +12,11 @@ banner();
 login:
 
 
-if (!is_file(__DIR__.'/mail.txt')) {
+if (!is_file(LIBDIR.'/mail.txt')) {
     logx('err', 'mail.txt not found');
     die;
 }
-$emails = file(__DIR__.'/mail.txt', FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+$emails = file(LIBDIR.'/mail.txt', FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
 
 $cookies = __DIR__.'/cookies';
 if (!is_dir($cookies)) mkdir($cookies, 0777, true);
@@ -108,7 +108,7 @@ foreach ($chunks as $batch) {
 
         foreach ($res as $i => $r) {
             if (!isset($accs[$i])) continue;
-            #var_dump($r); die;
+            #var_dump($r);
             $v = json_decode($r, true);
 
             if (empty($v['valid'])) {
@@ -150,6 +150,8 @@ foreach ($chunks as $batch) {
         foreach ($res as $i => $r) {
             if (!isset($accs[$i])) continue;
             $v = json_decode($r, true);
+            #var_dump($v);
+            
             if (!is_array($v)) continue;
             if (!empty($v['channel'])) {
                 $channels[$i] = $v['channel'];
@@ -257,6 +259,7 @@ foreach ($chunks as $batch) {
             if (!$res3 || !isset($accs[$i])) continue;
 
             $v = json_decode($res3, true);
+            #var_dump($v);
             if (!is_array($v)) continue;
 
             if (!empty($v['success']) || !empty($v['status'])) {

@@ -34,7 +34,7 @@ class _shortlinks {
         $rules = [
             'clk' => ['lnbz.la','tpi.li','oii.la','aii.sh'],
             'low' => ['xut.io','shrinkme.click','link.adlink.click','horrorpay.online','linkpay.top'],
-            'nono' => ['earnow.online','shortino.link','shortano.link'],
+            #'nono' => ['earnow.online','shortino.link','shortano.link'],
             'coinclix' => ['coinclix.co']
         ];
 
@@ -558,8 +558,8 @@ function _ccPayload($api, $dom, $ver, $pis, $cnn, $bg, $cp) {
             break;
 
         case 'HC':
-            $token = _rl('hcaptcha: ');
-            #$token = $_token($api, '2a9619f4-43bc-4e64-afc8-7fbc48f2bf34', $dom, 'hc', ['userAgent'=>$_ua, 'invisible'=>1, 'proxy' => _proxy_api_]);
+            #$token = _rl('hcaptcha: ');
+            $token = $_token($api, '2a9619f4-43bc-4e64-afc8-7fbc48f2bf34', $dom, 'hc', ['userAgent'=>$_ua, 'invisible'=>1, 'proxy' => _proxy_api_]);
             break;
 
         case 'PC':

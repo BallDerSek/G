@@ -21,7 +21,7 @@ function checkLogin($host, array $h, $ip = null, $pattern = '') {
     return ['ok' => $ok, 'html' => $html];
 }
 
-function lastLocation(array $respHeaders, $needle = '') {
+function lastLocation(array $respHeaders, $needle = '', $last = true) {
     $locs = $respHeaders['location'] ?? [];
     if (!$locs) return null;
 
@@ -30,7 +30,7 @@ function lastLocation(array $respHeaders, $needle = '') {
         if (!$locs) return null;
     }
 
-    return trim(end($locs));
+    return $last ? trim(end($locs)) : trim(reset($locs));
 }
 
 function artikel() {

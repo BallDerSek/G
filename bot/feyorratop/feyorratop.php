@@ -17,6 +17,7 @@ banner();
 login:
 
 $dash = null;
+$limit = false;
 $register = false;
 while (true) {
     
@@ -58,15 +59,15 @@ while (true) {
         $po = array_merge($pa, $ca, $cre);
         
         $ve = Net::C($f['url'], 'POST', $po, $cookieFile, [], "$host/login", $userAgent, false, false, $ip);
-        $alertt = xScraper::xpath($ve, "//div[contains(@class, 'alert-danger')]");
-        if (!empty($alertt)) {
-            $msg = $alertt[0]; 
+        $alert_d = xScraper::xpath($ve, "//div[contains(@class, 'alert-danger')]");
+        if (!empty($alert_d)) {
+            $msg = $alert_d[0]; 
             if (str_contains($msg, 'nvalid Credential')) {
                 logx('err', $msg);
                 $register = true;
-                break 2;
+                #break 2;
             }
-            #print_r($alertt);
+            #print_r($alert_d);
             logx('', $msg);
             die;
         }
@@ -144,16 +145,16 @@ while (true) {
     } while (!$claim);
     
     $box = false;
-    if ($claim) {
+    if ($claim && !$limit) {
         while (true) {
             $fau = Net::C("$host/faucet", 'GET', null, $cookieFile, [], "$host/dashboard", $userAgent, false, false, $ip);
             if (empty($fau)) continue;
             
             $fo = xScraper::payload($fau) ?? [];
             if (empty($fo)) {
-                $alertt = xScraper::xpath($fau, "//div[contains(@class, 'alert-danger')]");
-                if (!empty($alertt)) {
-                    $msg = $alertt[0]; 
+                $alert_d = xScraper::xpath($fau, "//div[contains(@class, 'alert-danger')]");
+                if (!empty($alert_d)) {
+                    $msg = $alert_d[0]; 
                     if (str_contains($msg, 'Pickabox game(s) required')) {
                         preg_match('/\d+/', $msg, $num);
                         $co = $num[0] ?? 1;
@@ -162,6 +163,12 @@ while (true) {
                         break;
                     }
                 }
+                
+                if (str_contains($fau, 'Daily limit reached, claim Shortlink Wall')) {
+                    $limit = true;
+                    break;
+                }
+                
                 styler('Waiting for faucet', fn() => _sle(30));
                 continue;
             }
@@ -318,10 +325,9 @@ if ($register) {
         $_1 = Net::C($f['url'], 'POST', $po_, $cookieFile, [], $host.'/register', $userAgent, false, false, $ip);
         #_put('1.html', $_1);
     }
-    
-    
+    goto login;
 }
-goto login;
+
 
 
 
@@ -400,24 +406,32 @@ function tK($api, $host, $key, $type, $ua) {
 
 function _cd($key = 'code') {
     $baseUrl = getenv('DG');
-    if (!$baseUrl) {
-        return _rl("$key: ");
-    }
+    if (!$baseUrl) return _rl("$key: ");
 
     $url = rtrim($baseUrl, '/') . '/get';
-    $deadline = time() + 600;
-
+    $deadline = time() + 320;
     $payload = ['type' => $key];
 
     while (time() < $deadline) {
         logx('info', "checking $key");
         $html = Net::X($url, 'POST', $payload, null, [], '', null, true);
-        if ($html !== false) {
-            if (preg_match('/^' . preg_quote($key, '/') . '=(.+)$/m', trim($html), $m)) {
-                return trim($m[1]);
+        
+        if ($html) {
+            if (preg_match('/.*[=]\s*(\S+)/i', $html, $m)) {
+                $result = trim($m[1]);
+                logx('ok', "Data found: $result");
+                return $result;
+            }
+            
+            if (strlen(trim($html)) > 0 && !str_contains($html, 'error')) {
+                return trim($html);
             }
         }
-        unset($html);
+        
+        if (str_contains($html, 'error')) {
+            logx('warn', "Remote: $html");
+        }
+
         sleep(5);
     }
 

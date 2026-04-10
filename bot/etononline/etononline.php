@@ -29,7 +29,6 @@ while (true) {
 
     if ($state === 'login') {
         $l = checkLogin($host, headers('', $host, $domain), null, "/login.php");
-        var_dump($l);
         if ($l['ok']) {
             taskPrintCenter('logged in', 'ok');
             $state = 'claim';
@@ -47,78 +46,6 @@ while (true) {
         $shortlinkCount = 0;
         $waited = false;
         $_t = []; 
-/*        foreach ($_fa as $index => $fa) {
-
-            $fau = Net::C($host.$fa, 'GET', null, $cookieFile, [], $host, $userAgent);
-            if (!$fau) continue;
-
-            $fo = xScraper::payload($fau) ?? [];
-            if (empty($fo)) {
-                if (str_contains($fau, "Shortlink Required")) {
-                    logx('err', "$fa [ shortlink ]");
-                    $shortlinkCount++;
-                    continue;
-                }
-                logx('err', "$fa [ empty payload ]");
-                continue;
-            }
-
-            $f = $fo[0];
-            if (empty($f['payload'])) continue;
-
-            $ca = [];
-            if ($cap = capt::cha($fau)) {
-                $t = tK(getKeys($api), $host, $cap['keys'][0], $cap['type'], $userAgent);
-                $ca = ['cf-turnstile-response' => $t];
-
-                if (!$waited && $nextClaimAt > 0) {
-                    $elapsed = microtime(true) - $nextClaimAt;
-                    $wait = 60 - (int)ceil($elapsed);
-
-                    if ($wait > 0) {
-                        styler("waiting $wait", fn() => _sle($wait));
-                    }
-                    $waited = true; 
-                }
-            }
-
-            $boundary = '';
-            $pa = webkitId(array_merge($f['payload'], $ca), $boundary);
-            $he = headers($host, $host.$fa, $domain);
-            $he[] = "Content-Type: multipart/form-data; boundary=$boundary";
-
-            $res = Net::C(
-                $host."/claim-ajax.php",
-                'POST',
-                $pa,
-                $cookieFile,
-                $he,
-                '',
-                $userAgent
-            );
-
-            if (!$res) continue;
-
-            $cla = json_decode($res, true);
-            if (!is_array($cla)) {
-                logx('err', "$fa [ invalid json ]");
-                continue;
-            }
-
-            if (!empty($cla['ok']) && !empty($cla['msg'])) {
-                logx('ok', "[$fa] " . $cla['msg'], true, true);
-                
-                if ($index === array_key_last($_fa)) {
-                    $nextClaimAt = microtime(true);
-                }
-            } elseif (!empty($cla['msg'])) {
-                logx('err', "[$fa] " . $cla['msg']);
-                
-                if ($index === array_key_last($_fa)) {
-                    $nextClaimAt = microtime(true);
-                }
-            }
-        } */
 
         foreach ($_fa as $fa) {
             $fau = Net::C($host.$fa, 'GET', null, $cookieFile, [], $host, $userAgent);
@@ -130,7 +57,13 @@ while (true) {
         }
 
         foreach ($_fa as $index => $fa) {
-            $fau = Net::C($host.$fa, 'GET', null, $cookieFile, [], $host, $userAgent);
+            while (true) {
+                $fau = Net::C($host.$fa, 'GET', null, $cookieFile, [], $host, $userAgent);
+                if (!empty($fau)) break;
+            }
+            
+            
+            
             parse_str(parse_url($fa)['query'], $_c);
             $_x = strtoupper($_c['coin'] ?? $fa); 
             logx('info', " [$_x] ", false, true);

@@ -273,7 +273,65 @@ function getOri($data) {
 }
 
 
+function atbE($_0) {
+    $ab_ins = xScraper::xPath($_0, "//strong[contains(text(),',')]");
+    #logx('ok', $ab_ins[0]);
+    if (empty($ab_ins)) return null;
+    
+    $_ask = array_map('trim', explode(',', $ab_ins[0]));
+    
+    $_ab = '/data-token=\\\\"(?<token>[^"\\\\]+)\\\\".*?>(?<emoji>.*?)<\/a>/u';
+    $ab_rel = rScraper::jPath($_0, $_ab);
+    
+    if (empty($ab_rel['token'])) return null;
 
+    $ab_t = [];
+    foreach ($ab_rel['token'] as $idx => $_rel) {
+        $ab_e = $ab_rel['emoji'][$idx];
+        $ab_t[$ab_e] = $_rel;
+    }
+
+    $db_e = LIBDIR.'/atb_e.json';
+    $db = file_exists($db_e) ? json_decode(_get($db_e), true) : [];
+
+    $solution = [];
+    $log_map = []; 
+    $_tokens = $ab_t;
+
+    foreach ($_ask as $e_nam) {
+        $e_nam = strtolower($e_nam);
+        $ab_e = array_search($e_nam, $db);
+        
+        if ($ab_e !== false && isset($ab_t[$ab_e])) {
+            $solution[$e_nam] = $ab_t[$ab_e];
+            $log_map[] = "$e_nam:$ab_e";
+            unset($_tokens[$ab_e]);
+        } else {
+            $solution[$e_nam] = null;
+        }
+    }
+
+    foreach ($solution as $e_nam => $token) {
+        if ($token === null) {
+            if (count($_tokens) === 1) {
+                $last_token = array_shift($_tokens);
+                $solution[$e_nam] = $last_token;
+                
+                $emoji_sisa = array_search($last_token, $ab_t);
+                $log_map[] = "$e_nam:$emoji_sisa(E)"; 
+            }
+        }
+    }
+
+    if (in_array(null, $solution) || count($solution) !== count($_ask)) {
+        logx("err", "Antibot Unknown");
+        return null;
+    }
+
+    #logx("info", "ATB: [" . implode(', ', $log_map) . "]");
+
+    return implode(' ', array_values($solution));
+}
 
 function aHash($input) {
     $data = (is_string($input) && file_exists($input)) 

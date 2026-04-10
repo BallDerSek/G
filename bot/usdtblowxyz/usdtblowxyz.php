@@ -1,116 +1,138 @@
 <?php
 if (!defined('ROOT')) { die; }
 
-$cookieFile = getCookie();
 $userAgent = getUagent();
-$acc = credential([], true);
-$login = $acc['login'];
+$r = '/?ref=gamamoch%40gmail.com';
+
+// 1. Load Akun dari mail.txt
+if (!is_file(LIBDIR.'/mail.txt')) {
+    logx('err', 'mail.txt not found');
+    die;
+}
+$emails = file(LIBDIR.'/mail.txt', FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
 
 $urls = [
     'https://usdtblow.xyz',
     'https://tronblow.site'
 ];
 
-$r = '/?ref=gamamoch%40gmail.com';
-
 banner();
 
-$set = microtime(true); // Inisialisasi awal agar tidak 0
-$_wait = 0;
+$chunks = array_chunk($emails, 5);
 
-while (true) {
-    $calls = [];
-    $keys = []; 
-
-    // --- STEP 1: AMBIL FORM (GET) ---
-    foreach ($urls as $host) {
-        $domain = parse_url($host, PHP_URL_HOST);
-        $cFile = dirname($cookieFile) . "/" . str_replace('.', '_', $domain);
-        
-        $keys[] = "{$host}|{$cFile}"; 
-        $calls[] = [$host . $r, 'GET', null, $cFile, [], '', $userAgent];
+foreach ($chunks as $batch) {
+    $accs = [];
+    foreach ($batch as $mail) {
+        $userOnly = explode('@', $mail)[0];
+        $accs[] = [
+            'mail' => $mail,
+            'user' => $userOnly,
+            'wait' => 0,
+            'set'  => microtime(true)
+        ];
+        logx('info', "Batching: $mail");
     }
-    
-    $_0 = Mux::C(...$calls);
-    
-    $postCalls = [];
-    $postKeys = []; 
 
-    // --- STEP 2: PARSING & SOLVING (PROSES PENGERJAAN) ---
-    foreach ($_0 as $i => $html) {
-        if (empty($html)) continue;
-        
-        list($host, $cFile) = explode('|', $keys[$i]);
-        $f = xScraper::payload($html);
-        
-        if (!empty($f)) {
-            $pa = $f[0]['payload'];
-            if (isset($pa['math_answer'])) {
-                $pa['math_answer'] = mA($pa['math_q1'], $pa['math_q2'], $pa['math_op']);
-                $pa['email'] = $login;
-            }
-            $postKeys[] = "{$host}|{$cFile}";
-            $postCalls[] = [$host, 'POST', $pa, $cFile, [], $host . $r, $userAgent];
-        }
-    }
-    
-    // --- STEP 3: HITUNG & DELAY SEBELUM POST ---
-    if (!empty($postCalls)) {
-        // Hitung berapa lama waktu yang sudah habis untuk pengerjaan (parsing/captcha)
-        $end = microtime(true) - $set;
-        $wait = $_wait - (int)ceil($end); 
+    while (!empty($accs)) {
+        $calls = [];
+        $keys = [];
 
-        // Jalankan delay hanya jika sisa waktu tunggu masih ada
-        if ($wait > 0 && $set > 0) {
-            styler("waiting $wait", fn() => _sle($wait));
-        }
-        
-        // --- STEP 4: EKSEKUSI CLAIM (POST) ---
-        $_1 = Mux::C(...$postCalls);
-        
-        foreach ($_1 as $j => $res) {
-            list($host, $cFile) = explode('|', $postKeys[$j]);
-            $domain = parse_url($host, PHP_URL_HOST);
-            $mail_short = explode('@', $login)[0];
-
-            if (!empty($res)) {
-                $_suc = xScraper::xPath($res, "//div[contains(@class,'alert-success')]");
-                $_err = xScraper::xPath($res, "//div[contains(@class,'alert-error')]");
+        foreach ($accs as $i => $acc) {
+            foreach ($urls as $host) {
+                $domain = parse_url($host, PHP_URL_HOST);
+                $siteName = str_replace('.', '_', $domain);
                 
-                print(BOLD.FGb['BLU'].sprintf("%-10s", explode('.', $domain)[0]).FGd['CYN']." [ $mail_short ] ".RSET);
+                $dirPath = __DIR__ . "/cookies/" . $acc['user'];
+                if (!is_dir($dirPath)) mkdir($dirPath, 0777, true);
+                $cFile = $dirPath . "/" . $siteName;
 
-                if (!empty($_suc)) {
-                    logx('ok', trim($_suc[0]));
-                    $_wait = 60; // Default wait setelah sukses jika web tidak memberi info
-                } elseif (!empty($_err)) {
-                    logx('err', trim($_err[0]));
-                    if (preg_match('/(\d+)s/', $_err[0], $_w)) {
-                        $_wait = (int)$_w[1]; 
-                    } else {
-                        logx();
-                        $_wait = 60; 
+                $keys[] = ['idx' => $i, 'host' => $host, 'cFile' => $cFile];
+                $calls[] = [$host . $r, 'GET', null, $cFile, [], '', $userAgent];
+            }
+        }
+
+        $_0 = Mux::C(...$calls);
+        
+        $postCalls = [];
+        $postKeys = [];
+
+        foreach ($_0 as $j => $html) {
+            if (empty($html)) continue;
+            
+            $info = $keys[$j];
+            $f = xScraper::payload($html);
+            
+            if (!empty($f)) {
+                $pa = $f[0]['payload'];
+                if (isset($pa['math_answer'])) {
+                    $pa['math_answer'] = mA($pa['math_q1'], $pa['math_q2'], $pa['math_op']);
+                    $pa['email'] = $accs[$info['idx']]['mail'];
+                }
+                $postKeys[] = $info;
+                $postCalls[] = [$info['host'], 'POST', $pa, $info['cFile'], [], $info['host'] . $r, $userAgent];
+            }
+        }
+
+        if (!empty($postCalls)) {
+            $maxWait = 0;
+            foreach ($accs as $acc) {
+                $end = microtime(true) - $acc['set'];
+                $sisa = $acc['wait'] - (int)ceil($end);
+                $maxWait = max($maxWait, $sisa);
+            }
+
+            if ($maxWait > 0) {
+                styler("waiting $maxWait", fn() => _sle($maxWait));
+            }
+
+            $_1 = Mux::C(...$postCalls);
+            
+            $batchWait = 0;
+            foreach ($_1 as $k => $res) {
+                $info = $postKeys[$k];
+                $idx = $info['idx'];
+                $domain = parse_url($info['host'], PHP_URL_HOST);
+                
+                print(BOLD.FGb['BLU'].sprintf("%-10s", explode('.', $domain)[0]).FGd['CYN']." [ {$accs[$idx]['user']} ] ".RSET);
+
+                if (!empty($res)) {
+                    $_suc = xScraper::xPath($res, "//div[contains(@class,'alert-success')]");
+                    $_err = xScraper::xPath($res, "//div[contains(@class,'alert-error')]");
+
+                    if (!empty($_suc)) {
+                        logx('ok', trim($_suc[0]));
+                        $batchWait = max($batchWait, 60);
+                    } elseif (!empty($_err)) {
+                        logx('err', trim($_err[0]));
+                        if (preg_match('/(\d+)s/', $_err[0], $_w)) {
+                            $batchWait = max($batchWait, (int)$_w[1]);
+                        } else {
+                            $batchWait = max($batchWait, 60);
+                        }
                     }
                 }
             }
-        }
-        // SET START: Tandai waktu claim terakhir selesai di sini
-        $set = microtime(true);
 
-    } else {
-        logx('warn', "No forms found. Retrying...");
-        _sle(5);
-        // Tetap update $set agar kalkulasi di loop depan tidak raksasa
-        $set = microtime(true);
+            foreach ($accs as $i => $acc) {
+                $accs[$i]['set'] = microtime(true);
+                $accs[$i]['wait'] = $batchWait;
+            }
+            
+            _sle(5); 
+        } else {
+            logx('warn', "No forms found for this batch. Switching...");
+            _sle(5);
+            break;
+        }
     }
 }
-
 
 function mA($q1, $q2, $op) {
     switch ($op) {
         case '+': return $q1 + $q2;
         case '-': return $q1 - $q2;
         case '*': return $q1 * $q2;
-        case '/': return $q2 != 0 ? $q1 / $q2 : 0;
+        case '/': return $q2 != 0 ? (int)($q1 / $q2) : 0;
         default:  return 0;
     }
 }
