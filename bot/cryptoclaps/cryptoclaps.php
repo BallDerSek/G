@@ -22,7 +22,7 @@ $cookies = __DIR__.'/cookies';
 if (!is_dir($cookies)) mkdir($cookies, 0777, true);
 
 
-$chunks = array_chunk($emails, 5);
+$chunks = array_chunk($emails, 3);
 
 foreach ($chunks as $batch) {
 
@@ -168,6 +168,7 @@ foreach ($chunks as $batch) {
             }
             $accs[$i]['retry']++;
             logx('warn', "[{$accs[$i]['mail']}] channel empty, retry {$accs[$i]['retry']}");
+            print_r($v);
             if ($accs[$i]['retry'] > $maxRetry) {
                 logx('err', "[{$accs[$i]['mail']}] no channel, remove");
                 unset($accs[$i]);
@@ -281,6 +282,6 @@ foreach ($chunks as $batch) {
             logx('err', $v['message'] ?? 'Unknown error');
         }
 
-        _sle(3);
+        _sle(10);
     }
 }
