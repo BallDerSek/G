@@ -15,6 +15,7 @@ banner();
 login:
 
 while (true) {
+    $claim = false;
     
     do {
         $_0 = Net::C($host, 'GET', null, $cookieFile, [], '', $userAgent);
