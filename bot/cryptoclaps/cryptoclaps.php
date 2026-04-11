@@ -32,6 +32,7 @@ while (true) {
     } while (!$claim);
     
     if (!$claim) continue;
+    logx('ok', 'using '.$login,true,true);
     while (true) {
     $set = microtime(true);
         $he = headers($host, $host, $domain);
@@ -51,7 +52,7 @@ while (true) {
         if (empty($_1)) continue;
         
         if (!empty($_1) && empty($v['valid'])) {
-            #var_dump($_1);
+            var_dump($_1);
             $_pe = [
                 'email' => $login,
                 'action' => 'get_channel',
@@ -65,7 +66,7 @@ while (true) {
         if (empty($_2)) continue;
         
         if (!empty($_2['success']) && !empty($chnl = $_2['channel'])) {
-            
+            var_dump($_2);
             $retry = 0;
             while (($t = getKeys($api)->token($capt['keys'][0], $host, $capt['type'])) === false && $retry++ < 5);
             #if (!$t) continue;
@@ -94,7 +95,7 @@ while (true) {
             
         }
         $_3 = json_decode(Net::C($host, 'POST', $po, $cookieFile, $head, $host, $userAgent)?: '', true);
-        
+        var_dump($_3);
         if (!empty($_3['success'])) {
             print(DIMM.BOLD.FGo['MAG']."  $login  ".RSET);
             logx('info', $_3['message'], true, true);
