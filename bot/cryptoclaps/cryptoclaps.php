@@ -50,8 +50,8 @@ while (true) {
         
         $_1 = json_decode(Net::C($host, 'POST', $pa, $cookieFile, $head, $host, $userAgent)?: '', true);
         
-        if (empty($_1)) continue;
         var_dump($_1);
+        if (empty($_1)) continue;
         if (!empty($_1) && empty($v['valid'])) {
             
             $_pe = [
@@ -64,8 +64,8 @@ while (true) {
         
         $_2 = json_decode(Net::C($host, 'POST', $pe, $cookieFile, $head, $host, $userAgent)?: '', true);
         
-        if (empty($_2)) continue;
         var_dump($_2);
+        if (empty($_2)) continue;
         if (!empty($_2['success']) && !empty($chnl = $_2['channel'])) {
             
             $retry = 0;
