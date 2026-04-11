@@ -122,7 +122,7 @@ foreach ($chunks as $batch) {
         } else {
             logx('warn', "No forms found for this batch. Switching...");
             _sle(5);
-            break;
+            #break;
         }
     }
 }
