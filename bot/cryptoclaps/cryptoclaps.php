@@ -50,9 +50,9 @@ while (true) {
         $_1 = json_decode(Net::C($host, 'POST', $pa, $cookieFile, $head, $host, $userAgent)?: '', true);
         
         if (empty($_1)) continue;
-        
+        var_dump($_1);
         if (!empty($_1) && empty($v['valid'])) {
-            var_dump($_1);
+            
             $_pe = [
                 'email' => $login,
                 'action' => 'get_channel',
@@ -64,9 +64,9 @@ while (true) {
         $_2 = json_decode(Net::C($host, 'POST', $pe, $cookieFile, $head, $host, $userAgent)?: '', true);
         
         if (empty($_2)) continue;
-        
+        var_dump($_2);
         if (!empty($_2['success']) && !empty($chnl = $_2['channel'])) {
-            var_dump($_2);
+            
             $retry = 0;
             while (($t = getKeys($api)->token($capt['keys'][0], $host, $capt['type'])) === false && $retry++ < 5);
             #if (!$t) continue;
