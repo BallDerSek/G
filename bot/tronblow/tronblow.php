@@ -125,7 +125,6 @@ while (!empty($accs)) {
                         $sKey = array_search($info['host'], $accs[$idx]['sites']);
                         if ($sKey !== false) {
                             unset($accs[$idx]['sites'][$sKey]);
-                            logx('warn', "{$domain} dihapus dari antrean {$accs[$idx]['user']}");
                         }
                         
                         if (empty($accs[$idx]['sites'])) {
@@ -162,9 +161,17 @@ while (!empty($accs)) {
             _sle(5); 
         }
     } else {
-        logx('warn', "No forms found");
+        logx('warn', "No forms found ");
+        
+        foreach ($keys as $info) {
+            if (is_file($info['cFile'])) {
+                unlink($info['cFile']);
+            }
+        }
+        var_dump($_0);
         _sle(10);
     }
+
 }
 
 logx('info', "Batch-{$login} limit.");
