@@ -168,7 +168,7 @@ while (!empty($accs)) {
                 unlink($info['cFile']);
             }
         }
-        var_dump($_0);
+        var_dump($_0); die;
         _sle(10);
     }
 
