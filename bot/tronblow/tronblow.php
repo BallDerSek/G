@@ -20,7 +20,6 @@ $urls = [
 banner();
 
 $chunks = array_chunk($emails, 5);
-
 $batchIndex = $login - 1;
 
 if (!isset($chunks[$batchIndex])) {
@@ -29,8 +28,7 @@ if (!isset($chunks[$batchIndex])) {
 }
 
 $batch = $chunks[$batchIndex];
-
-logx('info', " Batch-{$login}  " . count($batch) . " email");
+logx('info', " Batch-{$login} | " . count($batch) . " email");
 
 $accs = [];
 foreach ($batch as $mail) {
@@ -98,6 +96,8 @@ while (!empty($accs)) {
         $_1 = Mux::C(...$postCalls);
         
         $batchWait = 0;
+        $toRemove = []; 
+
         foreach ($_1 as $k => $res) {
             $info = $postKeys[$k];
             $idx = $info['idx'];
@@ -113,14 +113,32 @@ while (!empty($accs)) {
                     logx('ok', trim($_suc[0]));
                     $batchWait = max($batchWait, 60);
                 } elseif (!empty($_err)) {
-                    logx('err', trim($_err[0]));
-                    if (preg_match('/(\d+)s/', $_err[0], $_w)) {
+                    $errMsg = trim($_err[0]);
+                    logx('err', $errMsg);
+
+                    if (strpos(strtolower($errMsg), 'limit reached') !== false) {
+                        logx('warn', "Account {$accs[$idx]['user']} limit tercapai.");
+                        $toRemove[] = $idx;
+                    }
+
+                    if (preg_match('/(\d+)s/', $errMsg, $_w)) {
                         $batchWait = max($batchWait, (int)$_w[1]);
                     } else {
                         $batchWait = max($batchWait, 60);
                     }
                 }
             }
+            
+            if (is_file($info['cFile'])) {
+                unlink($info['cFile']);
+            }
+        }
+
+        if (!empty($toRemove)) {
+            foreach (array_unique($toRemove) as $remIdx) {
+                unset($accs[$remIdx]);
+            }
+            $accs = array_values($accs);
         }
 
         foreach ($accs as $i => $acc) {
@@ -128,13 +146,18 @@ while (!empty($accs)) {
             $accs[$i]['wait'] = $batchWait;
         }
         
-        _sle(5); 
+        if (!empty($accs)) {
+            _sle(5); 
+        }
     } else {
-        logx('warn', "No forms found for batch {$login}. Retrying in 10s...");
+        logx('warn', "No forms found ");
         _sle(10);
     }
 }
 
+logx('info', "Batch-{$login} limit");
+
+// Fungsi Math Answer
 function mA($q1, $q2, $op) {
     switch ($op) {
         case '+': return $q1 + $q2;
