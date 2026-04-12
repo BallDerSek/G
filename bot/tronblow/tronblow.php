@@ -34,10 +34,11 @@ $accs = [];
 foreach ($batch as $mail) {
     $userOnly = explode('@', $mail)[0];
     $accs[] = [
-        'mail' => $mail,
-        'user' => $userOnly,
-        'wait' => 0,
-        'set'  => microtime(true)
+        'mail'  => $mail,
+        'user'  => $userOnly,
+        'wait'  => 0,
+        'set'   => microtime(true),
+        'sites' => $urls 
     ];
 }
 
@@ -46,7 +47,7 @@ while (!empty($accs)) {
     $keys = [];
 
     foreach ($accs as $i => $acc) {
-        foreach ($urls as $host) {
+        foreach ($acc['sites'] as $host) {
             $domain = parse_url($host, PHP_URL_HOST);
             $siteName = str_replace('.', '_', $domain);
             
@@ -78,6 +79,10 @@ while (!empty($accs)) {
             }
             $postKeys[] = $info;
             $postCalls[] = [$info['host'], 'POST', $pa, $info['cFile'], [], $info['host'] . $r, $userAgent];
+        } else {
+            if (is_file($info['cFile'])) {
+                unlink($info['cFile']);
+            }
         }
     }
 
@@ -96,7 +101,7 @@ while (!empty($accs)) {
         $_1 = Mux::C(...$postCalls);
         
         $batchWait = 0;
-        $toRemove = []; 
+        $toRemoveAcc = []; 
 
         foreach ($_1 as $k => $res) {
             $info = $postKeys[$k];
@@ -117,8 +122,15 @@ while (!empty($accs)) {
                     logx('err', $errMsg);
 
                     if (strpos(strtolower($errMsg), 'limit reached') !== false) {
-                        logx('warn', "Account {$accs[$idx]['user']} limit tercapai.");
-                        $toRemove[] = $idx;
+                        $sKey = array_search($info['host'], $accs[$idx]['sites']);
+                        if ($sKey !== false) {
+                            unset($accs[$idx]['sites'][$sKey]);
+                            logx('warn', "{$domain} dihapus dari antrean {$accs[$idx]['user']}");
+                        }
+                        
+                        if (empty($accs[$idx]['sites'])) {
+                            $toRemoveAcc[] = $idx;
+                        }
                     }
 
                     if (preg_match('/(\d+)s/', $errMsg, $_w)) {
@@ -134,11 +146,11 @@ while (!empty($accs)) {
             }
         }
 
-        if (!empty($toRemove)) {
-            foreach (array_unique($toRemove) as $remIdx) {
+        if (!empty($toRemoveAcc)) {
+            foreach (array_unique($toRemoveAcc) as $remIdx) {
                 unset($accs[$remIdx]);
             }
-            $accs = array_values($accs);
+            $accs = array_values($accs); 
         }
 
         foreach ($accs as $i => $acc) {
@@ -150,14 +162,14 @@ while (!empty($accs)) {
             _sle(5); 
         }
     } else {
-        logx('warn', "No forms found ");
+        logx('warn', "No forms found");
         _sle(10);
     }
 }
 
-logx('info', "Batch-{$login} limit");
+logx('info', "Batch-{$login} limit.");
 
-// Fungsi Math Answer
+
 function mA($q1, $q2, $op) {
     switch ($op) {
         case '+': return $q1 + $q2;
