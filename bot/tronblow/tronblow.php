@@ -168,8 +168,7 @@ while (!empty($accs)) {
                 unlink($info['cFile']);
             }
         }
-        var_dump($_0); die;
-        _sle(10);
+        _sle(rand(60, 75));
     }
 
 }
