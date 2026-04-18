@@ -19,7 +19,7 @@ $urls = [
 
 banner();
 
-$chunks = array_chunk($emails, 5);
+$chunks = array_chunk($emails, 1);
 $batchIndex = $login - 1;
 
 if (!isset($chunks[$batchIndex])) {
