@@ -1,13 +1,51 @@
 <?php
-/**
- * 
- * 
- * 
- */
-if (!defined('ROOT')) exit;
 
+/** @file styler/utils.php
+ * @constant string ANN
+ * @constant string RSET
+ * @constant string BOLD
+ * @constant string DIMM
+ * @constant string ITAL
+ * @constant string UNDR
+ * @constant string BLNK
+ * @constant string RPID
+ * @constant string RVRS
+ * @constant string HDDN
+ * @constant string STRK
+ * @constant string FG256
+ * @constant string BG256
+ * @constant array FGo
+ * @constant array FGb
+ * @constant array FGd
+ * @constant array BG
+ * @function _sle
+     * @param int|float $time
+     * @return int
+ * @function _cle
+     * @return void
+ * @function _clr
+     * @return void
+ * @function _get
+     * @param string $path
+     * @return string|null
+ * @function _put
+     * @param string $path
+     * @param string $data
+     * @param bool $append
+     * @return bool
+ * @function animate
+     * @return bool
+ * @function hasTty
+     * @return bool
+ * @function outTty
+     * @return bool
+ * @function _rl
+     * @param string $prompt
+     * @return string|false
+ */
 #STYLER
 define("ANN", "\033["); 
+define("FG256", ANN."38;5;"); define("BG256", ANN."48;5;");
 
 define("RSET", ANN."0m"); define("BOLD", ANN."1m");
 define("DIMM", ANN."2m"); define("ITAL", ANN."3m");
@@ -15,7 +53,6 @@ define("UNDR", ANN."4m"); define("BLNK", ANN."5m");
 define("RPID", ANN."6m"); define("RVRS", ANN."7m");
 define("HDDN", ANN."8m"); define("STRK", ANN."9m"); 
 
-define("FG256", ANN."38;5;"); define("BG256", ANN."48;5;");
 
 #foreround colours origin 
 define("FGo", [
@@ -73,6 +110,24 @@ function _put($path, $data, $append = false) {
     return @file_put_contents($path, $data, $flags) !== false;
 }
 
+function _lib($host, $mail = null) {
+    $cleanHost = str_replace('.', '_', parse_url($host, PHP_URL_HOST) ?: $host);
+    
+    $user = ($mail && strpos($mail, '@') !== false) ? strstr($mail, '@', true) : '';
+    
+    $workDir = LIBDIR . "/{$cleanHost}";
+    if ($user) {
+        $workDir .= "/{$user}";
+    }
+    
+    if (!is_dir($workDir)) {
+        mkdir($workDir, 0777, true);
+    }
+    
+    return rtrim($workDir, '/');
+}
+
+
 function animate() {
     if (!outTty()) return false;
 
@@ -90,38 +145,27 @@ function outTty() {
     return (defined('STDOUT') && is_resource(STDOUT) && function_exists('posix_isatty')) ? @posix_isatty(STDOUT) : false;
 }
 
-
-
-function _dump($filename, $content) {
-    $tmp = tempnam(sys_get_temp_dir(), "up_");
-    file_put_contents($tmp, $content);
-
-    $ch = curl_init("https://upload.gofile.io/uploadfile");
-    curl_setopt_array($ch, [
-        CURLOPT_POST => true,
-        CURLOPT_POSTFIELDS => [
-            'file' => new CURLFile(
-                $tmp,
-                'application/octet-stream',
-                basename($filename) ?: 'dump.txt'
-            ),
-        ],
-        CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_USERAGENT => 'curl/8 (PHP)',
-        CURLOPT_HTTPHEADER => ['Accept: application/json'],
-    ]);
-
-    $resp = curl_exec($ch);
-    $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    unlink($tmp);
-
-    $json = json_decode($resp, true);
-    if (is_array($json) && !empty($json['data']['downloadPage'])) {
-        logx('info', "Uploaded → ".$json['data']['downloadPage'], true, true);
-        return $json;
+function _color($value) {
+    foreach ([BG, FGo, FGb, FGd] as $set) {
+        foreach ($set as $key => $val) {
+            if ($val === $value) return $key;
+        }
     }
-    logx('err', "$code".$resp);
     return null;
 }
 
-loader(__DIR__); 
+
+function _rl($prompt = '') {
+    $old = null;
+    if (function_exists('pcntl_signal_get_handler') && function_exists('pcntl_signal')) {
+        $old = pcntl_signal_get_handler(SIGINT);
+        pcntl_signal(SIGINT, SIG_DFL);
+    }
+
+    $line = readline($prompt);
+
+    if ($old !== null && function_exists('pcntl_signal')) {
+        pcntl_signal(SIGINT, $old);
+    }
+    return $line;
+}

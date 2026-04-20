@@ -1,17 +1,19 @@
 <?php
 if (!defined('ROOT')) { die; }
-
 $api = onKeys();
 
-$cookieFile = getCookie();
-$userAgent  = getUagent();
-$acc = credential([], true);
+$acc = config::credential([], true);
 $mail = $acc['mail'];
 $pass = $acc['pass'];
+
+$cookieFile = config::cookie($mail);
+$userAgent = config::uagent('mobile');
 
 $host = 'https://feyorra.top';
 $domain = parse_url($host, PHP_URL_HOST);
 $ip = '148.251.78.240';
+
+inf::setup($userAgent, $cookieFile, $ip);
 
 banner(); 
 login:
@@ -19,10 +21,11 @@ login:
 $dash = null;
 $limit = false;
 $register = false;
+$shortlink = false;
 while (true) {
     
     do {
-        $l = checkLogin("$host/dashboard", headers('', $host, $domain), $ip, '/register');
+        $l = inf::check("$host/dashboard", [], '/register');
         
         if ($l['ok']) {
             taskPrintCenter('logged in', 'ok');
@@ -36,59 +39,48 @@ while (true) {
         $_0 = Net::C("$host/login", 'GET', null, $cookieFile, [], '', $userAgent, false, false, $ip);
         if (empty($_0)) continue;
         #var_dump($_0); die;
-        $f = xScraper::payload($_0)[0];
+        $f = scraper::payload($_0)[0];
         $pa = $f['payload'];
         
-        if (str_contains($_0, 'iconcaptcha-widget')) {
-            $ic = null;
-            while(!$ic) {
-                $ic = solveICAPTCHA($_0, $host);
-            }
-            $ca = $ic;
-        } elseif (str_contains($pa['captcha'], 'turnstile')) {
-            $c = capt::cha($_0);
-            #print_r($c); die;
-            $t = tK(getKeys($api), $host, $c['keys'][0], $c['type'], $userAgent);
-            $ca = ['cf-turnstile-response' => $t, 'g-recaptcha-response' => $t];
-        } else {
-            logx('err', 'unknown captcha');
-            die;
-        }
+        $cap = null;
+        $cap = solve::exec($_0, $host, $api);
         
         $cre = ['email' => $mail, 'password' => $pass];
-        $po = array_merge($pa, $ca, $cre);
+        $po = array_merge($pa, $cap, $cre);
+        #print_r($po);
         
         $ve = Net::C($f['url'], 'POST', $po, $cookieFile, [], "$host/login", $userAgent, false, false, $ip);
-        $alert_d = xScraper::xpath($ve, "//div[contains(@class, 'alert-danger')]");
+        $alert_d = scraper::_xP($ve, "//div[contains(@class, 'alert-danger')]");
         if (!empty($alert_d)) {
             $msg = $alert_d[0]; 
             if (str_contains($msg, 'nvalid Credential')) {
                 logx('err', $msg);
-                $register = true;
+                #$register = true;
                 #break 2;
             }
-            #print_r($alert_d);
             logx('', $msg);
             die;
         }
         
     } while (empty($dash));
-    
     #_put('dash.html', $dash); 
+
+/*
     if (str_contains($dash, 'confirm your email')) {
         logx('info', 'check email');
         $_re = Net::C("$host/dashboard/resend", 'GET', null, $cookieFile, [], $host.'/dashboard', $userAgent, false, false, $ip);
         Net::C(_cd($mail), 'GET', null, $cookieFile, [], $host.'/dashboard', $userAgent, false, false, $ip);
         continue;
     }
+*/
     
     $claim = false;
     do {
         $ads = Net::C("$host/ptc", 'GET', null, $cookieFile, [], "$host/dashboard", $userAgent, false, false, $ip);
         
-        $_tim = xScraper::xPath($ads, "//div[@class='ptc_cards']//span[i[contains(@class, 'fa-clock')]]");
+        $_tim = scraper::_xP($ads, "//div[@class='ptc_cards']//span[i[contains(@class, 'fa-clock')]]");
         
-        $_url = xScraper::xPath($ads, "//button/@onclick");
+        $_url = scraper::_xP($ads, "//button/@onclick");
         $url = array_map(fn($u) => explode("'", $u)[1], $_url);
         $vurl = $url[0] ?? null;
         
@@ -96,27 +88,21 @@ while (true) {
             $cla = null;
             $tim = isset($_tim[0]) ? (int)preg_replace('/[^0-9]/', '', $_tim[0]) : 0;
             logx('info', "[ $vurl ]: ", false);
-            logx('', $tim, true);
+            logx('', $tim);
+            #die;
             while (true) {
                 $view = Net::C($vurl, 'GET', null, $cookieFile, [], '', $userAgent, false, false, $ip);
                 if (!empty($view)) {
                     $set = microtime(true);
-                    $f = xScraper::payload($view) ?? [];
+                    $f = scraper::payload($view) ?? [];
                     if (!empty($f)) {
                         $pa = $f[0]['payload'] ?? [];
-                        $ca = [];
+
+                        $cap = null;
+                        $cap = solve::exec($view, $host, $api);
+                        $po = array_merge($pa, $cap);
+                        #print_r($po);
                         
-                        if (str_contains($view, 'iconcaptcha-widget')) {
-                            $ic = null;
-                            while(!$ic) {
-                                $ic = solveICAPTCHA($view, $host, $ip);
-                            }
-                            $ca = $ic;
-                        } else {
-                            logx('err', 'unknown captcha.');
-                            die;
-                        }
-                        $po = array_merge($pa, $ca);
                         if (!empty($po)) {
                             $end = microtime(true) - $set;
                             $wait = (int)($tim - $end);
@@ -124,7 +110,7 @@ while (true) {
                                 styler("waiting for ads: $wait", fn() => _sle($wait));
                             }
                             claim:
-                            $cla = Net::C($f[0]['url'], 'POST', $po, $cookieFile, headers('', $vurl), $userAgent, false, false, $ip);
+                            $cla = Net::C($f[0]['url'], 'POST', $po, $cookieFile, [], $vurl, $userAgent, false, false, $ip);
                             if (empty($cla)) goto claim;
                             break;
                         }
@@ -132,9 +118,9 @@ while (true) {
                 }
             }
             if (!empty($cla)) {
-                $m = rScraper::jPath($cla, "/Swal\.fire\(\{.*?title\s*:\s*(['\"])(.*?)\\1.*?\}\)/s");
+                $m = scraper::_jP($cla, "/Swal\.fire\(\{.*?title\s*:\s*(['\"])(.*?)\\1.*?\}\)/s");
                 if (isset($m[2][0])) {
-                    logx('info', $m[2][0], true, true);
+                    logx('info','   '. $m[2][0], true, true);
                 }
             }
         } else {
@@ -143,16 +129,16 @@ while (true) {
             break;
         }
     } while (!$claim);
-    
+
     $box = false;
     if ($claim && !$limit) {
         while (true) {
             $fau = Net::C("$host/faucet", 'GET', null, $cookieFile, [], "$host/dashboard", $userAgent, false, false, $ip);
             if (empty($fau)) continue;
             
-            $fo = xScraper::payload($fau) ?? [];
+            $fo = scraper::payload($fau) ?? [];
             if (empty($fo)) {
-                $alert_d = xScraper::xpath($fau, "//div[contains(@class, 'alert-danger')]");
+                $alert_d = scraper::_xP($fau, "//div[contains(@class, 'alert-danger')]");
                 if (!empty($alert_d)) {
                     $msg = $alert_d[0]; 
                     if (str_contains($msg, 'Pickabox game(s) required')) {
@@ -166,6 +152,7 @@ while (true) {
                 
                 if (str_contains($fau, 'Daily limit reached, claim Shortlink Wall')) {
                     $limit = true;
+                    logx('err', 'daily limit');
                     break;
                 }
                 
@@ -178,7 +165,7 @@ while (true) {
             
             $t_text = null;
             if (str_contains($fau, 'Write what you see in the picture')) {
-                $src = rScraper::pPath($fau, 'src')[1];
+                $src = scraper::_pP($fau, 'src');
                 $_cu = null;
                 
                 foreach ($src as $_u) {
@@ -189,24 +176,32 @@ while (true) {
                 }
                 
                 if ($_cu) {
+                    $tmpDir = _lib($host, $mail); 
+                    $originalImg = $tmpDir . '/raw.png';
+
                     $img = Net::C($_cu, 'GET', null, $cookieFile, [], "$host/faucet", $userAgent);
+                    
                     if (!getDeps('tesseract')) {
-                        logx('err', 'GD extension missing');
+                        logx('err', 'tesseract missing');
                         exit;
                     }
                     
                     if (!empty($img)) {
-                        _put(__DIR__.'/img.png', $img);
+                        _put($originalImg, $img);
+                        
                         $t_vote = [];
                         $psm_stats = [6 => [], 8 => [], 11 => []];
                         $_th = [80, 90, 100, 110, 120, 140, 160];
                         $_psms = [6, 8, 11];
+
                         foreach ($_th as $th) {
-                            $pre = pre(__DIR__.'/img.png', $th, 3);
+                            $pre = pre($originalImg, $th, 3); 
+
                             foreach ($_psms as $psm) {
                                 $output = [];
                                 $cmd = "tesseract " . escapeshellarg($pre) . " stdout --psm $psm -c tessedit_char_whitelist=0123456789 2>/dev/null";
                                 @exec($cmd, $output);
+                                
                                 $resText = trim(implode('', $output));
                                 if (ctype_digit($resText) && strlen($resText) === 4) {
                                     $t_vote[] = $resText;
@@ -215,49 +210,31 @@ while (true) {
                             }
                             @unlink($pre);
                         }
-                        @unlink(__DIR__.'/img.png');
+                        
+                        @unlink($originalImg); 
+                        @rmdir($tmpDir); 
+
                         if (!empty($t_vote)) {
-                            foreach ($psm_stats as $p_num => $p_results) {
-                                if (!empty($p_results)) {
-                                    $p_counts = array_count_values($p_results);
-                                    arsort($p_counts);
-                                    $p_best = key($p_counts);
-                                    $p_score = reset($p_counts);
-                                    logx('info', "PSM $p_num: $p_best ($p_score/".count($_th).")");
-                                }
-                            }
                             $counts = array_count_values($t_vote);
                             arsort($counts); 
                             $t_text = key($counts); 
-                            $t_ocr = reset($counts);
-                            $t_vocr = count($t_vote); 
-                            logx('ok', "OCR: $t_text ( $t_ocr/$t_vocr )");
+                            logx('ok', "OCR: $t_text (" . reset($counts) . "/" . count($t_vote) . ")");
                         }
                     }
                 }
+                
                 if (!$t_text) {
                     _sle(3);
                     continue; 
                 }
             }
             
-            $ca = [];
-            $c = capt::cha($fau);
+            $cap = [];
             if (isset($pa['captcha'])) {
-                $field = match (true) {
-                    str_contains($pa['captcha'], 'turnstile') => 'cf-turnstile-response',
-                    str_contains($pa['captcha'], 'hcaptcha')  => 'h-captcha-response',
-                    default => null
-                };
-                
-                if ($field) {
-                    $t = tK(getKeys($api), $host, $c['keys'][0], $c['type'], $userAgent);
-                    $ca = [$field => $t, 'g-recaptcha-response' => $t];
-                }
-                
+                $cap = solve::exec($fau, $host, $api);
             }
             
-            $po = array_merge($pa, $ca);
+            $po = array_merge($pa, $cap);
             if ($t_text !== null) {
                 foreach ($po as $key => $val) {
                     if ($val === '' || $val === null) {
@@ -267,12 +244,12 @@ while (true) {
             }
             
             $cla = Net::C($f['url'], 'POST', $po, $cookieFile, [], "$host/faucet", $userAgent, false, false, $ip);
-            $m = rScraper::jPath($cla, "/Swal\.fire\(\{.*?title\s*:\s*(['\"])(.*?)\\1.*?\}\)/s") ?? [];
+            $m = scraper::_jP($cla, "/Swal\.fire\(\{.*?title\s*:\s*(['\"])(.*?)\\1.*?\}\)/s") ?? [];
             
             if (isset($m[2][0])) {
                 logx('info', $m[2][0], false, true);
                 $pttr = '/<h3>([^<]+)<\/h3>\s*<p>Balance<\/p>/';
-                $_bal = rScraper::jPath($cla, $pttr)[1];
+                $_bal = scraper::_jP($cla, $pttr)[1];
                 logx('ok', ' [ '.$_bal[0].' ]', true, true);
             }
             
@@ -284,12 +261,12 @@ while (true) {
             logx('info', "box $i/$co.");
             
             $box = Net::C("$host/pickabox", 'GET', null, $cookieFile, [], "$host/dashboard", $userAgent, false, false, $ip);
-            $f = xScraper::payload($box);
+            $f = scraper::payload($box);
             if (!empty($f)) {
                 $pa = $f[0]['payload'];
                 $pa['selected_box'] = rand(1,3);
                 $bet = Net::C($f[0]['url'], 'POST', $pa, $cookieFile, [], "$host/faucet", $userAgent, false, false, $ip);
-                $_aa = xScraper::xpath($bet, "//div[contains(@class, 'alert')]");
+                $_aa = scraper::_xP($bet, "//div[contains(@class, 'alert')]");
                 if (!empty($_aa)) {
                     $resMsg = preg_replace('/\s+/', ' ', trim(strip_tags($_aa[0])));
                     logx('info', "Result: $resMsg");
@@ -299,8 +276,34 @@ while (true) {
         }
     }
     
+    if ($limit) {
+        $wd = Net::C("$host/withdraw", 'GET', null, $cookieFile, [], "$host/faucet", $userAgent, false, false, $ip);
+        if (empty($wd)) continue;
+        $jajan = _wd($wd);
+        if (!$jajan) {
+            logx('err', 'gak bisa wd kayaknya');
+            exit;
+        }
+        if ($jajan['payload']['amount'] > 2000) {
+            $po = $jajan['payload'];
+            logg(true, '  tes ilmu: '. $jajan['info']['coin'], false);
+            logx('info', ' [ '.$po['wallet'].' ]');
+            $wd = Net::C($jajan['url'], 'POST', $po, $cookieFile, [], "$host/faucet", $userAgent, false, false, $ip);
+            _put('wd.html', $wd);
+            if (!empty($wd)) {
+                $m= scraper::_jP($wd, "/Swal\.fire\(\{.*?title\s*:\s*(['\"])(.*?)\\1.*?\}\)/s") ?? [];
+                if (isset($m[2][0])) {
+                    logx('info', $m[2][0], true, true);
+                    $pttr = '/<h3>([^<]+)<\/h3>\s*<p>Balance<\/p>/';
+                }
+            }
+        } else {
+            logx('err', 'gak cukup minimum wd');
+            exit;
+        }
+    }
+    
 }
-
 
 if ($register) {
     @unlink($cookieFile);
@@ -309,7 +312,7 @@ if ($register) {
         $_0 = Net::C("$host/register", 'GET', null, $cookieFile, [], '', $userAgent, false, false, $ip);
         if (!empty($_0)) {
             #_put('0.html', $_0);
-            $f = xScraper::payload($_0)[0];
+            $f = scraper::payload($_0)[0];
             $pa = $f['payload'];
             #print_r($f);
             $c = capt::cha($_0);
@@ -327,9 +330,6 @@ if ($register) {
     }
     goto login;
 }
-
-
-
 
 
 
@@ -393,15 +393,28 @@ function pre($in_put, $threshold = 128) {
     return $put_in;
 }
 
-function tK($api, $host, $key, $type, $ua) {
-    if (!$api) {
-        logx('err', 'undefined provider'); exit(1);
+function _wd($html) {
+    $res = Scraper::payload($html)[0] ?? null;
+    if (!$res) return false;
+
+    $names  = Scraper::_xP($html, "//input[@name='method']/@data-coincode");
+    $values = Scraper::_xP($html, "//input[@name='method']/@value");
+    $stocks = Scraper::_xP($html, "//div[contains(@class, 'col-2') and contains(text(), '%')]");
+
+    foreach ($names as $i => $name) {
+        $stokValue = (int) ($stocks[$i] ?? 0);
+        
+        if ($stokValue > 20) {
+            $res['payload']['method'] = $values[$i];
+            
+            $res['info'] = [
+                'coin'  => $name,
+                'stock' => $stokValue . '%'
+            ];
+            return $res;
+        }
     }
-    
-    while (($t = $api->token($key, $host, $type, ['userAgent' => $ua])) === false);
-    if ($t === null) exit(1);
-    
-    return $t;
+    return false;
 }
 
 function _cd($key = 'code') {

@@ -1,10 +1,110 @@
 <?php
-/**
- * 
- * 
- * 
+
+/** @file styler.php
+ * @function logg
+     * @param string $msg
+     * @param bool $clock
+     * @param bool $n
+     * @return void
+ * @function logx
+     * @param string $i
+     * @param string $msg
+     * @param bool $n
+     * @param bool $b
+     * @return void
+ * @function styler
+     * @param string $text
+     * @param callable $task
+     * @return mixed
+ * @function spinner
+     * @param string $text
+     * @param callable $task
+     * @return mixed
+ * @function underline
+     * @param string $text
+     * @param callable $task
+     * @return mixed
+ * @function loading
+     * @param string $text
+     * @param callable $task
+     * @return mixed
+ * @function gradient
+     * @param string $text
+     * @param callable $task
+     * @return mixed
+ * @function moveCursor
+     * @param int $r
+     * @param int $c
+     * @return void
+ * @function setCursor
+     * @return void
+ * @function getCursor
+     * @return void
+ * @function taskLine
+     * @return void
+ * @function logLine
+     * @return void
+ * @function banner
+     * @return void
+ * @function taskPrintCenter
+     * @param string $text
+     * @param string $level
+     * @return void
+ * @function blogx
+     * @param string $i
+     * @param string $msg
+     * @param bool $n
+     * @param bool $b
+     * @return void
  */
-if (!defined('ROOT')) exit;
+
+function logg($clock = true, $msg = '', $n = true, $check = false) {
+
+    $theme = [
+        ['bg' => BG['WHT'], 'bgk' => 'WHT'],
+        ['bg' => BG['YLW'], 'bgk' => 'YLW'],
+        ['bg' => BG['CYN'], 'bgk' => 'CYN'],
+        ['bg' => BG['GRN'], 'bgk' => 'GRN'],
+        ['bg' => BG['RED'], 'bgk' => 'RED'],
+        ['bg' => BG['BLU'], 'bgk' => 'BLU'],
+        ['bg' => BG['MAG'], 'bgk' => 'MAG'],
+        ['bg' => BG['BLK'], 'bgk' => 'BLK'],
+    ];
+
+    $pick = $theme[array_rand($theme)];
+
+    $fg = FGo['BLK'];
+    $fgk = 'BLK';
+
+    if ($pick['bgk'] === 'BLK') {
+        $fg = FGo['WHT'];
+        $fgk = 'WHT';
+    }
+
+    $time = $clock
+        ? FGo['WHT'] . "[" . date('H:i:s') . "] " . RSET
+        : "";
+
+    if ($check) {
+        echo "BG={$pick['bgk']} FG={$fgk}\n";
+    }
+
+    $formatted =
+        "\r"
+        . $time
+        . $pick['bg']
+        . BOLD
+        . $fg
+        . " " . trim($msg) . " "
+        . RSET;
+
+    if (outTty()) {
+        echo $formatted . ($n ? PHP_EOL : "");
+        fflush(STDOUT);
+    } else {
+        logx('', $msg, $n);
+    }
+}
 
 function logx($i = "", $msg = "\n", $n = true, $b = false) {
     $b = $b ? BOLD : '';
@@ -271,7 +371,8 @@ function logLine() {
 }
 
 function banner() {
-    global $BANNER, $bot;
+    global $BANNER;
+    $botName = $GLOBALS['_CTX']['current_bot'] ?? '71';
 
     $w     = $BANNER['width'];
     $inner = $w - 2;
@@ -280,7 +381,7 @@ function banner() {
     $_tx = FGb['WHT'];
 
     $lines = [
-        strtoupper($bot),
+        strtoupper((string)$botName),
         IP(),
         TIMEZONE(),
         "",

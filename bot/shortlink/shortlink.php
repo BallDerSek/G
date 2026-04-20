@@ -5,10 +5,8 @@ if (!defined('ROOT')) {die;}
     
 
 banner();
-
-    
-#goto tes;
-while(true) {;
+die('maintenance');
+while(true) {
     $shortLink = _rl('shortlink: ');
     try {
         $bypass = new _shortlinks("$shortLink");
@@ -51,12 +49,9 @@ while(true) {;
         $tino = "https://shortino.link/HippDJn",
         $tano = "https://shortano.link/6XXLZ",
         $erno = "https://earnow.online/VJfJpx",
+        $erno = "https://earnow.online/pqmu",
     ]
 */
-
-tes:
-
-
 
 
 

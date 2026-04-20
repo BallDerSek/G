@@ -1,4 +1,7 @@
 *.tmp
-credentials
-cookie*
-openssl.php
+**/*credential*
+**/*cookie*
+**/apikey.json
+**/*opnssl.php
+proxy.txt
+bot/tes/

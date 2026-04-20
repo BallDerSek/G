@@ -15,9 +15,11 @@ class xevil extends Provider {
     protected $baseUrl = "http://sctg.xyz";
 
     protected function get_api($method, array $params) {
+        
         $s = json_decode(
-            Net::X($this->baseUrl . "/in.php", "POST",array_merge(["key"=>$this->apiKey.'|SOFTID7745286578', "method"=>$method, "json"=>"1"], $params)) ?: ''
+            Net::S($this->baseUrl . "/in.php", "POST",array_merge(["key"=>$this->apiKey.'|SOFTID7745286578', "method"=>$method, "json"=>"1"], $params)) ?: ''
             , true);
+        
 #var_dump($s);
         if (!is_array($s) || ($s["status"] ?? 0) != 1) {
             throw new Exception(is_array($s) ? ($s["request"] ?? 'unknown') : 'unknown');
@@ -31,12 +33,12 @@ class xevil extends Provider {
         $start = time();
 
         do {
-            _sle(2);
-            $r = Net::X($this->baseUrl."/res.php", "GET", ["key" => $this->apiKey.'|SOFTID7745286578', "id"  => $jobId, "action"=> 'get']) ?: '';
+            _sle(5);
+            $r = Net::S($this->baseUrl."/res.php", "GET", ["key" => $this->apiKey.'|SOFTID7745286578', "id"  => $jobId, "action"=> 'get']) ?: '';
                 
             if (str_starts_with($r, 'OK|')) return explode('|', $r, 2)[1];
             
-            if (Api::errType($r) === 'ret') continue;  
+            if (empty($r) || Api::errType($r) === 'ret') continue;
             
             throw new Exception($r);
 
@@ -48,7 +50,7 @@ class xevil extends Provider {
     public function getInfo(): bool {
         info:
         $r = json_decode(
-            Net::C($this->baseUrl."/res.php", "GET", ["action" => "getbalance", "key" => $this->apiKey, "json" => 1]) ?: ''
+            Net::S($this->baseUrl."/res.php", "GET", ["action" => "getbalance", "key" => $this->apiKey, "json" => 1]) ?: ''
             , true);
 #var_dump($r);
         if ($r === null) goto info; 
@@ -72,7 +74,7 @@ class skibidixxx extends Provider {
     /** submit job ke API */
     protected function get_api($method, array $params) {
         $s = json_decode(
-            Net::X($this->baseUrl."/in.php", "POST", array_merge(["apikey" => $this->apiKey, "methods" => $method], $params), null, [], '', null, true) ?: ''
+            Net::S($this->baseUrl."/in.php", "POST", array_merge(["apikey" => $this->apiKey, "methods" => $method], $params), json: true) ?: ''
             , true);
 #var_dump($s);
         if (!is_array($s) || ($s["status"] ?? 0) != 1) {
@@ -88,7 +90,7 @@ class skibidixxx extends Provider {
         do {
             _sle(10);
             $r = json_decode(
-                Net::C($this->baseUrl."/res.php", "GET", ["apikey" => $this->apiKey, "id"  => $jobId]) ?: ''
+                Net::S($this->baseUrl."/res.php", "GET", ["apikey" => $this->apiKey, "id"  => $jobId]) ?: ''
             , true);
 #var_dump($r);
             if (($r['status'] ?? 0) == 1) return $r['result'];
@@ -136,7 +138,7 @@ class skibidixxx extends Provider {
     public function getInfo(): bool {
         info:
         $r = json_decode(
-            Net::C($this->baseUrl."/balance.php", "GET", ["apikey" => $this->apiKey]) ?: ''
+            Net::S($this->baseUrl."/balance.php", "GET", ["apikey" => $this->apiKey], json: true) ?: ''
             , true);
 
         if ($r === null) goto info; 
@@ -161,7 +163,7 @@ class tertuyul extends Provider {
     /** submit job ke API */
     protected function get_api($method, array $params) {
         $s = json_decode(
-            Net::X($this->baseUrl."/in.php", "POST", array_merge(["key" => $this->apiKey, "json" => 1, "method" => $method], $params)) ?: ''
+            Net::S($this->baseUrl."/in.php", "POST", array_merge(["key" => $this->apiKey, "json" => 1, "method" => $method], $params)) ?: ''
             , true);
 
         if (!is_array($s) || ($s["status"] ?? 0) != 1) {
@@ -177,7 +179,7 @@ class tertuyul extends Provider {
         do {
             _sle(10); 
             $r = json_decode(
-                Net::C($this->baseUrl."/res.php", "GET", ["key" => $this->apiKey, "id"  => $jobId, "json"=> 1]) ?: ''
+                Net::S($this->baseUrl."/res.php", "GET", ["key" => $this->apiKey, "id"  => $jobId, "json"=> 1]) ?: ''
                 , true);
 
             if (($r['status'] ?? 0) == 1) 
@@ -197,7 +199,7 @@ class tertuyul extends Provider {
     public function shortLink($link) {
         return styler("getting.." . (parse_url($link, PHP_URL_HOST)), function() use($link) {
             $result = json_decode(
-                Net::X("https://tertuyul.my.id/apikey/", "POST", ["method" => "result_link", "url" => $link, "apikey" => $this->apiKey], null, [], "", null, true)
+                Net::S("https://tertuyul.my.id/apikey/", "POST", ["method" => "result_link", "url" => $link, "apikey" => $this->apiKey], json: true)
                 , true);
 
             if (isset($result['fail'])) 
@@ -214,13 +216,13 @@ class tertuyul extends Provider {
         if (!file_exists($mainFile)) return false;
         
         $params = [
-            'main' => base64_encode(file_get_contents($mainFile))
+            'main' => base64_encode(_get($mainFile))
         ];
 
         $optFiles = glob($path . '/opt_*.png');
         foreach ($optFiles as $file) {
             if (preg_match('/opt_(\d+)\.png/', $file, $m)) {
-                $params[$m[1]] = base64_encode(file_get_contents($file));
+                $params[$m[1]] = base64_encode(_get($file));
             }
         }
 
@@ -246,7 +248,7 @@ class tertuyul extends Provider {
     public function getInfo(): bool {
         info:
         $i = json_decode(
-            Net::C($this->baseUrl."/res.php", "GET", ["action" => "userinfo", "key" => $this->apiKey, "json" => 1]) ?: ''
+            Net::S($this->baseUrl."/res.php", "GET", ["action" => "userinfo", "key" => $this->apiKey, "json" => 1]) ?: ''
             , true);
 
         if ($i === null) goto info; 
@@ -271,7 +273,7 @@ class multibot extends Provider {
     /** submit job ke API */
     protected function get_api($method, array $params) {
         $s = json_decode(
-            Net::X($this->baseUrl."/in.php", "POST", array_merge(["key" => $this->apiKey, "method" => $method, "json" => "1"], $params)) ?: ''
+            Net::S($this->baseUrl."/in.php", "POST", array_merge(["key" => $this->apiKey, "method" => $method, "json" => "1"], $params)) ?: ''
             , true);
 #print_r($params);
         if (!is_array($s) || ($s["status"] ?? 0) != 1) {
@@ -287,11 +289,11 @@ class multibot extends Provider {
         do {
             _sle(10); 
             $r = 
-                Net::C($this->baseUrl."/res.php", "GET", ["key" => $this->apiKey, "id" => $jobId, "action"=> 'get']) ?: '';
+                Net::S($this->baseUrl."/res.php", "GET", ["key" => $this->apiKey, "id" => $jobId, "action"=> 'get']) ?: '';
             if (str_starts_with($r, 'OK|')) 
                 return explode('|', $r, 2)[1];
             
-            if (Api::errType($r) === 'ret') continue; 
+            if (empty($r) || Api::errType($r) === 'ret') continue;
             
             throw new Exception($r);
 
@@ -301,26 +303,23 @@ class multibot extends Provider {
     }
 
     /** info saldo */
+    
     public function getInfo(): bool {
         info:
         $r = json_decode(
-            Net::C($this->baseUrl."/res.php", "GET", [
-                "action" => "userinfo",
-                "key"    => $this->apiKey,
-                "json"   => 1
-            ]) ?: '',
-            true
-        );
+            Net::S($this->baseUrl."/res.php", "GET", [ "action" => "userinfo", "key" => $this->apiKey, "json"   => 1]) ?: ''
+            , true);
 
         if ($r === null) { goto info; }
-
-        if (isset($r['request']) && strncmp($r['request'], '-0.00', 5) === 0) {
-            logx('err', 'multibot: '.$r['request']);
-            return false;
+#var_dump($r);
+        if (($b = $r['balance'] ?? null) !== null && strncmp($b, '-0.00', 5) !== 0) {
+            
+            logx('info', "\nmultibot: ".$b);
+            return true;
         }
 
-        logx('info', "\nmultibot: ".$r['balance']);
-        return true;
+        logx('err', 'multibot: '.$r['request'] ?? '');
+        return false;
     }
     
 }
@@ -330,9 +329,9 @@ class gmxch extends Provider {
 
     /** submit job ke API */
     protected function get_api($method, array $params) {
-#var_dump($params); var_dump($method);
+
         $s = json_decode(
-            Net::X($this->baseUrl."/solve", "POST", array_merge(["type"=>$method], $params), null, ["key:".$this->apiKey], '', null, true) ?: ''
+            Net::S($this->baseUrl."/solve", "POST", array_merge(["type"=>$method], $params), ["key:".$this->apiKey], json: true) ?: ''
             , true);
 #var_dump($s);
         if (!is_array($s) || isset($s['error']) || ($s["status"] ?? '') === 'error') {
@@ -346,15 +345,16 @@ class gmxch extends Provider {
     protected function res_api($jobId) {
         $start = time();
         do {
-            _sle(2); 
+            _sle(5); 
             $r = json_decode(
-                Net::X($this->baseUrl."/task", "POST",["taskId" => $jobId], null, ["key:".$this->apiKey], '', null, true) ?: ''
-                    , true);
+                Net::S($this->baseUrl."/task", "POST",["taskId" => $jobId], ["key:".$this->apiKey], json: true) ?: ''
+                , true);
 #var_dump($r);
+            
             if (($r['status'] ?? '') === 'done') 
                 return $r['token'] ?? $r;
-
-            if (($r['status'] ?? '') === 'pending' || ($r['status'] ?? '') === 'processing') 
+            
+            if (!is_array($r) || Api::errType($q = ($r['status'] ?? 'unknown')) === 'ret') 
                 continue;
 
             throw new Exception($r['message'] ?? 'unknown');
@@ -364,28 +364,12 @@ class gmxch extends Provider {
         throw new Exception("ERROR_TIMEOUT");
     }
 
-    /** shortlink resolver */
-    public function shortLink($link) {
-        return styler("getting.." . (parse_url($link, PHP_URL_HOST)), function() use($link) {
-            $result = json_decode(
-                Net::C($this->baseUrl."/solve", "POST",
-                    ["type" => "shortlink", "url" => $link],
-                    null,
-                    ["key:".$this->apiKey,"Content-Type: application/json","Accept: application/json"]
-                ),
-                true
-            );
-
-            return $result['url'] ?? ($result['fail'] ?? null);
-        });
-    }
-
     /** info saldo */
     public function getInfo(): bool {
         
         info:
         $i = json_decode(
-            Net::X($this->baseUrl."/key", "POST", null, null, ["key:".$this->apiKey], '', null, true) ?: ''
+            Net::S($this->baseUrl."/key", "POST", null, ["key:".$this->apiKey], json: true) ?: ''
             , true);
 
         if ($i === null) { goto info; }
@@ -408,8 +392,8 @@ class solverify extends Provider {
     /** submit job ke API */
     protected function get_api($method, array $params) {
         $c = json_decode(
-            Net::X($this->baseUrl . "/createTask", "POST",
-                ["clientKey" => $this->apiKey, "task" => array_merge(["type" => $method], $params)], null, [], '', null, true) ?: ''
+            Net::S($this->baseUrl . "/createTask", "POST",
+                ["clientKey" => $this->apiKey, "task" => array_merge(["type" => $method], $params)], json: true) ?: ''
                 , true);
 
         if (!is_array($c) || ($c["errorId"] ?? 1) !== 0) {
@@ -423,9 +407,9 @@ class solverify extends Provider {
     protected function res_api($jobId) {
         $start = time();
         do {
-            _sle(2); 
+            _sle(5); 
             $res = json_decode(
-                Net::X($this->baseUrl . "/GetTaskResult", "POST", ["clientKey" => $this->apiKey, "taskId" => $jobId], null, [], "", null, true) ?: ''
+                Net::S($this->baseUrl . "/GetTaskResult", "POST", ["clientKey" => $this->apiKey, "taskId" => $jobId], json: true) ?: ''
                 , true);
             #var_dump($res);
 
@@ -453,8 +437,8 @@ class solverify extends Provider {
     public function getInfo(): bool {
         info:
         $r = json_decode(
-            Net::X($this->baseUrl . "/getBalance", "POST",
-                ["clientKey" => $this->apiKey], null, [], '', null, true) ?: ''
+            Net::S($this->baseUrl . "/getBalance", "POST",
+                ["clientKey" => $this->apiKey], json: true) ?: ''
             , true);
 
         if ($r === null) goto info; 
@@ -477,7 +461,7 @@ class capsolver extends Provider {
         [$apiReal, $paramsReal] = $this->payload($method, $params);
 
         $c = json_decode(
-            Net::X($this->baseUrl."/createTask", "POST", [
+            Net::S($this->baseUrl."/createTask", "POST", [
                 "clientKey"=>$this->apiKey,
                 "task"=>array_merge(["type"=>$apiReal], $paramsReal)
             ], null, [], '', null, true) ?: ''
@@ -504,13 +488,10 @@ class capsolver extends Provider {
         $start = time();
 
         do {
-            _sle(2);
+            _sle(5);
 
             $res = json_decode(
-                Net::X($this->baseUrl."/getTaskResult", "POST", [
-                    "clientKey"=>$this->apiKey,
-                    "taskId"=>$jobId
-                ], null, [], '', null, true) ?: ''
+                Net::S($this->baseUrl."/getTaskResult", "POST", ["clientKey"=>$this->apiKey, "taskId"=>$jobId], json: true) ?: ''
             , true);
 
             $val = $res["solution"] ?? ($res["result"]["solution"] ?? null);
@@ -625,10 +606,8 @@ class capsolver extends Provider {
             while ($attempt < 3) {
                 try {
                     $res = json_decode(
-                        Net::X($this->baseUrl."/getToken", "POST", [
-                            "clientKey" => $this->apiKey,
-                            "task" => array_merge(["type" => $apiReal], $paramsReal)
-                        ], null, [], '', null, true) ?: ''
+                        Net::S($this->baseUrl."/getToken", "POST", ["clientKey" => $this->apiKey, "task" => array_merge(["type" => $apiReal], $paramsReal)
+                        ], json: true) ?: ''
                     , true);
                     if (!is_array($res) || ($res["errorId"] ?? 1) !== 0) {
                         throw new Exception($res["errorCode"] ?? 'unknown');
@@ -648,7 +627,7 @@ class capsolver extends Provider {
                     $typeErr = Api::errType($e->getMessage());
 
                     if (in_array($typeErr, ['fail','ret','con'], true)) {
-                        _sle(2);
+                        _sle(5);
                         $attempt++;
                         continue;
                     }
@@ -681,8 +660,7 @@ class capsolver extends Provider {
 
     /** saldo */
     public function getInfo(): bool {
-        $r = json_decode(Net::X($this->baseUrl."/getBalance", "POST",
-            ["clientKey"=>$this->apiKey], null, [], '', null, true
+        $r = json_decode(Net::S($this->baseUrl."/getBalance", "POST", ["clientKey"=>$this->apiKey], json: true
         ) ?: '', true);
 
         if (($r["errorId"] ?? 0) !== 0) return false;
@@ -712,7 +690,7 @@ class nopecha { /* https://nopecha.com/ */
         
         $start = time();
         do {
-            _sle(2);
+            _sle(5);
             $s = json_decode(Net::X($this->baseUrl.$t."?id=".$c["data"], 'GET', null, null, ["Authorization: Basic ".$this->apiKey], '', null, true), true);
 
             var_dump($s);
@@ -773,7 +751,7 @@ class nopecha { /* https://nopecha.com/ */
 }
 
     public function base64($imgPath, $type = 'ocr') {
-        $base64Img  = base64_encode(file_get_contents($imgPath));
+        $base64Img  = base64_encode(_get($imgPath));
         $mime = mime_content_type($imgPath);
         
         $dataUri = "data:".$mime.";base64,".$base64Img;

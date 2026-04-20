@@ -403,42 +403,6 @@ def build(ua=None):
             stop_ser(server)
 
 
-# COINCLIX pc
-def pc_solver(ua=None):
-    server = None
-    driver = make_driver(ua=ua)
-    try:
-        server = start_ser(port=8000)
-        url = "http://127.0.0.1:8000/PC.html"
-        log(f"open local puzzle: {url}")
-        driver.get(url)
-
-        log("solve puzzle lalu klik Submit...")
-
-        for _ in range(600):
-            try:
-                els = driver.find_elements(By.ID, "pc_done")
-                if els:
-                    txt = els[0].get_attribute("textContent")
-                    if txt:
-                        txt = txt.strip()
-                        json.loads(txt)  # validasi JSON
-                        log("result captured")
-                        return txt
-            except Exception as e:
-                if driver_dead(e):
-                    raise
-            time.sleep(1)
-
-        raise RuntimeError("timeout waiting puzzle result")
-
-    finally:
-        try:
-            driver.close()
-        except:
-            pass
-        if server:
-            stop_ser(server)
 
 
 
@@ -473,11 +437,9 @@ def pop_px_arg(argv):
 if __name__ == "__main__":
 
     PX = pop_px_arg(sys.argv)
-
     if len(sys.argv) < 2:
         log("python execPy.py <method> [url] [action]")
         sys.exit(1)
-
     METHOD = sys.argv[1].lower()
 
 
@@ -489,8 +451,6 @@ if __name__ == "__main__":
         print(json.dumps(fp) if isinstance(fp, (dict, list)) else (fp or ""))
         sys.exit(0)
 
-
-    # =================
     # USER AGENT
     if METHOD == "ua":
         ua = sys.argv[2] if len(sys.argv) >= 3 else None
@@ -498,20 +458,9 @@ if __name__ == "__main__":
         sys.exit(0)
 
 
-    # =================
-    # PC PUZZLE
-    if METHOD == "pc":
-        ua = sys.argv[2] if len(sys.argv) >= 3 else None
-        print(pc_solver(ua))
-        sys.exit(0)
-
-
-    # =================
-    # METHOD YANG BUTUH URL
     if len(sys.argv) < 3:
         log("python execPy.py <method> <url> [action]")
         sys.exit(1)
-
     URL = sys.argv[2]
 
 
@@ -523,16 +472,12 @@ if __name__ == "__main__":
         print(json.dumps(turnstile(URL, ua, cf)))
         sys.exit(0)
 
-
-    # =================
     # INTERSTITIAL
     elif METHOD == "inter":
         ua = sys.argv[3] if len(sys.argv) >= 4 else None
         print(json.dumps(interstitial(URL, ua)))
         sys.exit(0)
 
-
-    # =================
     # RECAPTCHA V3
     elif METHOD == "recaptcha3":
         if len(sys.argv) < 4:
@@ -545,7 +490,6 @@ if __name__ == "__main__":
 
         print(json.dumps(recaptcha3(URL, ACTION, ua, cf)))
         sys.exit(0)
-
 
     # =================
     # INVALID

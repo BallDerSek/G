@@ -62,7 +62,6 @@ jobs:
               case "<< pipeline.parameters.api >>" in
                 solverify) echo "export KEY=$SOLVERIFY" >> $BASH_ENV ;;
                 tertuyul)  echo "export KEY=$TERTUYUL" >> $BASH_ENV ;;
-                nopecha)   echo "export KEY=$NOPECHA" >> $BASH_ENV ;;
                 xevil)     echo "export KEY=$XEVIL" >> $BASH_ENV ;;
                 skibidixxx) echo "export KEY=$SKIBIDI" >> $BASH_ENV ;;
                 capsolver) echo "export KEY=$CAPSOLVER" >> $BASH_ENV ;;

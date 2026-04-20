@@ -16,7 +16,7 @@ $ip = '91.204.209.6';
 banner(); 
 
 foreach ($emails as $login) {
-    $cookieFile = getCookie(); 
+    $cookieFile = getCookie($login); 
     
     login:
     while (true) {
@@ -96,6 +96,7 @@ foreach ($emails as $login) {
                     logx('info', $_3['message'], true, true);
                 } elseif (!empty($_3['message'])) {
                     logx('err', $_3['message']);
+                    if (str_contains($_3['message'], 'sufficient')) break;
                 }
 
             } elseif (str_contains($_2['message'] ?? '', 'All tasks completed')) {

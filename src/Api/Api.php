@@ -50,7 +50,7 @@ final class Api { #contractor
 
         gmxch::class => [
             'cft' => [
-                'k'=>'siteKey','url'=>'domain','api'=>'cloudflare', 'defaults' => ['method' => 'turnstile']
+                'k'=>'siteKey','url'=>'domain','api'=>'cloudflare', 'defaults' => ['method' => 'turnstile'], 'map' => ['cdata' => 'cData']
                 ],
 /*
             'hc' => [
@@ -105,7 +105,7 @@ final class Api { #contractor
         multibot::class => [
             '_proxy_format' => 'uri',
             'cft' => [
-                'k' => 'sitekey','url' => 'pageurl','api' => 'turnstile'
+                'k' => 'sitekey','url' => 'pageurl','api' => 'turnstile', 'map' => ['cdata' => 'data']
                 ],
             'hc'  => [
                 'k' => 'sitekey','url' =>'pageurl','api' => 'hcaptcha',
@@ -129,6 +129,9 @@ final class Api { #contractor
         skibidixxx::class => [
             'cft' => [
                 'k' => 'sitekey', 'url' => 'domain', 'api' => 'turnstile'
+                ],
+            'hc' => [
+                'k' => 'sitekey', 'url' => 'domain', 'api' => 'hcaptcha'
                 ],
             'rc2' => [
                 'k' => 'sitekey', 'url' => 'domain', 'api' => 'recapv2'
@@ -294,7 +297,16 @@ final class Api { #contractor
                 'api' => 'cloudflare','url' => 'domain', 'defaults' => ['method' => 'interstitial']
             ],
             'fingerprint' => [
-                'api'  => 'fingerprint','url'  => 'domain','need' => ['userAgent'],
+                'api'  => 'fingerprint','url' => 'domain','need' => ['userAgent'],
+            ],
+            'datadome' => [
+                'api'  => 'datadome','url' => 'domain', 'defaults' => ['method' => 'slider'],'need' => ['proxy', 'captchaUrl'], 
+            ],
+            'datadome_c' => [
+                'api'  => 'datadome','url' => 'domain', 'defaults' => ['method' => 'tls'],'need' => ['proxy'], 
+            ],
+            'imperva' => [
+                'api'  => 'incapsula','url' => 'domain', 'defaults' => ['method' => 'basic'],'need' => ['proxy', 'cookie', 'userAgent', 'captchaUrl', ], 
             ],
         ],
         
@@ -332,12 +344,14 @@ final class Api { #contractor
         'ret' => [ 
             'ERROR_UNKNOWN_STATUS',
             'ERROR_NO_NODES_AVAILABLE',
-            'CAPCHA_NOT_READY',
-            'CAPTCHA_NOT_READY',
-            'ERROR_REQUEST_COOLDOWN',
             'ERROR_NO_SLOT_CONNECTION',
+            'ERROR_REQUEST_COOLDOWN',
+            'CAPTCHA_NOT_READY',
+            'CAPCHA_NOT_READY',
             'ERROR_RATE_LIMIT',
             'Task not found',
+            'processing',
+            'pending',
             'APP_11',
             'APP_14',
         ],
@@ -414,23 +428,17 @@ final class Api { #contractor
             'APP_12',
         ],
     ];
-    
+
     public static function errType($msgOrCode) {
-        $msg = trim($msgOrCode); 
+        $msg = trim($msgOrCode);
+        if (empty($msg) || $msg === 'unknown') return 'ret';
         foreach (self::ERR as $type => $codes) {
-            if (in_array($msg, $codes, true)) {
-                return $type;
+            foreach ($codes as $c) {
+                if (stripos($msg, $c) !== false) return $type;
             }
-
-        /*
-        foreach ($codes as $c) {
-            if (stripos($msg, $c) !== false) return $type;
         }
-        */
+        return false;
     }
-    return false;
-}
-
     
 } 
 
@@ -511,55 +519,36 @@ abstract class Provider {
     }
     
     public function atb(array $data) {
-        $mode = defined('static::ATB_MODE') ? static::ATB_MODE : 'num';
+        $pa = []; 
+        $map = []; 
+        $i = 0;
         
-        $pa = [];
-        if (!empty($data['main'])) {
-            $pa['main'] = $data['main'];
+        foreach ($data['rels'] as $rel => $b64) {
+            $pa[(string)$rel] = $b64;
+            $map[(string)$rel] = $rel;
+            $map[(string)$i] = $rel; 
+            $i++;
         }
         
-        $map = [];
-        if ($mode === 'rel') {
-            foreach ($data['rels'] as $rel => $b64) {
-                $pa[$rel] = $b64;
-            }
-        } else {
-            $i = 1;
-            foreach ($data['rels'] as $rel => $b64) {
-                $pa[$i] = $b64;
-                $map[$i] = $rel;
-                $i++;
-            }
-        }
-        #print_r($pa);
-        
+        $pa['main'] = $data['main'];
+        #var_dump($pa);
         $res = $this->run('antibot', $pa);
-        logx('info', static::class.': '.$res ?: 'false');
-        if (!$res) return false;
+        #var_dump($res);
+        if (!$res) return 77;
+        
         $in = explode(',', $res);
-        $links = '';
-        if ($mode === 'rel') {
-            $rels = array_keys($data['rels']);
-            foreach ($in as $idx) {
-                $idx = (int) trim($idx);
-                if (isset($rels[$idx])) {
-                    $links .= ' '.$rels[$idx];
-                }
-            }
-        } else {
-            foreach ($in as $idx) {
-                $idx = (int) trim($idx);
-                $idx++;
-                if (isset($map[$idx])) {
-                    $links .= ' '.$map[$idx];
-                }
+        $links = [];
+        foreach ($in as $val) {
+            $val = trim($val);
+            if (isset($map[$val])) {
+                $links[] = $map[$val];
             }
         }
-        #return trim($links);
-        return $links;
+        return !empty($links) ? implode(' ', $links) : false;
     }
 
     abstract protected function get_api($method, array $params);
     
     abstract protected function res_api($jobId);
 }
+

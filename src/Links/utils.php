@@ -6,11 +6,9 @@
  */
 if (!defined('ROOT')) exit;
 
-loader(__DIR__); 
-
 #EXTRACT
-class sScraper
-{
+class sScraper {
+    
     private static function dom(string $html): DOMXPath {
         libxml_use_internal_errors(true);
         $dom = new DOMDocument();
@@ -22,15 +20,15 @@ class sScraper
         return trim(preg_replace('/\s+/', ' ', html_entity_decode($s, ENT_QUOTES | ENT_HTML5)));
     }
 
-    private static function nodeText(DOMXPath $xp, DOMNode $node): string {
+    private static function _getNodes(DOMXPath $xp, DOMNode $node): string {
         return self::norm((string)$xp->evaluate("normalize-space(string(.))", $node));
     }
 
-    private static function extractLimit(string $txt): ?string {
+    private static function _getLimit($txt) {
         return preg_match('~(\d+)\s*/\s*(\d+)~', $txt, $m) ? ($m[1].'/'.$m[2]) : null;
     }
 
-    private static function bestContainer(DOMNode $node): DOMNode {
+    private static function _getCont(DOMNode $node): DOMNode {
         $cur = $node;
         for ($i=0; $i<8 && $cur && $cur->parentNode; $i++) {
             if (in_array($cur->nodeName, ['div','section','article','li'], true)) return $cur;
@@ -39,7 +37,7 @@ class sScraper
         return $node;
     }
 
-    private static function looksBadName(string $s) {
+    private static function _badName($s) {
         $s = self::norm($s);
         if ($s === '')
         return true;
@@ -57,11 +55,11 @@ class sScraper
         return false;
     }
 
-    private static function pickNameFast(DOMXPath $xp, DOMNode $container) {
+    private static function _getName(DOMXPath $xp, DOMNode $container) {
     $heads = $xp->query(".//h1|.//h2|.//h3|.//h4|.//h5|.//h6", $container);
     foreach ($heads as $h) {
-        $t = self::nodeText($xp, $h);
-        if (!self::looksBadName($t) && mb_strlen($t) >= 2 && mb_strlen($t) <= 40) {
+        $t = self::_getNodes($xp, $h);
+        if (!self::_badName($t) && mb_strlen($t) >= 2 && mb_strlen($t) <= 40) {
             return $t;
         }
     }
@@ -71,9 +69,9 @@ class sScraper
     $checked = 0;
     foreach ($nodes as $n) {
         if (++$checked > 30) break;
-        $t = self::nodeText($xp, $n);
+        $t = self::_getNodes($xp, $n);
         $t = self::norm($t);
-        if (self::looksBadName($t))
+        if (self::_badName($t))
         continue;
         if (mb_strlen($t) < 2 || mb_strlen($t) > 40) 
         continue;
@@ -82,12 +80,12 @@ class sScraper
         return $t;
     }
 
-    $all = self::nodeText($xp, $container);
+    $all = self::_getNodes($xp, $container);
     $all = self::norm($all);
 
     if (preg_match('~^([^\d]{2,40})~u', $all, $m)) {
         $cand = self::norm($m[1]);
-        if (!self::looksBadName($cand)) return $cand;
+        if (!self::_badName($cand)) return $cand;
     }
     return "";
 }
@@ -135,11 +133,11 @@ class sScraper
             if (isset($seen[$id])) continue;
             $seen[$id] = true;
 
-            $container = self::bestContainer($n);
+            $container = self::_getCont($n);
 
-            $containerText = self::nodeText($xp, $container);
-            $limit = self::extractLimit($containerText);
-            $name  = self::pickNameFast($xp, $container);
+            $containerText = self::_getNodes($xp, $container);
+            $limit = self::_getLimit($containerText);
+            $name  = self::_getName($xp, $container);
             $key = $name !== '' ? $name : ('go_'.$id);
             $key = strtolower($key);
             $out[$key] = [$id, $limit ?? ''];
@@ -153,7 +151,7 @@ class sScraper
 function limit($id) {
     list($current, $max) = explode('/', $id);
     $current = (int)$current;
-    $max     = (int)$max;
+    $max = (int)$max;
 
     return $current > 0;
 } 

@@ -2,7 +2,6 @@ stages:
   - deps
   - run
 
-# Job untuk setup dependencies
 deps:
   stage: deps
   image: ubuntu:latest
@@ -11,14 +10,13 @@ deps:
 
     # Setup PHP
     - apt-get install -y php-cli php-gd
-    # Setup Node.js
     - curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+    # Setup NODE
     - apt-get install -y nodejs
     - npm install -g deobfuscator
     # Setup Python
     - apt-get install -y python3 python3-pip
     - python3 -m pip install --upgrade pip
-    - pip install seledroid
 
 # Job
 run-bot:
@@ -38,7 +36,6 @@ run-bot:
         case "$API" in
           solverify) export KEY="$SOLVERIFY" ;;
           tertuyul)  export KEY="$TERTUYUL" ;;
-          nopecha)   export KEY="$NOPECHA" ;;
           xevil)     export KEY="$XEVIL" ;;
           skibidixxx) export KEY="$SKIBIDI" ;;
           capsolver) export KEY="$CAPSOLVER" ;;

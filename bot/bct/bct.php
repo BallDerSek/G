@@ -1,4 +1,5 @@
 <?php
+die;
 if (!defined('ROOT')) { die; }
 $api = onKeys();
 $cookieFile = getCookie();

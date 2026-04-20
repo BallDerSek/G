@@ -1,68 +1,89 @@
 <?php
-/**
- * 
- * 
- * 
- */
-if (!defined('ROOT')) exit;
 
-loader(__DIR__); 
+class inf {
+    public static $uagent;
+    public static $cookie;
+    public static $ip;
 
-function checkLogin($host, array $h, $ip = null, $pattern = '') {
-    global $cookieFile, $userAgent;
+    public static function setup($ua, $cookie, $ip = null) {
+        self::$uagent = $ua;
+        self::$cookie = $cookie;
+        self::$ip = $ip;
+    }
 
-    $html = Net::C($host, 'GET', null, $cookieFile, $h, '', $userAgent, false, false, $ip);
-    
-    $ok = is_string($html) && (
-        str_contains($html, 'Logout')
-        || str_contains($html, 'Dashboard')
-        || ($pattern !== '' && !str_contains($html, $pattern))
-    );
-    return ['ok' => $ok, 'html' => $html];
-}
+    public static function netHead(array $cookie = []) {
+        if (empty($cookie)) return [];
+        
+        $pairs = [];
+        foreach ($cookie as $k => $v) {
+            $pairs[] = "$k=$v";
+        }
+        return ["Cookie: " . implode('; ', $pairs)];
+    }
 
-function lastLocation(array $respHeaders, $needle = '', $last = true) {
-    $locs = $respHeaders['location'] ?? [];
-    if (!$locs) return null;
+    public static function wssHead($origin = '', $ua = 'Mozilla/5.0', array $cookie = []) {
+        $lang = function_exists('LANGUAGE') ? LANGUAGE() : 'id-ID,id;q=0.9';
+        
+        $h = [
+            "User-Agent: $ua",
+            "Accept-Language: $lang",
+        ];
+        
+        if ($origin !== '') {
+            $h[] = "Origin: " . rtrim($origin, '/');
+        }
+        
+        if (!empty($cookie)) {
+            $h = array_merge($h, self::netHead($cookie));
+        }
+        #$h[] = "Sec-WebSocket-Extensions: permessage-deflate; client_max_window_bits";
+        
+        return $h;
+    }
 
-    if ($needle !== '') {
-        $locs = array_values(array_filter($locs, fn($l) => stripos($l, $needle) !== false));
+    public static function lastLocation(array $respHeaders, $needle = '', $last = true) {
+        $locs = $respHeaders['location'] ?? [];
         if (!$locs) return null;
+
+        if ($needle !== '') {
+            $locs = array_values(array_filter($locs, fn($l) => stripos($l, $needle) !== false));
+            if (!$locs) return null;
+        }
+
+        return $last ? trim(end($locs)) : trim(reset($locs));
     }
 
-    return $last ? trim(end($locs)) : trim(reset($locs));
-}
+    public static function getLog($url = null) {
+        $logPath = LIBDIR . "/verbose.log";
+        if (!is_file($logPath)) return null;
+        
+        $logContent = _get($logPath);
+        
+        $regex = ($url === null) 
+            ? '/< location: ([^\r\n]+)/i'
+            : '/<\s*location:\s*(https?:\/\/[^\s\r\n]*'. preg_quote($url, '/') .'[^\s\r\n]*)/i';
 
-function artikel() {
-    $log = _get(LIBDIR . "/verbose.log");
-    $matches = rScraper::jPath($log, '/< location: ([^\r\n]+)/i');
-    //@unlink($log);
-    if (!empty($matches[1])) {
-        _sle(1); return end($matches[1]);
-    } else { logx('err', "arcticle unknown"); return null; }
-}
-
-function getLog($url) {
-    $logContent = _get(LIBDIR . "/verbose.log");
-    #$pattern = '/<\s*location:\s*(https?:\/\/[^\s\r\n]*' . preg_quote($url) . '[^\s\r\n]*)/i';
-
-    #$pattern = '/<\s*location:\s*(https?:\/\/[^\s\r\n]*' . preg_quote($url, '/') . '[^\s\r\n]*)/i';
-    /*
-    if (preg_match_all($pattern, $logContent, $matches)) {
-        _sle(1); return urldecode(trim(end($matches[1])));
+        $matches = Scraper::_jP($logContent, $regex);
+        
+        if (!empty($matches[1])) {
+            _sle(1); 
+            return urldecode(trim(end($matches[1])));
+        }
+        
+        if ($url === null) logx('err', "article unknown");
+        return null;
     }
-    */
     
-    $matches = rScraper::jPath($logContent, '/<\s*location:\s*(https?:\/\/[^\s\r\n]*'. preg_quote($url, '/') .'[^\s\r\n]*)/i');
-    if (!empty($matches[1])) {
-        _sle(1); return urldecode(trim(end($matches[1])));
+    public static function check($host, array $h = [], $pattern = '', $ins = false) {
+        $ip = self::$ip; 
+        
+        $html = Net::C($host, 'GET', null, self::$cookie, $h, $host, self::$uagent, false, false, $ip, true, $ins);
+        if (!is_string($html)) {
+            return ['ok' => false, 'html' => null, 'err' => 'Network error'];
+        }
+        $ok = ((str_contains($html, 'Logout') || str_contains($html, 'Dashboard') || str_contains($html, 'Account')) && ($pattern === '' || !str_contains($html, $pattern)));
+        return ['ok' => $ok, 'html' => $html];
     }
-    return null;
+    
 }
-
-
-
-
-
-
 
