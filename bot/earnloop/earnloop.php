@@ -16,12 +16,13 @@ inf::setup($userAgent, $cookieFile, $ip);
 banner();
 login:
 
-logx('', "Pilih Mode:", true, true) ;
-logx('info', "1. Normal ( limit web )") ;
+logx('', "Pilih Mode:", true, true);
+logx('info', "1. Normal ( limit web )");
 logx('info', "2. Dobrak ( limit+100 ) klo stop saat dobrak, limitnya reset saat rerun. awas keban");
-$pilih = _rl("mode [dobrak]: ");
+$pilih = trim(_rl("mode [dobrak]: "));
 
-$mode_dobrak = ($pilih == '2') ? false : true;
+$mode_dobrak = in_array($pilih, ["", "2"]);
+
 while (true) {
     do {
         $l = inf::check($host.'/dashboard', [], 'login-panel');
@@ -52,9 +53,10 @@ while (true) {
         $fa = $host . $_fa['link']; 
         $set = 0;
         $claimCount = 0;
-        $maxClaims = (!AUTH_API) ? 100 : PHP_INT_MAX; 
-
-        logx('info', "$coinName [Mode: " . (AUTH_API ? "UNLIMITED" : "DOBRAK 100") . "]");
+        $maxClaims = ($mode_dobrak) ? ((!AUTH_API) ? 100 : PHP_INT_MAX) : 0; 
+        
+        $txtMode = $mode_dobrak ? (AUTH_API ? "DOBRAK UNLIMITED" : "DOBRAK 100") : "NORMAL";
+        logx('info', "$coinName [Mode: $txtMode]");
 
         while (true) {
             if ($mode_dobrak && $claimCount >= $maxClaims) {

@@ -127,6 +127,18 @@ function _lib($host, $mail = null) {
     return rtrim($workDir, '/');
 }
 
+function maskEmail($email) {
+    $name = explode('@', $email)[0];
+    $len = strlen($name);
+    
+    if ($len <= 2) {
+        return "***" . $name; 
+    }
+    
+    return "****" . substr($name, -2);
+}
+
+
 
 function animate() {
     if (!outTty()) return false;

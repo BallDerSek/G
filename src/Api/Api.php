@@ -308,6 +308,9 @@ final class Api { #contractor
             'imperva' => [
                 'api'  => 'incapsula','url' => 'domain', 'defaults' => ['method' => 'basic'],'need' => ['proxy', 'cookie', 'userAgent', 'captchaUrl', ], 
             ],
+            'castle' => [
+                'api'  => 'castle','url' => 'domain', 'defaults' => ['method' => 'basic'],'need' => ['proxy', 'cookie', 'userAgent'], 
+            ],
         ],
         
         tertuyul::class => [

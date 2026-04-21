@@ -554,7 +554,7 @@ class Net {
         ], $ins, $f);
     }
 
-    public static function X($url, $type, $data = null, $cookie = null, array $head = [], $reff = '', $ua = 'Mozilla/5.0', $json = false, $foll = true, $ip = null, $ins = false) {
+    public static function X($url, $type, $data = null, $cookie = null, array $head = [], $reff = '', $ua = 'Mozilla/5.0', $json = false, $foll = true, $ip = null, $ins = false, $d = false) {
         $dns = []; $connect = [];
         if (!empty($ip)) {
             $dom = parse_url($url)['host'];
@@ -585,6 +585,7 @@ class Net {
             'follow' => $foll,
             'resolve' => $dns,
             'connect' => $connect,
+            'debug' => $d,
             'http2' => true,
         ], $ins, true);
     }

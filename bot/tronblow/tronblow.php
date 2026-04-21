@@ -19,7 +19,7 @@ $urls = ['https://usdtblow.xyz', 'https://tronblow.site'];
 
 banner();
 
-$chunks = array_chunk($emails, 1);
+$chunks = array_chunk($emails, 15);
 
 if (ctype_digit((string)$login)) {
     $idx = (int)$login - 1;
@@ -36,7 +36,7 @@ foreach ($chunks as $cIdx => $batch) {
             'base' => Config::cookie($mail),
             'sites' => $urls 
         ];
-        logx('info', "Batching: $mail");
+        logx('info', "Batching: " . maskEmail($mail));
     }
 
     while (!empty($accs)) {
@@ -108,10 +108,11 @@ foreach ($chunks as $cIdx => $batch) {
                 $idx = $info['idx'];
                 $domain = parse_url($info['host'])['host'];
                 
-                $userDisp = explode('@', $accs[$idx]['mail'])[0];
+                $userDisp = maskEmail($accs[$idx]['mail']);
                 print(BOLD.FGb['BLU'].sprintf("%-10s", explode('.', $domain)[0]).FGd['CYN']." [ $userDisp ] ".RSET);
 
                 if (!empty($res)) {
+                    
                     $_suc = scraper::_xP($res, "//div[contains(@class,'alert-success')]");
                     $_err = scraper::_xP($res, "//div[contains(@class,'alert-error')]");
 
@@ -132,7 +133,10 @@ foreach ($chunks as $cIdx => $batch) {
                         if (preg_match('/(\d+)s/', $errMsg, $_w)) {
                             $batchWait = max($batchWait, (int)$_w[1] + 2);
                         }
+                    } else {
+                        logx();
                     }
+                    
                 }
                 @unlink($info['cFile']);
             }
@@ -150,7 +154,7 @@ foreach ($chunks as $cIdx => $batch) {
             if (!empty($accs)) _sle(2); 
         } else {
             logx('warn', "No forms found.");
-            _sle(80);
+            _sle(30);
         }
     }
 }

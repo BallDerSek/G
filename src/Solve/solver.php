@@ -3,7 +3,6 @@
 class Solve {
     
     public static function exec($html, $host, ?Provider $api, $ins = false) {
-        // Ambil dari pusat data inf
         $ua = inf::$uagent;
         $cookie = inf::$cookie;
         $ip = inf::$ip;
@@ -27,7 +26,7 @@ class Solve {
             $ic = null;
             $attempt = 0;
             while (!$ic && $attempt < 3) {
-                $ic = self::iCaptcha($html, $host); // Data UA/Cookie otomatis di dalam
+                $ic = self::iCaptcha($html, $host);
                 $attempt++;
             }
             if ($ic) return array_merge($solution, $ic);
