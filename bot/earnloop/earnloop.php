@@ -58,7 +58,7 @@ while (true) {
         $txtMode = $mode_dobrak ? (AUTH_API ? "DOBRAK UNLIMITED" : "DOBRAK 100") : "NORMAL";
         logx('info', "$coinName [Mode: $txtMode]");
 
-         #goto tes_ilmu; 
+         goto tes_ilmu; 
 
         while (true) {
             if ($mode_dobrak && $claimCount >= $maxClaims) {
