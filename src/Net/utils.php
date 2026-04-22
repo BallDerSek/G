@@ -81,9 +81,9 @@ class inf {
         if (!is_string($html)) {
             return ['ok' => false, 'html' => null, 'err' => 'Network error'];
         }
-        $ok = ((str_contains($html, 'Logout') || str_contains($html, 'Dashboard') || str_contains($html, 'Account')) && ($pattern === '' || !str_contains($html, $pattern)));
+        $ok = (str_contains($html, 'Logout') || str_contains($html, 'Dashboard')) && ($pattern === '' || !str_contains($html, $pattern));
         return ['ok' => $ok, 'html' => $html];
+
     }
     
 }
-

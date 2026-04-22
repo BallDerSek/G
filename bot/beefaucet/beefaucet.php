@@ -19,11 +19,11 @@ banner();
 logx('info', 'using: '.$login, true, true);
 
 while (true) {
+
     if (empty($sites)) {
         logx('err', "\nALL SITES REACHED LIMIT", true, true);
         exit;
     }
-
     
     print(DIMM.BOLD.ITAL.FGo['MAG']."solving  ".RSET);
     $main_host = array_key_first($sites);
@@ -117,18 +117,22 @@ while (true) {
                     
                     print(FGo['BLU']."  ".str_pad($u_nam, 15) .RSET);
                     
-                    if (str_contains($lowMsg, 'sent')) {
+                    if (stripos($lowMsg, 'sent')) {
                         logx('ok', " ".$msg, true, true);
                     } else {
                         logx('warn', " ".$msg, true, true);
                         
-                        if (str_contains($lowMsg, 'claim limit')) {
+                        if (stripos($lowMsg, 'claim limit')) {
                             $limitReached++;
                         }
                     }
                 }
             }
-
+            
+            foreach ($prep_queue as $args) {
+                @unlink($args[3]);
+            }
+            
             if ($limitReached >= $totalCoins) {
                 logx('err', "\n  [!] ".strtoupper($domain)." IS FULLY LIMITED", true, true);
                 unset($sites[$host]); 

@@ -547,7 +547,9 @@ abstract class Provider {
                 $links[] = $map[$val];
             }
         }
-        return !empty($links) ? implode(' ', $links) : false;
+
+        return !empty($links) ? " " . implode(' ', $links) : false;
+
     }
 
     abstract protected function get_api($method, array $params);

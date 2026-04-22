@@ -91,7 +91,7 @@ class Capt {
                 if ($queryStr) {
                     parse_str($queryStr, $params);
                     if (!empty($params['public_key'])) {
-                        $found['rsc_token'] = [
+                        $found['rss'] = [
                             'type' => 'rsc_' . preg_replace('/^v/', '', $params['version'] ?? '1'),
                             'keys'   => $params['public_key'],
                             'extra'  => $params

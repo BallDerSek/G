@@ -334,12 +334,12 @@ function moveCursor($r,$c) {
 
 function setCursor() {
     if (!outTty()) return;
-    echo "\033[s";
+    echo ANN . "s";
 }
 
 function getCursor() {
     if (!outTty()) return;
-    echo "\033[u";
+    echo ANN . "u";
 }
 
 $GLOBALS['_CTX']['banner'] = [

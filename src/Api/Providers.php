@@ -133,6 +133,33 @@ class skibidixxx extends Provider {
         $params = ["url" => $link];
         return $this->run($type, $params);
     }
+    
+    public function rss($html, $co) {
+        if (empty($html)) return false;
+        
+        if ($co) {
+            preg_match_all('/\d+/', $co, $_co);
+            if (count($_co[0]) >= 2) {
+                $x = $_co[0][0];
+                $y = $_co[0][1];
+            }
+        }
+        
+        $data = [
+            "htmlContent" => $html,
+            "clickX" => (int)$x,
+            "clickY" => (int)$y
+        ];
+        $response = Net::S($this->baseUrl.'/rspayload.php', 'POST', $data, json: true);
+        $resJson = json_decode($response, true);
+        #print(base64_decode($resJson['Payload']));
+        if (isset($resJson['Payload'])) {
+            return [
+                "rscaptcha_response" => $resJson['Payload']
+            ];
+        }
+        return false;
+    }
 
     /** info saldo */
     public function getInfo(): bool {
@@ -243,7 +270,26 @@ class tertuyul extends Provider {
 
         return $res;
     }
-
+    
+    public function rss($html, $co) {
+        if (empty($html)) return false;
+        if ($co) {
+            preg_match_all('/\d+/', $co, $_co);
+            if (count($_co[0]) >= 2) {
+                $x = $_co[0][0];
+                $y = $_co[0][1];
+            }
+        }
+        $src = xtractJs($html);
+        $data = [
+            "script" => base64_encode($src[0]),
+            "clickX" => (int)$x,
+            "clickY" => (int)$y
+            ];
+            
+        return $this->run('rstoken', $data);
+    }
+    
     /** info saldo */
     public function getInfo(): bool {
         info:

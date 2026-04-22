@@ -1,9 +1,23 @@
-*.tmp
-**/*credential*
-**/*cookie*
+
 **/apikey.json
-**/*opnssl.php
+**/*.key
+**/*.pem
+
+**/cookie*
+**/cookie*/
+
+credentials
+**/credentials
+**/credentials/
+**/credentials/*
+
+*mail.txt
 proxy.txt
+
+*.tmp
+*.png
+
+**/*opnssl.php
 bot/tes/
 
 lib/*/

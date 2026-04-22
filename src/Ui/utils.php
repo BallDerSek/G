@@ -92,12 +92,12 @@ function _sle($time) {
 }
 
 function _cle() {
-    (PHP_OS == "Linux") ? system('clear') : pclose(popen('cls', 'w'));
+    system(PHP_OS_FAMILY === 'Windows' ? 'cls' : 'clear');
 }
 
 function _clr() {
     if (!outTty()) return;
-    echo ANN . "2K";
+    echo ANN . "2K\r";
 }
 
 function _get($path) {
@@ -138,23 +138,86 @@ function maskEmail($email) {
     return "****" . substr($name, -2);
 }
 
-
-
 function animate() {
-    if (!outTty()) return false;
+    static $ok = null;
 
-    $pcntl = function_exists('pcntl_async_signals') && function_exists('pcntl_waitpid') && function_exists('pcntl_fork') && function_exists('posix_kill');
+    if ($ok !== null) {
+        return $ok;
+    }
 
-    return $pcntl;
+    $ok = outTty()
+        && function_exists('pcntl_async_signals')
+        && function_exists('pcntl_waitpid')
+        && function_exists('pcntl_fork')
+        && function_exists('posix_kill');
+
+    return $ok;
 }
 
 function hasTty() {
-    return function_exists('posix_isatty') ? posix_isatty(STDIN) : false;
-} 
+    static $tty = null;
+
+    if ($tty !== null) {
+        return $tty;
+    }
+
+    if (!defined('STDIN') || !is_resource(STDIN)) {
+        return $tty = false;
+    }
+
+    if (function_exists('stream_isatty')) {
+        return $tty = @stream_isatty(STDIN);
+    }
+
+    if (function_exists('posix_isatty')) {
+        return $tty = @posix_isatty(STDIN);
+    }
+
+    return $tty = (PHP_OS_FAMILY === 'Windows');
+}
 
 function outTty() {
-    if (getenv('AN') === '0') return false;
-    return (defined('STDOUT') && is_resource(STDOUT) && function_exists('posix_isatty')) ? @posix_isatty(STDOUT) : false;
+    static $tty = null;
+
+    if ($tty !== null) {
+        return $tty;
+    }
+
+    if (getenv('AN') === '0') {
+        return $tty = false;
+    }
+
+    if (!defined('STDOUT') || !is_resource(STDOUT)) {
+        return $tty = false;
+    }
+
+    if (PHP_OS_FAMILY === 'Windows' && function_exists('sapi_windows_vt100_support')) {
+        @sapi_windows_vt100_support(STDOUT, true);
+    }
+
+    if (function_exists('stream_isatty')) {
+        return $tty = @stream_isatty(STDOUT);
+    }
+
+    if (function_exists('posix_isatty')) {
+        return $tty = @posix_isatty(STDOUT);
+    }
+
+    return $tty = (PHP_OS_FAMILY === 'Windows');
+}
+
+function canRaw() {
+    static $ok = null;
+
+    if ($ok !== null) {
+        return $ok;
+    }
+
+    $ok = hasTty()
+        && PHP_OS_FAMILY !== 'Windows'
+        && trim((string) shell_exec('command -v stty 2>/dev/null')) !== '';
+
+    return $ok;
 }
 
 function _color($value) {
@@ -165,7 +228,6 @@ function _color($value) {
     }
     return null;
 }
-
 
 function _rl($prompt = '') {
     $old = null;

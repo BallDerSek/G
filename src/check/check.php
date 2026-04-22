@@ -36,30 +36,46 @@ class check {
     }
 
     public static function Dep() {
-        self::$deps = underline("checking deps", function() {
+        self::$deps = underline("checking deps", function () {
+            $hasNode = self::depCmd('node') || self::depCmd('nodejs');
+            $hasSynchrony = self::depCmd('synchrony') || (($npm = trim((string)shell_exec('npm root -g 2>/dev/null'))) !== '' && is_file($npm . DIRECTORY_SEPARATOR . 'synchrony' . DIRECTORY_SEPARATOR . 'package.json'));
+            
+            $hasSeledroid = trim((string)shell_exec('python3 -c ' . escapeshellarg('import importlib.util; print(importlib.util.find_spec("seledroid") is not None)') . ' 2>/dev/null')) === 'True';
+            
             return [
                 'gd@php' => extension_loaded('gd'),
                 'python3' => self::depCmd('python3'),
                 'ssh' => self::depCmd('ssh'),
                 'sshpass' => self::depCmd('sshpass'),
-                'nodejs' => self::depCmd('node'),
+                'nodejs' => $hasNode,
                 'npm' => self::depCmd('npm'),
-                'synchrony@npm' => self::depCmd('synchrony'),
-                'seledroid@py' => trim(shell_exec('python3 -m pip show seledroid 2>/dev/null') ?? '') !== '',
+                'synchrony@npm' => $hasSynchrony,
+                'seledroid@py' => $hasSeledroid,
                 'tesseract' => self::depCmd('tesseract'),
             ];
         });
-
+        
         $missing = array_keys(array_filter(self::$deps, fn($v) => !$v));
         if ($missing) {
             logx('err', "Missing dependencies:\n- " . implode("\n- ", $missing) . "\n");
         }
-
         $GLOBALS['_CTX']['deps'] = self::$deps;
     }
 
     private static function depCmd($cmd) {
-        return trim(shell_exec("command -v $cmd") ?? '') !== '';
+        $cmd = trim($cmd);
+        if ($cmd === '' || preg_match('/[^a-zA-Z0-9._-]/', $cmd)) {
+            return false;
+        }
+        
+        if (PHP_OS_FAMILY === 'Windows') {
+            $out = shell_exec('where ' . escapeshellarg($cmd) . ' 2>NUL');
+            return trim((string)$out) !== '';
+        }
+        
+        $out = shell_exec('command -v ' . escapeshellarg($cmd) . ' 2>/dev/null');
+        
+        return trim((string)$out) !== '';
     }
 
     public static function Geo() {

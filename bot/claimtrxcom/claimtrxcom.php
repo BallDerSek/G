@@ -9,7 +9,7 @@ $pass = $acc['pass'];
 $cookieFile = config::cookie($mail);
 $userAgent = config::uagent('mobile');
 
-$host = 'https://feyorra.top';
+$host = 'https://claimtrx.com';
 $domain = parse_url($host, PHP_URL_HOST);
 $ip = '148.251.78.240';
 
@@ -77,13 +77,12 @@ while (true) {
     $claim = false;
     do {
         $ads = Net::C("$host/ptc", 'GET', null, $cookieFile, [], "$host/dashboard", $userAgent, false, false, $ip);
-        
-        $_tim = scraper::_xP($ads, "//div[@class='ptc_cards']//span[i[contains(@class, 'fa-clock')]]");
-        
-        $_url = scraper::_xP($ads, "//button/@onclick");
-        $url = array_map(fn($u) => explode("'", $u)[1], $_url);
-        $vurl = $url[0] ?? null;
-        
+
+        $_tim = scraper::_xP($ads, "//div[contains(@class, 'card-badge')]//span[contains(@class, 'badge-primary')]");
+        $_onclick = scraper::_xP($ads, "//div[@class='card-body']//button/@onclick");
+        $url_list = array_map(fn($u) => explode("'", $u)[1] ?? null, $_onclick);
+        $vurl = $url_list[0] ?? null;
+
         if ($vurl) {
             $cla = null;
             $tim = isset($_tim[0]) ? (int)preg_replace('/[^0-9]/', '', $_tim[0]) : 0;
@@ -134,6 +133,7 @@ while (true) {
     if ($claim && !$limit) {
         while (true) {
             $fau = Net::C("$host/faucet", 'GET', null, $cookieFile, [], "$host/dashboard", $userAgent, false, false, $ip);
+            #_put('fau.html', $fau);
             if (empty($fau)) continue;
             
             $fo = scraper::payload($fau) ?? [];
@@ -165,10 +165,8 @@ while (true) {
             
             $t_text = null;
             if (str_contains($fau, 'Write what you see in the picture')) {
-                $src = scraper::_pP($fau, 'src');
                 $_cu = null;
-                
-                foreach ($src as $_u) {
+                foreach (scraper::_pP($fau, 'src') as $_u) {
                     if (str_contains($_u, '/images/captcha')) {
                         $_cu = trim($_u);
                         break;
@@ -176,49 +174,13 @@ while (true) {
                 }
                 
                 if ($_cu) {
-                    $tmpDir = _lib($host, $mail); 
-                    $originalImg = $tmpDir . '/raw.png';
-
                     $img = Net::C($_cu, 'GET', null, $cookieFile, [], "$host/faucet", $userAgent);
-                    
-                    if (!getDeps('tesseract')) {
-                        logx('err', 'tesseract missing');
-                        exit;
-                    }
-                    
+                    #_put('img.png', $img);
                     if (!empty($img)) {
-                        _put($originalImg, $img);
-                        
-                        $t_vote = [];
-                        $psm_stats = [6 => [], 8 => [], 11 => []];
-                        $_th = [80, 90, 100, 110, 120, 140, 160];
-                        $_psms = [6, 8, 11];
-
-                        foreach ($_th as $th) {
-                            $pre = pre($originalImg, $th, 3); 
-
-                            foreach ($_psms as $psm) {
-                                $output = [];
-                                $cmd = "tesseract " . escapeshellarg($pre) . " stdout --psm $psm -c tessedit_char_whitelist=0123456789 2>/dev/null";
-                                @exec($cmd, $output);
-                                
-                                $resText = trim(implode('', $output));
-                                if (ctype_digit($resText) && strlen($resText) === 4) {
-                                    $t_vote[] = $resText;
-                                    $psm_stats[$psm][] = $resText; 
-                                }
-                            }
-                            @unlink($pre);
-                        }
-                        
-                        @unlink($originalImg); 
-                        @rmdir($tmpDir); 
-
-                        if (!empty($t_vote)) {
-                            $counts = array_count_values($t_vote);
-                            arsort($counts); 
-                            $t_text = key($counts); 
-                            logx('ok', "OCR: $t_text (" . reset($counts) . "/" . count($t_vote) . ")");
+                        $resText = $api->base64($img, 'ocr');
+                        #var_dump($resText); die;
+                        if (ctype_digit($resText) && strlen($resText) === 4) {
+                            $t_text = $resText; 
                         }
                     }
                 }
@@ -247,10 +209,10 @@ while (true) {
             $m = scraper::_jP($cla, "/Swal\.fire\(\{.*?title\s*:\s*(['\"])(.*?)\\1.*?\}\)/s") ?? [];
             
             if (isset($m[2][0])) {
-                logg(true, $m[2][0], false);
+                logg(true, $m[2][0]);
                 $pttr = '/<h3>([^<]+)<\/h3>\s*<p>Balance<\/p>/';
-                $_bal = scraper::_jP($cla, $pttr)[1];
-                logx('ok', ' [ '.$_bal[0].' ]', true, true);
+                #$_bal = scraper::_jP($cla, $pttr)[1];
+                #logx('ok', ' [ '.$_bal[0].' ]', true, true);
             }
             
         }
@@ -278,18 +240,29 @@ while (true) {
     
     if ($limit) {
         $wd = Net::C("$host/withdraw", 'GET', null, $cookieFile, [], "$host/faucet", $userAgent, false, false, $ip);
+        #_put('wd.html', $wd);
         if (empty($wd)) continue;
         $jajan = _wd($wd);
+        print_r($jajan);
         if (!$jajan) {
             logx('err', 'gak bisa wd kayaknya');
             exit;
         }
-        if ($jajan['payload']['amount'] > 2000) {
+        if ($jajan['payload']['amount'] > 0.04) {
             $po = $jajan['payload'];
+            $original = $po['amount'];
+            if (str_contains($original, '.')) {
+                $decimal_count = strlen(substr(strrchr($original, "."), 1));
+                $divider = pow(10, $decimal_count);
+                $minus = rand(1, 5) / $divider;
+                $po['amount'] = number_format($original - $minus, $decimal_count, '.', '');
+            } else {
+                $po['amount'] = $original - rand(1, 5);
+            }
             logg(true, '  tes ilmu: '. $jajan['info']['coin'], false);
             logx('info', ' [ '.$po['wallet'].' ]');
             $wd = Net::C($jajan['url'], 'POST', $po, $cookieFile, [], "$host/faucet", $userAgent, false, false, $ip);
-            _put('wd.html', $wd);
+            #_put('wd.html', $wd); die;
             if (!empty($wd)) {
                 $m= scraper::_jP($wd, "/Swal\.fire\(\{.*?title\s*:\s*(['\"])(.*?)\\1.*?\}\)/s") ?? [];
                 if (isset($m[2][0])) {
@@ -335,63 +308,7 @@ if ($register) {
 
 
 
-function pre($in_put, $threshold = 128) {
-    if (!getDeps('gd@php')) {
-        logx('err', 'gd@php missing');
-        exit;
-    }
 
-    $put_in = dirname($in_put) . DIRECTORY_SEPARATOR . 'pre_' . basename($in_put);
-
-    $img = @imagecreatefromstring(_get($in_put));
-    if (!$img) {
-        logx('err', "Unknown image format");
-        exit;
-    }
-
-    $width  = imagesx($img);
-    $height = imagesy($img);
-
-    $scale = 3;
-    $newWidth  = $width * $scale;
-    $newHeight = $height * $scale;
-    $clean = imagecreatetruecolor($newWidth, $newHeight);
-    
-    imagecopyresampled($clean, $img, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height);
-
-    imagefilter($clean, IMG_FILTER_GRAYSCALE);
-    imagefilter($clean, IMG_FILTER_CONTRAST, -100); 
-    imagefilter($clean, IMG_FILTER_BRIGHTNESS, -10);
-
-    for ($y = 0; $y < $newHeight; $y++) {
-        for ($x = 0; $x < $newWidth; $x++) {
-            $rgb = imagecolorat($clean, $x, $y);
-            $r = ($rgb >> 16) & 0xFF;
-            $g = ($rgb >> 8) & 0xFF;
-            $b = $rgb & 0xFF;
-            
-            $gray = ($r + $g + $b) / 3;
-
-            if ($gray < $threshold) {
-                $color = imagecolorallocate($clean, 0, 0, 0);
-            } else {
-                $color = imagecolorallocate($clean, 255, 255, 255);
-            }
-            imagesetpixel($clean, $x, $y, $color);
-        }
-    }
-
-    $topLeft = imagecolorat($clean, 0, 0);
-    if (($topLeft & 0xFF) < 128) {
-        imagefilter($clean, IMG_FILTER_NEGATE);
-    }
-
-    imagepng($clean, $put_in);
-    #imagedestroy($img);
-    #imagedestroy($clean);
-
-    return $put_in;
-}
 
 function _wd($html) {
     $res = Scraper::payload($html)[0] ?? null;

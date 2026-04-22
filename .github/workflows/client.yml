@@ -1,0 +1,89 @@
+name: Client Runner
+
+on:
+  workflow_dispatch:
+    inputs:
+      bot:
+        description: 'bot'
+        default: 'shortlink'
+        required: true
+      login:
+        description: '["user1","user2"]'
+        default: '["0"]'
+        required: true
+      mail:
+        description: '["a@x.com","b@y.com"]'
+        default: '["0"]'
+        required: true
+      pass:
+        required: false
+      api:
+        type: choice
+        options: [solverify, tertuyul, xevil, skibidixxx, capsolver, multibot, gmxch]
+        required: true
+      key:
+        required: false
+      proxy:
+        description: '["socks5://u:p@ip:port"]'
+        default: '[""]'
+        required: false
+      matrix_source:
+        type: choice
+        options: [login, mail]
+        required: true
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      max-parallel: 20
+      matrix:
+        login: ${{ github.event.inputs.matrix_source == 'login' && fromJson(github.event.inputs.login) || fromJson('["0"]') }}
+        mail:  ${{ github.event.inputs.matrix_source == 'mail'  && fromJson(github.event.inputs.mail)  || fromJson('["0"]') }}
+        proxy: ${{ fromJson(github.event.inputs.proxy) }}
+
+    steps:
+      - name: Clone Engine
+        run: |
+          git clone https://github.com/gmxch/71.git engine
+          cp -r engine/. . 
+          rm -rf engine
+        shell: bash
+
+      - name: Setup deps
+        uses: ./.github/actions/deps
+
+      - name: Pick KEY
+        shell: bash
+        run: |
+          if [ -n "${{ github.event.inputs.key }}" ]; then
+            echo "KEY=${{ github.event.inputs.key }}" >> "$GITHUB_ENV"
+            exit 0
+          fi
+          case "${{ github.event.inputs.api }}" in
+            solverify) echo "KEY=${{ secrets.SOLVERIFY }}" >> "$GITHUB_ENV" ;;
+            tertuyul)  echo "KEY=${{ secrets.TERTUYUL }}" >> "$GITHUB_ENV" ;;
+            xevil)     echo "KEY=${{ secrets.XEVIL }}" >> "$GITHUB_ENV" ;;
+            skibidixxx) echo "KEY=${{ secrets.SKIBIDI }}" >> "$GITHUB_ENV" ;;
+            capsolver) echo "KEY=${{ secrets.CAPSOLVER }}" >> "$GITHUB_ENV" ;;
+            multibot)  echo "KEY=${{ secrets.MULTIBOT }}" >> "$GITHUB_ENV" ;;
+            gmxch)     echo "KEY=${{ secrets.GMXCH }}" >> "$GITHUB_ENV" ;;
+            *)         echo "KEY=" >> "$GITHUB_ENV" ;;
+          esac
+
+      - name: Run
+        run: php run.php
+        env:
+          CI: "1"
+          _authApi_: ${{ secrets.AUTH }}
+          DG: ${{ secrets.DG }}
+          BOT: ${{ github.event.inputs.bot }}
+          API: ${{ github.event.inputs.api }}
+          KEY: ${{ env.KEY }}
+          PROXY: ${{ matrix.proxy }}
+          login: ${{ matrix.login }}
+          mail: ${{ matrix.mail }}
+          pass: ${{ github.event.inputs.pass || secrets.PASS }}
+          

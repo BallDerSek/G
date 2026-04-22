@@ -9,9 +9,10 @@ class Solve {
         
         if (!$_cap = Capt::cha($html)) {
             logx('info', 'no captcha detected');
-            return null;
+            return 'nocaptcha';
         }
-
+        
+        #var_dump($_cap); die;
         $solution = [];
 
         // 1. ANTIBOT
@@ -31,6 +32,17 @@ class Solve {
             }
             if ($ic) return array_merge($solution, $ic);
         }
+        
+        /*/ RSCAPTCHA (rss) 
+        if (!empty($_cap['rss'])) {
+            $imgData = Net::C($_cap['rss']['keys'], 'GET', null, $cookie, [], $host, $ua);
+            $rss = $api->base64($imgData, $_cap['rss']['type']);
+            #if ($rss === false) return 'reload';
+            if (!empty($rss)) {
+                return $solution['rscaptcha_response'] = $rss;
+            } 
+        }
+        */
         
         // 3. API BASED (Recaptcha, Turnstile, Hcaptcha)
         if ($api) {
@@ -57,7 +69,7 @@ class Solve {
                 }
             }
         } else {
-            logx('err', 'undefined provider');
+            logx('err', 'wajib solver provider');
             die;
         }
         
@@ -67,12 +79,14 @@ class Solve {
     public static function tkn($api, $host, $key, $type, array $Params = []) {
         $solver = config::getKeys($api, $type);
         print(DIMM.BOLD.ITAL.FGo['MAG']."solving  ".RSET);
+        tes:
         $set = microtime(true);
         while (($t = $solver->token($key, $host, $type, $Params)) === false);
         if ($t === null) exit(1);
         $end = microtime(true);
         $solver->getInfo();
         logg(false, '  elapsed: ' . number_format($end - $set, 3).'s');
+        #goto tes;
         return $t;
     }
 
@@ -276,10 +290,44 @@ class Solve {
         $body .= "--{$boundary}--\r\n";
         return $body;
     }
-
+    
+    
 }
 
 class locally {
+    
+    public static function smartFP($html) {
+        $xpath = Scraper::dom($html);
+        $node = $xpath->query("//input[@name='smart_token']")->item(0);
+        if ($node) {
+            $hasLogic = false;
+            $scripts = $xpath->query("//script");
+            $id = $node->getAttribute('id');
+            foreach ($scripts as $script) {
+                $content = $script->textContent;
+                if (strpos($content, 'smart_token') !== false || ($id && strpos($content, $id) !== false)) {
+                    $hasLogic = true;
+                    break;
+                }
+            }
+            if ($hasLogic) {
+                $currentValue = $node->getAttribute('value');
+                if (empty($currentValue)) {
+                    $data = [
+                        'ts' => (int)round(microtime(true) * 1000),
+                        'cpu' => 8,
+                        'mem' => 4,
+                        'w' => 1366,
+                        'h' => 768,
+                        'touch' => 0,
+                        'moves' => rand(1, 5)
+                    ];
+                    return base64_encode(json_encode($data));
+                }
+            }
+        }
+        return "";
+    }
 
     public static function oddCaptcha($base64) {
         if (!getDeps('gd@php')) {
@@ -424,3 +472,4 @@ class locally {
         ]));
     }
 */
+

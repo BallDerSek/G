@@ -324,23 +324,55 @@ function onKeys() {
 }
 
 function pickIndex(array $items, callable $callback) {
-    $idx = 0;
     $count = count($items);
 
-    while (true) {
-        _cle();
-        $callback($items, $idx);
+    if ($count === 0) {
+        return 0;
+    }
 
-        system("stty -icanon -echo");
-        $char = fread(STDIN, 3);
-        system("stty icanon echo"); 
+    $idx = 0;
+    $rawMode = false;
 
-        if ($char === "\033[A") { // Panah Atas
-            $idx = ($idx > 0) ? $idx - 1 : $count - 1;
-        } elseif ($char === "\033[B") { // Panah Bawah
-            $idx = ($idx < $count - 1) ? $idx + 1 : 0;
-        } elseif ($char === "\n" || $char === "\r") { // Enter
-            return $idx;
+    if (canRaw()) {
+        system('stty -icanon -echo min 1 time 0');
+        $rawMode = true;
+    }
+
+    try {
+        while (true) {
+            _cle();
+            $callback($items, $idx);
+
+            $char = fread(STDIN, 1);
+            
+            if ($char === "\033") {
+                $char .= fread(STDIN, 2) ?: '';
+            }
+
+            if ($char === "\033[A") {
+                $idx = ($idx <= 0) ? $count - 1 : $idx - 1;
+                continue;
+            }
+
+            if ($char === "\033[B") {
+                $idx = ($idx >= $count - 1) ? 0 : $idx + 1;
+                continue;
+            }
+
+            if ($char === "\n" || $char === "\r") {
+                return $idx;
+            }
+
+            if (ctype_digit($char)) {
+                $n = (int)$char - 1;
+                if (isset($items[$n])) {
+                    return $n;
+                }
+            }
+        }
+    } finally {
+        if ($rawMode) {
+            system('stty sane');
         }
     }
 }
