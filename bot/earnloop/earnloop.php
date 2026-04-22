@@ -58,21 +58,12 @@ while (true) {
         $txtMode = $mode_dobrak ? (AUTH_API ? "DOBRAK UNLIMITED" : "DOBRAK 100") : "NORMAL";
         logx('info', "$coinName [Mode: $txtMode]");
 
+        // goto tes_ilmu; 
+
         while (true) {
-            // 1. Cek Batas Klaim Lokal (Dobrak 100)
             if ($mode_dobrak && $claimCount >= $maxClaims) {
-                logx('ok', "Limit dobrak tercapai. Cek WD...");
-                $fau = Net::C($fa, 'GET', null, $cookieFile, [], $host, $userAgent); 
-                if (_canWD($fau)) {
-                    $f = scraper::payload($fau)[0]['payload'];
-                    $wd = Net::C($fa, 'POST', array_merge($f, ['withdraw' => '']), $cookieFile, [], $fa, $userAgent);
-                    if (!empty($wd)) {
-                        $_suc = scraper::_xP($wd, "//div[contains(@class, 'alert-success')]");
-                        $msg = trim($_suc[0] ?? 'Withdraw process done');
-                        logx('info', "$msg");
-                    }
-                }
-                break; // Pindah koin
+                logx('ok', "Limit dobrak.");
+                goto tes_ilmu;
             }
 
             $fau = Net::C($fa, 'GET', null, $cookieFile, [], $host, $userAgent);
@@ -80,35 +71,22 @@ while (true) {
             
             $limit = _info($fau);
             
+            // JIKA SALDO WEB HABIS
             if ($limit === "EMPTY") {
                 logx('err', "$coinName habis");
-                if (_canWD($fau)) {
-                    $f = scraper::payload($fau)[0]['payload'];
-                    Net::C($fa, 'POST', array_merge($f, ['withdraw' => '']), $cookieFile, [], $fa, $userAgent);
-                }
-                break; 
+                goto tes_ilmu; 
             }
             
-            // JIKA JATAH LIMIT USER HABIS
             if ($limit === 0) {
                 if (!$mode_dobrak) {
-                    logx('warn', "$coinName skip (Limit web reached)");
-                    if (_canWD($fau)) {
-                        $f = scraper::payload($fau)[0]['payload'];
-                        $wd = Net::C($fa, 'POST', array_merge($f, ['withdraw' => '']), $cookieFile, [], $fa, $userAgent);
-                        if (!empty($wd)) {
-                            $_suc = scraper::_xP($wd, "//div[contains(@class, 'alert-success')]");
-                            logx('info', trim($_suc[0] ?? 'WD Attempted'));
-                        }
-                    }
-                    break; 
+                    logx('warn', "$coinName limit daily");
+                    goto tes_ilmu; 
                 } else {
                     $displayLimit = (AUTH_API) ? "∞" : $maxClaims;
-                    logx('warn', "$coinName: Lanjut [$claimCount/$displayLimit]");
+                    logx('warn', "$coinName: [$claimCount/$displayLimit]");
                 }
             }
             
-            // 3. Sponsor/Gateway Bypass (Tetap Sama)
             if (str_contains($fau, 'Sponsor verification require')) {
                 $_p = scraper::_pP($fau, 'data-slot')[0] ?? '';
                 $_t = scraper::_pP($fau, 'data-token')[0] ?? '';
@@ -141,7 +119,7 @@ while (true) {
                     $msg = trim($_err[0]);
                     logx("err", trim($msg), false);
                     if (stripos($msg, 'sponsor') !== false) { _sle(2); continue; }
-                    if (stripos($msg, 'insufficient') !== false) break; // Langsung break kalau koin habis
+                    if (stripos($msg, 'insufficient') !== false) goto tes_ilmu;
                 }
 
                 $_b = scraper::_xP($cla, "//div[contains(@class, 'faucet-wallet-balance')]");
@@ -149,8 +127,24 @@ while (true) {
                 $set = microtime(true);
             }
             _sle(2);
+        } 
+
+        tes_ilmu:
+        $fau = Net::C($fa, 'GET', null, $cookieFile, [], $host, $userAgent);
+        if (_canWD($fau)) {
+            $f = scraper::payload($fau)[0]['payload'] ?? null;
+            if ($f) {
+                logx('ok', " WD $coinName...");
+                $wd = Net::C($fa, 'POST', array_merge($f, ['withdraw' => '']), $cookieFile, [], $fa, $userAgent);
+                if (!empty($wd)) {
+                    $_suc = scraper::_xP($wd, "//div[contains(@class, 'alert-success')]");
+                    $msg = trim($_suc[0] ?? 'Withdraw process done');
+                    logx('info', "WD: $msg");
+                }
+            }
         }
     }
+
 
     logx('ok', "done");
     exit;
@@ -233,5 +227,4 @@ function _info($html, $_limit_health = 1) {
     if ($limit <= 0) return 0;
 
     return $limit;
-}
 }
