@@ -13,15 +13,15 @@ $ip = null;
 
 inf::setup($userAgent, $cookieFile, $ip);
 
-banner();
-login:
-
+#$shortlink = true; goto shortlink;
 logx('', "Pilih Mode:", true, true);
 logx('info', "1. Normal ( limit web )");
 logx('info', "2. Dobrak ( limit+100 ) klo stop saat dobrak, limitnya reset saat rerun. awas keban");
 $pilih = trim(_rl("mode [dobrak]: "));
 
 $mode_dobrak = in_array($pilih, ["", "2"]);
+banner();
+login:
 
 while (true) {
     do {
@@ -120,7 +120,22 @@ while (true) {
                     logx("err", trim($msg), false);
                     if (stripos($msg, 'sponsor') !== false) { _sle(2); continue; }
                     if (stripos($msg, 'insufficient') !== false) goto tes_ilmu;
+                    if (stripos($msg, 'shortlink visits today')) {
+                        $shortlink = true;
+                        logx();
+                        if (preg_match('/Progress:\s*(\d+)\/(\d+)/', $msg, $s)) {
+                            $cu = (int)$s[1]; 
+                            $ta = (int)$s[2]; 
+                            $ne = $ta - $cu; 
+                            if ($ne <= 0) {
+                                $shortlink = false;
+                            } else {
+                                goto shortlink;
+                            }                            
+                        }
+                    }
                 }
+
 
                 $_b = scraper::_xP($cla, "//div[contains(@class, 'faucet-wallet-balance')]");
                 logx("", '  [ ' . trim($_b[0] ?? '0') . ' ]');
@@ -150,6 +165,92 @@ while (true) {
     exit;
 }
 
+
+shortlink:
+if ($shortlink) {
+    logx('err', '  need ' . $ne);
+    $solved = 0; 
+
+    while ($solved < $ne) {
+        $short = Net::C($host . '/shortlinks', 'GET', null, $cookieFile, [], $host, $userAgent);
+        $sl_c = Scraper::_jP($short, '/ShortlinkConfig\s*=\s*(.*?);/');
+        
+        if (isset($sl_c[1][0])) {
+            $config = json_decode($sl_c[1][0], true);
+            $csrf = $config['csrfToken'];
+            $apii = $config['apiUrl'];
+        } else {
+            _sle(3);
+            continue;
+        }
+
+        $sho = json_decode(Net::C($host . $apii, 'GET', ['action' => 'list'], $cookieFile, [], $host . '/shortlinks', $userAgent), true);
+        
+        if (empty($sho['links'])) {
+            logx('err', "shortlink abis");
+            break; // Balik ke flow utama
+        }
+
+        $targetLink = null;
+        foreach ($sho['links'] as $l) {
+            if ($l['remaining'] > 0) {
+                $targetLink = $l;
+                break; 
+            }
+        }
+
+        if (!$targetLink) {
+            logx('err', "dah abis slnya.");
+            break;
+        }
+
+        $id = $targetLink['id'];
+        $nm = $targetLink['name'];
+        $ti = $targetLink['wait_seconds'] ?? 40;
+
+        $pos = [
+            'csrf_token' => $csrf,
+            'shortlink_id' => $id
+        ];
+        
+        $res = json_decode(Net::X($host . $apii . '?action=start', 'POST', $pos, $cookieFile, [], $host . '/shortlinks', $userAgent, true) ?: '', true);
+
+        if (isset($res['success']) && $res['success']) {
+            $durl = $res['destination_url'];
+            $skey = $res['session_key'];
+            
+            $total_wait = $ti + rand(3, 8);
+            styler("waiting $total_wait", fn() => _sle($total_wait));
+            
+            logx('info', "Sending callback $nm...");
+            $claim = Net::C($host . $apii . '?action=callback&session=' . $skey, 'GET', null, $cookieFile, [], $durl, $userAgent);
+            _put('cla.html', $claim);
+            
+            $statusPos = [
+                'csrf_token' => $csrf,
+                'session_key' => $skey
+            ];
+            $check = json_decode(Net::X($host . $apii . '?action=status', 'POST', $statusPos, $cookieFile, [], $host . '/shortlinks', $userAgent, true) ?: '', true);
+            
+            if (isset($check['status']) && $check['status'] === 'completed') {
+                $solved++;
+                $bal = $check['wallet']['balance_usd'] ?? '0';
+                logx('ok', "solved [$solved/$ne] | Bal: $bal");
+            } else {
+                logx('err', "Status: " . ($check['status'] ?? 'pending'));
+            }
+            
+            _sle(rand(3, 6));
+
+        } else {
+            logx('err', "Gagal start: " . ($res['message'] ?? 'limit/error'));
+            _sle(5); 
+        }
+    }
+    
+    #logx('success', "Target shortlink terpenuhi.");
+    goto login;
+}
 
 
 
