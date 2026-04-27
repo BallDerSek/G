@@ -20,7 +20,7 @@ class Owme {
         }
     }
 
-    public function claim($url, $timer): bool {
+    public function claim($url, $timer) {
         $maxFullRetry = 5;
         $attempt = 0;
 
@@ -61,7 +61,7 @@ class Owme {
             $capReq = json_decode($capRaw, true);
 
             if (!$capReq || !is_array($capReq)) {
-                logx('err', "Gagal ambil list icon");
+                logx('err', "Gagal ambil icon");
                 _sle(3); continue;
             }
 

@@ -1,5 +1,4 @@
 <?php
-
 /** @class Capt 
  * @type cha
      * @param string $html

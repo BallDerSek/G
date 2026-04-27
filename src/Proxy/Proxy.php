@@ -51,11 +51,11 @@ class Proxy {
         if (($p['host'] ?? '') !== '127.0.0.1') return;
 
         if (!self::_enable()) {
-            logx('warn', "SSH Tunnel lost connection, restarting...");
+            logx('warn', "SSH Tunnel lost connection");
             self::load();
             
             if (!self::_enable()) {
-                logx('err', "Failed to reconnect SSH. Disabling proxy.");
+                logx('err', "Destroying SSH Tunnel");
                 self::_unable();
             }
         }
@@ -71,7 +71,7 @@ class Proxy {
 
         $u = parse_url($raw);
         if (!$u || empty($u['scheme'])) {
-            logx('err', "Invalid PROXY format in environment");
+            logx('err', "Invalid PROXY format");
             return;
         }
 
@@ -107,7 +107,7 @@ class Proxy {
         $pass = $u['pass'] ?? '';
 
         if ($host === '' || $user === '' || $pass === '') {
-            logx('err', "SSH credentials missing (user:pass@host:port)");
+            logx('err', "SSH credentials missing");
             return;
         }
 

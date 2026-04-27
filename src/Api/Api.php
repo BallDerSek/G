@@ -1,13 +1,44 @@
 <?php
-/**
- * 
- * 
- * 
+/** @class Api
+ * @constant string PX_AUTH
+ * @constant string PX_TYPE
+ * @constant string PROXY
+ * @constant array KEY
+ * @constant array TKN
+ * @constant array B64
+ * @constant array ACC
+ * @constant array ERR
+ *
+ * @method use
+ *   @param string $API
+ *   @param string $KEY
+ *   @return Provider
+ *
+ * @method cfgTkn
+ *   @param string $c
+ *   @param string $t
+ *   @param string $siteKey
+ *   @param string $siteUrl
+ *   @param array $extra
+ *   @return array
+ *
+ * @method cfgB64
+ *   @param string $c
+ *   @param string $t
+ *   @param string $b64
+ *   @return array
+ *
+ * @method cfgAcc
+ *   @param string $c
+ *   @param string $t
+ *   @param string $siteUrl
+ *   @param array $extra
+ *   @return array
+ *
+ * @method errType
+ *   @param string $msgOrCode
+ *   @return string|false
  */
-if (!defined('ROOT')) exit;
-
-#Direct API Request 
-
 final class Api { #contractor
     public const PX_AUTH = '';
     public const PX_TYPE = '';
@@ -49,6 +80,7 @@ final class Api { #contractor
         ],
 
         gmxch::class => [
+            'shortlink' => true,
             'cft' => [
                 'k'=>'siteKey','url'=>'domain','api'=>'cloudflare', 'defaults' => ['method' => 'turnstile'], 'map' => ['cdata' => 'cData']
                 ],
@@ -72,6 +104,7 @@ final class Api { #contractor
         ],
 
         tertuyul::class => [
+            'shortlink' => true,
             '_proxy_format' => 'split',
             'cft' => [
                 'k' => 'sitekey','url' => 'pageurl','api' => 'turnstile'
@@ -127,6 +160,7 @@ final class Api { #contractor
         ],
 
         skibidixxx::class => [
+            'shortlink' => true,
             'cft' => [
                 'k' => 'sitekey', 'url' => 'domain', 'api' => 'turnstile'
                 ],
@@ -213,6 +247,7 @@ final class Api { #contractor
             'least' => ['t' => 'iconfinder', 'field' => 'body'],
             'rs_upside' => ['t' => 'upside', 'field' => 'body'],
             'upside' => ['t' => 'upside', 'field' => 'body'],
+            'of_odd' => ['t' => 'onlyfaucet', 'field' => 'body'],
             'vie_upside' => ['t' => 'upside', 'field' => 'body'],
             'fa_icon' => ['t' => 'hunter', 'field' => 'body'],
             'icon_up' => ['t' => 'iconflip', 'field' => 'body'],
@@ -258,11 +293,13 @@ final class Api { #contractor
 
         gmxch::class => [
             'fa3_icon' => ['t' => 'fa_3', 'field' => 'image'],
+            'of_odd' => ['t' => 'of_odd', 'field' => 'image'],
         ],
 
         solverify::class => [
             'ocr' => ['t' => 'ocr', 'field' => 'body'],
         ],
+
     ];
     
     public static function cfgB64($c, $t, $b64): array {
@@ -293,6 +330,7 @@ final class Api { #contractor
         ],
         
         gmxch::class => [
+            '_proxy_format' => 'uri',
             'interstitial' => [
                 'api' => 'cloudflare','url' => 'domain', 'defaults' => ['method' => 'interstitial']
             ],
@@ -314,8 +352,9 @@ final class Api { #contractor
         ],
         
         tertuyul::class => [
+            '_proxy_format' => 'split',
             'interstitial' => [
-                'api' => 'cloudflare','url' => 'domain', 'need' => ['proxy'], 
+                'api' => 'cloudflare','url' => 'pageurl', 'need' => ['proxy'], 
             ],
         ],
         
@@ -327,8 +366,87 @@ final class Api { #contractor
                 'api'  => 'DatadomeSliderTask','url'  => 'websiteURL','need' => ['captchaUrl'],
             ],
         ],
+
+        xevil::class => [
+            '_proxy_format' => 'split',
+            'interstitial' => [
+                'api' => 'turnstile', 
+                'url' => 'pageurl',
+                'defaults' => [
+                    'sitekey' => 'jschallenge'
+                ]
+            ],
+        ],
+        
+        multibot::class => [
+            '_proxy_format' => 'split',
+            'interstitial' => [
+                'api' => 'turnstile', 
+                'url' => 'pageurl',
+                'defaults' => [
+                    'cf_clearance' => 1
+                ],
+               # 'need' => ['body'] 
+            ],
+        ],
         
     ];
+    
+    public static function cfgAcc($c, $t, $siteUrl, array $extra = []): array {
+        
+        $cfg = self::ACC[$c][$t] ?? null;
+        if (!$cfg) throw new Exception("invalid method, change providers");
+
+        $params = array_merge([
+            $cfg['url'] => $siteUrl
+        ], ($cfg['defaults'] ?? []), $extra);
+
+        $fmt = self::ACC[$c]['_proxy_format'] ?? null;
+
+        if (isset($params['proxy'])) {
+            if ($params['proxy'] === 'empty' || $params['proxy'] === '') {
+                unset($params['proxy'], $params['proxytype']);
+            } elseif ($fmt) {
+                $px = $params['proxy'];
+                $u = parse_url($px);
+                
+                if ($u && !empty($u['host'])) {
+                    $host = $u['host'];
+                    $port = $u['port'] ?? 80;
+                    $user = $u['user'] ?? '';
+                    $pass = $u['pass'] ?? '';
+                    $scheme = strtolower($u['scheme'] ?? self::PX_TYPE ?? 'http');
+
+                    if ($fmt === 'uri') {
+                        unset($params['proxytype']);
+                        $auth = $user ? "{$user}:{$pass}@" : "";
+                        $params['proxy'] = "{$scheme}://{$auth}{$host}:{$port}";
+                    } elseif ($fmt === 'split') {
+                        if (strpos(strtolower($c), 'xevil') !== false) {
+                            $params['proxytype'] = $scheme;
+                            $params['proxy'] = $user ? "{$host}:{$port}:{$user}:{$pass}" : "{$host}:{$port}";
+                        } else {
+                            unset($params['proxytype']); 
+                            $auth = $user ? "{$user}:{$pass}@" : "";
+                            $params['proxy'] = "{$auth}{$host}:{$port}";
+                        }
+                    }
+                }
+            }
+        }
+
+        if (!empty($cfg['map'])) {
+            foreach ($cfg['map'] as $from => $to) {
+                if (array_key_exists($from, $params)) {
+                    $params[$to] = $params[$from];
+                    unset($params[$from]);
+                }
+            }
+        }
+        
+        return [$cfg['api'], $params];
+        
+    }
     
     public const ERR = [
 
@@ -340,6 +458,7 @@ final class Api { #contractor
             'ERROR_TIMEOUT',
             'ERROR_TASK_TIMEOUT',
             'WRONG_RESULT',
+            'IP Address Blocked',
             'totally failed',
             'Timeout Error'
             ],
@@ -349,11 +468,13 @@ final class Api { #contractor
             'ERROR_NO_NODES_AVAILABLE',
             'ERROR_NO_SLOT_CONNECTION',
             'ERROR_REQUEST_COOLDOWN',
+            'Internal solver error',
             'CAPTCHA_NOT_READY',
             'CAPCHA_NOT_READY',
             'ERROR_RATE_LIMIT',
             'Task not found',
             'processing',
+            'Invalid challenge',
             'pending',
             'APP_11',
             'APP_14',
@@ -371,6 +492,7 @@ final class Api { #contractor
             'ERROR_SERVICE_UNAVALIABLE',
             'ERROR_SERVICE_UNAVAILABLE',
             'ERROR_PROXY_BANNED',
+            'connection close',
             'APP_9',
         ],
 
@@ -430,6 +552,7 @@ final class Api { #contractor
             'APP_16',
             'APP_12',
         ],
+
     ];
 
     public static function errType($msgOrCode) {
@@ -445,6 +568,53 @@ final class Api { #contractor
     
 } 
 
+/** @class Provider
+ * @property mixed $apiKey
+ *
+ * @method __construct
+ *   @param mixed $apiKey
+ *
+ * @method run
+ *   @param string $method
+ *   @param array $params
+ *   @return mixed
+ *
+ * @method call
+ *   @param string $method
+ *   @param array $params
+ *   @return mixed
+ *
+ * @method token
+ *   @param string $siteKey
+ *   @param string $siteUrl
+ *   @param string $type
+ *   @param array $extraParams
+ *   @return mixed
+ *
+ * @method base64
+ *   @param string $img
+ *   @param string $type
+ *   @return mixed
+ *
+ * @method access
+ *   @param string $siteUrl
+ *   @param string $type
+ *   @param array $extraParams
+ *   @return mixed
+ *
+ * @method atb
+ *   @param array $data
+ *   @return string|false|int
+ *
+ * @method get_api
+ *   @param string $method
+ *   @param array $params
+ *   @return mixed
+ *
+ * @method res_api
+ *   @param mixed $jobId
+ *   @return mixed
+ */
 abstract class Provider {
     protected $apiKey;
     #protected $baseUrl;
@@ -469,14 +639,16 @@ abstract class Provider {
                 $type = Api::errType($code);
                 #var_dump($code);
                 logx('err', $code);
-                
+                if (stripos($code, 'all nodes unavailable') && (static::class === 'gmxch')) {
+                    return 777;
+                }
                 if (in_array($type, ['ret','con','fail'], true)) {
                     _sle(3); continue;
                 }
-                break;
+                return null;
             }
         }
-        return null;
+        return false;
     }
 
     public function token($siteKey, $siteUrl, $type, array $extraParams = []) {
@@ -491,34 +663,40 @@ abstract class Provider {
 
     public function base64($img, $type = 'ocr') {
         $raw = is_file($img) ? _get($img) : $img;
-        $b64 = base64_encode($raw);
+        $isBase64 = (!is_file($img) && preg_match('%^[a-zA-Z0-9/+]*={0,2}$%', trim($raw)));
+        $b64 = $isBase64 ? trim($raw) : base64_encode($raw);
         try {
             [$m, $params] = Api::cfgB64(static::class, $type, $b64);
         } catch (Throwable $e) {
             logx('warn', $e->getMessage());
-            return null;
+            return null; 
         }
-        return $this->run($m, $params);
+        $res = $this->run($m, $params);
+        if (!$res) return 77;
+        
+        return $res;
     }
 
+
     public function access($siteUrl, $type, array $extraParams = []) {
-        $cfg = Api::ACC[static::class][$type] ?? null;
-        if (!$cfg) { logx('warn', "invalid method, change providers", true, true); return null; }
-
-        foreach (($cfg['need'] ?? []) as $k) {
-            if (!array_key_exists($k, $extraParams)) {
-                logx('warn', "missing arg: $k");
-                return null;
+        try {
+            [$method, $params] = Api::cfgAcc(static::class, $type, $siteUrl, $extraParams);
+            
+            $cfg = Api::ACC[static::class][$type];
+            foreach (($cfg['need'] ?? []) as $k) {
+                if (!isset($params[$k])) {
+                    logx('warn', "missing required arg: $k for $type");
+                    return null;
+                }
             }
+            #print_r($params); die;
+            $solved = $this->run($method, $params);
+            return [static::class,$solved];
+
+        } catch (Exception $e) {
+            logx('warn', $e->getMessage(), true, true);
+            return null;
         }
-
-        $params = array_merge(
-            [$cfg['url'] => $siteUrl],
-            ($cfg['defaults'] ?? []),
-            $extraParams
-        );
-
-        return $this->run($cfg['api'], $params);
     }
     
     public function atb(array $data) {

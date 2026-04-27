@@ -1,6 +1,6 @@
 <?php
 if (!defined('ROOT')) {die;}
-    
+$api = onKeys();
 
     
 

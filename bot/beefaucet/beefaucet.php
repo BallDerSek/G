@@ -11,8 +11,8 @@ $ip = '162.213.248.69';
 $r = '/?r=gamamoch@gmail.com';
 
 $sites = [
-    'https://claimfreecoins.io' => '6LfwaSgTAAAAAJJNz6oAdimVHmIe3s4fHj4D0at4',
-    'https://beefaucet.org' => '6LfwaSgTAAAAAJJNz6oAdimVHmIe3s4fHj4D0at4'
+    'https://beefaucet.org' => '6LfwaSgTAAAAAJJNz6oAdimVHmIe3s4fHj4D0at4',
+    'https://claimfreecoins.io' => '6LfwaSgTAAAAAJJNz6oAdimVHmIe3s4fHj4D0at4'
 ];
 
 banner();
@@ -122,7 +122,7 @@ while (true) {
                     } else {
                         logx('warn', " ".$msg, true, true);
                         
-                        if (stripos($lowMsg, 'claim limit')) {
+                        if (stripos($lowMsg, 'claim limit') || stripos($lowMsg, 'sufficient') || stripos($lowMsg, 'safety')) {
                             $limitReached++;
                         }
                     }
@@ -141,6 +141,6 @@ while (true) {
     }
     
     if (!empty($sites)) {
-        styler("waiting", fn() => _sle(10));
+        styler("waiting", fn() => _sle(30));
     }
 }

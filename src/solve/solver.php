@@ -1,5 +1,52 @@
 <?php
-
+/** @class Solve
+ * @method exec
+ * @param string $html
+ * @param string $host
+ * @param Provider|null $api
+ * @param bool $ins
+ * @return array|string|null
+ *
+ * @method tkn
+ * @param Provider $api
+ * @param string $host
+ * @param string $key
+ * @param string $type
+ * @param array $Params
+ * @return string|null
+ *
+ * @method iCaptcha
+ * @param string $html
+ * @param string $host
+ * @return array|false
+ *
+ * @method eCaptcha
+ * @param string $host
+ * @return array|false
+ *
+ * @method ATB
+ * @param string $type
+ * @param Provider|null $apii
+ * @param string $html
+ * @return mixed
+ *
+ * @method atb_E
+ * @param string $html
+ * @return string|null
+ *
+ * @method atb_I
+ * @param object $api
+ * @param string $html
+ * @return mixed
+ *
+ * @method widgetID
+ * @return string
+ *
+ * @method webkitID
+ * @param array $fo
+ * @param string $boundary
+ * @return string
+ */
 class Solve {
     
     public static function exec($html, $host, ?Provider $api, $ins = false) {
@@ -9,7 +56,7 @@ class Solve {
         
         if (!$_cap = Capt::cha($html)) {
             logx('info', 'no captcha detected');
-            return 'nocaptcha';
+            return [ 'nocaptcha' => true];
         }
         
         #var_dump($_cap); die;
@@ -75,18 +122,29 @@ class Solve {
         
         return !empty($solution) ? $solution : null;
     }
-
+    
     public static function tkn($api, $host, $key, $type, array $Params = []) {
         $solver = config::getKeys($api, $type);
         print(DIMM.BOLD.ITAL.FGo['MAG']."solving  ".RSET);
+        
         tes:
         $set = microtime(true);
-        while (($t = $solver->token($key, $host, $type, $Params)) === false);
+        while (true) {
+            $t = $solver->token($key, $host, $type, $Params);
+            if ($t === 777) {
+            logx('warn', "Switching to Direct API");
+            $t = $api->token($key, $host, $type, $Params);
+            }
+            if ($t === false) {
+                _sle(1);
+                continue;
+            }
+            break; 
+        }
         if ($t === null) exit(1);
         $end = microtime(true);
-        $solver->getInfo();
+        $api->getInfo();
         logg(false, '  elapsed: ' . number_format($end - $set, 3).'s');
-        #goto tes;
         return $t;
     }
 
@@ -157,7 +215,7 @@ class Solve {
             $task = json_decode($resTask, true);
             if (empty($task['captcha_key']) || empty($task['question'])) return false;
             
-            // 3. Parsing Answer (Logic: ambil kata terakhir setelah titik dua)
+            // 3. Parsing Answer 
             $sel = explode(':', $task['question']);
             $answer = strtolower(trim(end($sel))) . '.gif';
             
@@ -291,9 +349,42 @@ class Solve {
         return $body;
     }
     
-    
 }
 
+/** @class locally
+ * @method smartFP
+ * @param string $html
+ * @return string
+ *
+ * @method oddCaptcha
+ * @param string $base64
+ * @return int|false
+ *
+ * @method aHash
+ * @param string $input
+ * @return string|null
+ *
+ * @method dHash
+ * @param string $input
+ * @return string|null
+ *
+ * @method hamming
+ * @param string $h1
+ * @param string $h2
+ * @return int
+ *
+ * @method createImg
+ * @param string $input
+ * @return resource|false|null
+ *
+ * @method getGray
+ * @param int $rgb
+ * @return float|int
+ *
+ * @method hcdn
+ * @param string $cjs
+ * @return string
+ */
 class locally {
     
     public static function smartFP($html) {
@@ -457,19 +548,72 @@ class locally {
         return 0.299*$r + 0.587*$g + 0.114*$b;
     }
     
-}
+    public static function hcdn($cjs) {
+        $h = [
+            0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a,
+            0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19
+        ];
 
-/*
-    if (isset($payload['smart_token'])) {
-        $payload['smart_token'] = base64_encode(json_encode([
-            'ts'    => time() * 1000,
-            'cpu'   => 8,
-            'mem'   => 4,
-            'w'     => 1366,
-            'h'     => 768,
-            'touch' => 0,
-            'moves' => 0,
-        ]));
+        $k = [
+            0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
+            0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
+            0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
+            0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7, 0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967,
+            0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13, 0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85,
+            0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,
+            0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
+            0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2
+        ];
+
+        // Closure 32-bit 
+        $u32  = function($n) { return $n & 0xFFFFFFFF; };
+        $rotr = function($x, $n) use ($u32) {
+            return $u32(($x >> $n) | ($x << (32 - $n)));
+        };
+
+        // Padding
+        $z = $cjs . "\x80";
+        while ((strlen($z) % 64) !== 56) $z .= "\x00";
+        $z .= pack('N2', 0, strlen($cjs) * 8);
+
+        $chunks = str_split($z, 64);
+        foreach ($chunks as $chunk) {
+            $w = array_values(unpack('N16', $chunk));
+            for ($i = 16; $i < 64; $i++) {
+                $s0 = $rotr($w[$i-15], 7) ^ $rotr($w[$i-15], 18) ^ ($w[$i-15] >> 3);
+                $s1 = $rotr($w[$i-2], 17) ^ $rotr($w[$i-2], 19) ^ ($w[$i-2] >> 10);
+                $w[$i] = $u32($w[$i-16] + $s0 + $w[$i-7] + $s1);
+            }
+
+            list($a, $b, $c, $d, $e, $f, $g, $h_temp) = $h;
+
+            for ($i = 0; $i < 64; $i++) {
+                $S1 = $rotr($e, 6) ^ $rotr($e, 11) ^ $rotr($e, 25);
+                $ch = ($e & $f) ^ ((~$e) & $g);
+                $temp1 = $u32($h_temp + $S1 + $ch + $k[$i] + $w[$i]);
+                $S0 = $rotr($a, 2) ^ $rotr($a, 13) ^ $rotr($a, 22);
+                $maj = ($a & $b) ^ ($a & $c) ^ ($b & $c);
+                $temp2 = $u32($S0 + $maj);
+
+                $h_temp = $g;
+                $g = $f;
+                $f = $e;
+                $e = $u32($d + $temp1);
+                $d = $c;
+                $c = $b;
+                $b = $a;
+                $a = $u32($temp1 + $temp2);
+            }
+
+            $h[0] = $u32($h[0] + $a); $h[1] = $u32($h[1] + $b);
+            $h[2] = $u32($h[2] + $c); $h[3] = $u32($h[3] + $d);
+            $h[4] = $u32($h[4] + $e); $h[5] = $u32($h[5] + $f);
+            $h[6] = $u32($h[6] + $g); $h[7] = $u32($h[7] + $h_temp);
+        }
+
+        $res = '';
+        foreach ($h as $val) $res .= sprintf('%08x', $val);
+        return $res;
     }
-*/
-
+    
+}

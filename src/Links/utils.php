@@ -149,10 +149,32 @@ class sScraper {
 } 
 
 function limit($id) {
-    list($current, $max) = explode('/', $id);
-    $current = (int)$current;
-    $max = (int)$max;
+    $parts = explode('/', $id);
+    
+    if (count($parts) < 2) {
+        return (int)$id > 0;
+    }
+
+    $current = (int)$parts[0];
 
     return $current > 0;
-} 
+}
 
+
+function links($api, $url) {
+    if (!$api) {
+        logx('err', 'undefined provider');
+        exit;
+    }
+    $solver = config::getKeys($api, 'shortlink', 'tkn');
+    if (!isset(Api::TKN[get_class($solver)]['shortlink'])) {
+        logx('err', 'unsupported provider');
+        exit;
+    }
+
+    if ($solver) {
+        return $solver->shortLink($url);
+    }
+
+    return false;
+}

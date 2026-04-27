@@ -18,7 +18,8 @@ $emails = file($mailPath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
 $urls = ['https://usdtblow.xyz', 'https://tronblow.site'];
 
 banner();
-
+login:
+    
 $chunks = array_chunk($emails, 60);
 
 if (ctype_digit((string)$login)) {
@@ -160,6 +161,7 @@ foreach ($chunks as $cIdx => $batch) {
 }
 
 logx('ok', "ALL BATCHES FINISHED");
+_rl('mode pesawat'); goto login;
 
 function mA($q1, $q2, $op) {
     return match($op) {

@@ -11,13 +11,18 @@ credentials
 **/credentials/
 **/credentials/*
 
-*mail.txt
-proxy.txt
+**/mail.txt
+**/proxy.txt
 
 *.tmp
 *.png
+.env
+**/.env
 
 **/*opnssl.php
 bot/tes/
+bot/bct/
 
 lib/*/
+!lib/python/
+!lib/python/**

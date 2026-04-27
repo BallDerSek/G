@@ -1,5 +1,4 @@
 <?php
-
 /** @class Scraper 
  * @method dom
      * @param string|DOMXPath $html
@@ -170,7 +169,23 @@ class Scraper {
         $xp = self::dom($html);
         $forms = $xp->query('//form');
         $payload = [];
+/*
+$inputs = $xpath->query('.//input', $form);
+foreach ($inputs as $input) {
+    $name = $input->getAttribute('name');
+    $id   = $input->getAttribute('id');
+    $type = $input->getAttribute('type');
 
+    if ($name && $type !== 'submit') {
+        if ($id && isset($mappedInputs[$id])) {
+            $payload[$name] = $mappedInputs[$id];
+            unset($mappedInputs[$id]);
+        } else {
+            $payload[$name] = $input->getAttribute('value');
+        }
+    }
+}
+*/
         foreach ($forms as $form) {
             $isTarget = true;
             if ($captchaTag) {

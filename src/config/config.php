@@ -1,5 +1,4 @@
 <?php
-
 /** @class Config
  * @method credential
      * @param array $defaults
@@ -177,16 +176,29 @@ class Config {
 
         return "Mozilla/5.0 (Linux; Android $androidVer; $device) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/$chromeVer.0.0.0 Mobile Safari/537.36";
     }
-
-    public static function getKeys($api, $type) {
+    
+    public static function getKeys($api, $type, $mod = 'tkn') {
         if (defined('AUTH_KEY') && AUTH_KEY) {
-            if (isset(Api::TKN[gmxch::class][$type])) {
+            switch ($mod) {
+                case 'acc':
+                    $targetArray = Api::ACC;
+                    break;
+                case 'b64':
+                    $targetArray = Api::B64;
+                    break;
+                default:
+                    $targetArray = Api::TKN;
+                    break;
+            }
+            if (isset($targetArray[gmxch::class][$type])) {
                 return AUTH_API;
             }
         }
         
         return $api;
     }
+
+
 
 }
 

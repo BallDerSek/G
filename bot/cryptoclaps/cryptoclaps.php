@@ -25,10 +25,9 @@ foreach ($emails as $login) {
         do {
             $_0 = Net::C($host, 'GET', null, $cookieFile, [], '', $userAgent);
             if (!empty($_0)) {
-                _put('0.html', $_0);
-                $capt = capt::cha($_0);
-                $curr = xScraper::xPath($_0, "//select[@id='coin-select']/option[not(@disabled)]/@value") ?? '';
-                $csrf = rScraper::jPath($_0, "/csrf_token['\"]?\s*,\s*['\"]([a-f0-9]{32,})/i") ?? '';
+               # _put('0.html', $_0);
+                $curr = scraper::_xP($_0, "//select[@id='coin-select']/option[not(@disabled)]/@value") ?? '';
+                $csrf = scraper::_jP($_0, "/csrf_token['\"]?\s*,\s*['\"]([a-f0-9]{32,})/i") ?? '';
                 
                 if ($csrf && $curr) {
                     $claim = true;
@@ -48,7 +47,7 @@ foreach ($emails as $login) {
                 'csrf_token' => $csrf[1][0]
             ];
             $boundary = '';
-            $pa = webkitId($_pa, $boundary);
+            $pa = solve::webkitID($_pa, $boundary);
             $head = ["Content-Type: multipart/form-data; boundary=$boundary"];
             
             $_1 = json_decode(Net::C($host, 'POST', $pa, $cookieFile, $head, $host, $userAgent)?: '', true);
@@ -59,7 +58,7 @@ foreach ($emails as $login) {
                     'action' => 'get_channel',
                     'csrf_token' => $csrf[1][1] ?? $csrf[1][0]
                 ];
-                $pe = webkitId($_pe, $boundary);
+                $pe = solve::webkitID($_pe, $boundary);
             } else {
                 continue;
             }
@@ -69,8 +68,7 @@ foreach ($emails as $login) {
             if (!empty($_2['success']) && !empty($chnl = $_2['channel'])) {
                 $set = microtime(true);
                 
-                $retry = 0;
-                while (($t = getKeys($api)->token($capt['keys'][0], $host, $capt['type'])) === false && $retry++ < 5);
+                $cap = solve::exec($_0, $host, $api);
                 
                 $_po = [
                     'action' => 'send_reward',
@@ -78,10 +76,9 @@ foreach ($emails as $login) {
                     'email' => $login,
                     'csrf_token' => $csrf[1][2] ?? $csrf[1][0],
                     'channel_url' => $chnl['url'],
-                    'cf-turnstile-response' => $t,
                     'coin' => $curr[0]
                 ];
-                $po = webkitId($_po, $boundary);
+                $po = solve::webkitID(array_merge($_po, $cap), $boundary);
                 
                 $end = microtime(true);
                 $wait = $chnl['watch_time'] - ($end - $set);

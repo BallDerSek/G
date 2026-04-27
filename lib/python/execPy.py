@@ -4,7 +4,7 @@ import random, re, socket, subprocess
 
 from urllib.parse import urlparse, quote 
 from pathlib import Path
-warnings.filterwarnings('ignore')
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 os.environ["PYTHONWARNINGS"] = "ignore"
 
 
@@ -20,7 +20,6 @@ except ImportError:
     log("install Seledroid module and Apk")
     sys.exit(1) 
 
-
 def make_driver(ua=None):
     d = webdriver.Chrome(gui=True, pip_mode=True)
     #d = webdriver.Chrome(gui=False)
@@ -30,7 +29,6 @@ def make_driver(ua=None):
     if ua:
         d.user_agent = ua
     return d
-
 
 def driver_dead(err: Exception) -> bool:
     s = str(err).lower()
@@ -162,22 +160,6 @@ def reactor(driver):
     except Exception as e:
         log(f"reactor failed: {e}")
 
-
-def check_ua(ua=None):
-    driver = make_driver(ua=ua)
-    driver.get("https://httpbin.org/user-agent")
-    time.sleep(2)
-
-    src = driver.page_source or ""
-    driver.close()
-
-    m = re.search(r'"user-agent"\s*:\s*"([^"]+)"', src, flags=re.I)
-    if m:
-        return m.group(1)
-
-    src2 = re.sub(r"<[^>]+>", "", src).strip()
-    return src2
-
 def start_ser(port=8000):
     docroot = os.path.dirname(os.path.realpath(__file__))
     p = subprocess.Popen(
@@ -209,6 +191,21 @@ def stop_ser(p):
             p.kill()
         except Exception:
             pass
+
+def check_ua(ua=None):
+    driver = make_driver(ua=ua)
+    driver.get("https://httpbin.org/user-agent")
+    time.sleep(2)
+
+    src = driver.page_source or ""
+    driver.close()
+
+    m = re.search(r'"user-agent"\s*:\s*"([^"]+)"', src, flags=re.I)
+    if m:
+        return m.group(1)
+
+    src2 = re.sub(r"<[^>]+>", "", src).strip()
+    return src2
 
 
 
@@ -376,7 +373,6 @@ def build(ua=None):
                 s = str(txt).strip() if txt is not None else ""
                 if s and s not in ("initialize", "running..."):
                     try:
-                        # bersihkan string agar JSON valid
                         clean = txt.strip().replace("\\n", "\n")
                         return json.loads(clean)
                     except Exception as e:

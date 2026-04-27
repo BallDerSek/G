@@ -1,9 +1,8 @@
 <?php
-if (!defined('ROOT')) exit;
-
-
-
-
+/** @function xtractJs
+ * @param string $html
+ * @return array
+ */
 function xtractJs($html): array {
     $m = scraper::_jP($html, '#<script\b[^>]*>(.*?)</script>#is');
     $out = [];
@@ -28,6 +27,13 @@ function xtractJs($html): array {
     return $out;
 }
 
+/** @function dumpJsFlex
+ * @param string $_input
+ * @param string|null $_putin
+ * @param bool $unlink
+ * @param string $fakeFile
+ * @return string|false
+ */
 function dumpJsFlex($_input, $_putin = null, $unlink = false, $fakeFile = 'input.js'): string|false {
 
     if (is_file($_input)) {
@@ -140,6 +146,15 @@ JS;
     return $best;
 }
 
+/** @function rsResponse
+ * @param string $jsFile
+ * @param int|float $x
+ * @param int|float $y
+ * @param int|float $timestamp
+ * @param string $ua
+ * @param string|null $_img
+ * @return string|false
+ */
 function rsResponseORI($jsFile, $x, $y, $timestamp, $ua, $_img = null) {
     if (!getDeps('gd@php')) {
         logx('err', 'gd@php missing');
@@ -250,6 +265,11 @@ function rsResponseORI($jsFile, $x, $y, $timestamp, $ua, $_img = null) {
 
 
 
+
+/** @function rsAescipher
+ * @param string $jsFile
+ * @return array|false
+ */
 function rsAescipher($jsFile) {
     if (!file_exists($jsFile)) return false;
     $jsContent = _get($jsFile);

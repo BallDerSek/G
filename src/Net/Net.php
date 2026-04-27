@@ -291,78 +291,82 @@ class Net {
         $ajx = $opt['http2'] ?? false;
         $he_manual = $opt['head'] ?: [];
         
+        $useHints = true;
+        foreach ($he_manual as $k => $v) {
+            if (stripos($v, 'detail-hints') !== false && stripos($v, 'false') !== false) {
+                $useHints = false;
+                unset($he_manual[$k]); 
+                break;
+            }
+        }
+        
         $head = [];
         
-        $head[] = "Host: " . parse_url($url)['host'];
-        
-        if ($ua !== '') {
-            $is_mobile = (stripos($ua, 'Android') !== false || stripos($ua, 'Mobile') !== false);
-            $platform = (stripos($ua, 'Android') !== false) ? "Android" : ((stripos($ua, 'Mac') !== false) ? "macOS" : "Windows");
-            preg_match('/Chrome\/(\d+)/', $ua, $m);
-            $v = $m[1] ?? '144';
-            
-            $head[] = 'Sec-CH-UA: "Not(A:Brand";v="8", "Chromium";v="'.$v.'", "Brave";v="'.$v.'"';
-            $head[] = 'Sec-CH-UA-Mobile: '.($is_mobile ? '?1' : '?0');
-            $head[] = 'Sec-CH-UA-Platform: "'.$platform.'"';
+        $host_val = parse_url($url)['host'];
+        $manualHost = false;
+        foreach ($he_manual as $h) {
+            if (stripos($h, 'Host:') === 0) {
+                $manualHost = true;
+                break;
+            }
         }
-        
-        if (!$ajx) {
-            $head[] = "Upgrade-Insecure-Requests: 1";
+        if (!$manualHost) {
+            $head[] = "Host: " . $host_val;
         }
-        
+
         if ($ua !== '') {
+            if ($useHints) {
+                $is_mobile = (stripos($ua, 'Android') !== false || stripos($ua, 'Mobile') !== false);
+                $platform = (stripos($ua, 'Android') !== false) ? "Android" : "Windows";
+                preg_match('/Chrome\/(\d+)/', $ua, $m);
+                $v_chrome = $m[1] ?? '122';
+                
+                $head[] = 'Sec-CH-UA: "Chromium";v="'.$v_chrome.'", "Not(A:Brand";v="24", "Google Chrome";v="'.$v_chrome.'"';
+                $head[] = 'Sec-CH-UA-Mobile: '.($is_mobile ? '?1' : '?0');
+                $head[] = 'Sec-CH-UA-Platform: "'.$platform.'"';
+            }
             $head[] = "User-Agent: $ua";
         }
         
+        if (!$ajx && $useHints) {
+            $head[] = "Upgrade-Insecure-Requests: 1";
+        }
+        
+        $he_cookie = null;
         foreach ($he_manual as $h) {
+            $h = trim($h);
+            if ($h === '' || stripos($h, 'detail-hints') !== false) continue; 
+            
             if (stripos($h, 'Cookie:') === 0) {
                 $he_cookie = $h;
                 continue;
             }
+            if (stripos($h, 'Host:') === 0) continue;
+            
             $head[] = $h;
         }
         
-        if ($ajx && !empty($ref)) {
-            $head[] = "Origin: " . parse_url($ref)['scheme'] . "://" . parse_url($ref)['host'];
-        }
-        
-        $he_fetchs = "none";
-        if (!empty($ref)) {
-            $he_t = parse_url($url)['host'] ?? '';
-            $he_r = parse_url($ref)['host'] ?? '';
-            if ($he_t === $he_r) {
-                $he_fetchs = "same-origin";
-            } else {
-                $t_pa = explode('.', $he_t);
-                $r_pa = explode('.', $he_r);
-                $tRoot = implode('.', array_slice($t_pa, -2));
-                $rRoot = implode('.', array_slice($r_pa, -2));
-                $he_fetchs = ($tRoot === $rRoot) ? "same-site" : "cross-site";
+        if ($useHints) {
+            $he_fetchs = "none";
+            if (!empty($ref)) {
+                $he_t = parse_url($url)['host'] ?? '';
+                $he_r = parse_url($ref)['host'] ?? '';
+                $he_fetchs = ($he_t === $he_r) ? "same-origin" : "cross-site";
             }
-        }
-        $head[] = "Sec-Fetch-Site: $he_fetchs";
-        
-        if ($ajx) {
-            $head[] = "Sec-Fetch-Mode: cors";
-            $head[] = "Sec-Fetch-Dest: empty";
-        } else {
-            $head[] = "Sec-Fetch-Mode: navigate";
-            $head[] = "Sec-Fetch-User: ?1";
-            $head[] = "Sec-Fetch-Dest: document";
+            $head[] = "Sec-Fetch-Site: $he_fetchs";
+            $head[] = "Sec-Fetch-Mode: " . ($ajx ? "cors" : "navigate");
+            if (!$ajx) $head[] = "Sec-Fetch-User: ?1";
+            $head[] = "Sec-Fetch-Dest: " . ($ajx ? "empty" : "document");
         }
         
-        if (!empty($ref)) {
-            $head[] = "Referer: $ref";
-        }
+        if (!empty($ref)) $head[] = "Referer: $ref";
         
         $lang = function_exists('LANGUAGE') ? LANGUAGE() : 'id-ID,id;q=0.9';
         $head[] = "Accept-Language: $lang";
+        $head[] = "Expect:";
         
-        if (isset($he_cookie)) {
-            $head[] = $he_cookie;
-        }
+        if ($he_cookie) $head[] = $he_cookie;
         
-        #print_r($head);
         return $head;
     }
     
@@ -393,6 +397,7 @@ class Net {
 
         # HEADERS
         $opt['head'] = self::applyHead($opt);
+        #print_r($opt['head']); _sle(3);
 
         $ch = curl_init($opt['url']);
         if (!$ch) { logx('err', 'init failed'); return null; }
@@ -416,7 +421,7 @@ class Net {
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_FOLLOWLOCATION => $opt['follow'],
             CURLOPT_CONNECTTIMEOUT => 30,
-            CURLOPT_TIMEOUT => 30,
+            CURLOPT_TIMEOUT => $opt['timeout'] ?? 30,
             CURLOPT_HTTPHEADER => $opt['head'], 
             #CURLOPT_REFERER => $opt['ref'],
             CURLOPT_SSL_VERIFYPEER => !$insecure,
@@ -424,10 +429,15 @@ class Net {
             CURLOPT_HTTP_VERSION => $httpVer,
             CURLOPT_FORBID_REUSE => $fresh,
             CURLOPT_FRESH_CONNECT => $fresh,
+            #CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4,
+            CURLOPT_PROXY_SSL_VERIFYPEER => false,
+            CURLOPT_PROXY_SSL_VERIFYHOST => 0,
+            CURLOPT_HTTP09_ALLOWED => true,
             CURLOPT_LOW_SPEED_LIMIT => 1,
-            CURLOPT_LOW_SPEED_TIME  => 15,
+            CURLOPT_LOW_SPEED_TIME  => $opt['speed'] ?? 15,
             CURLOPT_ENCODING => '',
         ]);
+
 
         # VERBOSE
         $logFile = null;
@@ -523,10 +533,11 @@ class Net {
         $dns = []; $connect = [];
         if (!empty($ip)) {
             $dom = parse_url($url)['host'];
-            if (!empty($GLOBALS['_CTX']['proxy'])) {
-                $connect = ["$dom:443:$ip:443"];
+            $scheme = parse_url($url)['scheme'];
+            if ($scheme === 'http') {
+                $dns = ["$dom:80:$ip"];
             } else {
-                $dns = ["$dom:80:$ip", "$dom:443:$ip"]; 
+                $dns = ["$dom:80:$ip", "$dom:443:$ip"];
             }
         }
         if (!self::hasHeader($head, 'Accept')) {
@@ -558,10 +569,11 @@ class Net {
         $dns = []; $connect = [];
         if (!empty($ip)) {
             $dom = parse_url($url)['host'];
-            if (!empty($GLOBALS['_CTX']['proxy'])) {
-                $connect = ["$dom:443:$ip:443"]; 
+            $scheme = parse_url($url)['scheme'];
+            if ($scheme === 'http') {
+                $dns = ["$dom:80:$ip"];
             } else {
-                $dns = ["$dom:80:$ip", "$dom:443:$ip"]; 
+                $dns = ["$dom:80:$ip", "$dom:443:$ip"];
             }
         }
         
@@ -613,6 +625,8 @@ class Net {
             'isJson' => $json,
             'follow' => true,
             'verbose' => false,
+            'timeout' => 120,
+            'speed' => 300,
             'no_proxy' => true 
         ], false, true);
         
@@ -626,7 +640,6 @@ class Net {
 
 /** @class Ws
  * @method Wait
-     * Menunggu socket siap dibaca.
      * @param array $c Context 
      * @param int $sec Timeout 
      * @param int $usec Timeout 

@@ -1,5 +1,4 @@
 <?php
-
 /** @function cfGet
  * @param string $url
  * @param string &$cookie
@@ -12,10 +11,17 @@ function cfGet($url, &$cookie, &$uagent) {
         $html = Net::C($url, 'GET', null, $cookie, [], '', $uagent);
         if (!$html) { $att++; _sle(2); continue; }
 
-        $titles = xScraper::xPath($html, "//title");
-        $title = isset($titles[0]) ? strtolower($titles[0]) : '';
+        $isCloudflare = (
+            stripos($html, 'Cloudflare Ray ID') !== false || 
+            stripos($html, 'Attention Required!') !== false || 
+            stripos($html, 'just a moment') !== false ||
+            stripos($html, 'sucuri') !== false ||
+            stripos($html, 'been blocked') !== false 
+        );
 
-        if ($title !== '' && stripos($title, 'just a moment') === false) return $html;
+        if (!$isCloudflare && !empty($html)) {
+            return $html;
+        }
 
         logx('err', "Cloudflare detected");
 
@@ -31,16 +37,118 @@ function cfGet($url, &$cookie, &$uagent) {
         $ck = (string)$r['cookie_file'];
 
         $html_fix = Net::C($url, 'GET', null, $ck, [], $url, $ua);
-        if (!$html_fix) { $att++; _sle(2); continue; }
+        
+        $isStillCF = (stripos($html_fix, 'challenge-platform') !== false || stripos($html_fix, 'just a moment') !== false);
 
-        if (stripos($html_fix, 'challenge-platform') === false && stripos($html_fix, 'just a moment') === false) {
+        if ($html_fix && !$isStillCF) {
             $cookie = $ck;
             $uagent = $ua;
             return $html_fix;
         }
-        $att++; _sle(2);
+
+        $att++;
+        _sle(2);
     }
-    return $html;
+    
+    return false; 
+}
+
+
+/** @function cfSet
+ * @param string $class
+ * @param mixed $res
+ * @return array|null
+ */
+function cfSet($class, $res) {
+    if (!$res) return null;
+
+    switch (strtolower($class)) {
+        case str_contains(strtolower($class), 'xevil'):
+            $decoded = json_decode(base64_decode($res), true);
+            return [
+                'token' => $decoded['cf_clearance'] ?? null,
+                'ua'    => $decoded['user_agent'] ?? null,
+            ];
+
+        case str_contains(strtolower($class), 'gmxch'):
+            return [
+                'token' => $res['cf_clearance'] ?? null,
+                'ua'    => $res['user_agent'] ?? null,
+            ];
+
+        #case str_contains(strtolower($class), 'multibot'):
+        case str_contains(strtolower($class), 'tertuyul'):
+            $part = explode(':', $res, 2);
+            return [
+                'token' => $part[0] ?? null,
+                'ua'    => $part[1] ?? null,
+            ];
+
+        default:
+            return null;
+    }
+}
+
+/** @function execCF
+ * @param mixed $api
+ * @param string $url
+ * @param string $cookie
+ * @param string $uagent
+ * @param array $data
+ * @return array|string|bool|null
+ */
+function execCF($api, $url, $cookie, $uagent, array $data = []) {
+    /*
+    logx('err', '  1 [local via seledroid]');
+    logx('err', '  2 [remote via solver] (DEFAULT)');
+    #$input = _rl('solve cloudflare ??  ');
+    */
+    $input = '';
+    
+    if ($input === '' || $input === '2') {
+        if (!$api) {
+            logx('err', 'undefined provider');
+            return null; 
+        }
+
+        $param = array_filter([
+            'body' => !empty($data['html']) ? base64_encode($data['html']) : null,
+            'proxy' => $GLOBALS['_CTX']['proxy']['src']
+        ]);
+        #print_r($param); die;
+
+        $solver = config::getKeys($api, 'interstitial', 'acc');
+        
+        if (!isset(Api::ACC[get_class($solver)]['interstitial'])) return false;
+        
+        $solve = $solver->access($url, 'interstitial', $param);
+        
+        if ($solve === 777 || (is_array($solve) && isset($solve[1]) && $solve[1] === 777)) {
+            logx('warn', "Failover to Direct API Provider...");
+            $solve = $api->access($url, 'interstitial', $param);
+            
+            if ($solve && is_array($solve)) {
+                $api->getInfo();
+                [$_cl, $_cf] = $solve;
+                return cfSet($_cl, $_cf);
+            }
+        }
+        
+        if ($solve && is_array($solve)) {
+            [$_cl, $_cf] = $solve;
+            return cfSet($_cl, $_cf);
+        }
+        
+        logx('err', "API Solver failed");
+        return false;
+    } 
+    
+    if ($input === '1') {
+        $local = cfGet($url, $cookie, $uagent);
+        return 'stated';
+    }
+    
+    return null;
 }
 
 /** @class execPython
@@ -78,8 +186,8 @@ final class execPython {
         $this->cookie = $cookie;
         $this->uagent = $ua;
 
-        if (($py = realpath(LIBDIR . '/execPy.py')) === false) {
-            logx('err', "execPy.py not found");
+        if (($py = realpath(LIBDIR . 'python/execPy.py')) === false) {
+            logx('err', "execPy file not found");
             exit(9);
         }
         $this->scriptPath = $py;
@@ -138,13 +246,14 @@ final class execPython {
         return shell_exec($cmd);
     }
 
-    private function cfCookie($cfString, $url) {
+    public function cfCookie($cfString, $url) {
+        # manual inject cookiefile netscape format
         if (empty($this->cookie)) return false;
         if (!preg_match('/cf_clearance=([^;]+)/', $cfString, $m)) return false;
 
-        $domain = parse_url($url, PHP_URL_HOST);
+        $domain = parse_url($url)['host'];
         $cookieDomain = '.' . ltrim($domain, '.');
-        $secure = (parse_url($url, PHP_URL_SCHEME) === 'https') ? "TRUE" : "FALSE";
+        $secure = (parse_url($url)['scheme'] === 'https') ? "TRUE" : "FALSE";
 
         $lines = file_exists($this->cookie) ? file($this->cookie, FILE_IGNORE_NEW_LINES) : ["# Netscape HTTP Cookie File", ""];
         $filtered = [];

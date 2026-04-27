@@ -16,7 +16,7 @@ class _shortlinks {
         $this->path = ltrim(parse_url($url)['path'], '/');
         $this->path = str_replace('/', '_', $this->path);
         $this->cookie = SLDIR."/".$this->host."_".$this->path.".tmp";
-        $this->uagent = config::getUagent("desktop");
+        $this->uagent = config::uagent("desktop");
         $this->proxied = Proxy::_enable();
         $this->proxy = "gamamoch-rotate:playernoob@p.webshare.io:80";
         
@@ -25,9 +25,9 @@ class _shortlinks {
     public function links($api) {
         
         $rules = [
-            #'clk' => ['lnbz.la','tpi.li','oii.la','aii.sh'],
+            'clk' => ['lnbz.la','tpi.li','oii.la','aii.sh'],
             'low' => ['xut.io','shrinkme.click','link.adlink.click','horrorpay.online','linkpay.top'],
-            #'nono' => ['earnow.online','shortino.link','shortano.link'],
+            'nono' => ['earnow.online','shortino.link','shortano.link'],
             'coinclix' => ['coinclix.co']
         ];
 
@@ -441,16 +441,17 @@ class _shortlinks {
             $_g1 = Net::C($lastreload, 'GET', null, $cookie, [], $lastreload, $uagent);
             $error = false;
         }
-
+        
+        #_put('g1.html', $_g1); die;
         $st = scraper::_xP($_g1, "//*[@id='linkResHeader']//h4") ?? '';
         if (isset($st[0])) {
             $step = trim(preg_replace('/\s+/', ' ', $st[0]));
-            $pis = x($_g1, 'pissoff', 'input', 'value', 'id')?? null;
-            $lpt = x($_g1, 'lpt', 'input', 'value', 'id') ?? null;
-            $ver = x($_g1, 'linkVer', 'input', 'value', 'id') ?? null;
+            $pis =scraper::find($_g1, 'pissoff', 'input', 'value', 'id')?? null;
+            $lpt =scraper::find($_g1, 'lpt', 'input', 'value', 'id') ?? null;
+            $ver =scraper::find($_g1, 'linkVer', 'input', 'value', 'id') ?? null;
             $cnn = scraper::_xP($_g1, "//*[contains(@class,'cnnc')]/@id") ?? null;
-            $_bg = x($_g1, 'cpres2', 'input', 'value', 'id') ?? null;
-            $_cp = x($_g1, 'cpobj', 'input', 'value', 'id') ?? null;
+            $_bg =scraper::find($_g1, 'cpres2', 'input', 'value', 'id') ?? null;
+            $_cp =scraper::find($_g1, 'cpobj', 'input', 'value', 'id') ?? null;
             $ccpayloadcomponents = true;
         } 
         #logx('info', $step, false, true);
@@ -553,7 +554,7 @@ function _ccPayload($api, $dom, $ver, $pis, $cnn, $bg, $cp) {
 
         case 'HC':
             #$token = _rl('hcaptcha: ');
-            $token = $_token($api, '2a9619f4-43bc-4e64-afc8-7fbc48f2bf34', $dom, 'hc', ['userAgent'=>$_ua, 'invisible'=>1, 'proxy' => _proxy_api_]);
+            $token = $_token($api, '2a9619f4-43bc-4e64-afc8-7fbc48f2bf34', $dom, 'hc', ['userAgent'=>$_ua, 'invisible'=>1, 'proxy' => '']);
             break;
 
         case 'PC':

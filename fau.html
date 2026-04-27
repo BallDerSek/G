@@ -1,0 +1,720 @@
+ 
+
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light dark" />
+  <meta name="description" content="Earn Money Now">
+  <meta name="author" content="Faucet">
+  <title>SatoshiFaucet | LTC Faucet</title>
+
+  <!-- fontawsome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+
+  <!-- Boxicons -->
+  <link href='https://unpkg.com/boxicons@2.1.2/css/boxicons.min.css' rel='stylesheet'>
+
+  <!-- materials icon -->
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+  <!-- bootstrap stylesheet -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <!-- main stylesheet -->
+  <link rel="stylesheet" href="https://satoshifaucet.io/assets/vprop/vdash/css/vdashboard.css">
+  
+  <script src='https://satoshifaucet.io/assets/js/webjs/sweetalert.min.js'></script>
+  
+  <style>
+      .modal-content {
+  background: var(--bg-primary);
+  box-shadow: var(--myshadow);
+}
+
+.modal-header {
+    background: var(--gradient);
+    color: #fff;
+    border-bottom: 2px solid #05023e;
+}
+.crypto_wrap {
+    justify-content: center;
+}
+
+th, td {
+    min-width: 100px;
+}
+
+@media only screen and (max-width: 450px) {
+        .crypto {
+          width: 40px;
+        }
+      }
+      
+      .btn-primary {
+         background: linear-gradient(to right bottom, #3F14E1, #600ECD) !important;
+         font-weight: bold;
+         color: #fff;
+     }
+     
+     .data-table img {
+         width: auto;
+     }
+        
+  </style>
+
+  <div style="position:fixed; padding: 3px; bottom: 10px; left: 7px; width: 300px; height:250px; z-index: 999999;">
+    <span id="" style="position: absolute; z-index: 999999; background-color: rgb(255, 255, 255); color: rgb(0, 0, 0); top: 12px; left: 8px; font-family: Arial, sans-serif; font-size: 10px; text-decoration: none; padding: 2px 2px 2px; border-radius: 4px 4px 4px; font-weight: 400; cursor: pointer; line-height: 10px; box-shadow: rgba(0, 0, 0, 0.3) 0px 0px;" onclick="$(this).parent().fadeOut();">X</span>
+
+
+
+
+    <center>
+      <div id="banner-container">
+
+
+
+       <!--Cointraffic ads code-->
+       
+      <script async src="https://appsha-pnd.ctengine.io/js/script.js?wkey=8wHxgjU3iR"></script>
+    
+
+
+        <div class="banner30" style="display:none">
+
+         <ins class="65c4ff4c3d959dd1437133e8" style="display:inline-block;width:300px;height:250px;"></ins><script>!function(e,n,c,t,o,r,d){!function e(n,c,t,o,r,m,d,s,a){s=c.getElementsByTagName(t)[0],(a=c.createElement(t)).async=!0,a.src="https://"+r[m]+"/js/"+o+".js?v="+d,a.onerror=function(){a.remove(),(m+=1)>=r.length||e(n,c,t,o,r,m)},s.parentNode.insertBefore(a,s)}(window,document,"script","65c4ff4c3d959dd1437133e8",["cdn.bmcdn6.com"], 0, new Date().getTime())}();</script>
+
+        </div>
+
+
+        <div class="banner30" style="display:none">
+
+          <ins class="69eef7b5cf0afb9b65fad3e4" style="display:inline-block;width:1px;height:1px;"></ins><script>!function(e,n,c,t,o,r,d){!function e(n,c,t,o,r,m,d,s,a){s=c.getElementsByTagName(t)[0],(a=c.createElement(t)).async=!0,a.src="https://"+r[m]+"/js/"+o+".js?v="+d,a.onerror=function(){a.remove(),(m+=1)>=r.length||e(n,c,t,o,r,m)},s.parentNode.insertBefore(a,s)}(window,document,"script","69eef7b5cf0afb9b65fad3e4",["cdn.bmcdn6.com"], 0, new Date().getTime())}();</script>
+
+        </div>
+        
+        
+        
+        
+        
+        
+
+
+
+
+      </div>
+  </div>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script>
+    $(document).ready(function() {
+      var banners = $(".banner30");
+      var randomBanner = banners[Math.floor(Math.random() * banners.length)];
+      $(randomBanner).css("display", "block");
+    });
+  </script>
+  </center>
+  </div>
+</head>
+
+<body id="body">
+  <div class="wrapper-parent">
+    <!-- sidebar menu -->
+    <div id="menu" class="menu-wrap hide">
+      <!-- # faucet name # -->
+      <div class="site-name">
+        <a href="https://satoshifaucet.io/dashboard">
+          <img class="logo" src="https://satoshifaucet.io/assets/vprop/vdash/img/logo.png" alt="">
+        </a>
+      </div>
+
+      <!-- # Nav List # -->
+      <ul class="insideScroll text-white mt-2">
+        <li class="title">
+          <p>Menu</p>
+        </li>
+
+        <li class="hover">
+          <a href="https://satoshifaucet.io/dashboard" class="">
+            <i class="fa-brands fa-microsoft"></i>
+            Dashboard
+          </a>
+        </li>
+
+        <li class="hover">
+          <a href="https://satoshifaucet.io/referrals" class="">
+            <i class="fa-solid fa-users"></i>
+            Referrals
+          </a>
+        </li>
+
+        <li class="title">
+          <p>Earn</p>
+        </li>
+
+        <li class="hover">
+          <div class="sub-btn-two">
+            <div class="sub-btn-two_left">
+              <i class="fa-solid fa-faucet"></i>
+              Faucets
+            </div>
+            <div class="sub-btn-two_right dropdown">
+              <i class="bx bxs-chevron-right"></i>
+            </div>
+          </div>
+          <div class="sub-menu-two">
+         
+
+                              <a href="https://satoshifaucet.io/faucet/currency/ltc" class="">
+                  Faucet LTC                </a>
+                              <a href="https://satoshifaucet.io/faucet/currency/ton" class="">
+                  Faucet TON                </a>
+                              <a href="https://satoshifaucet.io/faucet/currency/doge" class="">
+                  Faucet DOGE                </a>
+                              <a href="https://satoshifaucet.io/faucet/currency/bch" class="">
+                  Faucet BCH                </a>
+                              <a href="https://satoshifaucet.io/faucet/currency/usdt" class="">
+                  Faucet USDT                </a>
+                              <a href="https://satoshifaucet.io/faucet/currency/trx" class="">
+                  Faucet TRX                </a>
+                              <a href="https://satoshifaucet.io/faucet/currency/bnb" class="">
+                  Faucet BNB                </a>
+                              <a href="https://satoshifaucet.io/faucet/currency/eth" class="">
+                  Faucet ETH                </a>
+                              <a href="https://satoshifaucet.io/faucet/currency/sol" class="">
+                  Faucet SOL                </a>
+                              <a href="https://satoshifaucet.io/faucet/currency/dash" class="">
+                  Faucet DASH                </a>
+                              <a href="https://satoshifaucet.io/faucet/currency/dgb" class="">
+                  Faucet DGB                </a>
+                              <a href="https://satoshifaucet.io/faucet/currency/xrp" class="">
+                  Faucet XRP                </a>
+                              <a href="https://satoshifaucet.io/faucet/currency/usdc" class="">
+                  Faucet USDC                </a>
+                              <a href="https://satoshifaucet.io/faucet/currency/fey" class="">
+                  Faucet FEY                </a>
+                              <a href="https://satoshifaucet.io/faucet/currency/ada" class="">
+                  Faucet ADA                </a>
+                              <a href="https://satoshifaucet.io/faucet/currency/xlm" class="">
+                  Faucet XLM                </a>
+                              <a href="https://satoshifaucet.io/faucet/currency/xmr" class="">
+                  Faucet XMR                </a>
+                              <a href="https://satoshifaucet.io/faucet/currency/tara" class="">
+                  Faucet TARA                </a>
+                              <a href="https://satoshifaucet.io/faucet/currency/pol" class="">
+                  Faucet POL                </a>
+                              <a href="https://satoshifaucet.io/faucet/currency/trump" class="">
+                  Faucet TRUMP                </a>
+                              <a href="https://satoshifaucet.io/faucet/currency/pepe" class="">
+                  Faucet PEPE                </a>
+                              <a href="https://satoshifaucet.io/faucet/currency/zec" class="">
+                  Faucet ZEC                </a>
+                        </div>
+        </li>
+
+                  <li class="hover">
+            <div class="sub-btn-two">
+              <div class="sub-btn-two_left">
+                <i class="fa-solid fa-up-right-from-square"></i>
+                Shortlinks
+              </div>
+              <div class="sub-btn-two_right dropdown">
+                <i class="bx bxs-chevron-right"></i>
+              </div>
+            </div>
+            <div class="sub-menu-two">
+                              <a href="https://satoshifaucet.io/links/currency/ltc" class="">
+                  Link LTC                </a>
+                              <a href="https://satoshifaucet.io/links/currency/ton" class="">
+                  Link TON                </a>
+                              <a href="https://satoshifaucet.io/links/currency/doge" class="">
+                  Link DOGE                </a>
+                              <a href="https://satoshifaucet.io/links/currency/bch" class="">
+                  Link BCH                </a>
+                              <a href="https://satoshifaucet.io/links/currency/usdt" class="">
+                  Link USDT                </a>
+                              <a href="https://satoshifaucet.io/links/currency/trx" class="">
+                  Link TRX                </a>
+                              <a href="https://satoshifaucet.io/links/currency/bnb" class="">
+                  Link BNB                </a>
+                              <a href="https://satoshifaucet.io/links/currency/eth" class="">
+                  Link ETH                </a>
+                              <a href="https://satoshifaucet.io/links/currency/sol" class="">
+                  Link SOL                </a>
+                              <a href="https://satoshifaucet.io/links/currency/dash" class="">
+                  Link DASH                </a>
+                              <a href="https://satoshifaucet.io/links/currency/dgb" class="">
+                  Link DGB                </a>
+                              <a href="https://satoshifaucet.io/links/currency/xrp" class="">
+                  Link XRP                </a>
+                              <a href="https://satoshifaucet.io/links/currency/usdc" class="">
+                  Link USDC                </a>
+                              <a href="https://satoshifaucet.io/links/currency/fey" class="">
+                  Link FEY                </a>
+                              <a href="https://satoshifaucet.io/links/currency/ada" class="">
+                  Link ADA                </a>
+                              <a href="https://satoshifaucet.io/links/currency/xlm" class="">
+                  Link XLM                </a>
+                              <a href="https://satoshifaucet.io/links/currency/xmr" class="">
+                  Link XMR                </a>
+                              <a href="https://satoshifaucet.io/links/currency/tara" class="">
+                  Link TARA                </a>
+                              <a href="https://satoshifaucet.io/links/currency/pol" class="">
+                  Link POL                </a>
+                              <a href="https://satoshifaucet.io/links/currency/trump" class="">
+                  Link TRUMP                </a>
+                              <a href="https://satoshifaucet.io/links/currency/pepe" class="">
+                  Link PEPE                </a>
+                              <a href="https://satoshifaucet.io/links/currency/zec" class="">
+                  Link ZEC                </a>
+                          </div>
+          </li>
+        
+        
+
+                  <li class="hover">
+            <a href="https://satoshifaucet.io/challenge" class="">
+              <i class="fa-solid fa-flag"></i>
+              Challenge
+            </a>
+          </li>
+        
+                  <li class="hover">
+            <a href="https://satoshifaucet.io/coupon" class="">
+              <i class="fa-solid fa-ticket"></i>
+              Coupon
+            </a>
+          </li>
+              </ul>
+    </div>
+
+    <!-- responsive overlay -->
+    <div class="responsive-overlay"></div>
+
+    <!-- ########## main content ########## -->
+    <div class="content-wrap">
+      <!-- top row -->
+      <div class="top-bar sticky-top">
+        <div class="container-fluid">
+          <div class="row px-3">
+            <div class="col-12 bg">
+              <div class="row">
+                <div class="col-2 col-sm-1">
+                  <!-- ## hamburger icon ## -->
+                  <div id="hideshow" href="#!" class="menu-toggle-btn">
+                    <img src="https://satoshifaucet.io/assets/vprop/vdash/img/menutoggle.svg" alt="">
+                  </div>
+
+                  <!-- ## hamburger icon responsive ## -->
+                  <div id="hideshow" href="#!" class="menu-toggle-btn lg">
+                    <img src="https://satoshifaucet.io/assets/vprop/vdash/img/menutoggle.svg" alt="">
+                  </div>
+                </div>
+
+                <!-- top row cta -->
+                <div class="col-10 d-flex justify-content-end">
+                  <div class="theme-toggler">
+                    <i class="fas fa-moon"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- #### dashboard main content #### -->
+      <div class=" main-content">
+        <div class="container-fluid">
+
+          
+            <!-- Content Row -->
+            <div class="row">  
+    <div>         
+   
+                         
+        <div class="row section px-3">
+              <div class="col-lg-4">
+                <div class="explore_n_earn_card">
+                  <div class="enec_img">
+                    <img src="https://satoshifaucet.io/assets/images/mycur/ltc.png" alt="">
+                  </div>
+                  <div class="enec_content">
+                    <h3>LTC</h3>
+                    <p>Currency You Claiming</p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-lg-4">
+                <div class="explore_n_earn_card">
+                  <div class="enec_img">
+                    <img src="https://satoshifaucet.io/assets/vprop/vdash/img/coin.svg" alt="">
+                  </div>
+                  <div class="enec_content">
+                    <h3><strong>0.00000180 LTC</strong></h3>
+                    <p>Amount</p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-lg-4">
+                <div class="explore_n_earn_card">
+                  <div class="enec_img">
+                    <img src="https://satoshifaucet.io/assets/vprop/vdash/img/hourglass.svg" alt="">
+                  </div>
+                  <div class="enec_content">
+                                        <h3>Every 10 Seconds</h3>
+                                        <p>Claim Time</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+                
+                 </div> 
+    </div>
+          
+                    
+     
+    
+      
+      
+
+<style>
+    .alert img {
+        width: auto;
+    }
+    
+    .antibotlinks img {
+        width: auto;
+        background: #fff;
+    }
+</style>
+
+<div class="text-center">
+	<h4 class="text-center mb-4"></h4>
+	<div class="text-center row">
+		    			<div class="col-12 col-md-8 col-lg-6 order-md-2 mb-4 text-center">
+			    
+			   
+			    
+			    
+			    
+            <center><iframe scrolling="no" src="https://cryptocoinsad.com/ads/show.php?a=257549&b=398869" style="overflow: hidden; width: 300px; height: 250px;" frameborder="0"></iframe></center>
+			
+		
+			
+		           <div class="common_card">
+					<div class="card-body">  
+					
+					
+				
+					
+								<div class="alert alert-danger text-danger mt-2 mb-2"> 
+					<strong>After every 50 faucet claims, 1 Shortlink must be completed to continue again!</strong>
+					</div>  
+								     
+					<br>
+					
+				<center><ins class="69eef7b5cf0afb9b65fad3e4" style="display:inline-block;width:1px;height:1px;"></ins><script>!function(e,n,c,t,o,r,d){!function e(n,c,t,o,r,m,d,s,a){s=c.getElementsByTagName(t)[0],(a=c.createElement(t)).async=!0,a.src="https://"+r[m]+"/js/"+o+".js?v="+d,a.onerror=function(){a.remove(),(m+=1)>=r.length||e(n,c,t,o,r,m)},s.parentNode.insertBefore(a,s)}(window,document,"script","69eef7b5cf0afb9b65fad3e4",["cdn.bmcdn6.com"], 0, new Date().getTime())}();</script></center>
+			
+				
+					<form id="fauform" action="https://satoshifaucet.io/faucet/verify/ltc" method="POST">
+							<div class="atb">
+
+								<div class="antibotlinks"></div><div class="antibotlinks"></div>							</div>
+														<div class="atb">
+															</div>
+							<input type="hidden" name="csrf_token_name" id="token" value="94999f4c6c117dcc463475ebc0c9bcce">
+                            <input type="hidden" name="token" value="c29JmxaAZgesO71vPq5WdriRF6DnUX">
+                            <input type="hidden" name="claim_nonce" value="401259adf3ba321c0f488ac4d16a349c84521a083e57339539cbc6685cfa7ca4">
+							
+                            <input type="hidden" name="uf" id="uf" value="">
+							<input type="hidden" name="utt" id="utt" value="1777333180">
+							<input type="hidden" name="ls" id="ls" value="qb7aG2MT">
+							<div class="atb">
+								<div class="antibotlinks"></div>							</div>
+							<center>
+								<div>
+									<input type="hidden" name="captcha" value="shield"><input type="hidden" name="shield_token" value="d0af74c6f38000b3cc3c178a1826178c">
+<input type="hidden" name="shield_answer" id="shd0af74c6_a" value="">
+<div id="shd0af74c6"></div>
+<style>
+.sc-wrap{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;width:340px;margin:16px auto;border-radius:20px;overflow:hidden;background:linear-gradient(170deg,#0f172a 0%,#0c1222 50%,#0f172a 100%);border:1px solid rgba(99,102,241,.18);box-shadow:0 8px 40px rgba(0,0,0,.6),0 0 0 1px rgba(99,102,241,.08),0 0 80px -20px rgba(99,102,241,.08);position:relative}
+.sc-wrap::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(99,102,241,.4),rgba(139,92,246,.3),transparent)}
+.sc-head{padding:16px 20px;display:flex;align-items:center;gap:14px;border-bottom:1px solid rgba(99,102,241,.08)}
+.sc-logo{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#6366f1 0%,#8b5cf6 50%,#a78bfa 100%);box-shadow:0 4px 16px rgba(99,102,241,.4);position:relative;overflow:hidden}
+.sc-logo::after{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.15),transparent);border-radius:12px}
+.sc-logo.done{background:linear-gradient(135deg,#22c55e 0%,#16a34a 50%,#15803d 100%);box-shadow:0 4px 16px rgba(34,197,94,.4)}
+.sc-info{flex:1}
+.sc-title{font-size:15px;font-weight:700;color:#f1f5f9;letter-spacing:-.02em}
+.sc-sub{font-size:10px;color:rgba(148,163,184,.6);font-family:"SF Mono",SFMono-Regular,ui-monospace,Consolas,monospace;margin-top:3px;letter-spacing:.07em;text-transform:uppercase}
+.sc-body{padding:20px}
+.sc-prompt{font-size:14px;color:#e2e8f0;margin-bottom:18px;font-weight:500;padding:12px 16px;border-radius:12px;background:linear-gradient(135deg,rgba(99,102,241,.05),rgba(139,92,246,.03));border:1px solid rgba(99,102,241,.1);text-align:center;line-height:1.5;position:relative}
+.sc-prompt b{color:#a78bfa;font-weight:700}
+.sc-prompt::before{content:'';position:absolute;top:-1px;left:20%;right:20%;height:1px;background:linear-gradient(90deg,transparent,rgba(99,102,241,.25),transparent)}
+.sc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.sc-item{aspect-ratio:1;border-radius:14px;border:2px solid rgba(30,41,59,.6);background:rgba(15,23,42,.5);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s cubic-bezier(.22,1,.36,1);padding:0;outline:0;position:relative;-webkit-tap-highlight-color:transparent;overflow:hidden}
+.sc-item::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at center,rgba(99,102,241,.04),transparent 70%);opacity:0;transition:opacity .2s}
+.sc-item:hover{border-color:rgba(99,102,241,.25);background:rgba(22,33,55,.7);transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,.2)}
+.sc-item:hover::before{opacity:1}
+.sc-item:active{transform:scale(.95);transition-duration:.1s}
+.sc-item.pick{border-color:rgba(129,140,248,.7);background:rgba(99,102,241,.1);box-shadow:0 0 0 3px rgba(99,102,241,.12),0 0 20px -4px rgba(99,102,241,.2);transform:scale(.97)}
+.sc-item.pick::before{opacity:1;background:radial-gradient(circle at center,rgba(99,102,241,.08),transparent 70%)}
+.sc-badge{position:absolute;top:6px;right:6px;width:20px;height:20px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(99,102,241,.5);animation:scBounce .3s cubic-bezier(.34,1.56,.64,1)}
+@keyframes scBounce{0%{transform:scale(0) rotate(-45deg)}100%{transform:scale(1) rotate(0deg)}}
+.sc-foot{padding:12px 20px;border-top:1px solid rgba(30,41,59,.4);display:flex;justify-content:space-between;align-items:center;background:rgba(8,12,28,.3)}
+.sc-ver{font-size:7px;color:rgba(51,65,85,.6);font-family:"SF Mono",ui-monospace,Consolas,monospace;letter-spacing:.1em;text-transform:uppercase}
+.sc-state{font-size:10px;font-weight:600;letter-spacing:.02em;display:flex;align-items:center;gap:6px}
+.sc-pulse{width:7px;height:7px;border-radius:50%;display:inline-block;position:relative}
+.sc-pulse.on::after{content:'';position:absolute;inset:-3px;border-radius:50%;background:inherit;opacity:.4;animation:scGlow 1.5s ease-in-out infinite}
+@keyframes scGlow{0%,100%{opacity:.4;transform:scale(1)}50%{opacity:.1;transform:scale(1.5)}}
+.sc-item svg{pointer-events:none;filter:drop-shadow(0 2px 3px rgba(0,0,0,.35))}
+</style>
+<script>
+(function(){
+var S={
+circle:function(c,z){return'<circle cx="'+z/2+'" cy="'+z/2+'" r="'+z*.38+'" fill="'+c+'"/>';},
+square:function(c,z){return'<rect x="'+z*.12+'" y="'+z*.12+'" width="'+z*.76+'" height="'+z*.76+'" rx="'+z*.08+'" fill="'+c+'"/>';},
+triangle:function(c,z){return'<polygon points="'+z/2+','+z*.06+' '+z*.94+','+z*.9+' '+z*.06+','+z*.9+'" fill="'+c+'"/>';},
+diamond:function(c,z){return'<polygon points="'+z/2+','+z*.04+' '+z*.96+','+z/2+' '+z/2+','+z*.96+' '+z*.04+','+z/2+'" fill="'+c+'"/>';},
+star:function(c,z){var x=z/2,y=z/2,R=z*.44,r=z*.19,p='';for(var i=0;i<5;i++){var a=-Math.PI/2+i*2*Math.PI/5,b=a+Math.PI/5;p+=(x+R*Math.cos(a)).toFixed(1)+','+(y+R*Math.sin(a)).toFixed(1)+' ';p+=(x+r*Math.cos(b)).toFixed(1)+','+(y+r*Math.sin(b)).toFixed(1)+' ';}return'<polygon points="'+p+'" fill="'+c+'"/>';},
+hexagon:function(c,z){var x=z/2,y=z/2,r=z*.42,p='';for(var i=0;i<6;i++){var a=Math.PI/3*i-Math.PI/6;p+=(x+r*Math.cos(a)).toFixed(1)+','+(y+r*Math.sin(a)).toFixed(1)+' ';}return'<polygon points="'+p+'" fill="'+c+'"/>';}
+};
+var D={"grid":[{"shape":"square","color":"#a855f7"},{"shape":"circle","color":"#06b6d4"},{"shape":"circle","color":"#06b6d4"},{"shape":"circle","color":"#06b6d4"},{"shape":"circle","color":"#06b6d4"},{"shape":"circle","color":"#06b6d4"},{"shape":"circle","color":"#06b6d4"},{"shape":"circle","color":"#06b6d4"},{"shape":"circle","color":"#06b6d4"}],"instruction":"Select the shape that <b>doesn't belong<\/b>","token":"d0af74c6f38000b3cc3c178a1826178c"};
+var G=D.grid,Q=D.instruction,sel={},Z=56;
+var root=document.getElementById('shd0af74c6');
+var ans=document.getElementById('shd0af74c6_a');
+function mk(sh,co){var f=S[sh];return f?'<svg width="'+Z+'" height="'+Z+'" viewBox="0 0 '+Z+' '+Z+'" xmlns="http://www.w3.org/2000/svg">'+f(co,Z)+'</svg>':'';}
+function up(){var k=Object.keys(sel).map(Number);k.sort(function(a,b){return a-b});ans.value=k.join(',');}
+function draw(){
+var n=Object.keys(sel).length,ok=n>0;
+var h='<div class="sc-wrap"><div class="sc-head"><div class="sc-logo'+(ok?' done':'')+'"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+(ok?'<polyline points="20 6 9 17 4 12"/>':'<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>')+'</svg></div><div class="sc-info"><div class="sc-title">Shield Captcha</div><div class="sc-sub">'+(ok?n+' shape'+(n>1?'s':'')+' selected':'verify you are human')+'</div></div></div>';
+h+='<div class="sc-body"><div class="sc-prompt">'+Q+'</div><div class="sc-grid">';
+for(var i=0;i<G.length;i++){
+h+='<button type="button" class="sc-item'+(sel[i]?' pick':'')+'" data-i="'+i+'">';
+if(sel[i])h+='<div class="sc-badge"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg></div>';
+h+=mk(G[i].shape,G[i].color)+'</button>';
+}
+h+='</div></div><div class="sc-foot"><span class="sc-ver">Shield Captcha</span><span class="sc-state" style="color:'+(ok?'#4ade80':'rgba(148,163,184,.4)')+'"><span class="sc-pulse'+(ok?' on':'')+'" style="background:'+(ok?'#4ade80':'rgba(71,85,105,.5)')+'"></span>'+(ok?'Ready \u2014 submit form':'Waiting for selection')+'</span></div></div>';
+root.innerHTML=h;
+var btns=root.querySelectorAll('.sc-item');
+for(var b=0;b<btns.length;b++){
+btns[b].onclick=function(e){e.preventDefault();e.stopPropagation();var i=parseInt(this.getAttribute('data-i'));if(sel[i])delete sel[i];else sel[i]=true;up();draw();};
+}
+}
+draw();
+})();
+</script>
+								</div>
+							</center>
+							<div class="atb">
+															</div>
+							<div class="atb">
+															</div>
+							<input type="hidden" name="wallet" class="form-control" value="gamamoch@gmail.com" readonly>
+							<div class="atb">
+															</div>
+							<br>
+							
+				
+							
+							
+							
+			
+							
+							 
+							 
+							 
+							 
+							 
+							 
+					
+					
+					<center><ins class="65c4ff4c3d959dd1437133e8" style="display:inline-block;width:300px;height:250px;"></ins><script>!function(e,n,c,t,o,r,d){!function e(n,c,t,o,r,m,d,s,a){s=c.getElementsByTagName(t)[0],(a=c.createElement(t)).async=!0,a.src="https://"+r[m]+"/js/"+o+".js?v="+d,a.onerror=function(){a.remove(),(m+=1)>=r.length||e(n,c,t,o,r,m)},s.parentNode.insertBefore(a,s)}(window,document,"script","65c4ff4c3d959dd1437133e8",["cdn.bmcdn6.com"], 0, new Date().getTime())}();</script></center>
+
+								
+
+
+
+
+                    
+				
+								
+                    <button type="submit" class="btn sl_btn text-white" style="border-radius:7px !important;
+								border:1px solid black !important;background-image: linear-gradient(to right bottom, #3F14E1, #600ECD)">
+								<i class="far fa-check-circle text-white"></i> Get Reward
+							</button>
+							
+						<center><iframe id='banner_advert_wrapper_13428' src='https://api.fpadserver.com/banner?id=13428&size=300x250' width='300px' height='250px' frameborder='0'></iframe></center>
+
+
+					
+							
+				
+						
+						<script>
+								// $(document).ready(function(){
+								// 	$('#subbutt').click(function(){
+								// 		$("#fauform").submit();
+								// 	});
+								// })
+							</script>
+						</form>
+					</div>
+				</div>
+			</div>
+
+			<div class="col-6 col-md-2 col-lg-3 order-md-1 p-0 left-ads">			
+			</div>
+			<div class="col-6 col-md-2 col-lg-3 order-md-3 p-0 right-ads"></div>
+		</div>
+		<div class="alert alert-success text-center">Invite your friends and earn 15% of their earning. Your referral links is: <code>https://satoshifaucet.io/?r=124158</code></div>
+		<p class="text-muted text-center font-weight-medium">Referrals: 0</p>
+			<script>
+		const countDown = setInterval(() => {
+			if (typeof wait !== 'undefined') {
+				if (wait == 0) {
+					clearInterval(countDown);
+					// Reloads the current page 
+					window.location.reload();
+
+				}
+				let minutes = Math.floor(wait / 60);
+				let seconds = wait % 60;
+				$("#minute").text(minutes);
+				$("#second").text(seconds);
+				wait -= 1;
+			}
+		}, 1000);
+
+		$(document).ready(function () {
+			let timer = 6;
+			const counter = setInterval(() => {
+				if (timer == 0) {
+					$(".claim-button").html(
+					'<i class="far fa-check-circle"></i> Claim Now'
+					);
+					$(".claim-button").removeAttr("disabled");
+					clearInterval(counter);
+				} else {
+					if (timer === 1) {
+						$(".claim-button").text(`Please wait ${timer} second`);
+					} else {
+						$(".claim-button").text(`Please wait ${timer} seconds`);
+					}
+					--timer;
+				}
+			}, 1000);
+		});
+	</script>
+
+    <!--<script>
+    var uid = localStorage.getItem('account_id');
+    if (uid === '124158') {  
+     } else {
+    window.location.href = "https://satoshifaucet.io/account/banned";
+    } 
+    </script>-->
+
+
+</div>
+<script type="module">
+	import CommonScripts from 'https://satoshifaucet.io/assets/js/common.js';
+
+	CommonScripts.load()
+	.then(fp => fp.get())
+	.then(result => {
+		const ufid = result.visitorId;
+		const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+		const languages = navigator.languages.join(',');
+
+		// ─── Write cookies so they persist through the OAuth round-trip ───
+		document.cookie = `uf=${ufid}; path=/;`;
+		document.cookie = `utt=${timezone}; path=/;`;
+		document.cookie = `ls=${languages}; path=/;`;
+
+		// ─── Also inject them as hidden form fields on submit ──────────────
+		const form = document.querySelector('form'); // adjust selector if needed
+		form.addEventListener('submit', event => {
+			event.preventDefault();
+
+			let uf = document.getElementById('uf');
+			if (!uf) {
+				uf = document.createElement('input');
+				uf.type = 'hidden';
+				uf.name = 'uf';
+				uf.id = 'uf';
+				form.appendChild(uf);
+			}
+			let utt = document.getElementById('utt');
+			if (!utt) {
+				utt = document.createElement('input');
+				utt.type = 'hidden';
+				utt.name = 'utt';
+				utt.id = 'utt';
+				form.appendChild(utt);
+			}
+			let ls = document.getElementById('ls');
+			if (!ls) {
+				ls = document.createElement('input');
+				ls.type = 'hidden';
+				ls.name = 'ls';
+				ls.id = 'ls';
+				form.appendChild(ls);
+			}
+
+			uf.value  = ufid;
+			utt.value = timezone;
+			ls.value  = languages;
+
+			form.submit();
+		});
+	});
+</script>
+                  </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ########## js ########## -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://satoshifaucet.io/assets/js/jquery.js" async></script>
+  <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://satoshifaucet.io/assets/vprop/vdash/js/sweetalert.js"></script>
+  <!-- Core plugin JavaScript-->
+  <script src="https://satoshifaucet.io/BSassets/vendor/jquery-easing/jquery.easing.min.js"></script>
+  <script type="text/javascript">
+    var site_url = "https://satoshifaucet.io/";
+  </script>
+  <script src="https://satoshifaucet.io/assets/js/webjs/captcha.js"></script>
+      <script src="https://satoshifaucet.io/assets/vprop/vdash/js/dexdash.js"></script>
+
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-26TB8SG0MB"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+
+    function gtag() {
+      dataLayer.push(arguments);
+    }
+    gtag('js', new Date());
+
+    gtag('config', 'G-26TB8SG0MB');
+  </script>
+<script>
+  console.log('Server Time: 2026-04-27 23:39:40');
+</script>
+  <script>//<![CDATA[ 
+/* Place this code snippet near the footer of your page before the close of the /body tag */
+/* LEGAL NOTICE: The content of this website and all associated program code are protected under the Digital Millennium Copyright Act. Intentionally circumventing this code may constitute a violation of the DMCA.*/
+const AdblockRegixFinder = { class : [/\[\[\[\[(.*)\]\]\]\]/gm, /\[\[\[(.*)\]\]\]/gm, /\[\[(.*)\]\]/gm], squarebracket : /[\[\]']+/g, settings : /\{\{(.*)\}\}/gm, curlbrackets : /[{}]/g, classfind : (className) => new RegExp('(\\s|^)' + className + '(\\s|$)'), linebreak : /(?:\r\n|\r|\n)/g, whitespace : /\s+/g };
+var _0xc29e=["","split","0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ+/","slice","indexOf","","",".","pow","reduce","reverse","0"];function _0xe79c(d,e,f){var g=_0xc29e[2][_0xc29e[1]](_0xc29e[0]);var h=g[_0xc29e[3]](0,e);var i=g[_0xc29e[3]](0,f);var j=d[_0xc29e[1]](_0xc29e[0])[_0xc29e[10]]()[_0xc29e[9]](function(a,b,c){if(h[_0xc29e[4]](b)!==-1)return a+=h[_0xc29e[4]](b)*(Math[_0xc29e[8]](e,c))},0);var k=_0xc29e[0];while(j>0){k=i[j%f]+k;j=(j-(j%f))/f}return k||_0xc29e[11]}eval(function(h,u,n,t,e,r){r="";for(var i=0,len=h.length;i<len;i++){var s="";while(h[i]!==n[e]){s+=h[i];i++}for(var j=0;j<n.length;j++)s=s.replace(new RegExp(n[j],"g"),j);r+=String.fromCharCode(_0xe79c(s,e,10)-t)}return decodeURIComponent(escape(r))}("YTyXWWyXOXyXOMyXOWyXOsyWYyXXNyXWsyXXTyXssyXOXyXWWyXsWyXWXyXYYyXWOyXssyXOYyXWOyXOTyWYyXMOyWYyYMWyWYyXsNyXOWyXWXyXWWyXOXyXOMyXOMyXWOyXWWyXOsyXWOyXWsyXMTyWYysYysNyWYyXMOyXXMyWYyYMWyWYyXOsyXOTyYMNyWYyYMWyWYyXOTyXWOyXOsyXOOyXOTyXOMyWYyYMXyXsNyXOMyXWsyXOXyYMXyOMyXOMyXWNyYMMyXsNyXsXyXWNyXOsyXOXyXOTyOMyXOXyXOMyXYsyXsNyXOMyXWOyXMWyWYyYMOyWYyXWWyXWNyXOsyXWWyXsYyWYysYyXWOyXOTyXOTyXOXyXOTysNyWYyYMWyWYyXOTyXWOyXOsyXOOyXOTyXOMyWYyXOsyXOTyXOOyXWOyXMWyWYyYMOyWYyYMOyssyWYyXsYyXWNyXOWyXXWyXssyXWNyXOWyXOWyXMTyWYysYyXWOyXssyssyWYyXWWyXssyXWNyXOWyXOWyXNMyXWNyXsOyXWOysNyWYyXMOyXXMyWYyYMWyWYyXsNyXsMyWYysYyXWOyXssysNyWYyYMWyWYyXsNyXsMyWYysYyXWOyXssyOMyXWWyXssyXWNyXOWyXOWyXYsyXsNyXOWyXOsysNyYMWyWYyXOTyXWOyXOsyXOOyXOTyXOMyWYyXWOyXssyOMyXWWyXssyXWNyXOWyXOWyXYsyXsNyXOWyXOsyOMyXWWyXOXyXOMyXOsyXWNyXsNyXOMyXOWysYyXWWyXssyXWNyXOWyXOWyXNMyXWNyXsOyXWOysNyWYyYMOyXWOyXssyXOWyXWOyYMWyWYyXOTyXWOyXOsyXOOyXOTyXOMyWYyWNyWNyXWOyXssyOMyXWWyXssyXWNyXOWyXOWyXNMyXWNyXsOyXWOyOMyXsOyXWNyXOsyXWWyXsYysYyXXNyXWsyXWTyXssyXOXyXWWyXsWyXNTyXWOyXsXyXsNyYMYyXYMyXsNyXOMyXWsyXWOyXOTyOMyXWWyXssyXWNyXOWyXOWyXsMyXsNyXOMyXWsysYyXWWyXssyXWNyXOWyXOWyXNMyXWNyXsOyXWOysNysNyXMWyWYyYMOyWYyYMOyWYyXOTyXWOyXOsyXOOyXOTyXOMyWYyXsMyXWNyXssyXOWyXWOyXMWyWYyYMOyssyWYyXWNyXWsyXWsyXXWyXssyXWNyXOWyXOWyXMTyWYysYyXWOyXssyssyWYyXWWyXssyXWNyXOWyXOWyXNMyXWNyXsOyXWOysNyWYyXMOyXXMyWYyYMWyWYyXsNyXsMyWYysYyXWOyXssysNyWYyYMWyWYyXsNyXsMyWYysYyXWOyXssyOMyXWWyXssyXWNyXOWyXOWyXYsyXsNyXOWyXOsysNyYMWyWYyXWOyXssyOMyXWWyXssyXWNyXOWyXOWyXYsyXsNyXOWyXOsyOMyXWNyXWsyXWsysYyXWWyXssyXWNyXOWyXOWyXNMyXWNyXsOyXWOysNyXMWyWYyYMOyXWOyXssyXOWyXWOyWYyXsNyXsMyWYysYyWNyXXNyXWsyXXTyXssyXOXyXWWyXsWyXWXyXYYyXWOyXssyXOYyXWOyXOTyOMyXsYyXWNyXOWyXXWyXssyXWNyXOWyXOWysYyXWOyXssyssyWYyXWWyXssyXWNyXOWyXOWyXNMyXWNyXsOyXWOysNysNyYMWyWYyXWOyXssyOMyXWWyXssyXWNyXOWyXOWyXNMyXWNyXsOyXWOyWYysWyXMOyWYysXyWYysXyWYysWyWYyXWWyXssyXWNyXOWyXOWyXNMyXWNyXsOyXWOyXMWyWYyYMOyWYyYMOyWYyXOTyXWOyXOsyXOOyXOTyXOMyWYyXsMyXWNyXssyXOWyXWOyXMWyWYyYMOyssyWYyXOTyXWOyXsOyXOXyYMMyXWOyXXWyXssyXWNyXOWyXOWyXMTyWYysYyXWOyXssyssyWYyXWWyXssyXWNyXOWyXOWyXNMyXWNyXsOyXWOysNyWYyXMOyXXMyWYyYMWyWYyXsNyXsMyWYysYyXWOyXssysNyWYyYMWyWYyXsNyXsMyWYysYyXXNyXWsyXXTyXssyXOXyXWWyXsWyXWXyXYYyXWOyXssyXOYyXWOyXOTyOMyXsYyXWNyXOWyXXWyXssyXWNyXOWyXOWysYyXWOyXssyssyWYyXWWyXssyXWNyXOWyXOWyXNMyXWNyXsOyXWOysNysNyWYyYMWyWYyXWOyXssyOMyXWWyXssyXWNyXOWyXOWyXNMyXWNyXsOyXWOyWYyXMOyWYyXWOyXssyOMyXWWyXssyXWNyXOWyXOWyXNMyXWNyXsOyXWOyOMyXOTyXWOyXOYyXssyXWNyXWWyXWOysYyXXNyXWsyXWTyXssyXOXyXWWyXsWyXNTyXWOyXsXyXsNyYMYyXYMyXsNyXOMyXWsyXWOyXOTyOMyXWWyXssyXWNyXOWyXOWyXsMyXsNyXOMyXWsysYyXWWyXssyXWNyXOWyXOWyXNMyXWNyXsOyXWOysNyssyWYysXyWYysXysNyXMWyWYyYMOyWYyXWOyXssyXOWyXWOyWYyXsNyXsMyWYysYyXWOyXssyOMyXWWyXssyXWNyXOWyXOWyXYsyXsNyXOWyXOsysNyWYyYMWyWYyXWOyXssyOMyXWWyXssyXWNyXOWyXOWyXYsyXsNyXOWyXOsyOMyXOTyXWOyXsOyXOXyYMMyXWOysYyXWWyXssyXWNyXOWyXOWyXNMyXWNyXsOyXWOysNyXMWyWYyYMOyWYyYMOyWYyXOTyXWOyXOsyXOOyXOTyXOMyWYyXsMyXWNyXssyXOWyXWOyXMWyWYyYMOyssyWYyXsXyXWOyXOMyXWOyXOTyXWNyXOsyXWOyXOTyXWNyXOMyXWsyXMTyWYysYyXssyXWOyXOMyXsXyXOsyXsYyWYyXMOyWYyOWyOYysNyWYyXMOyXXMyWYyYMWyWYyXssyXWOyXOsyWYyXOTyXWOyXOWyXOOyXssyXOsyWYyXMOyWYysXysXyXMWyWYyXWWyXOXyXOMyXOWyXOsyWYyXWWyXsYyXWNyXOTyXWNyXWWyXOsyXWOyXOTyXOWyWYyXMOyWYysXyXXNyXXTyXXWyXXsyXXOyXYMyXYXyXYYyXYNyXYTyXYWyXYsyXYOyXNMyXNXyXNYyXNNyXNTyXNWyXNsyXNOyXTMyXTXyXTYyXTNyXTTyXWNyXWTyXWWyXWsyXWOyXsMyXsXyXsYyXsNyXsTyXsWyXssyXsOyXOMyXOXyXOYyXONyXOTyXOWyXOsyXOOyYMMyYMXyYMYyYMNyYMTysXyXMWyWYyXWWyXOXyXOMyXOWyXOsyWYyXWWyXsYyXWNyXOTyXWNyXWWyXOsyXWOyXOTyXOWyXYsyXWOyXOMyXsXyXOsyXsYyWYyXMOyWYyXWWyXsYyXWNyXOTyXWNyXWWyXOsyXWOyXOTyXOWyOMyXssyXWOyXOMyXsXyXOsyXsYyXMWyWYyXsMyXOXyXOTyWYysYyXssyXWOyXOsyWYyXsNyWYyXMOyWYyOYyXMWyWYyXsNyWYyXMsyWYyXssyXWOyXOMyXsXyXOsyXsYyXMWyWYyXsNysWysWysNyWYyYMWyWYyXOTyXWOyXOWyXOOyXssyXOsyWYysWyXMOyWYyXWWyXsYyXWNyXOTyXWNyXWWyXOsyXWOyXOTyXOWyOMyXWWyXsYyXWNyXOTyXXNyXOsysYyXYOyXWNyXOsyXsYyOMyXsMyXssyXOXyXOXyXOTysYyXYOyXWNyXOsyXsYyOMyXOTyXWNyXOMyXWsyXOXyXsOysYysNyWYysTyWYyXWWyXsYyXWNyXOTyXWNyXWWyXOsyXWOyXOTyXOWyXYsyXWOyXOMyXsXyXOsyXsYysNysNyXMWyWYyYMOyWYyXOTyXWOyXOsyXOOyXOTyXOMyWYyXOTyXWOyXOWyXOOyXssyXOsyXMWyWYyYMOyssyWYyXWOyXOMyXWWyXOXyXWsyXWOyXMTyWYyXsMyXOOyXOMyXWWyXOsyXsNyXOXyXOMyWYysYyXOWyXOsyXOTyXsNyXOMyXsXysNyWYyYMWyWYyXssyXWOyXOsyWYyXWOyXOMyXWWyXOXyXWsyXWOyXWsyWYyXMOyWYysXysXyXMWyWYyXsNyXsMysYyWYyXOWyXOsyXOTyXsNyXOMyXsXyWYysMysMyWYyXOWyXOsyXOTyXsNyXOMyXsXyOMyXssyXWOyXOMyXsXyXOsyXsYyWYyXXMyWYyOYyWYysNyYMWyWYyXssyXWOyXOsyWYyXWOyYMMyXWNyXOTyWYyXMOyWYysXysXyXMWyWYyXsMyXOXyXOTysYyXssyXWOyXOsyWYyXOXyWYyXMOyWYyOYyXMWyWYyXOXyWYyXMsyWYyXOWyXOsyXOTyXsNyXOMyXsXyOMyXssyXWOyXOMyXsXyXOsyXsYyXMWyWYyXOXysWysWysNyYMWyWYyXWOyYMMyXWNyXOTyWYyXMOyWYyXYOyXWNyXOsyXsYyOMyXOTyXOXyXOOyXOMyXWsysYysYyXOWyXOsyXOTyXsNyXOMyXsXyOMyXWWyXsYyXWNyXOTyXXWyXOXyXWsyXWOyXXNyXOsysYyXOXysNyWYysWyWYyONyOTyOWysNyWYyOXyWYyOTysNyXMWyWYyXsNyXsMysYyWYysYyXWOyYMMyXWNyXOTyWYyXXMyXMOyWYyXMNyXMXyWYysMysMyWYyXWOyYMMyXWNyXOTyWYyXMsyXMOyWYyONyOTyOTysNyWYyYMsyYMsyWYysYyXWOyYMMyXWNyXOTyWYyXXMyXMOyWYyXMMyOOyWYysMysMyWYyXWOyYMMyXWNyXOTyWYyXMsyXMOyWYyXMNyOYysNyWYysNyYMWyWYyXWOyXOMyXWWyXOXyXWsyXWOyXWsyWYysWyXMOyWYyXNWyXOsyXOTyXsNyXOMyXsXyOMyXsMyXOTyXOXyXsOyXXWyXsYyXWNyXOTyXXWyXOXyXWsyXWOysYyXWOyYMMyXWNyXOTysNyXMWyWYyYMOyXWOyXssyXOWyXWOyYMWyWYyXWOyXOMyXWWyXOXyXWsyXWOyXWsyWYysWyXMOyWYysXyXOWyXsWyXsMyXsTyXsYyXOWyXsTyXsWyXWsyXsMyXsYysXyXMWyWYyYMOyWYyYMOyWYyXOTyXWOyXOsyXOOyXOTyXOMyWYyXWOyXOMyXWWyXOXyXWsyXWOyXWsyXMWyWYyYMOyWYyXOTyXWOyXOsyXOOyXOTyXOMyWYyXOWyXOsyXOTyXsNyXOMyXsXyXMWyWYyYMOyYTyYMOyXMWyYTyXWWyXssyXWNyXOWyXOWyWYyXXNyXWsyXWTyXssyXOXyXWWyXsWyXWXyXYYyXNsyXYOyXYsyXNsyXWOyXsOyXOYyXssyXWNyXOsyXWOyWYyYMWyWYyXOWyXWOyXOsyXOsyXsNyXOMyXsXyXOWyWYyXMOyWYyYMWyYMOyXMWyWYyXWsyXWOyXsMyXWNyXOOyXssyXOsyXOWyWYyXMOyWYyYMWyWYyXWWyXOXyXOMyXOsyXWOyXOMyXOsyXMTyWYysXyXMsyXOYyXXMyXTXyXWOyWYyXsYyXWNyYMMyXWOyWYyXWsyXWOyXOsyXWOyXWWyXOsyXWOyXWsyWYyXOsyXsYyXWNyXOsyWYyYMNyXOXyXOOyWYyXWNyXOTyXWOyWYyXOOyXOWyXsNyXOMyXsXyWYyXWOyYMYyXOsyXWOyXOMyXOWyXsNyXOXyXOMyXOWyWYyXOsyXOXyWYyXWTyXssyXOXyXWWyXsWyWYyXWNyXWsyXOWyOMyWYyXNYyXssyXWOyXWNyXOWyXWOyWYyXOWyXOOyXOYyXOYyXOXyXOTyXOsyWYyXOOyXOWyWYyXWTyYMNyWYyXWsyXsNyXOWyXWNyXWTyXssyXsNyXOMyXsXyWYyXOsyXsYyXWOyXOWyXWOyWYyXWNyXWsyXOWyWYyXWTyXssyXOXyXWWyXsWyXWOyXOTyOMyXMsyOXyXOYyXXMysXyssyWYyXOsyXsNyXOsyXssyXWOyXMTyWYysXyXXNyXWsyXOWyWYyXXTyXssyXOXyXWWyXsWyXWOyXOTyWYyXXsyXWOyXOsyXWOyXWWyXOsyXWOyXWsyWNyWNyWNysXyssyWYyYMXyXsNyXWsyXOsyXsYyXMTyWYyOWyOOyssyWYyXOsyXOXyXOYyXMTyWYyOYyssyWYyXWTyXOsyXOMyONyXWXyXOWyXsYyXOXyYMXyXMTyWYyXOsyXOTyXOOyXWOyssyWYyXWTyXOsyXOMyONyXWXyXOsyXWOyYMYyXOsyXMTyWYyWTyXYNysXyYMMyXWOyWYyXWsyXsNyXOWyXWNyXWTyXssyXWOyWYyXXNyXWsyXWTyXssyXOXyXWWyXsWyWTyssyWYyXWTyXOsyXOMyOTyXWXyXOWyXsYyXOXyYMXyXMTyWYyXsMyXWNyXssyXOWyXWOyssyWYyXWTyXOsyXOMyOTyXWXyXOsyXWOyYMYyXOsyXMTyWYysXyXXWyXssyXOXyXOWyXWOysXyssyWYyXWTyXOXyXOTyXWsyXWOyXOTyXOTyXWNyXWsyXsNyXOOyXOWyXMTyWYyOOyssyWYyXWWyXssyXWNyXOWyXOWyXWOyXOWyWYyXMTyWYysXyXOMyXWNyYMMyXWNyXWsyWYyXWsyXWOyXssyXWNyYMNyXWOyXWsyXWNyXWsyWYyXWNyXWsyXOWyXOsyYMYyWYyXWNyXWsyXOWyXWXyXssyXOXyXWNyXWsyXWOyXOTyWYyXOWyYMNyXOWyXOsyXWOyXsOyXWXyXWNyXWsyWYyXOTyXWsyXsOyXWNyXWsyXsMyXWOyXWOyXWsyWYyXWNyXWsyYMMyXWXyYMMyXWOyXOTyXOsyWYyXWNyXWsyXOWyXWXyXOWyXOYyXOTyXOXyXOOyXOsyWYyXOXyXsOyXWTyXWNyXWsyWYyXWNyXWsysOyXsOyXWNyXOTyXsWyXWOyXOTyWYyXOsyXWOyYMYyXOsyXWNyXWsyXOWyWYyXOWyXWWyXWNyXOMyXOWyXWWyXOXyXOOyXOsyWYyXOsyXOTyXsNyXWTyXWNyXssyXWNyXWsyWYyXWsyYMNyXOMyXWXyXWTyXWNyXOMyXOMyXWOyXOTyWYyXWNyXOMyXOMyXOXyXOMyXOWyXWOyXOTyWYyXWNyXWsyXOWyXWOyXWWyXOsyXsNyXOXyXOMyWYyXWNyXWsyXOWyXWWyXOTyXsNyXOYyXOsyWYyXOsyXOTyXWNyXsMyXsMyXsNyXWWyXWOyYMYyXWWyXsYyXWNyXOMyXsXyXWOysOyXsTyXOWyWYyXWNyXWsyXssyXOXyXsXyWYyXWTyXWNyXOMyXOMyXWOyXOTyXOWyXWNyXWsyXOWyWYyXOYyXWNyXsXyXWOyXWNyXWsyXOWyWYyXOXyXOYyXWOyXOMyXWNyXWsyXOWyWYyXOYyXWOyXOTyXsMyXWNyXWsyXOWyWYyXssyXWNyYMNyXWOyXOTyXWNyXWsyXOWyWYyXWNyXWsyXsXyXOYyXOsyWYyXOYyXOXyXOYyXOOyXOMyXWsyXWOyXOTyWYyXWNyXWsyYMMysOyXWNyXOWyXOYyWYyXOXyXOYyXWOyXOMyYMYyWYyXsMyXOXyXOXyXOsyXWOyXOTyXWNyXWsyXOWyWYyXWNyXWsyXOWyXOYyXsMyWYyXsOyXOWyXOMyXOYyXOXyXOYyXOOyXOYyWYyXWTyXWOyXOsyXWNyXWNyXWsyWYyXOWyXWWyXOTyXOYyXWNyXWsyXOWyWYyXWNyXWsyXOWyXWXyXWsyXWOyXOsyXWOyXWWyXOsyWYyXssyXWOyXWNyXWsyXWOyXOTyXWTyXOXyXWNyXOTyXWsyXWXyXWNyXWsyWYyXWsyXWNyXOTyXOsyXWXyXsNyXOMyXOsyXWOyXOTyXOWyXOsyXsNyXOsyXsNyXWNyXssyWYyXWNyXWsyXOTyXOXyXOsyXWNyXOsyWYyXWNyXWsyXOsyXOXyXOYyXssyXWOyXsMyXOsyWYyYMMyXsNyXWsyXWOyXOXyXsTyXOWysOyXWNyXWsyXOWyWYyXWNyXWsyXOTyXWOyXWNyXWsyYMNyXOsyXOTyXWNyXWWyXOsyXsNyXOXyXOMyXOWysXyssyWYyXWsyXWOyXWTyXOOyXsXyWYyXMTyWYyXsMyXWNyXssyXOWyXWOyWYyYMOyXMWyWYyXOsyXsYyXWOyXsOyXWOyXXOyXssyXWOyWYyXMOyWYyYMWyWYyXOsyXsYyXWOyXsOyXWOyXMTyWYyXOMyXOOyXssyXssyssyWYyXWWyXssyXOXyXOWyXWOyXWTyXOsyXOMyXMTyWYyXOMyXOOyXssyXssyssyWYyXWTyXOOyXOsyXOsyXOXyXOMyONyXMTyWYyXOMyXOOyXssyXssyssyWYyXWTyXOOyXOsyXOsyXOXyXOMyOTyXMTyWYyXOMyXOOyXssyXssyWYyYMOyXMWyWYyXWsyXWOyXWTyXOOyXsXyWYyXMOyWYyXsMyXWNyXssyXOWyXWOyXMWyWYyXWWyXOXyXOMyXOWyXOsyXOTyXOOyXWWyXOsyXOXyXOTysYyXOWyXWOyXOsyXOsyXsNyXOMyXsXyXOWyWYyXMOyWYyYMWyYMOysNyWYyYMWyWYyXOsyXsYyXsNyXOWyOMyXOWyXWOyXOsyXOsyXsNyXOMyXsXyXOWyWYyXMOyWYyYMWyWYyOMyOMyOMyXOsyXsYyXsNyXOWyOMyXWsyXWOyXsMyXWNyXOOyXssyXOsyXOWyssyWYyOMyOMyOMyXOWyXWOyXOsyXOsyXsNyXOMyXsXyXOWyWYyYMOyXMWyWYyXOsyXsYyXsNyXOWyOMyXWsyXWOyXWTyXOOyXsXyWYyXMOyWYyXOsyXsYyXsNyXOWyOMyXOWyXWOyXOsyXOsyXsNyXOMyXsXyXOWyOMyXWsyXWOyXWTyXOOyXsXyWYyYMsyYMsyWYyXsMyXWNyXssyXOWyXWOyXMWyWYyXOsyXsYyXsNyXOWyOMyXOTyXWNyXOMyXWsyXOWyXOsyXOTyXsNyXOMyXsXyWYyXMOyWYyXXNyXWsyXXTyXssyXOXyXWWyXsWyXWXyXYYyXWOyXssyXOYyXWOyXOTyOMyXsXyXWOyXOMyXWOyXOTyXWNyXOsyXWOyXOTyXWNyXOMyXWsysYyONyOOysNyXMWyWYyYMOyXMWyWYyXOTyXWWyXssyXWNyXOWyXOWyWYyXMOyWYyXOWyXOsyXOTyXsNyXOMyXsXyWYyXMOyXXMyWYyYMWyWYyXOTyXWOyXOsyXOOyXOTyXOMyWYyXXNyXWsyXXTyXssyXOXyXWWyXsWyXWXyXYYyXWOyXssyXOYyXWOyXOTyOMyXWOyXOMyXWWyXOXyXWsyXWOysYyXOsyXsYyXsNyXOWyOMyXOTyXWNyXOMyXWsyXOWyXOsyXOTyXsNyXOMyXsXyWYysWyWYysXyXWXyXWXysXyWYysWyWYyXOWyXOsyXOTyXsNyXOMyXsXyWYysWyWYysXyXWXyXWXysXyWYysWyWYyXOsyXsYyXsNyXOWyOMyXOTyXWNyXOMyXWsyXOWyXOsyXOTyXsNyXOMyXsXysNyXMWyWYyYMOyXMWyWYyXWTyXOTyXWNyXOMyXWsyXsNyXOMyXsXyWYyXMOyWYysYysNyWYyXMOyXXMyWYyYMWyWYyXssyXWOyXOsyWYyXWTyXOTyXWNyXOMyXWsyXsNyXOMyXsXyWYyXMOyWYyXWsyXOXyXWWyXOOyXsOyXWOyXOMyXOsyOMyXWWyXOTyXWOyXWNyXOsyXWOyXXOyXssyXWOyXsOyXWOyXOMyXOsysYysXyXWsyXsNyYMMysXysNyXMWyWYyXWTyXOTyXWNyXOMyXWsyXsNyXOMyXsXyOMyXOWyXWOyXOsyXXNyXOsyXOsyXOTyXsNyXWTyXOOyXOsyXWOysYysXyXWWyXssyXWNyXOWyXOWysXyssyWYyXOsyXsYyXsNyXOWyOMyXOTyXWWyXssyXWNyXOWyXOWysYysXyXWWyXsYyXOYyXWXyXWTyXOTyXWNyXOMyXWsyXsNyXOMyXsXysXysNysNyXMWyWYyXssyXWOyXOsyWYyXWNyYMXyXOTyXWNyXOYyWYyXMOyWYyXWsyXOXyXWWyXOOyXsOyXWOyXOMyXOsyOMyXWWyXOTyXWOyXWNyXOsyXWOyXXOyXssyXWOyXsOyXWOyXOMyXOsysYysXyXWNysXysNyXMWyWYyXWNyYMXyXOTyXWNyXOYyOMyXOWyXWOyXOsyXXNyXOsyXOsyXOTyXsNyXWTyXOOyXOsyXWOysYysXyXsNyXWsysXyssyWYyXOsyXsYyXsNyXOWyOMyXOTyXWWyXssyXWNyXOWyXOWysYysXyXWWyXsYyXOYyXWXyXWTyXOTyXWNyXOMyXWsyXsNyXOMyXsXysXysNysNyXMWyWYyXWNyYMXyXOTyXWNyXOYyOMyXOWyXWOyXOsyXXNyXOsyXOsyXOTyXsNyXWTyXOOyXOsyXWOysYysXyXsYyXOTyXWOyXsMysXyssyWYysXyXsYyXOsyXOsyXOYyXOWyXMTyOXyOXyXWWyXsYyXOYyXWNyXWsyXWTyXssyXOXyXWWyXsWyOMyXWWyXOXyXsOyOXyXOYyXOTyXsNyXWWyXsNyXOMyXsXyOXysXysNyXMWyWYyXWNyYMXyXOTyXWNyXOYyOMyXOWyXWOyXOsyXXNyXOsyXOsyXOTyXsNyXWTyXOOyXOsyXWOysYysXyXOsyXWNyXOTyXsXyXWOyXOsysXyssyWYysXyXWXyXWTyXssyXWNyXOMyXsWysXysNyXMWyWYyXWNyYMXyXOTyXWNyXOYyOMyXOWyXWOyXOsyXXNyXOsyXOsyXOTyXsNyXWTyXOOyXOsyXWOysYysXyXOTyXWOyXssysXyssyWYysXyXOMyXOXyXOXyXOYyXWOyXOMyXWOyXOTyWYyXOMyXOXyXOTyXWOyXsMyXWOyXOTyXOTyXWOyXOTysXysNyXMWyWYyXWNyYMXyXOTyXWNyXOYyOMyXsNyXOMyXOMyXWOyXOTyXYYyXNsyXYOyXYsyWYyXMOyWYysXyXMsyXOWyXOYyXWNyXOMyWYyXWWyXssyXWNyXOWyXOWyXMOyWTysXysWyXOsyXsYyXsNyXOWyOMyXOTyXWWyXssyXWNyXOWyXOWysYyWTyXOYyXOXyYMXyXWOyXOTyXWOyXWsyXWXyXWTyYMNyWTysNysWysXyWTyWYyXOWyXOsyYMNyXssyXWOyXMOyWTyXWWyXOXyXssyXOXyXOTyXMTyWYyXOTyXsXyXWTysYyXMNyssyWYyONyOWyssyWYyOTyOTysNyXMWyWTyXXMyXNYyXOXyYMXyXWOyXOTyXWOyXWsyWYyXXTyYMNyXMsyOXyXOWyXOYyXWNyXOMyXXMyWYyXMsyXWsyXsNyYMMyWYyXWWyXssyXWNyXOWyXOWyXMOyWTysXysWyXOsyXsYyXsNyXOWyOMyXOTyXWWyXssyXWNyXOWyXOWysYyWTyXWWyXsYyXOYyXWXyXWTyXOTyXWNyXWsyXsNyXOMyXsXyXWXyXOWyYMMyXsXyWTysNysWysXyWTyXXMyXMsyXsNyXsOyXsXyWYyXOWyXOTyXWWyXMOyWTyXsYyXOsyXOsyXOYyXOWyXMTyOXyOXyXWWyXsYyXOYyXWNyXWsyXWTyXssyXOXyXWWyXsWyOMyXWWyXOXyXsOyOXyYMXyXOYysOyXWWyXOXyXOMyXOsyXWOyXOMyXOsyOXyXOOyXOYyXssyXOXyXWNyXWsyXOWyOXyOTyOYyOTyOWyOXyOYyOsyOXyXWsyOMyXOWyYMMyXsXyWTyWYyXWNyXssyXOsyXMOyWTyXXTyXWOyXOWyXOsyWYyXTXyXOXyXOTyXWsyXOYyXOTyXWOyXOWyXOWyWYyXXNyXWsyXWTyXssyXOXyXWWyXsWyWYyXXsyXWOyXOsyXWOyXWWyXOsyXsNyXOMyXsXyWYyXNYyXssyXOOyXsXyXsNyXOMyWYyYMsyWYyXXWyXYYyXNYyWYyXXNyXWsyXWTyXssyXOXyXWWyXsWyWTyWYyOXyXXMyXMsyOXyXWsyXsNyYMMyXXMysXyXMWyWYyXWTyXOTyXWNyXOMyXWsyXsNyXOMyXsXyOMyXWNyXOYyXOYyXWOyXOMyXWsyXXWyXsYyXsNyXssyXWsysYyXWNyYMXyXOTyXWNyXOYysNyXMWyWYyXWsyXOXyXWWyXOOyXsOyXWOyXOMyXOsyOMyXWTyXOXyXWsyYMNyOMyXWNyXOYyXOYyXWOyXOMyXWsyXXWyXsYyXsNyXssyXWsysYyXWTyXOTyXWNyXOMyXWsyXsNyXOMyXsXysNyXMWyWYyXOTyXWOyXOsyXOOyXOTyXOMyWYyXWTyXOTyXWNyXOMyXWsyXsNyXOMyXsXyXMWyWYyYMOyXMWyWYyXXsyXWOyXsMyXWNyXOOyXssyXOsyXNsyXsYyXWOyXsOyXWOyWYyXMOyWYysYysNyWYyXMOyXXMyWYyYMWyWYyXssyXWOyXOsyWYyXsOyXWNyXsNyXOMyXOsyXsYyXWOyXsOyXWOyWYyXMOyWYyXWsyXOXyXWWyXOOyXsOyXWOyXOMyXOsyOMyXWWyXOTyXWOyXWNyXOsyXWOyXXOyXssyXWOyXsOyXWOyXOMyXOsysYysXyXWsyXsNyYMMysXysNyXMWyWYyXsOyXWNyXsNyXOMyXOsyXsYyXWOyXsOyXWOyOMyXOWyXWOyXOsyXXNyXOsyXOsyXOTyXsNyXWTyXOOyXOsyXWOysYysXyXWWyXssyXWNyXOWyXOWysXyssyWYyXOsyXsYyXsNyXOWyOMyXOTyXWWyXssyXWNyXOWyXOWysYysXyXOsyXsYyXWOyXsOyXWOysXysNyWYysWyWYyWTyWYyWTyWYysWyWYyXOsyXsYyXsNyXOWyOMyXOTyXWWyXssyXWNyXOWyXOWysYysXyXOsyXsYyXWOyXsOyXWOyONysXysNysNyXMWyWYyXssyXWOyXOsyWYyXOsyXsYyXWOyXsOyXWOyWYyXMOyWYyXWsyXOXyXWWyXOOyXsOyXWOyXOMyXOsyOMyXWWyXOTyXWOyXWNyXOsyXWOyXXOyXssyXWOyXsOyXWOyXOMyXOsysYysXyXWsyXsNyYMMysXysNyXMWyWYyXOsyXsYyXWOyXsOyXWOyOMyXOWyXWOyXOsyXXNyXOsyXOsyXOTyXsNyXWTyXOOyXOsyXWOysYysXyXWWyXssyXWNyXOWyXOWysXyssyWYyXOsyXsYyXsNyXOWyOMyXOTyXWWyXssyXWNyXOWyXOWysYysXyXWTyXOXyXWsyYMNysXysNysNyXMWyWYyXWWyXOXyXOMyXOWyXOsyWYyXsOyXWNyXsNyXOMyXWWyXOXyXOMyXOsyXWOyXOMyXOsyWYyXMOyWYysXyXMsyXWsyXsNyYMMyWYyXWWyXssyXWNyXOWyXOWyXMOyWTysXysWyXOsyXsYyXsNyXOWyOMyXOTyXWWyXssyXWNyXOWyXOWysYyWTyXsOyXWNyXsNyXOMyXWXyXWWyXOXyXOMyXOsyXWOyXOMyXOsyXWXyYMXyXOTyXWNyXOYyXOYyXWOyXOTyWTysNysWysXyWTyXXMyXTsyWYyXMsyXWsyXsNyYMMyWYyXWWyXssyXWNyXOWyXOWyXMOyWTysXysWyXOsyXsYyXsNyXOWyOMyXOTyXWWyXssyXWNyXOWyXOWysYyWTyYMXyXOTyXWNyXOYyXOYyXWOyXOTyWTysNysWysXyWTyXXMyXTsyWYyXMsyXsNyXsOyXsXyWYyXWWyXssyXWNyXOWyXOWyXMOyWTyXsNyXsOyXsXyWYysXysWyXOsyXsYyXsNyXOWyOMyXOTyXWWyXssyXWNyXOWyXOWysYyWTyXsNyXWWyXOXyXOMyWTysNysWysXyWTyWYyXOWyXOTyXWWyXMOyWTyXsYyXOsyXOsyXOYyXOWyXMTyOXyOXyXWWyXsYyXOYyXWNyXWsyXWTyXssyXOXyXWWyXsWyOMyXWWyXOXyXsOyOXyYMXyXOYysOyXWWyXOXyXOMyXOsyXWOyXOMyXOsyOXyXOOyXOYyXssyXOXyXWNyXWsyXOWyOXyOTyOYyOTyOTyOXyOYyXMYyOXyXsNyXWWyXOXyXOMysOyONyOMyXOYyXOMyXsXyWTyWYyXWNyXssyXOsyXMOyWTyXXWyXYYyXNYyWYyXXNyXWsyXWTyXssyXOXyXWWyXsWyWYyXYNyXWWyXOXyXOMyWTyOXyXXMyXTsyWYyXMsyOXyXWsyXsNyYMMyXXMyWYyXMsyXWsyXsNyYMMyWYyXWWyXssyXWNyXOWyXOWyXMOyWTysXysWyXOsyXsYyXsNyXOWyOMyXOTyXWWyXssyXWNyXOWyXOWysYysXyXsOyXWNyXsNyXOMyXWXyXWWyXOXyXOMyXOsyXWOyXOMyXOsysXysNysWysXyWTyXXMyXTsyWYyXMsyXsYyOsyWYyXWWyXssyXWNyXOWyXOWyXMOyWTyXWNyXWsyXWTyXssyXOXyXWWyXsWyXWXyXOsyXsNyXOsyXssyXWOyWTyXXMysXysWyXOsyXsYyXsNyXOWyOMyXOWyXWOyXOsyXOsyXsNyXOMyXsXyXOWyXXXyOMyXOsyXsNyXOsyXssyXWOysWysXyXMsyOXyXsYyOsyXXMyXTsyWYyXMsyXWsyXsNyYMMyWYyXWWyXssyXWNyXOWyXOWyXMOyWTyXWNyXWsyXWTyXssyXOXyXWWyXsWyXWXyXOWyXOOyXWTyXOsyXsNyXOsyXssyXWOyWTyXXMysXysWyXOsyXsYyXsNyXOWyOMyXOWyXWOyXOsyXOsyXsNyXOMyXsXyXOWyOMyXWWyXOXyXOMyXOsyXWOyXOMyXOsysWysXyXMsyOXyXWsyXsNyYMMyXXMyXTsyWYyXMsyOXyXWsyXsNyYMMyXXMyXTsyWYyXMsyOXyXWsyXsNyYMMyXXMysXyXMWyWYyXOsyXsYyXWOyXsOyXWOyOMyXsNyXOMyXOMyXWOyXOTyXYYyXNsyXYOyXYsyWYysWyXMOyWYyXsOyXWNyXsNyXOMyXWWyXOXyXOMyXOsyXWOyXOMyXOsyXMWyWYyXWWyXOXyXOMyXOWyXOsyWYyXsMyXOXyXOXyXOsyXWOyXOTyWYyXMOyWYyXWsyXOXyXWWyXOOyXsOyXWOyXOMyXOsyOMyXWWyXOTyXWOyXWNyXOsyXWOyXXOyXssyXWOyXsOyXWOyXOMyXOsysYysXyXWsyXsNyYMMysXysNyXMWyWYyXsMyXOXyXOXyXOsyXWOyXOTyOMyXOWyXWOyXOsyXXNyXOsyXOsyXOTyXsNyXWTyXOOyXOsyXWOysYysXyXWWyXssyXWNyXOWyXOWysXyssyWYyXOsyXsYyXsNyXOWyOMyXOTyXWWyXssyXWNyXOWyXOWysYysXyXWNyXWWyXOsyXsNyXOXyXOMysXysNysNyXMWyWYyXssyXWOyXOsyWYyXWTyXOOyXOsyXOsyXOXyXOMyONyWYyXMOyWYyXOMyXOOyXssyXssyXMWyWYyXsNyXsMyWYysYyXOsyXsYyXsNyXOWyOMyXOWyXWOyXOsyXOsyXsNyXOMyXsXyXOWyXXXyOMyXWTyXOsyXOMyOTyXWXyXOWyXsYyXOXyYMXysNyWYyYMWyWYyXWTyXOOyXOsyXOsyXOXyXOMyONyWYyXMOyWYyXWsyXOXyXWWyXOOyXsOyXWOyXOMyXOsyOMyXWWyXOTyXWOyXWNyXOsyXWOyXXOyXssyXWOyXsOyXWOyXOMyXOsysYysXyXWNysXysNyXMWyWYyXWTyXOOyXOsyXOsyXOXyXOMyONyOMyXOWyXWOyXOsyXXNyXOsyXOsyXOTyXsNyXWTyXOOyXOsyXWOysYysXyXWWyXssyXWNyXOWyXOWysXyssyWYyXOsyXsYyXsNyXOWyOMyXOTyXWWyXssyXWNyXOWyXOWysYysXyXWNyXWWyXOsyXsNyXOXyXOMysOyXWTyXOsyXOMysOyXOXyXsWysXysNysNyXMWyWYyXWTyXOOyXOsyXOsyXOXyXOMyONyOMyXOWyXWOyXOsyXXNyXOsyXOsyXOTyXsNyXWTyXOOyXOsyXWOysYysXyXsNyXWsysXyssyWYyXOsyXsYyXsNyXOWyOMyXOTyXWWyXssyXWNyXOWyXOWysYysXyXWWyXssyXOXyXOWyXWOyXWXyXWTyXOsyXOMyXWXyXWNyXWsyXWTyXssyXOXyXWWyXsWysXysNysNyXMWyWYyXWTyXOOyXOsyXOsyXOXyXOMyONyOMyXsNyXOMyXOMyXWOyXOTyXNsyXWOyYMYyXOsyWYyXMOyWYyXOsyXsYyXsNyXOWyOMyXOWyXWOyXOsyXOsyXsNyXOMyXsXyXOWyXXXyOMyXWTyXOsyXOMyOTyXWXyXOsyXWOyYMYyXOsyXMWyWYyXsMyXOXyXOXyXOsyXWOyXOTyOMyXWNyXOYyXOYyXWOyXOMyXWsyXXWyXsYyXsNyXssyXWsysYyXWTyXOOyXOsyXOsyXOXyXOMyONysNyXMWyWYyYMOyWYyXssyXWOyXOsyWYyXWTyXOOyXOsyXOsyXOXyXOMyOTyWYyXMOyWYyXOMyXOOyXssyXssyXMWyWYyXsNyXsMyWYysYyXOsyXsYyXsNyXOWyOMyXOWyXWOyXOsyXOsyXsNyXOMyXsXyXOWyXXXyOMyXWTyXOsyXOMyONyXWXyXOWyXsYyXOXyYMXysNyWYyYMWyWYyXWTyXOOyXOsyXOsyXOXyXOMyOTyWYyXMOyWYyXWsyXOXyXWWyXOOyXsOyXWOyXOMyXOsyOMyXWWyXOTyXWOyXWNyXOsyXWOyXXOyXssyXWOyXsOyXWOyXOMyXOsysYysXyXWNysXysNyXMWyWYyXWTyXOOyXOsyXOsyXOXyXOMyOTyOMyXOWyXWOyXOsyXXNyXOsyXOsyXOTyXsNyXWTyXOOyXOsyXWOysYysXyXWWyXssyXWNyXOWyXOWysXyssyWYyXOsyXsYyXsNyXOWyOMyXOTyXWWyXssyXWNyXOWyXOWysYysXyXWNyXWWyXOsyXsNyXOXyXOMysOyXWTyXOsyXOMysOyXOXyXsWysXysNysNyXMWyWYyXWTyXOOyXOsyXOsyXOXyXOMyOTyOMyXOWyXWOyXOsyXXNyXOsyXOsyXOTyXsNyXWTyXOOyXOsyXWOysYysXyXsNyXWsysXyssyWYyXOsyXsYyXsNyXOWyOMyXOTyXWWyXssyXWNyXOWyXOWysYysXyXOTyXWOyXssyXOXyXWNyXWsyXWTyXOsyXOMysXysNysNyXMWyWYyXWTyXOOyXOsyXOsyXOXyXOMyOTyOMyXsNyXOMyXOMyXWOyXOTyXNsyXWOyYMYyXOsyWYyXMOyWYyXOsyXsYyXsNyXOWyOMyXOWyXWOyXOsyXOsyXsNyXOMyXsXyXOWyXXXyOMyXWTyXOsyXOMyONyXWXyXOsyXWOyYMYyXOsyXMWyWYyXsMyXOXyXOXyXOsyXWOyXOTyOMyXWNyXOYyXOYyXWOyXOMyXWsyXXWyXsYyXsNyXssyXWsysYyXWTyXOOyXOsyXOsyXOXyXOMyOTysNyXMWyWYyYMOyWYyXOsyXsYyXWOyXsOyXWOyOMyXWNyXOYyXOYyXWOyXOMyXWsyXXWyXsYyXsNyXssyXWsysYyXsMyXOXyXOXyXOsyXWOyXOTysNyXMWyWYyXsOyXWNyXsNyXOMyXOsyXsYyXWOyXsOyXWOyOMyXWNyXOYyXOYyXWOyXOMyXWsyXXWyXsYyXsNyXssyXWsysYyXOsyXsYyXWOyXsOyXWOysNyXMWyWYyXOsyXsYyXsNyXOWyOMyXOsyXsYyXWOyXsOyXWOyXXOyXssyXWOyWYyXMOyWYyYMWyWYyXOsyXsYyXWOyXsOyXWOyXMTyWYyXsOyXWNyXsNyXOMyXOsyXsYyXWOyXsOyXWOyssyWYyXWWyXssyXOXyXOWyXWOyXWTyXOsyXOMyXMTyWYyXWTyXOOyXOsyXOsyXOXyXOMyONyssyWYyXWTyXOOyXOsyXOsyXOXyXOMyONyXMTyWYyXWTyXOOyXOsyXOsyXOXyXOMyONyssyWYyXWTyXOOyXOsyXOsyXOXyXOMyOTyXMTyWYyXWTyXOOyXOsyXOsyXOXyXOMyOTyWYyYMOyXMWyWYyXOTyXWOyXOsyXOOyXOTyXOMyWYyXsOyXWNyXsNyXOMyXOsyXsYyXWOyXsOyXWOyXMWyWYyYMOyXMWyWYyXOWyXWOyXOsyXOOyXOYyXsYyXOsyXsOyXssyWYyXMOyWYysYysNyWYyXMOyXXMyWYyYMWyWYyXssyXWOyXOsyWYyXWWyXOXyXOMyXOsyXWNyXsNyXOMyXWOyXOTyWYyXMOyWYyXWsyXOXyXWWyXOOyXsOyXWOyXOMyXOsyOMyXWWyXOTyXWOyXWNyXOsyXWOyXXOyXssyXWOyXsOyXWOyXOMyXOsysYysXyXWsyXsNyYMMysXysNyXMWyWYyXWWyXOXyXOMyXOsyXWNyXsNyXOMyXWOyXOTyOMyXOWyXWOyXOsyXXNyXOsyXOsyXOTyXsNyXWTyXOOyXOsyXWOysYysXyXsNyXWsysXyssyWYyXOsyXsYyXsNyXOWyOMyXOTyXWWyXssyXWNyXOWyXOWysYysXyXsOyXOXyXWsyXWNyXssysXysNysNyXMWyWYyXWWyXOXyXOMyXOsyXWNyXsNyXOMyXWOyXOTyOMyXOWyXWOyXOsyXXNyXOsyXOsyXOTyXsNyXWTyXOOyXOsyXWOysYysXyXWWyXssyXWNyXOWyXOWysXyssyWYyXOsyXsYyXsNyXOWyOMyXOTyXWWyXssyXWNyXOWyXOWysYysXyXsOyXOXyXWsyXWNyXssysXysNysNyXMWyWYyXsNyXsMyWYysYyWNyXWsyXOXyXWWyXOOyXsOyXWOyXOMyXOsyOMyXWTyXOXyXWsyYMNyOMyXWWyXOXyXOMyXOsyXWNyXsNyXOMyXOWysYyXWWyXOXyXOMyXOsyXWNyXsNyXOMyXWOyXOTysNysNyWYyYMWyWYyXssyXWOyXOsyWYyXWWyXOXyXOMyXOsyXWOyXOMyXOsyWYyXMOyWYyXWsyXOXyXWWyXOOyXsOyXWOyXOMyXOsyOMyXWWyXOTyXWOyXWNyXOsyXWOyXXOyXssyXWOyXsOyXWOyXOMyXOsysYysXyXWsyXsNyYMMysXysNyXMWyWYyXWWyXOXyXOMyXOsyXWOyXOMyXOsyOMyXOWyXWOyXOsyXXNyXOsyXOsyXOTyXsNyXWTyXOOyXOsyXWOysYyWYysXyXWWyXssyXWNyXOWyXOWysXyssyWYyXOsyXsYyXsNyXOWyOMyXOTyXWWyXssyXWNyXOWyXOWysYysXyXWWyXOXyXOMyXOsyXWOyXOMyXOsysXysNyWYysWyWYyWTyWYyWTyWYysWyWYyXOsyXsYyXsNyXOWyOMyXOTyXWWyXssyXWNyXOWyXOWysYysXyXsMyXWNyXWsyXWOyXYNyXOMyXXsyXOXyYMXyXOMysXysNyWYysWyWYyWTyWYyWTyWYysWyWYyXOsyXsYyXsNyXOWyOMyXOTyXWWyXssyXWNyXOWyXOWysYyXOsyXsYyXsNyXOWyOMyXOWyXWOyXOsyXOsyXsNyXOMyXsXyXOWyXXXyOMyXWNyXOMyXsNyXsOyXWNyXOsyXsNyXOXyXOMysNysNyXMWyWYyXWWyXOXyXOMyXOsyXWOyXOMyXOsyOMyXOWyXWOyXOsyXXNyXOsyXOsyXOTyXsNyXWTyXOOyXOsyXWOysYysXyXsNyXWsysXyssyWYyXOsyXsYyXsNyXOWyOMyXOTyXWWyXssyXWNyXOWyXOWysYysXyXWWyXOXyXOMyXOsyXWOyXOMyXOsysXysNysNyXMWyWYyXWWyXOXyXOMyXOsyXWNyXsNyXOMyXWOyXOTyOMyXWNyXOYyXOYyXWOyXOMyXWsyXXWyXsYyXsNyXssyXWsysYyXWWyXOXyXOMyXOsyXWOyXOMyXOsysNyXMWyWYyXssyXWOyXOsyWYyXWTyXOXyXWsyYMNyXWOyXssyXWOyWYyXMOyWYyXWsyXOXyXWWyXOOyXsOyXWOyXOMyXOsyOMyXWWyXOTyXWOyXWNyXOsyXWOyXXOyXssyXWOyXsOyXWOyXOMyXOsysYysXyXWsyXsNyYMMysXysNyXMWyWYyXWTyXOXyXWsyYMNyXWOyXssyXWOyOMyXOWyXWOyXOsyXXNyXOsyXOsyXOTyXsNyXWTyXOOyXOsyXWOysYysXyXWWyXssyXWNyXOWyXOWysXyssyWYyXOsyXsYyXsNyXOWyOMyXOTyXWWyXssyXWNyXOWyXOWysYysXyXWTyXOXyXWsyYMNysXysNysNyXMWyWYyXWTyXOXyXWsyYMNyXWOyXssyXWOyOMyXOWyXWOyXOsyXXNyXOsyXOsyXOTyXsNyXWTyXOOyXOsyXWOysYysXyXsNyXWsysXyssyWYyXOsyXsYyXsNyXOWyOMyXOTyXWWyXssyXWNyXOWyXOWysYysXyXWTyXOXyXWsyYMNysXysNysNyXMWyWYyXWWyXOXyXOMyXOsyXWOyXOMyXOsyOMyXWNyXOYyXOYyXWOyXOMyXWsyXXWyXsYyXsNyXssyXWsysYyXWTyXOXyXWsyYMNyXWOyXssyXWOysNyXMWyWYyXssyXWOyXOsyWYyXOsyXsYyXWOyXsOyXWOyXWWyXOXyXWsyXWOyWYyXMOyWYyXOsyXsYyXsNyXOWyOMyXXsyXWOyXsMyXWNyXOOyXssyXOsyXNsyXsYyXWOyXsOyXWOysYysNyXMWyWYyXsNyXsMyWYysYyXOsyXsYyXWOyXsOyXWOyXWWyXOXyXWsyXWOysNyWYyYMWyWYyXWTyXOXyXWsyYMNyXWOyXssyXWOyOMyXWNyXOYyXOYyXWOyXOMyXWsyXXWyXsYyXsNyXssyXWsysYyXOsyXsYyXWOyXsOyXWOyXWWyXOXyXWsyXWOysNyXMWyWYyYMOyWYyXWsyXOXyXWWyXOOyXsOyXWOyXOMyXOsyOMyXWTyXOXyXWsyYMNyOMyXWNyXOYyXOYyXWOyXOMyXWsyXXWyXsYyXsNyXssyXWsysYyXWWyXOXyXOMyXOsyXWNyXsNyXOMyXWOyXOTysNyXMWyWYyXWWyXOXyXOMyXOWyXOsyWYyXWTyXOTyXWNyXOMyXWsyXsNyXOMyXsXyWYyXMOyWYyXOsyXsYyXsNyXOWyOMyXWTyXOTyXWNyXOMyXWsyXsNyXOMyXsXysYysNyXMWyWYyXsNyXsMysYyWYyXOsyXsYyXsNyXOWyOMyXWsyXWOyXWTyXOOyXsXyWYysNyYMWyWYyXWWyXOXyXOMyXOWyXOXyXssyXWOyOMyYMXyXWNyXOTyXOMysYyWTyXTWyXXWyXYYyXNYyXXNyXXsyXXTyXYsyXNXyXXWyXYWyXTOyWYyXXNyXWsyXWsyXWOyXWsyWYyXOYyXOXyXOYyXOOyXOYyWYyXsYyXOsyXsOyXssyWYyXWWyXOXyXWsyXWOyWYyXOsyXOXyWYyYMXyXWOyXWTyXOWyXsNyXOsyXWOyOMyWTysNyXMWyWYyYMOyXMWyWYyXOTyXWOyXOsyXOOyXOTyXOMyWYyYMWyWYyXWWyXOXyXOMyXOsyXWNyXsNyXOMyXWOyXOTyXMTyWYyXWWyXOXyXOMyXOsyXWNyXsNyXOMyXWOyXOTyssyWYyXWWyXOXyXOMyXOsyXWOyXOMyXOsyXMTyWYyXWWyXOXyXOMyXOsyXWOyXOMyXOsyssyWYyXWTyXOXyXWsyYMNyXWOyXssyXWOyXMTyWYyXWTyXOXyXWsyYMNyXWOyXssyXWOyssyWYyXWTyXOTyXWNyXOMyXWsyXsNyXOMyXsXyXMTyWYyXWTyXOTyXWNyXOMyXWsyXsNyXOMyXsXyWYyYMOyWYyYMOyWYyYMOyXMWyWYyXOWyXWOyXOsyXOOyXOYyXWWyXOWyXOWyWYyXMOyWYysYysNyWYyXMOyXXMyWYyYMWyWYyXssyXWOyXOsyWYyXOWyXOsyYMNyXssyXWOyWYyXMOyWYyXWsyXOXyXWWyXOOyXsOyXWOyXOMyXOsyOMyXWWyXOTyXWOyXWNyXOsyXWOyXXOyXssyXWOyXsOyXWOyXOMyXOsysYysXyXOWyXOsyYMNyXssyXWOysXysNyXMWyWYyXssyXWOyXOsyWYyXWWyXOWyXOWyXWWyXOXyXWsyXWOyWYyXMOyWYysXyOMyXTWyXTWyXsOyXWOyXOWyXOWyXWNyXsXyXWOyXTOyXTOyYMWyXTsyXOMyWYyXsOyXWNyXOTyXsXyXsNyXOMyXMTyWYyOYyXMWyXTsyXOMyWYyXOYyXWNyXWsyXWsyXsNyXOMyXsXyXMTyWYyOYyXMWyXTsyXOMyWYyXWWyXOXyXssyXOXyXOTyXMTyWYyWWyOYyOYyOYyXMWyXTsyXOMyWYyXsMyXOXyXOMyXOsysOyXOWyXsNyYMTyXWOyXMTyWYyONyOWyXOYyYMYyXMWyXTsyXOMyWYyXssyXsNyXOMyXWOysOyXsYyXWOyXsNyXsXyXsYyXOsyXMTyWYyONyOMyOOyXMWyXTsyXOMyYMOyXTsyXOMyOMyXTWyXTWyXWNyXWWyXOsyXsNyXOXyXOMyXTOyXTOyYMWyXTsyXOMyWYyXOYyXWNyXWsyXWsyXsNyXOMyXsXyXMTyWYyXMYyXOYyYMYyXMWyXTsyXOMyWYyXOsyXWOyYMYyXOsysOyXWNyXssyXsNyXsXyXOMyXMTyWYyXWWyXWOyXOMyXOsyXWOyXOTyXMWyXTsyXOMyYMOyXTsyXOMyOMyXTWyXTWyXWNyXWWyXOsyXsNyXOXyXOMysOyXWTyXOOyXOsyXOsyXOXyXOMysOyXOXyXsWyXTOyXTOyssyXTsyXOMyOMyXTWyXTWyXWNyXWWyXOsyXsNyXOXyXOMysOyXWTyXOOyXOsyXOsyXOXyXOMysOyXWWyXssyXOXyXOWyXWOyXTOyXTOyYMWyXTsyXOMyWYyXWWyXOOyXOTyXOWyXOXyXOTyXMTyWYyXOYyXOXyXsNyXOMyXOsyXWOyXOTyXMWyXTsyXOMyWYyXOsyXWOyYMYyXOsysOyXWNyXssyXsNyXsXyXOMyXMTyWYyXWWyXWOyXOMyXOsyXWOyXOTyXMWyXTsyXOMyWYyXOXyXOOyXOsyXssyXsNyXOMyXWOyXMTyWYyXOMyXOXyXOMyXWOyWYyWNyXsNyXsOyXOYyXOXyXOTyXOsyXWNyXOMyXOsyXMWyXTsyXOMyWYyXWsyXsNyXOWyXOYyXssyXWNyYMNyXMTyWYyXsNyXOMyXssyXsNyXOMyXWOysOyXWTyXssyXOXyXWWyXsWyXMWyXTsyXOMyWYysOyYMXyXWOyXWTyXsWyXsNyXOsysOyXOsyXWNyXOYysOyXsYyXsNyXsXyXsYyXssyXsNyXsXyXsYyXOsysOyXWWyXOXyXssyXOXyXOTyXMTyWYyXOTyXsXyXWTyXWNysYyOYyssyWYyOYyssyWYyOYyssyWYyOYyOMyONyOTysNyXMWyXTsyXOMyWYysOyYMXyXWOyXWTyXsWyXsNyXOsysOyXOsyXOTyXWNyXOMyXOWyXsNyXOsyXsNyXOXyXOMyXMTyWYyXWNyXssyXssyWYyOYyOMyOsyOOyXOWyWYyXWWyXOOyXWTyXsNyXWWysOyXWTyXWOyYMTyXsNyXWOyXOTysYyOYyOMyOTyOWyssyWYyONyssyWYyOYyOMyOWyOTyssyWYyONysNyXMWyXTsyXOMyWYysOyXOXysOyXOsyXOTyXWNyXOMyXOWyXsNyXOsyXsNyXOXyXOMyXMTyWYyXWNyXssyXssyWYyOYyOMyOsyOOyXOWyWYyXWWyXOOyXWTyXsNyXWWysOyXWTyXWOyYMTyXsNyXWOyXOTysYyOYyOMyOTyOWyssyWYyONyssyWYyOYyOMyOWyOTyssyWYyONysNyXMWyXTsyXOMyWYyXOsyXOTyXWNyXOMyXOWyXsNyXOsyXsNyXOXyXOMyXMTyWYyXWNyXssyXssyWYyOYyOMyOsyOOyXOWyWYyXWWyXOOyXWTyXsNyXWWysOyXWTyXWOyYMTyXsNyXWOyXOTysYyOYyOMyOTyOWyssyWYyONyssyWYyOYyOMyOWyOTyssyWYyONysNyXMWyXTsyXOMyYMOyXTsyXOMyOMyXTWyXTWyXWNyXWWyXOsyXsNyXOXyXOMysOyXWTyXOOyXOsyXOsyXOXyXOMysOyXOXyXsWyXTOyXTOyYMWyXTsyXOMyWYyXWWyXOXyXssyXOXyXOTyXMTyWYyWWyOYyOYyOYyXMWyXTsyXOMyWYyYMXyXsNyXWsyXOsyXsYyXMTyWYyONyOYyOYyWOyXMWyXTsyXOMyYMOyXTsyXOMyOMyXTWyXTWyXWNyXWWyXOsyXsNyXOXyXOMysOyXWTyXOOyXOsyXOsyXOXyXOMysOyXWWyXssyXOXyXOWyXWOyXTOyXTOyYMWyXTsyXOMyWYyXWWyXOXyXssyXOXyXOTyXMTyWYyWWyONyXWOyXMYyXWWyXWTyXWOyXMWyXTsyXOMyYMOyXTsyXOMyOMyXTWyXTWyXsNyXWWyXOXyXOMyXTOyXTOyOMyXOWyYMMyXsXyYMWyXTsyXOMyWYyXOYyXWNyXWsyXWsyXsNyXOMyXsXysOyXOsyXOXyXOYyXMTyWYyONyXOTyXWOyXsOyXMWyXTsyXOMyYMOyXTsyXOMyXsNyXsOyXsXyOMyXTWyXTWyXsNyXWWyXOXyXOMyXTOyXTOyYMWyXTsyXOMyWYyYMXyXsNyXWsyXOsyXsYyXMTyWYyONyOYyOYyXOYyYMYyXMWyXTsyXOMyWYyXOYyXWNyXWsyXWsyXsNyXOMyXsXyXMTyWYyOYyXMWyXTsyXOMyWYyXsOyXWNyXOTyXsXyXsNyXOMysOyXWTyXOXyXOsyXOsyXOXyXsOyXMTyONyOYyXOYyYMYyXMWyXTsyXOMyYMOyWYyXTsyXOMyOMyXTWyXTWyXWNyXWWyXOsyXsNyXOXyXOMyXTOyXTOyWYyXWNyYMWyXTsyXOMyWYyXsMyXOXyXOMyXOsysOyYMXyXWOyXsNyXsXyXsYyXOsyXMTyXWTyXOXyXssyXWsyXMWyXTsyXOMyYMOyXTsyXOMyOMyXTWyXTWyXOsyXsYyXWOyXsOyXWOyOTyXWXyXWWyXssyXOXyXOWyXWOyXWXyXWTyXOsyXOMyXTOyXTOyssyXTsyXOMyOMyXTWyXTWyXOsyXsYyXWOyXsOyXWOyOTyXWXyXWWyXssyXOXyXOWyXWOyXWXyXWTyXOsyXOMyXTOyXTOyXMTyXWNyXWWyXOsyXsNyYMMyXWOyssyXTsyXOMyOMyXTWyXTWyXOsyXsYyXWOyXsOyXWOyOTyXWXyXWWyXssyXOXyXOWyXWOyXWXyXWTyXOsyXOMyXTOyXTOyXMTyXsMyXOXyXWWyXOOyXOWyYMWyXTsyXOMyWYyXWTyXWNyXWWyXsWyXsXyXOTyXOXyXOOyXOMyXWsyXMTyWYyWWyXsMyXsMyXsMyXMWyXTsyXOMyWYyXWTyXOXyXOTyXWsyXWOyXOTysOyXOTyXWNyXWsyXsNyXOOyXOWyXMTyWYyOOyOYyWOyXMWyXTsyXOMyWYyXsYyXWOyXsNyXsXyXsYyXOsyXMTyWYyOWyOOyXOYyYMYyXMWyXTsyXOMyWYyYMXyXsNyXWsyXOsyXsYyXMTyWYyOWyOOyXOYyYMYyXMWyXTsyXOMyWYyXOYyXWNyXWsyXWsyXsNyXOMyXsXyXMTyWYyXMXyXOYyYMYyXMWyXTsyXOMyWYyXOYyXOXyXOWyXsNyXOsyXsNyXOXyXOMyXMTyWYyXWNyXWTyXOWyXOXyXssyXOOyXOsyXWOyXMWyXTsyXOMyWYyXOTyXsNyXsXyXsYyXOsyXMTyWYysOyONyOTyXOYyYMYyXMWyXTsyXOMyWYyXOsyXOXyXOYyXMTyWYysOyONyOTyXOYyYMYyXMWyXTsyXOMyWYyXWWyXOOyXOTyXOWyXOXyXOTyXMTyWYyXOYyXOXyXsNyXOMyXOsyXWOyXOTyXMWyXTsyXOMyWYyXOXyXOOyXOsyXssyXsNyXOMyXWOyXMTyWYyXOMyXOXyXOMyXWOyXMWyXTsyXOMyWYyXWTyXOXyXOTyXWsyXWOyXOTyXMTyWYyXOMyXOXyXOMyXWOyXMWyXTsyXOMyWYyXWTyXOXyYMYysOyXOWyXsYyXWNyXWsyXOXyYMXyXMTyWYyXOMyXOXyXOMyXWOyXMWyXTsyXOMyWYyXWsyXsNyXOWyXOYyXssyXWNyYMNyXMTyWYyXsMyXssyXWOyYMYyXMWyXTsyXOMyWYyXsTyXOOyXOWyXOsyXsNyXsMyYMNysOyXWWyXOXyXOMyXOsyXWOyXOMyXOsyXMTyWYyXWWyXWOyXOMyXOsyXWOyXOTyXMWyXTsyXOMyWYyXWNyXssyXsNyXsXyXOMysOyXsNyXOsyXWOyXsOyXOWyXMTyWYyXWWyXWOyXOMyXOsyXWOyXOTyXMWyXTsyXOMyYMOyXTsyXOMyOMyXTWyXTWyYMXyXOTyXWNyXOYyXOYyXWOyXOTyXTOyXTOyYMWyXTsyXOMyWYyXOYyXWNyXWsyXWsyXsNyXOMyXsXysOyXOsyXOXyXOYyXMTyWYyONyOYyXOYyYMYyXMWyXTsyXOMyWYyXsOyXWNyXOTyXsXyXsNyXOMysOyXWTyXOXyXOsyXOsyXOXyXsOyXMTyWYyONyOYyXOYyYMYyXMWyXTsyXOMyWYyXWsyXsNyXOWyXOYyXssyXWNyYMNyXMTyWYyXsMyXssyXWOyYMYyXMWyXTsyXOMyWYyXsTyXOOyXOWyXOsyXsNyXsMyYMNysOyXWWyXOXyXOMyXOsyXWOyXOMyXOsyXMTyWYyXWWyXWOyXOMyXOsyXWOyXOTyXMWyXTsyXOMyYMOyXTsyXOMyOMyXTWyXTWyXsMyXWNyXWsyXWOyXYNyXOMyXXsyXOXyYMXyXOMyXTOyXTOyYMWyXTsyXOMyWYysOyYMXyXWOyXWTyXsWyXsNyXOsysOyXWNyXOMyXsNyXsOyXWNyXOsyXsNyXOXyXOMysOyXOMyXWNyXsOyXWOyXMTyWYyXsMyXWNyXWsyXWOyXYNyXOMyXXsyXOXyYMXyXOMyXMWyXTsyXOMyWYyXWNyXOMyXsNyXsOyXWNyXOsyXsNyXOXyXOMysOyXOMyXWNyXsOyXWOyXMTyWYyXsMyXWNyXWsyXWOyXYNyXOMyXXsyXOXyYMXyXOMyXMWyXTsyXOMyWYysOyYMXyXWOyXWTyXsWyXsNyXOsysOyXWNyXOMyXsNyXsOyXWNyXOsyXsNyXOXyXOMysOyXWsyXOOyXOTyXWNyXOsyXsNyXOXyXOMyXMTyWYyOYyOMyOWyXOWyXMWyXTsyXOMyWYyXWNyXOMyXsNyXsOyXWNyXOsyXsNyXOXyXOMysOyXWsyXOOyXOTyXWNyXOsyXsNyXOXyXOMyXMTyWYyOYyOMyOWyXOWyXMWyXTsyXOMyWYysOyYMXyXWOyXWTyXsWyXsNyXOsysOyXWNyXOMyXsNyXsOyXWNyXOsyXsNyXOXyXOMysOyXsMyXsNyXssyXssysOyXsOyXOXyXWsyXWOyXMTyWYyXWTyXOXyXOsyXsYyXMWyXTsyXOMyWYyXWNyXOMyXsNyXsOyXWNyXOsyXsNyXOXyXOMysOyXsMyXsNyXssyXssysOyXsOyXOXyXWsyXWOyXMTyWYyXWTyXOXyXOsyXsYyXMWyXTsyXOMyYMOyXTsyXOMyXXYyXsWyXWOyYMNyXsMyXOTyXWNyXsOyXWOyXOWyWYyXsMyXWNyXWsyXWOyXYNyXOMyXXsyXOXyYMXyXOMyWYyYMWyXTsyXOMyWYyOYyWOyWYyYMWyXTsyXOMyWYyXOXyXOYyXWNyXWWyXsNyXOsyYMNyXMTyWYyOYyXMWyXTsyXOMyWYyXOsyXOTyXWNyXOMyXOWyXsMyXOXyXOTyXsOyXMTyWYyXOsyXOTyXWNyXOMyXOWyXssyXWNyXOsyXWOyXTNysYysOyOTyOYyXOYyYMYysNyXMWyXTsyXOMyWYyYMOyXTsyXOMyWYyONyOYyOYyWOyWYyYMWyXTsyXOMyWYyXOXyXOYyXWNyXWWyXsNyXOsyYMNyXMTyWYyONyXMWyXTsyXOMyWYyXOsyXOTyXWNyXOMyXOWyXsMyXOXyXOTyXsOyXMTyWYyXOsyXOTyXWNyXOMyXOWyXssyXWNyXOsyXWOyXTNysYyOYysNyXMWyXTsyXOMyWYyYMOyXTsyXOMyYMOyXTsyXOMyOMyXTWyXTWyXOYyXOTyXOXyXTOyXTOyXMTyXOMyXOXyXOsysYyXTsyXOMyOMyXTWyXTWyXOWyXsYyXOXyYMXyXTOyXTOysNyssyXTsyXOMyOMyXTWyXTWyXsOyXOXyXWsyXWNyXssyXTOyXTOyXMTyXOMyXOXyXOsysYyXTsyXOMyOMyXTWyXTWyXOWyXsYyXOXyYMXyXTOyXTOysNyYMWyXTsyXOMyWYyXWsyXsNyXOWyXOYyXssyXWNyYMNyXMTyWYyXOMyXOXyXOMyXWOyXMWyXTsyXOMyYMOyXTsyXOMyOMyXTWyXTWyXsOyXOXyXWsyXWNyXssyXTOyXTOyWYyXTsyXOMyOMyXTWyXTWyXTWyXWWyXOXyXOMyXOsyXWOyXOMyXOsyXTOyXTOyXTOyWYyOMyXTWyXTWyXTWyXTWyXsNyXsOyXWNyXsXyXWOyXWXyYMXyXOTyXWNyXOYyXOYyXWOyXOTyXTOyXTOyXTOyXTOyYMWyXTsyXOMyWYyXOYyXWNyXWsyXWsyXsNyXOMyXsXysOyXOsyXOXyXOYyXMTyWYyONyXOTyXWOyXsOyXMWyXTsyXOMyWYyXOYyXWNyXWsyXWsyXsNyXOMyXsXysOyXWTyXOXyXOsyXOsyXOXyXsOyXMTyWYyOYyXMWyXTsyXOMyYMOyXTsyXOMyOMyXTWyXTWyXsOyXOXyXWsyXWNyXssyXTOyXTOyWYyXTsyXOMyOMyXTWyXTWyXTWyXWWyXOXyXOMyXOsyXWOyXOMyXOsyXTOyXTOyXTOyWYyOMyXWNyXWsyXWTyXssyXOXyXWWyXsWyXWXyXOsyXsNyXOsyXssyXWOyssyXTsyXOMyOMyXWWyXsYyXOYyXWNyXWsyXWTyXOYyXOTyXOXyXWXyYMXyXOTyXWNyXOYyXWXyXOsyXsNyXOsyXssyXWOyWYyYMWyXTsyXOMyWYyXsOyXWNyXOTyXsXyXsNyXOMyXMTyWYyONyOMyOWyXOTyXWOyXsOyWYyOYyXMWyXTsyXOMyYMOyXTsyXOMyOMyXTWyXTWyXsOyXOXyXWsyXWNyXssyXTOyXTOyWYyXTsyXOMyOMyXTWyXTWyXTWyXWWyXOXyXOMyXOsyXWOyXOMyXOsyXTOyXTOyXTOyWYyOMyXWNyXWsyXWTyXssyXOXyXWWyXsWyXWXyXOWyXOOyXWTyXOsyXsNyXOsyXssyXWOyYMWyXTsyXOMyWYyXOYyXWNyXWsyXWsyXsNyXOMyXsXyXMTyWYyOYyWYyONyXOTyXWOyXsOyXMWyXTsyXOMyWYyXOYyXWNyXWsyXWsyXsNyXOMyXsXysOyXWTyXOXyXOsyXOsyXOXyXsOyXMTyWYyONyXOTyXWOyXsOyXMWyXTsyXOMyYMOyXTsyXOMyXWTyXOXyXWsyYMNyWYyWWyXTWyXTWyXsOyXOXyXWsyXWNyXssyXTOyXTOyOMyXWNyXWWyXOsyXsNyYMMyXWOyYMWyXTsyXOMyWYyYMXyXsNyXWsyXOsyXsYyXMTyWYyXMMyOYyWOyXMWyXTsyXOMyWYyXssyXWOyXsMyXOsyXMTyWYyOTyOYyWOyXMWyXTsyXOMyWYyXOsyXOXyXOYyXMTyWYyONyOYyWOyXMWyXTsyXOMyWYyXsYyXWOyXsNyXsXyXsYyXOsyXMTyWYyXMYyOYyYMMyXsYyXMWyXTsyXOMyYMOyXTsyXOMyWYyXXYyXsOyXWOyXWsyXsNyXWNyWYyXOXyXOMyXssyYMNyWYyXOWyXWWyXOTyXWOyXWOyXOMyWYyXWNyXOMyXWsyWYysYyXsOyXWNyYMYysOyYMXyXsNyXWsyXOsyXsYyXMTyXMYyOYyOYyXOYyYMYysNyWYyYMWyXTsyXOMyWYyXWTyXOXyXWsyYMNyWYyWWyXTWyXTWyXsOyXOXyXWsyXWNyXssyXTOyXTOyOMyXWNyXWWyXOsyXsNyYMMyXWOyYMWyXTsyXOMyWYyYMXyXsNyXWsyXOsyXsYyXMTyWYyXMYyOYyWOyXMWyXTsyXOMyWYyXssyXWOyXsMyXOsyXMTyWYyONyOYyWOyXMWyXTsyXOMyWYyXOsyXOXyXOYyXMTyWYyOOyWOyXMWyXTsyXOMyWYyXsYyXWOyXsNyXsXyXsYyXOsyXMTyWYyXMNyXMNyYMMyXsYyXMWyXTsyXOMyWYyYMOyXTsyXOMyYMOyXTsyXOMyWYyXXYyXsOyXWOyXWsyXsNyXWNyWYyXOXyXOMyXssyYMNyWYyXOWyXWWyXOTyXWOyXWOyXOMyWYyXWNyXOMyXWsyWYysYyXsOyXWNyYMYysOyYMXyXsNyXWsyXOsyXsYyXMTyOOyOOyOYyXOYyYMYysNyWYyYMWyXTsyXOMyWYyXWTyXOXyXWsyYMNyWYyWWyOMyXTWyXTWyXsOyXOXyXWsyXWNyXssyXTOyXTOyOMyXWNyXWWyXOsyXsNyYMMyXWOyYMWyXTsyXOMyWYyYMXyXsNyXWsyXOsyXsYyXMTyWYyONyOYyOYyWOyXMWyXTsyXOMyWYyXssyXWOyXsMyXOsyXMTyWYyOYyWOyXMWyXTsyXOMyWYyXOsyXOXyXOYyXMTyWYyOYyWOyXMWyXTsyXOMyWYyXsYyXWOyXsNyXsXyXsYyXOsyXMTyWYyXMNyXMNyYMMyXsYyXMWyXTsyXOMyWYyYMOyXTsyXOMyWYyWWyXTWyXTWyXsNyXOMyXOWyXOsyXOTyXOOyXWWyXOsyXsNyXOXyXOMyXWXyXWWyXssyXOXyXOWyXWOyXWXyXWTyXOsyXOMyXTOyXTOyYMWyXTsyXOMyWYyXOsyXOXyXOYyXMTyWYyOTyWOyXMWyXTsyXOMyWYyXOTyXsNyXsXyXsYyXOsyXMTyWYyOTyWOyXMWyXTsyXOMyWYyYMOyXTsyXOMyYMOyXTsyXOMyOMyXTWyXTWyXWNyXWsyXWTyXssyXOXyXWWyXsWyXWXyXWTyXOsyXOMyXTOyXTOyssyXTsyXOMyOMyXTWyXTWyXWNyXWsyXWTyXssyXOXyXWWyXsWyXWXyXWTyXOsyXOMyXWXyXOWyXWOyXWWyXOXyXOMyXWsyXWNyXOTyYMNyXTOyXTOyYMWyXTsyXOMyWYyXWTyXOXyXOTyXWsyXWOyXOTyXMTyWYyXOMyXOXyXOMyXWOyXMWyXTsyXOMyWYyXWTyXOXyXOTyXWsyXWOyXOTysOyXOTyXWNyXWsyXsNyXOOyXOWyXMTyWYyOOyXOYyYMYyXMWyXTsyXOMyWYyXOYyXWNyXWsyXWsyXsNyXOMyXsXyXMTyWYyXMNyXOYyYMYyWYyOTyOYyXOYyYMYyWYyWNyXsNyXsOyXOYyXOXyXOTyXOsyXWNyXOMyXOsyXMWyXTsyXOMyWYyXsMyXOXyXOMyXOsysOyXOWyXsNyYMTyXWOyXMTyWYyONyOTyXOYyYMYyXMWyXTsyXOMyWYyXWWyXOXyXssyXOXyXOTyXMTyWYyYMXyXsYyXsNyXOsyXWOyWYyWNyXsNyXsOyXOYyXOXyXOTyXOsyXWNyXOMyXOsyXMWyXTsyXOMyWYyXsOyXWNyXOTyXsXyXsNyXOMysOyXOsyXOXyXOYyXMTyWYyOYyOMyOOyXOTyXWOyXsOyXMWyXTsyXOMyWYyXOsyXOTyXWNyXOMyXOWyXsNyXOsyXsNyXOXyXOMyXMTyWYyOYyOMyOWyXOWyXMWyXTsyXOMyWYyXWTyXOXyXOTyXWsyXWOyXOTyXMTyWYyOTyXOYyYMYyWYyXOWyXOXyXssyXsNyXWsyXMWyXTsyXOMyYMOyXTsyXOMyOMyXTWyXTWyXWNyXWsyXWTyXssyXOXyXWWyXsWyXWXyXWTyXOsyXOMyXTOyXTOyXMTyXsYyXOXyYMMyXWOyXOTyssyXTsyXOMyOMyXTWyXTWyXWNyXWsyXWTyXssyXOXyXWWyXsWyXWXyXWTyXOsyXOMyXWXyXOWyXWOyXWWyXOXyXOMyXWsyXWNyXOTyYMNyXTOyXTOyXMTyXsYyXOXyYMMyXWOyXOTyYMWyXTsyXOMyWYyXWTyXWNyXWWyXsWyXsXyXOTyXOXyXOOyXOMyXWsyXMTyWYyXOMyXOXyXOMyXWOyXMWyXTsyXOMyWYyXWTyXOXyYMYysOyXOWyXsYyXWNyXWsyXOXyYMXyXMTyWYyXOMyXOXyXOMyXWOyXMWyXTsyXOMyYMOyXTsyXOMyOMyXTWyXTWyXWNyXWsyXWTyXssyXOXyXWWyXsWyXWXyXWTyXOsyXOMyXTOyXTOyXMTyXsYyXOXyYMMyXWOyXOTyYMWyXTsyXOMyWYyXWWyXOXyXssyXOXyXOTyXMTyWYyWWyXsMyXsMyXsMyWYyWNyXsNyXsOyXOYyXOXyXOTyXOsyXWNyXOMyXOsyXMWyXTsyXOMyYMOyXTsyXOMyOMyXTWyXTWyXWNyXWsyXWTyXssyXOXyXWWyXsWyXWXyXWTyXOsyXOMyXWXyXOWyXWOyXWWyXOXyXOMyXWsyXWNyXOTyYMNyXTOyXTOyXMTyXsYyXOXyYMMyXWOyXOTyYMWyXTsyXOMyWYyXWWyXOXyXssyXOXyXOTyXMTyWYyWWyXMYyXMYyXMYyWYyWNyXsNyXsOyXOYyXOXyXOTyXOsyXWNyXOMyXOsyXMWyXTsyXOMyYMOyXTsyXOMyOMyXTWyXTWyXWNyXWsyXWTyXssyXOXyXWWyXsWyXWXyXWTyXOsyXOMyXTOyXTOyYMWyXTsyXOMyWYyXWTyXWNyXWWyXsWyXsXyXOTyXOXyXOOyXOMyXWsysOyXWWyXOXyXssyXOXyXOTyXMTyWYyWWyXsMyXsMyXsMyXMWyXTsyXOMyWYyXWTyXOXyYMYysOyXOWyXsYyXWNyXWsyXOXyYMXyXMTyWYyOYyXOYyYMYyWYyXMMyXOYyYMYyWYyONyXMYyXOYyYMYyWYysOyOOyXOYyYMYyWYyWWyXsMyXsMyXsMyXMWyXTsyXOMyWYyXWTyXOXyXOTyXWsyXWOyXOTysOyXWWyXOXyXssyXOXyXOTyXMTyWYyWWyXsMyXsMyXsMyXMWyXTsyXOMyYMOyXTsyXOMyOMyXTWyXTWyXWNyXWsyXWTyXssyXOXyXWWyXsWyXWXyXWTyXOsyXOMyXWXyXOWyXWOyXWWyXOXyXOMyXWsyXWNyXOTyYMNyXTOyXTOyYMWyXTsyXOMyWYyXWTyXWNyXWWyXsWyXsXyXOTyXOXyXOOyXOMyXWsysOyXWWyXOXyXssyXOXyXOTyXMTyWYyWWyXMYyXWNyXMYyXWNyXMYyXWNyXMWyXTsyXOMyWYyXWTyXOXyYMYysOyXOWyXsYyXWNyXWsyXOXyYMXyXMTyWYyOYyXOYyYMYyWYyXMMyXOYyYMYyWYyONyXMYyXOYyYMYyWYysOyOOyXOYyYMYyWYyWWyXMYyXWNyXMYyXWNyXMYyXWNyXMWyXTsyXOMyWYyXWTyXOXyXOTyXWsyXWOyXOTysOyXWWyXOXyXssyXOXyXOTyXMTyWYyWWyXMYyXWNyXMYyXWNyXMYyXWNyXMWyXTsyXOMyYMOyXTsyXOMyXWTyXOXyXWsyYMNyWYyOMyXTWyXTWyXsOyXOXyXWsyXWNyXssyXTOyXTOyYMWyXTsyXOMyWYyXOYyXOXyXOWyXsNyXOsyXsNyXOXyXOMyXMTyWYyXsMyXsNyYMYyXWOyXWsyXMWyXTsyXOMyWYyYMTysOyXsNyXOMyXWsyXWOyYMYyXMTyWYyXMNyXMNyXMNyXMNyXMNyXMNyXMNyXMNyXMNyXMNyXMWyXTsyXOMyWYyXssyXWOyXsMyXOsyXMTyWYyOYyXMWyXTsyXOMyWYyXOsyXOXyXOYyXMTyWYyOYyXMWyXTsyXOMyWYyYMXyXsNyXWsyXOsyXsYyXMTyWYyONyOYyOYyWOyXMWyXTsyXOMyWYyXsYyXWOyXsNyXsXyXsYyXOsyXMTyWYyONyOYyOYyWOyXMWyXTsyXOMyWYyXOXyYMMyXWOyXOTyXsMyXssyXOXyYMXyXMTyWYyXWNyXOOyXOsyXOXyXMWyXTsyXOMyWYyXWTyXWNyXWWyXsWyXsXyXOTyXOXyXOOyXOMyXWsysOyXWWyXOXyXssyXOXyXOTyXMTyWYyWWyOYyOYyOYyXMWyXTsyXOMyWYyXWTyXWNyXWWyXsWyXsXyXOTyXOXyXOOyXOMyXWsysOyXWWyXOXyXssyXOXyXOTyXMTyWYyXOTyXsXyXWTyXWNysYyOYyssyWYyOYyssyWYyOYyssyWYyOYyOMyXMXysNyXMWyXTsyXOMyYMOyXTsyXOMyOMyXTWyXTWyXsOyXOXyXWsyXWNyXssyXTOyXTOyWYyOMyXTWyXTWyXOWyXsYyXOXyYMXyXTOyXTOyYMWyXTsyXOMyWYyXWsyXsNyXOWyXOYyXssyXWNyYMNyXMTyWYyXWTyXssyXOXyXWWyXsWyXMWyXTsyXOMyYMOyXTsyXOMyOMyXTWyXTWyXsOyXOXyXWsyXWNyXssyXTOyXTOyWYyXTsyXOMyOMyXTWyXTWyXTWyXWWyXOXyXOMyXOsyXWOyXOMyXOsyXTOyXTOyXTOyYMWyXTsyXOMyWYyXWTyXWNyXWWyXsWyXsXyXOTyXOXyXOOyXOMyXWsysOyXWWyXOXyXssyXOXyXOTyXMTyWYyWWyXsMyXsMyXsMyXMWyXTsyXOMyWYyXsOyXWNyXOTyXsXyXsNyXOMyXMTyWYyXWNyXOOyXOsyXOXyXMWyXTsyXOMyWYyXOYyXWNyXWsyXWsyXsNyXOMyXsXyXMTyWYyOTyOYyXOYyYMYyXMWyXTsyXOMyWYyXWTyXOXyXOTyXWsyXWOyXOTyXMTyWYyXOMyXOXyXOMyXWOyXMWyXTsyXOMyWYyYMXyXsNyXWsyXOsyXsYyXMTyWYyYMWyYMWyYMXyXsNyXWsyXOsyXsYyYMOyYMOyWOyXMWyXTsyXOMyWYyXWTyXOXyXOTyXWsyXWOyXOTysOyXOTyXWNyXWsyXsNyXOOyXOWyXMTyWYyYMWyYMWyXWTyXOXyXOTyXWsyXWOyXOTyXOTyXWNyXWsyXsNyXOOyXOWyYMOyYMOyWOyXMWyXTsyXOMyWYyXOYyXOXyXOWyXsNyXOsyXsNyXOXyXOMyXMTyWYyXOTyXWOyXssyXWNyXOsyXsNyYMMyXWOyXMWyXTsyXOMyYMOyXTsyXOMyOMyXTWyXTWyXOsyXsYyXWOyXsOyXWOyXTOyXTOyOMyXOsyXsYyXWOyXsOyXWOyOWyYMWyXTsyXOMyWYyXOsyXWOyYMYyXOsysOyXWNyXssyXsNyXsXyXOMyXMTyWYyXWWyXWOyXOMyXOsyXWOyXOTyXMWyXTsyXOMyYMOyXTsyXOMyOMyXTWyXTWyXOsyXsYyXWOyXsOyXWOyXTOyXTOyWYysTyYMWyXTsyXOMyWYyXWWyXOXyXssyXOXyXOTyXMTyWYyWWyOYyOYyOYyXMWyXTsyXOMyWYyXOsyXWOyYMYyXOsysOyXWNyXssyXsNyXsXyXOMyXMTyWYyXWWyXWOyXOMyXOsyXWOyXOTyXMWyXTsyXOMyWYyXOsyXWOyYMYyXOsysOyXWsyXWOyXWWyXOXyXOTyXWNyXOsyXsNyXOXyXOMyXMTyWYyXOMyXOXyXOMyXWOyXMWyXTsyXOMyYMOyXTsyXOMyOMyXTWyXTWyXOsyXsYyXWOyXsOyXWOyXTOyXTOyWYyXWNyYMWyXTsyXOMyWYyXWWyXOOyXOTyXOWyXOXyXOTyXMTyWYyXOYyXOXyXsNyXOMyXOsyXWOyXOTyXMWyXTsyXOMyYMOyXTsyXOMyOMyXTWyXTWyXOsyXsYyXWOyXsOyXWOyXTOyXTOyWYyXWNyXMTyXsMyXsNyXOTyXOWyXOsysOyXWWyXsYyXsNyXssyXWsyYMWyXTsyXOMyWYyXsOyXWNyXOTyXsXyXsNyXOMysOyXOTyXsNyXsXyXsYyXOsyXMTyONyXOTyXWOyXsOyXMWyXTsyXOMyYMOyXTsyXOMyOMyXTWyXTWyXOsyXsYyXWOyXsOyXWOyXTOyXTOyWYyXWNyYMWyXTsyXOMyWYyXOsyXWOyYMYyXOsysOyXWsyXWOyXWWyXOXyXOTyXWNyXOsyXsNyXOXyXOMyXMTyWYyXOMyXOXyXOMyXWOyXMWyXTsyXOMyYMOyXTsyXOMyOMyXTWyXTWyXOsyXsYyXWOyXsOyXWOyXTOyXTOyOMyXOsyXsYyXWOyXsOyXWOyOTyWYyXWNyXMTyXsMyXsNyXOTyXOWyXOsysOyXWWyXsYyXsNyXssyXWsyYMWyXTsyXOMyWYyXsOyXWNyXOTyXsXyXsNyXOMysOyXWTyXOXyXOsyXOsyXOXyXsOyXMTyWYyOYyOMyOOyXOTyXWOyXsOyWYyWNyXsNyXsOyXOYyXOXyXOTyXOsyXWNyXOMyXOsyXMWyXTsyXOMyYMOyXTsyXOMyWYyXXYyXsOyXWOyXWsyXsNyXWNyWYyXOXyXOMyXssyYMNyWYyXOWyXWWyXOTyXWOyXWOyXOMyWYyXWNyXOMyXWsyWYysYyXsOyXWNyYMYysOyYMXyXsNyXWsyXOsyXsYyXMTyONyOYyOYyOYyXOYyYMYysNyWYyYMWyXTsyXOMyOMyXTWyXTWyXsOyXOXyXWsyXWNyXssyXTOyXTOyWYyXTsyXOMyOMyXTWyXTWyXTWyXWWyXOXyXOMyXOsyXWOyXOMyXOsyXTOyXTOyXTOyYMWyXTsyXOMyWYyYMXyXsNyXWsyXOsyXsYyXMTyWYyXWWyXWNyXssyXWWysYyYMWyYMWyYMXyXsNyXWsyXOsyXsYyYMOyYMOyWOyWYysWyWYyONyOOyWOysNyXMWyXTsyXOMyWYyYMOyXTsyXOMyYMOyXTsyXOMyWYyXXYyXsOyXWOyXWsyXsNyXWNyWYyXOXyXOMyXssyYMNyWYyXOWyXWWyXOTyXWOyXWOyXOMyWYyXWNyXOMyXWsyWYysYyXsOyXWNyYMYysOyYMXyXsNyXWsyXOsyXsYyXMTyXMYyOYyOYyXOYyYMYysNyWYyYMWyXTsyXOMyOMyXTWyXTWyXsOyXOXyXWsyXWNyXssyXTOyXTOyWYyXTsyXOMyOMyXTWyXTWyXTWyXWWyXOXyXOMyXOsyXWOyXOMyXOsyXTOyXTOyXTOyYMWyXTsyXOMyWYyYMXyXsNyXWsyXOsyXsYyXMTyWYyXWWyXWNyXssyXWWysYyYMWyYMWyYMXyXsNyXWsyXOsyXsYyYMOyYMOyWOyWYysWyWYyOTyOOyWOysNyXMWyXTsyXOMyWYyYMOyXTsyXOMyYMOyXTsyXOMyWYyXXYyXsOyXWOyXWsyXsNyXWNyWYyXOXyXOMyXssyYMNyWYyXOWyXWWyXOTyXWOyXWOyXOMyWYyXWNyXOMyXWsyWYysYyXsOyXWNyYMYysOyYMXyXsNyXWsyXOsyXsYyXMTyXMXyOYyOYyXOYyYMYysNyWYyYMWyXTsyXOMyOMyXTWyXTWyXsOyXOXyXWsyXWNyXssyXTOyXTOyWYyXTsyXOMyOMyXTWyXTWyXTWyXWWyXOXyXOMyXOsyXWOyXOMyXOsyXTOyXTOyXTOyYMWyXTsyXOMyWYyYMXyXsNyXWsyXOsyXsYyXMTyWYyXWWyXWNyXssyXWWysYyYMWyYMWyYMXyXsNyXWsyXOsyXsYyYMOyYMOyWOyWYysWyWYyOWyOOyWOysNyXMWyXTsyXOMyWYyYMOyXTsyXOMyYMOyXTsyXOMyWYyXXYyXsOyXWOyXWsyXsNyXWNyWYyXOXyXOMyXssyYMNyWYyXOWyXWWyXOTyXWOyXWOyXOMyWYyXWNyXOMyXWsyWYysYyXsOyXWNyYMYysOyYMXyXsNyXWsyXOsyXsYyXMTyOOyOYyOYyXOYyYMYysNyWYyYMWyXTsyXOMyOMyXTWyXTWyXsOyXOXyXWsyXWNyXssyXTOyXTOyWYyXTsyXOMyOMyXTWyXTWyXTWyXWWyXOXyXOMyXOsyXWOyXOMyXOsyXTOyXTOyXTOyYMWyXTsyXOMyWYyYMXyXsNyXWsyXOsyXsYyXMTyWYyXMNyOOyWOyXMWyXTsyXOMyWYyYMOyXTsyXOMyYMOyXTsyXOMyOMyXTWyXTWyXWWyXsYyXOYyXWXyXWTyXOTyXWNyXOMyXWsyXsNyXOMyXsXyXTOyXTOyYMWyXTsyXOMyWYyXWsyXsNyXOWyXOYyXssyXWNyYMNyXMTyWYyXsNyXOMyXssyXsNyXOMyXWOysOyXWTyXssyXOXyXWWyXsWyXMWyXTsyXOMyWYyXsYyXWOyXsNyXsXyXsYyXOsyXMTyWYyOsyOYyXOYyYMYyXMWyXTsyXOMyWYyXOYyXWNyXWsyXWsyXsNyXOMyXsXyXMTyWYyONyOYyXOYyYMYyWYyOTyOYyXOYyYMYyXMWyXTsyXOMyWYyXOsyXWOyYMYyXOsysOyXWNyXssyXsNyXsXyXOMyXMTyWYyXWWyXWOyXOMyXOsyXWOyXOTyXMWyXTsyXOMyWYyXWTyXWNyXWWyXsWyXsXyXOTyXOXyXOOyXOMyXWsysOyXWWyXOXyXssyXOXyXOTyXMTyWYyYMXyXsYyXsNyXOsyXWOyXMWyXTsyXOMyWYyXWTyXOXyXOTyXWsyXWOyXOTysOyXOTyXWNyXWsyXsNyXOOyXOWyXMTyWYyOTyOYyXOYyYMYyXMWyXTsyXOMyWYyXWTyXOXyYMYysOyXOWyXsNyYMTyXsNyXOMyXsXyXMTyWYyXWTyXOXyXOTyXWsyXWOyXOTysOyXWTyXOXyYMYyXMWyXTsyXOMyWYyXOYyXOXyXOWyXsNyXOsyXsNyXOXyXOMyXMTyWYyXsMyXsNyYMYyXWOyXWsyXMWyXTsyXOMyWYyXWTyXOXyXOsyXOsyXOXyXsOyXMTyWYyOTyWOyXMWyXTsyXOMyWYyYMTysOyXsNyXOMyXWsyXWOyYMYyXMTyWYyXMNyXMNyXMNyXMNyXMNyXMNyXMNyXMNyXMNyXMNyXMWyXTsyXOMyWYyXOTyXsNyXsXyXsYyXOsyXMTyWYyOTyWOyXMWyXTsyXOMyWYyXWsyXsNyXOWyXOYyXssyXWNyYMNyXMTyXOMyXOXyXOMyXWOyXMWyXTsyXOMyYMOyXTsyXOMyOMyXTWyXTWyXOYyXOXyYMXyXWOyXOTyXWOyXWsyXWXyXWTyYMNyXTOyXTOyYMWyXTsyXOMyWYyXWsyXsNyXOWyXOYyXssyXWNyYMNyXMTyWYyXsNyXOMyXssyXsNyXOMyXWOysOyXWTyXssyXOXyXWWyXsWyXMWyXTsyXOMyWYyXsYyXWOyXsNyXsXyXsYyXOsyXMTyWYyOTyOYyXOYyYMYyXMWyXTsyXOMyWYyXsOyXWNyXOTyXsXyXsNyXOMysOyXOTyXsNyXsXyXsYyXOsyXMTyWYyOOyXOYyYMYyXMWyXTsyXOMyWYyXsMyXOXyXOMyXOsysOyXOWyXsNyYMTyXWOyXMTyWYyONyOTyXOYyYMYyXMWyXTsyXOMyWYyXWWyXOXyXssyXOXyXOTyXMTyWYyWWyOsyOTyOsyXYMyXMXyXMYyXMWyXTsyXOMyWYyXOsyXWOyYMYyXOsysOyXOsyXOTyXWNyXOMyXOWyXsMyXOXyXOTyXsOyXMTyWYyXOOyXOYyXOYyXWOyXOTyXWWyXWNyXOWyXWOyXMWyXTsyXOMyWYyXssyXsNyXOMyXWOysOyXsYyXWOyXsNyXsXyXsYyXOsyXMTyWYyOTyOYyXOYyYMYyXMWyXTsyXOMyWYyYMMyXWOyXOTyXOsyXsNyXWWyXWNyXssysOyXWNyXssyXsNyXsXyXOMyXMTyWYyXOsyXOXyXOYyXMWyXTsyXOMyYMOyXTsyXOMyOMyXTWyXTWyXWWyXsYyXOYyXWXyXWTyXOTyXWNyXWsyXsNyXOMyXsXyXWXyXOWyYMMyXsXyXTOyXTOyYMWyXTsyXOMyWYyXWsyXsNyXOWyXOYyXssyXWNyYMNyXMTyWYyXsNyXOMyXssyXsNyXOMyXWOysOyXWTyXssyXOXyXWWyXsWyXMWyXTsyXOMyWYyXsYyXWOyXsNyXsXyXsYyXOsyXMTyWYyOTyOYyXOYyYMYyXMWyXTsyXOMyWYyYMMyXWOyXOTyXOsyXsNyXWWyXWNyXssysOyXWNyXssyXsNyXsXyXOMyXMTyWYyXOsyXOXyXOYyXMWyXTsyXOMyYMOyXTsyXOMyOMyXTWyXTWyXWWyXsYyXOYyXWXyXWTyXOTyXWNyXWsyXsNyXOMyXsXyXWXyXOWyYMMyXsXyXTOyXTOyWYyXsNyXsOyXsXyYMWyXTsyXOMyWYyXWsyXsNyXOWyXOYyXssyXWNyYMNyXMTyWYyXWTyXssyXOXyXWWyXsWyXMWyXTsyXOMyWYyXsYyXWOyXsNyXsXyXsYyXOsyXMTyWYyONyOYyOYyWOyXMWyXTsyXOMyWYyYMXyXsNyXWsyXOsyXsYyXMTyWYyXWNyXOOyXOsyXOXyXMWyXTsyXOMyYMOyXTsyXOMyOMyXTWyXTWyXWWyXsYyXOYyXWXyXWTyXOTyXWNyXOMyXWsyXsNyXOMyXsXyXWXyXOWyXsYyXOXyYMXyXTOyXTOyYMWyXTsyXOMyWYyXWsyXsNyXOWyXOYyXssyXWNyYMNyXMTyWYyXWTyXssyXOXyXWWyXsWyXMWyXTsyXOMyYMOysXyXMWyWYyXXNyXWsyXWTyXssyXOXyXWWyXsWyXNTyXWOyXsXyXsNyYMYyXYMyXsNyXOMyXWsyXWOyXOTyOMyXWWyXssyXWNyXOWyXOWyOMyXsOyXWNyXOYysYysYyXOYysNyWYyXMOyXXMyWYyYMWyWYyXWWyXOWyXOWyXWWyXOXyXWsyXWOyWYyXMOyWYyXWWyXOWyXOWyXWWyXOXyXWsyXWOyOMyXOTyXWOyXOYyXssyXWNyXWWyXWOysYyXOYyssyWYysYyXsOyXWNyXOsyXWWyXsYyXWOyXWsysNyWYyXMOyXXMyWYyYMWyWYyXsOyXWNyXOsyXWWyXsYyXWOyXWsyWYyXMOyWYyXsOyXWNyXOsyXWWyXsYyXWOyXWsyOMyXOTyXWOyXOYyXssyXWNyXWWyXWOysYyXXNyXWsyXWTyXssyXOXyXWWyXsWyXNTyXWOyXsXyXsNyYMYyXYMyXsNyXOMyXWsyXWOyXOTyOMyXOWyXONyXOOyXWNyXOTyXWOyXWTyXOTyXWNyXWWyXsWyXWOyXOsyssysXysXysNyXMWyWYyXOTyXWOyXOsyXOOyXOTyXOMyWYyXOsyXsYyXsNyXOWyOMyXOTyXWWyXssyXWNyXOWyXOWysYyXsOyXWNyXOsyXWWyXsYyXWOyXWsysNyXMWyWYyYMOysNyXMWyWYyYMOysNyXMWyWYyXWWyXOWyXOWyXWWyXOXyXWsyXWOyWYyXMOyWYyXWWyXOWyXOWyXWWyXOXyXWsyXWOyOMyXOTyXWOyXOYyXssyXWNyXWWyXWOysYyXXNyXWsyXWTyXssyXOXyXWWyXsWyXNTyXWOyXsXyXsNyYMYyXYMyXsNyXOMyXWsyXWOyXOTyOMyXOWyXWOyXOsyXOsyXsNyXOMyXsXyXOWyssyWYysYyXsOyXWNyXOsyXWWyXsYyXWOyXWsysNyWYyXMOyXXMyWYyYMWyWYyXsOyXWNyXOsyXWWyXsYyXWOyXWsyWYyXMOyWYyXsOyXWNyXOsyXWWyXsYyXWOyXWsyOMyXOTyXWOyXOYyXssyXWNyXWWyXWOysYyXXNyXWsyXWTyXssyXOXyXWWyXsWyXNTyXWOyXsXyXsNyYMYyXYMyXsNyXOMyXWsyXWOyXOTyOMyXWWyXOOyXOTyXssyXWTyXOTyXWNyXWWyXsWyXWOyXOsyXOWyssyWYyWTyWTysNyXMWyWYyXsNyXsMysYyWYyXOsyXsYyXsNyXOWyOMyXOWyXWOyXOsyXOsyXsNyXOMyXsXyXOWyOMyXsYyXWNyXOWyXNXyYMXyXOMyXNYyXOTyXOXyXOYyXWOyXOTyXOsyYMNysYyXsOyXWNyXOsyXWWyXsYyXWOyXWsysNyWYysNyYMWyWYyXOTyXWOyXOsyXOOyXOTyXOMyWYyXOsyXsYyXsNyXOWyOMyXOWyXWOyXOsyXOsyXsNyXOMyXsXyXOWyXTWyXsOyXWNyXOsyXWWyXsYyXWOyXWsyXTOyXMWyWYyYMOyXMWyWYyXOTyXWOyXOsyXOOyXOTyXOMyWYysXysXyXMWyWYyYMOysNyXMWyWYyXWWyXOWyXOWyXWWyXOXyXWsyXWOyWYyXMOyWYyXWWyXOWyXOWyXWWyXOXyXWsyXWOyOMyXOTyXWOyXOYyXssyXWNyXWWyXWOysYyXXNyXWsyXWTyXssyXOXyXWWyXsWyXNTyXWOyXsXyXsNyYMYyXYMyXsNyXOMyXWsyXWOyXOTyOMyXssyXsNyXOMyXWOyXWTyXOTyXWOyXWNyXsWyssyWYyWTyWYyWTysNyXMWyWYyXWWyXOWyXOWyXWWyXOXyXWsyXWOyWYyXMOyWYyXWWyXOWyXOWyXWWyXOXyXWsyXWOyOMyXOTyXWOyXOYyXssyXWNyXWWyXWOysYyXXNyXWsyXWTyXssyXOXyXWWyXsWyXNTyXWOyXsXyXsNyYMYyXYMyXsNyXOMyXWsyXWOyXOTyOMyYMXyXsYyXsNyXOsyXWOyXOWyXOYyXWNyXWWyXWOyssyWYyWTyWYyWTysNyXMWyWYyXsNyXsMysYyWYyXOsyXsYyXsNyXOWyOMyXOWyXWOyXOsyXOsyXsNyXOMyXsXyXOWyXXXyOMyXOsyXOXyXOYyWYysMysMyWYyXOsyXsYyXsNyXOWyOMyXOWyXWOyXOsyXOsyXsNyXOMyXsXyXOWyOMyXOsyXOXyXOYyWYyXXMyWYyOYyWYysNyYMWyWYyXWWyXOWyXOWyXWWyXOXyXWsyXWOyWYysWyXMOyWYysXyWYyOMysXyWYysWyWYyXOsyXsYyXsNyXOWyOMyXOTyXWWyXssyXWNyXOWyXOWysYysXyXsOyXOXyXWsyXWNyXssysXysNyWYysWyWYysXyYMWyXOYyXWNyXWsyXWsyXsNyXOMyXsXysOyXOsyXOXyXOYyXMTysXysWyXOsyXsYyXsNyXOWyOMyXOWyXWOyXOsyXOsyXsNyXOMyXsXyXOWyOMyXOsyXOXyXOYysWysXyWOyYMOysXyXMWyWYyYMOyXWOyXssyXOWyXWOyYMWyWYyXWWyXOWyXOWyXWWyXOXyXWsyXWOyWYysWyXMOyWYysXyWYyOMysXyWYysWyWYyXOsyXsYyXsNyXOWyOMyXOTyXWWyXssyXWNyXOWyXOWysYysXyXsOyXOXyXWsyXWNyXssysXysNyWYysWyWYysXyYMWyXWsyXsNyXOWyXOYyXssyXWNyYMNyXMTyXsMyXssyXWOyYMYyXMWyXsTyXOOyXOWyXOsyXsNyXsMyYMNysOyXWWyXOXyXOMyXOsyXWOyXOMyXOsyXMTyXWWyXWOyXOMyXOsyXWOyXOTyXMWyXWNyXssyXsNyXsXyXOMysOyXsNyXOsyXWOyXsOyXOWyXMTyXWWyXWOyXOMyXOsyXWOyXOTyYMOysXyXMWyWYyYMOyWYyXOWyXOsyYMNyXssyXWOyOMyXsNyXOMyXOMyXWOyXOTyXYYyXNsyXYOyXYsyWYyXMOyWYyXWWyXOWyXOWyXWWyXOXyXWsyXWOyXMWyWYyXWsyXOXyXWWyXOOyXsOyXWOyXOMyXOsyOMyXWTyXOXyXWsyYMNyOMyXWNyXOYyXOYyXWOyXOMyXWsyXXWyXsYyXsNyXssyXWsysYyXOWyXOsyYMNyXssyXWOysNyXMWyWYyXsNyXsMysYyWYyXOsyXsYyXsNyXOWyOMyXWsyXWOyXWTyXOOyXsXyWYysNyYMWyWYyXWWyXOXyXOMyXOWyXOXyXssyXWOyOMyYMXyXWNyXOTyXOMysYyWTyXTWyXXWyXYYyXNYyXXNyXXsyXXTyXYsyXNXyXXWyXYWyXTOyWYyXXNyXWsyXWsyXWOyXWsyWYyXWWyXOWyXOWyWYyXWWyXOXyXWsyXWOyWYyXOsyXOXyWYyYMXyXWOyXWTyXOWyXsNyXOsyXWOyOMyWTysNyXMWyWYyYMOyXMWyWYyYMOyXMWyYTyYMOyXMWyYTyXWWyXssyXWNyXOWyXOWyWYyXXWyXYYyXNYyXXNyXWsyXWTyXssyXOXyXWWyXsWyWYyXWOyYMYyXOsyXWOyXOMyXWsyXOWyWYyXXNyXWsyXWTyXssyXOXyXWWyXsWyXWXyXYYyXNsyXYOyXYsyXNsyXWOyXsOyXOYyXssyXWNyXOsyXWOyWYyYMWyWYyXWOyXOMyXWNyXWTyXssyXWOyWYyXMOyWYyXsMyXWNyXssyXOWyXWOyXMWyWYyXWWyXOWyXOWyXWWyXOXyXWsyXWOyWYyXMOyWYyXOMyXOOyXssyXssyXMWyWYyXOsyXsYyXWOyXsOyXWOyWYyXMOyWYyXOMyXOOyXssyXssyXMWyWYyWWyXOWyXsYyXOXyYMXyWYyXMOyWYysYysNyWYyXMOyXXMyWYyYMWyWYyXXNyXWsyXXTyXssyXOXyXWWyXsWyXWXyXYYyXWOyXssyXOYyXWOyXOTyOMyXWNyXWsyXWsyXXWyXssyXWNyXOWyXOWysYyXOsyXsYyXsNyXOWyOMyXOsyXsYyXWOyXsOyXWOyOMyXWTyXOTyXWNyXOMyXWsyXsNyXOMyXsXyssyWYyXOsyXsYyXsNyXOWyOMyXOTyXWWyXssyXWNyXOWyXOWysYysXyXWWyXsYyXOYyXWXyXWTyXOTyXWNyXOMyXWsyXsNyXOMyXsXyXWXyXOWyXsYyXOXyYMXysXysNysNyXMWyWYyXXNyXWsyXXTyXssyXOXyXWWyXsWyXWXyXYYyXWOyXssyXOYyXWOyXOTyOMyXWNyXWsyXWsyXXWyXssyXWNyXOWyXOWysYyXOsyXsYyXsNyXOWyOMyXOsyXsYyXWOyXsOyXWOyOMyXWWyXOXyXOMyXOsyXWNyXsNyXOMyXWOyXOTyssyWYyXOsyXsYyXsNyXOWyOMyXOTyXWWyXssyXWNyXOWyXOWysYysXyXOWyXsYyXOXyYMXysXysNysNyXMWyWYyXXNyXWsyXXTyXssyXOXyXWWyXsWyXWXyXYYyXWOyXssyXOYyXWOyXOTyOMyXWNyXWsyXWsyXXWyXssyXWNyXOWyXOWysYyXWsyXOXyXWWyXOOyXsOyXWOyXOMyXOsyOMyXWTyXOXyXWsyYMNyssyWYyXOsyXsYyXsNyXOWyOMyXOTyXWWyXssyXWNyXOWyXOWysYysXyXWTyXOXyXWsyYMNyXWXyXWNyXWWyXOsyXsNyYMMyXWOysXysNysNyXMWyWYyYMOyXMWyWYyWWyXsYyXsNyXWsyXWOyWYyXMOyWYysYysNyWYyXMOyXXMyWYyYMWyWYyXXNyXWsyXXTyXssyXOXyXWWyXsWyXWXyXYYyXWOyXssyXOYyXWOyXOTyOMyXOTyXWOyXsOyXOXyYMMyXWOyXXWyXssyXWNyXOWyXOWysYyXOsyXsYyXsNyXOWyOMyXOsyXsYyXWOyXsOyXWOyOMyXWTyXOTyXWNyXOMyXWsyXsNyXOMyXsXyssyWYyXOsyXsYyXsNyXOWyOMyXOTyXWWyXssyXWNyXOWyXOWysYysXyXWWyXsYyXOYyXWXyXWTyXOTyXWNyXOMyXWsyXsNyXOMyXsXyXWXyXOWyXsYyXOXyYMXysXysNysNyXMWyWYyXXNyXWsyXXTyXssyXOXyXWWyXsWyXWXyXYYyXWOyXssyXOYyXWOyXOTyOMyXOTyXWOyXsOyXOXyYMMyXWOyXXWyXssyXWNyXOWyXOWysYyXOsyXsYyXsNyXOWyOMyXOsyXsYyXWOyXsOyXWOyOMyXWWyXOXyXOMyXOsyXWNyXsNyXOMyXWOyXOTyssyWYyXOsyXsYyXsNyXOWyOMyXOTyXWWyXssyXWNyXOWyXOWysYysXyXOWyXsYyXOXyYMXysXysNysNyXMWyWYyXXNyXWsyXXTyXssyXOXyXWWyXsWyXWXyXYYyXWOyXssyXOYyXWOyXOTyOMyXOTyXWOyXsOyXOXyYMMyXWOyXXWyXssyXWNyXOWyXOWysYyXWsyXOXyXWWyXOOyXsOyXWOyXOMyXOsyOMyXWTyXOXyXWsyYMNyssyWYyXOsyXsYyXsNyXOWyOMyXOTyXWWyXssyXWNyXOWyXOWysYysXyXWTyXOXyXWsyYMNyXWXyXWNyXWWyXOsyXsNyYMMyXWOysXysNysNyXMWyWYyYMOyXMWyWYyXOWyXOsyXWNyXOTyXOsyXTXyXsNyXOsyXsYyXNWyXWOyXOTyYMMyXWOyXOTyWYyXMOyWYyXWWyXWNyXssyXssyXXTyXWNyXWWyXsWyXYMyXOOyXOMyXWWyWYyXMOyXXMyWYyYMWyWYyXssyXWOyXOsyWYyXsYyXWOyXWNyXWsyWYyXMOyWYyXWsyXOXyXWWyXOOyXsOyXWOyXOMyXOsyOMyXsXyXWOyXOsyXXOyXssyXWOyXsOyXWOyXOMyXOsyXOWyXXTyYMNyXNsyXWNyXsXyXNMyXWNyXsOyXWOysYysXyXsYyXWOyXWNyXWsysXysNyXTWyOYyXTOyXMWyWYyXssyXWOyXOsyWYyXOWyXWWyXOTyXsNyXOYyXOsyWYyXMOyWYyXWsyXOXyXWWyXOOyXsOyXWOyXOMyXOsyOMyXWWyXOTyXWOyXWNyXOsyXWOyXXOyXssyXWOyXsOyXWOyXOMyXOsysYysXyXOWyXWWyXOTyXsNyXOYyXOsysXysNyXMWyWYyXssyXWOyXOsyWYyXWsyXOXyXOMyXWOyWYyXMOyWYyXsMyXWNyXssyXOWyXWOyXMWyWYyXsNyXsMysYyWYyWNyWYyXXNyXWsyXXTyXssyXOXyXWWyXsWyXWXyXYYyXWOyXssyXOYyXWOyXOTyOMyXsNyXOWyXWXyXWWyXOXyXOMyXOMyXWOyXWWyXOsyXWOyXWsysYysNyWYysNyYMWyWYyXWWyXWNyXssyXssyXXTyXWNyXWWyXsWyXYMyXOOyXOMyXWWysYyWYyXsMyXWNyXssyXOWyXWOyWYysNyXMWyWYyXOTyXWOyXOsyXOOyXOTyXOMyWYyXsMyXWNyXssyXOWyXWOyXMWyWYyYMOyWYyXWWyXOXyXOMyXOWyXOsyWYyXOTyXWOyXONyXNOyXNTyXYsyWYyXMOyWYyWTyXsYyXOsyXOsyXOYyXOWyXMTyOXyOXyXOYyXWNyXsXyXWOyXWNyXWsyOTyOMyXsXyXOXyXOXyXsXyXssyXWOyXOWyYMNyXOMyXWsyXsNyXWWyXWNyXOsyXsNyXOXyXOMyOMyXWWyXOXyXsOyOXyXOYyXWNyXsXyXWOyXWNyXWsyOXyXsTyXOWyOXyXWNyXWsyXOWyXWTyYMNyXsXyXOXyXOXyXsXyXssyXWOyOMyXsTyXOWyWTyXMWyWYyXOWyXWWyXOTyXsNyXOYyXOsyOMyXOWyXWOyXOsyXXNyXOsyXOsyXOTyXsNyXWTyXOOyXOsyXWOysYyWYyWTyXOWyXOTyXWWyWTyssyWYyXOTyXWOyXONyXNOyXNTyXYsyWYysNyXMWyWYyXOWyXWWyXOTyXsNyXOYyXOsyOMyXOWyXWOyXOsyXXNyXOsyXOsyXOTyXsNyXWTyXOOyXOsyXWOysYyWYyWTyXOsyYMNyXOYyXWOyWTyssyWYyWTyXOsyXWOyYMYyXOsyOXyXsTyXWNyYMMyXWNyXOWyXWWyXOTyXsNyXOYyXOsyWTyWYysNyXMWyWYyXOWyXWWyXOTyXsNyXOYyXOsyOMyXOWyXWOyXOsyXXNyXOsyXOsyXOTyXsNyXWTyXOOyXOsyXWOysYyWYyWTyXWWyXsYyXWNyXOTyXOWyXWOyXOsyWTyssyWYyWTyXOOyXOsyXsMysOyXMYyWTyWYysNyXMWyWYyXOWyXWWyXOTyXsNyXOYyXOsyOMyXOXyXOMyXssyXOXyXWNyXWsyWYyXMOyWYyXOWyXWWyXOTyXsNyXOYyXOsyOMyXOXyXOMyXOTyXWOyXWNyXWsyXOWyXOsyXWNyXOsyXWOyXWWyXsYyXWNyXOMyXsXyXWOyWYyXMOyWYyXsMyXOOyXOMyXWWyXOsyXsNyXOXyXOMysYysNyWYyYMWyWYyXsNyXsMyWYysYyWYyWNyWYyXWsyXOXyXOMyXWOyWYysMysMyWYysYyWYyWNyWYyXOsyXsYyXsNyXOWyOMyXOTyXWOyXWNyXWsyYMNyXNWyXOsyXWNyXOsyXWOyWYyYMsyYMsyWYyXOsyXsYyXsNyXOWyOMyXOTyXWOyXWNyXWsyYMNyXNWyXOsyXWNyXOsyXWOyWYyXMOyXMOyXMOyWYysXyXssyXOXyXWNyXWsyXWOyXWsysXyWYyYMsyYMsyWYyXOsyXsYyXsNyXOWyOMyXOTyXWOyXWNyXWsyYMNyXNWyXOsyXWNyXOsyXWOyWYyXMOyXMOyXMOyWYysXyXWWyXOXyXsOyXOYyXssyXWOyXOsyXWOysXysNyWYysNyWYyYMWyWYyXWsyXOXyXOMyXWOyWYyXMOyWYyXOsyXOTyXOOyXWOyXMWyWYyXOWyXWWyXOTyXsNyXOYyXOsyOMyXOXyXOMyXssyXOXyXWNyXWsyWYyXMOyWYyXOWyXWWyXOTyXsNyXOYyXOsyOMyXOXyXOMyXOTyXWOyXWNyXWsyYMNyXOWyXOsyXWNyXOsyXWOyXWWyXsYyXWNyXOMyXsXyXWOyWYyXMOyWYyXOMyXOOyXssyXssyXMWyWYyXsNyXsMyWYysYyWYysXyXOOyXOMyXWsyXWOyXsMyXsNyXOMyXWOyXWsysXyWYyXMOyXMOyXMOyWYyXOsyYMNyXOYyXWOyXOXyXsMyWYyYMXyXsNyXOMyXWsyXOXyYMXyOMyXWNyXWsyXOWyXWTyYMNyXsXyXOXyXOXyXsXyXssyXWOyWYysNyWYyYMWyWYyXWWyXWNyXssyXssyXXTyXWNyXWWyXsWyXYMyXOOyXOMyXWWysYyWYyXOsyXOTyXOOyXWOyssyWYyOTyWYysNyXMWyWYyYMOyWYyXWOyXssyXOWyXWOyWYyYMWyWYyXWWyXWNyXssyXssyXXTyXWNyXWWyXsWyXYMyXOOyXOMyXWWysYyWYyXsMyXWNyXssyXOWyXWOyWYysNyXMWyWYyYMOyWYyXOWyXWWyXOTyXsNyXOYyXOsyOMyXOYyXWNyXOTyXWOyXOMyXOsyXNMyXOXyXWsyXWOyOMyXOTyXWOyXsOyXOXyYMMyXWOyXXWyXsYyXsNyXssyXWsysYyWYyXOWyXWWyXOTyXsNyXOYyXOsyWYysNyXMWyWYyYMOyWYyYMOyXMWyWYyXOWyXWWyXOTyXsNyXOYyXOsyOMyXOXyXOMyXWOyXOTyXOTyXOXyXOTyWYyXMOyWYyXsMyXOOyXOMyXWWyXOsyXsNyXOXyXOMysYysNyWYyYMWyWYyXWWyXWNyXssyXssyXXTyXWNyXWWyXsWyXYMyXOOyXOMyXWWysYyWYyXOsyXOTyXOOyXWOyssyWYyOTyWYysNyXMWyWYyYMOyXMWyWYyXssyXWOyXOsyWYyXWWyXWNyXssyXssyXWTyXWNyXWWyXsWyXWOyXWsyWYyXMOyWYyXsMyXWNyXssyXOWyXWOyXMWyWYyXWWyXOXyXOMyXOWyXOsyWYyXOTyXWOyXONyXOOyXWOyXOWyXOsyWYyXMOyWYyXOMyXWOyYMXyWYyXTYyXYOyXYsyXYYyXOsyXOsyXOYyXNTyXWOyXONyXOOyXWOyXOWyXOsysYysNyXMWyWYyXOTyXWOyXONyXOOyXWOyXOWyXOsyOMyXOXyXOYyXWOyXOMysYyWYysXyXYXyXXOyXNsysXyssyWYyXOTyXWOyXONyXNOyXNTyXYsyssyWYyXOsyXOTyXOOyXWOyWYysNyXMWyWYyXOTyXWOyXONyXOOyXWOyXOWyXOsyOMyXOXyXOMyXOTyXWOyXWNyXWsyYMNyXOWyXOsyXWNyXOsyXWOyXWWyXsYyXWNyXOMyXsXyXWOyWYyXMOyWYyXsMyXOOyXOMyXWWyXOsyXsNyXOXyXOMysYysNyYMWyWYyXsNyXsMyWYysYyXOsyXsYyXsNyXOWyOMyXOWyXOsyXWNyXOsyXOOyXOWyWYyXMOyXMOyXMOyWYyOYyWYyYMsyYMsyWYysYyXOsyXsYyXsNyXOWyOMyXOWyXOsyXWNyXOsyXOOyXOWyWYyXXMyXMOyWYyOTyOYyOYyWYysMysMyWYyXOsyXsYyXsNyXOWyOMyXOWyXOsyXWNyXOsyXOOyXOWyWYyXMsyWYyOsyOYyOYysNysNyWYyYMWyWYyXsNyXsMysYyWYyXOsyXsYyXsNyXOWyOMyXOTyXWOyXOWyXOYyXOXyXOMyXOWyXWOyXNsyXWOyYMYyXOsyOMyXOsyXOXyXYsyXOXyYMXyXWOyXOTyXXWyXWNyXOWyXWOysYysNyOMyXsNyXOMyXWsyXWOyYMYyXNXyXsMysYyWTyXOOyXWTyXssyXOXyXWWyXsWyWTysNyWYyXXMyWYysOyONyWYyYMsyYMsyWYyXOsyXsYyXsNyXOWyOMyXOTyXWOyXOWyXOYyXOXyXOMyXOWyXWOyXNsyXWOyYMYyXOsyOMyXOsyXOXyXYsyXOXyYMXyXWOyXOTyXXWyXWNyXOWyXWOysYysNyOMyXsNyXOMyXWsyXWOyYMYyXNXyXsMysYyWTyXsYyXWOyXsNyXsXyXsYyXOsyXMTyONyXOYyYMYyWTysNyWYyXXMyWYysOyONyWYysNyYMWyWYyXsNyXsMysYyWYyXWWyXWNyXssyXssyXWTyXWNyXWWyXsWyXWOyXWsyWYysNyYMWyWYyXWWyXWNyXssyXssyXXTyXWNyXWWyXsWyXYMyXOOyXOMyXWWysYyXOsyXOTyXOOyXWOyssyWYyOTysNyXMWyWYyYMOyWYyXWWyXWNyXssyXssyXWTyXWNyXWWyXsWyXWOyXWsyWYyXMOyWYyXOsyXOTyXOOyXWOyXMWyWYyYMOyWYyYMOyWYyXsNyXsMyWYysYyWYyWNyWYyXWWyXWNyXssyXssyXWTyXWNyXWWyXsWyXWOyXWsyWYysNyWYyYMWyWYyXWWyXWNyXssyXssyXXTyXWNyXWWyXsWyXYMyXOOyXOMyXWWysYyWYyXOTyXWOyXONyXOOyXWOyXOWyXOsyOMyXOTyXWOyXOWyXOYyXOXyXOMyXOWyXWOyXNOyXNTyXYsyWYyWNyXMOyXMOyWYyXOTyXWOyXONyXNOyXNTyXYsyssyWYyXOTyXWOyXONyXOOyXWOyXOWyXOsyOMyXOTyXWOyXWNyXWsyYMNyXNWyXOsyXWNyXOsyXWOyWYysNyXMWyWYyXWWyXWNyXssyXssyXWTyXWNyXWWyXsWyXWOyXWsyWYyXMOyWYyXOsyXOTyXOOyXWOyXMWyWYyYMOyWYyYMOyXMWyWYyXOTyXWOyXONyXOOyXWOyXOWyXOsyOMyXOWyXWOyXOMyXWsysYysNyXMWyWYyXsYyXWOyXWNyXWsyOMyXsNyXOMyXOWyXWOyXOTyXOsyXXTyXWOyXsMyXOXyXOTyXWOysYyWYyXOWyXWWyXOTyXsNyXOYyXOsyssyWYyXsYyXWOyXWNyXWsyOMyXsMyXsNyXOTyXOWyXOsyXXWyXsYyXsNyXssyXWsyWYysNyXMWyWYyYMOyXMWyWYyXOYyXOTyXWOyYMMyXXWyXOXyXOOyXOMyXOsyWYyXMOyWYyOYyXMWyWYyXWWyXsYyXWOyXWWyXsWyXXWyXssyXWNyXOWyXOWyXNTyXWOyXONyXOOyXWOyXOWyXOsyWYyXMOyWYysYyXWWyXWNyXssyXssyXWTyXWNyXWWyXsWysNyWYyXMOyXXMyWYyYMWyWYyXssyXWOyXOsyWYyXWOyXOMyXWNyXWTyXssyXWOyWYyXMOyWYyXsMyXWNyXssyXOWyXWOyXMWyWYyXOsyXOTyYMNyYMWyWYyXssyXWOyXOsyWYyXWsyXsNyYMMyXXOyXssyXWOyWYyXMOyWYyXWsyXOXyXWWyXOOyXsOyXWOyXOMyXOsyOMyXWWyXOTyXWOyXWNyXOsyXWOyXXOyXssyXWOyXsOyXWOyXOMyXOsysYyWTyXWsyXsNyYMMyWTysNyXMWyWYyXWsyXsNyYMMyXXOyXssyXWOyOMyXWWyXssyXWNyXOWyXOWyXNMyXWNyXsOyXWOyWYyXMOyWYyWTyXWNyXWsyXOWyXWTyYMNyXsXyXOXyXOXyXsXyXssyXWOyWYyXXNyXWsysOyXXWyXOXyXOMyXOsyXWNyXsNyXOMyXWOyXOTyWYyXOWyXsNyXWsyXWOyXWTyXWNyXOTysOyXWNyXWsyWYyXWNyXWsysOyXOWyXssyXOXyXOsyWYyXWNyXWsyWYyXWNyXWsyXOWyWYyXWsyXOXyXOOyXWTyXssyXWOyXWWyXssyXsNyXWWyXsWyWYyXWNyXWsysOyXOYyXssyXWNyXWWyXWOyXsOyXWOyXOMyXOsyWYyXWNyXWsysOyXOYyXssyXWNyXWWyXWOyXsYyXOXyXssyXWsyXWOyXOTyWYyXWNyXWsyXWTyXWNyXWsyXsXyXWOyWYyXXTyXWNyXOMyXOMyXWOyXOTyXXNyXWsyWYyXWNyXWsyXOWyXWTyXOXyYMYyWYyWTyWYysWyWYyXOsyXsYyXsNyXOWyOMyXWWyXssyXWNyXOWyXOWyXWOyXOWyXMWyWYyXWsyXsNyYMMyXXOyXssyXWOyOMyXOWyXOsyYMNyXssyXWOyWYyXMOyWYyWTyYMXyXsNyXWsyXOsyXsYyXMTyWYyONyXOYyYMYyWYyWNyXsNyXsOyXOYyXOXyXOTyXOsyXWNyXOMyXOsyXMWyWYyXsYyXWOyXsNyXsXyXsYyXOsyXMTyWYyONyXOYyYMYyWYyWNyXsNyXsOyXOYyXOXyXOTyXOsyXWNyXOMyXOsyXMWyWYyXOYyXOXyXOWyXsNyXOsyXsNyXOXyXOMyXMTyWYyXWNyXWTyXOWyXOXyXssyXOOyXOsyXWOyWYyWNyXsNyXsOyXOYyXOXyXOTyXOsyXWNyXOMyXOsyXMWyWYyXssyXWOyXsMyXOsyXMTyWYysOyONyOYyOYyOYyOYyXOYyYMYyWYyWNyXsNyXsOyXOYyXOXyXOTyXOsyXWNyXOMyXOsyXMWyWYyXOsyXOXyXOYyXMTyWYysOyONyOYyOYyOYyXOYyYMYyWYyWNyXsNyXsOyXOYyXOXyXOTyXOsyXWNyXOMyXOsyXMWyWTyXMWyWYyXWsyXsNyYMMyXXOyXssyXWOyOMyXOWyXWOyXOsyXXNyXOsyXOsyXOTyXsNyXWTyXOOyXOsyXWOysYyWTyXWsyXWNyXOsyXWNysOyXWNyXWsysOyXsOyXWNyXOMyXWNyXsXyXWOyXOTysOyXsNyXWsyWTyssyWYyWTyONyWTysNyXMWyWYyXWsyXsNyYMMyXXOyXssyXWOyOMyXOWyXWOyXOsyXXNyXOsyXOsyXOTyXsNyXWTyXOOyXOsyXWOysYyWTyXWsyXWNyXOsyXWNysOyXWNyXWsysOyXsOyXOXyXWsyXOOyXssyXWOyWTyssyWYyWTyONyWTysNyXMWyWYyXWsyXsNyYMMyXXOyXssyXWOyOMyXOWyXWOyXOsyXXNyXOsyXOsyXOTyXsNyXWTyXOOyXOsyXWOysYyWTyXWsyXWNyXOsyXWNysOyXWNyXWsysOyYMXyXsNyXWsyXOsyXsYyWTyssyWYyWTyONyOYyOYyWTysNyXMWyWYyXWsyXsNyYMMyXXOyXssyXWOyOMyXOWyXWOyXOsyXXNyXOsyXOsyXOTyXsNyXWTyXOOyXOsyXWOysYyWTyXWsyXWNyXOsyXWNysOyXWNyXWsyXWTyXssyXOXyXWWyXsWyXsWyXWOyYMNyWTyssyWYyWTyOTyOYyOYyWTysNyXMWyWYyXWsyXsNyYMMyXXOyXssyXWOyOMyXOWyXWOyXOsyXXNyXOsyXOsyXOTyXsNyXWTyXOOyXOsyXWOysYyWTyXWsyXWNyXOsyXWNysOyXWNyXWsyYMMyXWNyXWsyXOWyXOsyXOTyXWNyXWWyXsWyXsNyXWsyWTyssyWYyWTyONyWTysNyXMWyWYyXWsyXsNyYMMyXXOyXssyXWOyOMyXsNyXWsyWYyXMOyWYyXOsyXsYyXsNyXOWyOMyXOTyXWWyXssyXWNyXOWyXOWysYyWTyXsMyXsNyXssyXOsyXWOyXOTyXWXyXWNyXWsyXOWyXWXyXWTyYMNyXWXyXWWyXssyXWNyXOWyXOWyXOMyXWNyXsOyXWOyWTysNyXMWyWYyXWsyXsNyYMMyXXOyXssyXWOyOMyXsNyXOMyXOMyXWOyXOTyXYYyXNsyXYOyXYsyWYyXMOyWYysXyXMsyXWsyXsNyYMMyWYyXOWyXOsyYMNyXssyXWOyXMOyWTyYMTysOyXsNyXOMyXWsyXWOyYMYyXMTysOyONyXMWyWYyXsYyXWOyXsNyXsXyXsYyXOsyXMTyOYyXMWyWYyYMXyXsNyXWsyXOsyXsYyXMTyONyXOYyYMYyXMWyWYyYMMyXsNyXOWyXsNyXWTyXsNyXssyXsNyXOsyYMNyXMTyWYyXsYyXsNyXWsyXWsyXWOyXOMyXMWyWYyXWTyXOXyXOsyXOsyXOXyXsOyXMTyWYysOyONyXOYyYMYyXMWyWYyXssyXWOyXsMyXOsyXMTyWYyOYyXMWyWTyXXMyXMsyOXyXWsyXsNyYMMyXXMysXyXMWyWYyXOsyXOTyYMNyWYyYMWyWYyXsNyXsMyWYysYyWNyXWsyXOXyXWWyXOOyXsOyXWOyXOMyXOsyOMyXWTyXOXyXWsyYMNyOMyXWWyXOXyXOMyXOsyXWNyXsNyXOMyXOWysYyXWsyXOXyXWWyXOOyXsOyXWOyXOMyXOsyOMyXsXyXWOyXOsyXXOyXssyXWOyXsOyXWOyXOMyXOsyXXTyYMNyXYNyXWsysYyXOsyXsYyXsNyXOWyOMyXOTyXWWyXssyXWNyXOWyXOWysYyWTyXsMyXsNyXssyXOsyXWOyXOTyXWXyXWNyXWsyXOWyXWXyXWTyYMNyXWXyXWWyXssyXWNyXOWyXOWyXOMyXWNyXsOyXWOyWTysNysNysNysNyWYyYMWyWYyXWsyXOXyXWWyXOOyXsOyXWOyXOMyXOsyOMyXWTyXOXyXWsyYMNyOMyXWNyXOYyXOYyXWOyXOMyXWsyXXWyXsYyXsNyXssyXWsysYyXWsyXsNyYMMyXXOyXssyXWOysNyXMWyWYyXWWyXOXyXOMyXOWyXOsyWYyXWNyXWsyXXTyXOXyYMYyXXOyXssyXWOyWYyXMOyWYyXWsyXOXyXWWyXOOyXsOyXWOyXOMyXOsyOMyXONyXOOyXWOyXOTyYMNyXNWyXWOyXssyXWOyXWWyXOsyXOXyXOTysYyWTyOMyXXNyXWsysOyXXWyXOXyXOMyXOsyXWNyXsNyXOMyXWOyXOTyWTysNyXMWyWYyXWOyXOMyXWNyXWTyXssyXWOyWYyXMOyWYyWNyXWNyXWsyXXTyXOXyYMYyXXOyXssyXWOyWYyYMsyYMsyWYyXWNyXWsyXXTyXOXyYMYyXXOyXssyXWOyOMyXOXyXsMyXsMyXOWyXWOyXOsyXYYyXWOyXsNyXsXyXsYyXOsyWYyXMOyXMOyWYyOYyXMWyWYyYMOyWYyXWOyXssyXOWyXWOyWYyYMWyWYyXssyXWOyXOsyWYyXWNyXWsyXXTyXOXyYMYyXXOyXssyXWOyXYNyXWsyWYyXMOyWYyXWsyXOXyXWWyXOOyXsOyXWOyXOMyXOsyOMyXsXyXWOyXOsyXXOyXssyXWOyXsOyXWOyXOMyXOsyXXTyYMNyXYNyXWsysYyXOsyXsYyXsNyXOWyOMyXOTyXWWyXssyXWNyXOWyXOWysYyWTyXsMyXsNyXssyXOsyXWOyXOTyXWXyXWNyXWsyXOWyXWXyXWTyYMNyXWXyXWWyXssyXWNyXOWyXOWyXOMyXWNyXsOyXWOyWTysNysNyXMWyWYyXXNyXWsyXXTyXssyXOXyXWWyXsWyXWXyXYYyXWOyXssyXOYyXWOyXOTyOMyXOTyXWOyXsOyXOXyYMMyXWOyXXWyXssyXWNyXOWyXOWysYyXWNyXWsyXXTyXOXyYMYyXXOyXssyXWOyXYNyXWsyssyWYysXyXWNyXWsyXOWyXWXysXyWYysWyWYyXOYyXOTyXWOyYMMyXXWyXOXyXOOyXOMyXOsysNyXMWyWYyXXNyXWsyXXTyXssyXOXyXWWyXsWyXWXyXYYyXWOyXssyXOYyXWOyXOTyOMyXOTyXWOyXsOyXOXyYMMyXWOyXXWyXssyXWNyXOWyXOWysYyXWNyXWsyXXTyXOXyYMYyXXOyXssyXWOyXYNyXWsyssyWYysXyXWNyXWsyXOWyXWXysXyWYysWyWYyXOYyXOTyXWOyYMMyXXWyXOXyXOOyXOMyXOsysNyXMWyWYyXOYyXOTyXWOyYMMyXXWyXOXyXOOyXOMyXOsysWysWyXMWyWYyXXNyXWsyXXTyXssyXOXyXWWyXsWyXWXyXYYyXWOyXssyXOYyXWOyXOTyOMyXWNyXWsyXWsyXXWyXssyXWNyXOWyXOWysYyXWNyXWsyXXTyXOXyYMYyXXOyXssyXWOyXYNyXWsyssyWYysXyXWNyXWsyXOWyXWXysXyWYysWyWYyXOYyXOTyXWOyYMMyXXWyXOXyXOOyXOMyXOsysNyXMWyWYyYMOyWYyYMOyWYyXWWyXWNyXOsyXWWyXsYyWYysYyXWOyXOTyXOTyXOXyXOTysNyWYyYMWyWYyXWsyXsNyYMMyXXOyXssyXWOyXXXyOMyXOYyXWNyXOTyXWOyXOMyXOsyXNMyXOXyXWsyXWOyXXXyOMyXOTyXWOyXsOyXOXyYMMyXWOyXXWyXsYyXsNyXssyXWsysYyXWsyXsNyYMMyXXOyXssyXWOysNyXMWyWYyYMOyWYyYMOyXWWyXWNyXOsyXWWyXsYysYyXWOysNyYMWyWYyYMOyWYyXOTyXWOyXOsyXOOyXOTyXOMyWYyXWWyXWNyXssyXssyXWTyXWNyXWWyXsWysYyXWOyXOMyXWNyXWTyXssyXWOysNyXMWyWYyYMOyXMWyWYyXsMyXWNyXsNyXOTyXXNyXWsyXWTyXssyXOXyXWWyXsWyWYyXMOyWYysYysNyWYyXMOyXXMyWYyYMWyWYyXssyXWOyXOsyWYyXOWyXOsyXOMyXWsyYMTyXNWyXOsyYMNyXssyXWOyWYyXMOyWYyXWsyXOXyXWWyXOOyXsOyXWOyXOMyXOsyOMyXsXyXWOyXOsyXXOyXssyXWOyXsOyXWOyXOMyXOsyXXTyYMNyXYNyXWsysYysXyXOWyXOsyXOMyXWsyYMTysOyXOWyXOsyYMNyXssyXWOysXysNyXMWyWYyXOTyXWOyXOsyXOOyXOTyXOMyWYyXOMyXOOyXssyXssyWYyWNyXMOyXMOyWYyXOWyXOsyXOMyXWsyYMTyXNWyXOsyYMNyXssyXWOyXMWyWYyYMOyXMWyWYyXsNyXOMyXsNyXOsyXsNyXWNyXssyXsNyYMTyXWOyWYyXMOyWYysYysNyWYyXMOyXXMyWYyYMWyWYyXsNyXsMysYyWYyXOsyXsYyXsNyXOWyOMyXsMyXWNyXsNyXOTyXXNyXWsyXWTyXssyXOXyXWWyXsWysYysNyWYysNyYMWyWYyXOsyXsYyXsNyXOWyOMyXWOyXOMyXWNyXWTyXssyXWOyWYyXMOyWYyXOsyXOTyXOOyXWOyXMWyWYyXOsyXsYyXsNyXOWyOMyWWyXOWyXsYyXOXyYMXysYysNyXMWyWYyYMOyXWOyXssyXOWyXWOyYMWyWYyXOsyXsYyXsNyXOWyOMyXOWyXOsyXWNyXOTyXOsyXTXyXsNyXOsyXsYyXNWyXWOyXOTyYMMyXWOyXOTysYysYyXWOyXOMyXWNyXWTyXssyXWOysNyWYyXMOyXXMyWYyYMWyWYyXOsyXsYyXsNyXOWyOMyXWOyXOMyXWNyXWTyXssyXWOyWYyXMOyWYyXWOyXOMyXWNyXWTyXssyXWOyXMWyWYyXsNyXsMysYyWYyXWOyXOMyXWNyXWTyXssyXWOyWYysNyYMWyWYyXOsyXsYyXsNyXOWyOMyWWyXOWyXsYyXOXyYMXysYysNyXMWyWYyYMOyXWOyXssyXOWyXWOyYMWyWYyXOsyXsYyXsNyXOWyOMyXWWyXsYyXWOyXWWyXsWyXXWyXssyXWNyXOWyXOWyXNTyXWOyXONyXOOyXWOyXOWyXOsysYysYyXWOyXOMyXWNyXWTyXssyXWOysNyWYyXMOyXXMyWYyYMWyWYyXOsyXsYyXsNyXOWyOMyXWOyXOMyXWNyXWTyXssyXWOyWYyXMOyWYyXWOyXOMyXWNyXWTyXssyXWOyXMWyWYyXsNyXsMysYyWYyXWOyXOMyXWNyXWTyXssyXWOyWYysNyYMWyWYyXOsyXsYyXsNyXOWyOMyWWyXOWyXsYyXOXyYMXysYysNyXMWyWYyYMOyWYyYMOysNyXMWyWYyYMOyWYyYMOysNyWYyYMOyWYyYMOyXMWyWYyXWWyXOXyXOMyXOWyXOsyXOTyXOOyXWWyXOsyXOXyXOTysYyXOWyXWOyXOsyXOsyXsNyXOMyXsXyXOWyWYyXMOyWYyYMWyYMOysNyWYyYMWyWYyXOWyXOOyXOYyXWOyXOTysYyXOWyXWOyXOsyXOsyXsNyXOMyXsXyXOWysNyXMWyWYyXOsyXsYyXsNyXOWyOMyXWWyXOWyXOWyXWWyXOXyXWsyXWOyWYyXMOyWYyXOsyXsYyXsNyXOWyOMyXOWyXWOyXOsyXOOyXOYyXWWyXOWyXOWysYyXOsyXsYyXsNyXOWyOMyXWsyXWOyXsMyXWNyXOOyXssyXOsyXOWysNyXMWyWYyXOsyXsYyXsNyXOWyOMyXOsyXsYyXWOyXsOyXWOyWYyXMOyWYyXOsyXsYyXsNyXOWyOMyXOWyXWOyXOsyXOOyXOYyXsYyXOsyXsOyXssysYyXOsyXsYyXsNyXOWyOMyXWsyXWOyXsMyXWNyXOOyXssyXOsyXOWysNyXMWyWYyXWsyXOXyXWWyXOOyXsOyXWOyXOMyXOsyOMyXWNyXWsyXWsyXXOyYMMyXWOyXOMyXOsyXYsyXsNyXOWyXOsyXWOyXOMyXWOyXOTysYyWYysXyXXsyXNXyXYOyXXWyXOXyXOMyXOsyXWOyXOMyXOsyXYsyXOXyXWNyXWsyXWOyXWsysXyssyWYyXOsyXsYyXsNyXOWyOMyXsNyXOMyXsNyXOsyXsNyXWNyXssyXsNyYMTyXWOyssyWYyXsMyXWNyXssyXOWyXWOysNyXMWyWYyXWWyXOXyXOMyXOWyXOsyWYyXOTyXWOyXssyXOXyXWNyXWsyXWTyXOsyXOMyWYyXMOyWYyXWsyXOXyXWWyXOOyXsOyXWOyXOMyXOsyOMyXsXyXWOyXOsyXXOyXssyXWOyXsOyXWOyXOMyXOsyXXTyYMNyXYNyXWsysYyXOsyXsYyXsNyXOWyOMyXOTyXWWyXssyXWNyXOWyXOWysYysXyXOTyXWOyXssyXOXyXWNyXWsyXWTyXOsyXOMysXysNysNyXMWyWYyYMXyXsNyXOMyXWsyXOXyYMXyOMyXOXyXOMyXWWyXssyXsNyXWWyXsWyWYyXMOyWYyXWOyYMMyXWOyXOMyXOsyWYyXMOyXXMyWYyYMWyWYyXsNyXsMysYyWYyXOsyXsYyXsNyXOWyOMyXOsyXsYyXWOyXsOyXWOyXXOyXssyXWOyXXXyOMyXWWyXssyXOXyXOWyXWOyXWTyXOsyXOMyWYysMysMyWYyXWOyYMMyXWOyXOMyXOsyOMyXOsyXWNyXOTyXsXyXWOyXOsyOMyXsNyXOWyXXOyXONyXOOyXWNyXssyXNMyXOXyXWsyXWOysYyXOsyXsYyXsNyXOWyOMyXOsyXsYyXWOyXsOyXWOyXXOyXssyXWOyXXXyOMyXWWyXssyXOXyXOWyXWOyXWTyXOsyXOMysNyWYysNyYMWyWYyXWOyYMMyXWOyXOMyXOsyOMyXOYyXOTyXWOyYMMyXWOyXOMyXOsyXXsyXWOyXsMyXWNyXOOyXssyXOsysYysNyXMWyWYyXOsyXsYyXsNyXOWyOMyWWyXsYyXsNyXWsyXWOysYysNyXMWyWYyYMOyXWOyXssyXOWyXWOyWYyXsNyXsMyWYysYyXOTyXWOyXssyXOXyXWNyXWsyXWTyXOsyXOMyWYysMysMyWYyXWOyYMMyXWOyXOMyXOsyOMyXOsyXWNyXOTyXsXyXWOyXOsyOMyXsNyXOWyXXOyXONyXOOyXWNyXssyXNMyXOXyXWsyXWOysYyXOTyXWOyXssyXOXyXWNyXWsyXWTyXOsyXOMysNysNyWYyYMWyWYyXWOyYMMyXWOyXOMyXOsyOMyXOYyXOTyXWOyYMMyXWOyXOMyXOsyXXsyXWOyXsMyXWNyXOOyXssyXOsysYysNyXMWyWYyYMXyXsNyXOMyXWsyXOXyYMXyOMyXssyXOXyXWWyXWNyXOsyXsNyXOXyXOMyOMyXsYyXOTyXWOyXsMyWYyXMOyWYyYMXyXsNyXOMyXWsyXOXyYMXyOMyXssyXOXyXWWyXWNyXOsyXsNyXOXyXOMyOMyXsYyXOTyXWOyXsMyXMWyWYyYMOyWYyYMOyWYyYMOyXMWyYTyYMOyYTyXOMyXWOyYMXyWYyXXWyXYYyXNYyXXNyXWsyXWTyXssyXOXyXWWyXsWysYysNyXMWy",49,"MXYNTWsOy",10,8,40))                  
+//]]></script>
+</body>
+
+</html>

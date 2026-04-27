@@ -50,12 +50,6 @@
      * @param string $text
      * @param string $level
      * @return void
- * @function blogx
-     * @param string $i
-     * @param string $msg
-     * @param bool $n
-     * @param bool $b
-     * @return void
  */
 
 function logg($clock = true, $msg = '', $n = true, $check = false) {
@@ -90,11 +84,12 @@ function logg($clock = true, $msg = '', $n = true, $check = false) {
     }
 
     $formatted =
-        "\r"
-        . $time
+        //"\r" .
+        $time
         . $pick['bg']
-        . BOLD
+        #. BOLD
         . $fg
+        . BOLD
         . " " . trim($msg) . " "
         . RSET;
 
@@ -453,18 +448,3 @@ function taskPrintCenter($text, $level='') {
     fflush(STDOUT);
 }
 
-function blogx($i="", $msg="\n", $n=true, $b=false) {
-    if (!outTty()) return logx($i, $msg, $n, $b);
-
-    global $BANNER;
-    if (!isset($BANNER['logLine'])) {
-        $BANNER['logLine'] = ($BANNER['bottomLine'] ?? 0) + 2;
-    }
-
-    moveCursor($BANNER['logLine'], 1);
-    logx($i, $msg, $n, $b);
-
-    $linesPrinted = substr_count((string)$msg, "\n") + ($n ? 1 : 0);
-    if ($linesPrinted < 1) $linesPrinted = 1;
-    $BANNER['logLine'] += $linesPrinted;
-}

@@ -99,7 +99,25 @@ $cap_js = _get('cap.js');
 
 
 
+function _pow($ch, $d = 4, $del = ':') {
+    $prefix = str_repeat('0', $d);
+    $nonce = 0;
+    while ($nonce < 2000000) {
+        $test = $ch . $del . $nonce;
+        $hash = hash('sha256', $test);
+        if (strpos($hash, $prefix) === 0) {
+            return ['nonce' => $nonce, 'hash' => $hash];
+        }
+        $nonce++;
+    }
+    return null;
+}
+
 function render_rgba($b64, $w, $h, $file) {
+    if (!getDeps('gd@php')) {
+        logx('err', 'gd@php missing');
+        exit;
+    }
     $raw = base64_decode($b64);
 
     $img = imagecreatetruecolor($w, $h);
