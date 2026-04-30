@@ -16,8 +16,7 @@ credentials
 
 *.tmp
 *.png
-.env
-**/.env
+
 
 **/*opnssl.php
 bot/tes/

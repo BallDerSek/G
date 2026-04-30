@@ -8,19 +8,23 @@ $login = $acc['login'];
 $cookieFile = config::cookie($login);
 $userAgent = config::uagent('mobile');
 
-$host = 'http://satoshifaucet.io';
+$host = 'https://satoshifaucet.io';
 $domain = parse_url($host, PHP_URL_HOST);
 $r = '/?r=124158';
-$ip = '173.249.41.150';
+$ip = null;
 
 inf::setup($userAgent, $cookieFile, $ip);
 
 banner();
 login:
 
-$_0 = Net::C($host, 'GET', null, inf::$cookie, ['detail-hints:false'], '', inf::$uagent, ip: $ip);
-if (empty($_0)) goto login;
 
+if (empty($GLOBALS['_CTX']['proxy']['src'])) {
+    logx('err', '  MANA PROXY NYA !!!');
+    die;
+}
+
+$headersCF = [];
 $skipped = [];
 $SLDONE = false;
 while (true) {
@@ -29,7 +33,7 @@ while (true) {
     
     do {
         $ret++;
-        $l = inf::check($host.'/dashboard', ['detail-hints:false'], '/auth/login');
+        $l = inf::check($host.'/dashboard', $headersCF, '/auth/login');
         #_put('l.html', $l['html']);
         
         if ($l['ok']) {
@@ -38,53 +42,55 @@ while (true) {
             break; 
         }
         if ($ret >= $max) {
-            logx('err', 'gak tau');
+            logx('warn', 'ADA YANG SALAH, COBA CEK KE WEB');
             exit; 
         }
         @unlink(inf::$cookie);
         taskPrintCenter('logging in', 'err');
         
-        $_0 = Net::C($host.$r, 'GET', null, inf::$cookie, ['detail-hints:false'], '', inf::$uagent, ip: $ip);
+        $_0 = Net::C($host.$r, 'GET', null, inf::$cookie, $headersCF, '', inf::$uagent);
+        if ($_0 === 99) exit;
         if (empty($_0)) continue;
         
-       # _put('0.html', $_0);
-        $f = scraper::payload($_0)[0] ?? [];
-        if (empty($f)) continue;
+        #_put('0.html', $_0);
+        $f = scraper::payload($_0)[0];
         $pa = $f['payload'];
-        $cap = solve::exec($_0, 'https://'.$domain, $api);
+        $cap = solve::exec($_0, $host, $api);
         
         $cre = ['uf' => md5($login), 'ls' => LANGUAGE(), 'utt' => TIMEZONE(), 'wallet' => $login];
         $po = array_merge($pa, $cap, $cre);
         
-        Net::C($host.'/auth/login', 'POST', $po, inf::$cookie, ['detail-hints:false'], $host.$r, inf::$uagent, ip: $ip, foll: false);
+        $lo = Net::C($f['url'], 'POST', $po, inf::$cookie, $headersCF, $host.$r, inf::$uagent);
+        if ($lo === 99) exit;
+        #_put('lo.html', $lo);
 #die;
         _sle(5);
     } while (empty($dash));
 
-    /*
-    $task = Net::C($host.'/challenge', 'GET', null, $cookieFile, [], '', $userAgent, ip: $ip);
-    _put('task.html', $task);
-    $f = scraper::payload($task)[0]['payload'];
-    print_r($f);
-    
-    solve::eCaptcha($host);
-    */
+    #_put('dash.html', $dash);
     
     $_fa = Scraper::_xP($dash, "//div[normalize-space()='Faucets']/ancestor::li//div[@class='sub-menu-two']/a/@href");
     
     foreach ($_fa as $fa) {
-        $fa = str_replace('https://', 'http://', $fa);
         $_c = basename(parse_url($fa)['path']);
         
-        print(FGd['CYN']." ".UNDR.$login.RSET."  ");
+        print(FGd['CYN']." ".UNDR.maskEmail($login).RSET."  ");
         logx('err', strtoupper($_c));
         
         while (true) {
-            _sle(3);
-            $fau = Net::C($fa, 'GET', null, $cookieFile, [], '', $userAgent, ip: $ip);
+            #print_r($headersCF);
+            $fau = Net::C($fa, 'GET', null, inf::$cookie, $headersCF, '', inf::$uagent, ip: $ip);
+            if ($fau === 99) exit;
             if (empty($fau)) continue;
+            #_put('stffau.html', $fau);
             
-            #_put('fau.html', $fau);
+            /*
+            if (!empty($headersCF)) {
+                _put('fau.html', $fau);
+                logx('info', inf::$uagent);
+            }
+            */
+            
             $f = scraper::payload($fau)[0] ?? [];
             if (!empty($f)) {
                 $pa = $f['payload'];
@@ -99,17 +105,28 @@ while (true) {
                 $po = array_merge($pa, $cap, $cre);
             } else {
                 if (stripos($fau, 'claim limit for this coin reached')) continue 2;
-                styler("waiting for CLAIM", fn() => _sle(10));
+                if ((stripos($fau, 'Just a moment') !== false || stripos($fau, 'Attention Required!') !== false)) {
+                    logx('warn', 'Cloudflare Detected');
+                    if ($cf = stfCF($api, $fa)) {
+                        [$he, $ua] = $cf;
+                        inf::setup($ua, inf::$cookie);
+                        $headersCF = $he;
+                        
+                        #$fauuu = Net::C($fa, 'GET', null, inf::$cookie, $he, $fa, inf::$uagent);
+                        #_put('faa.html', $fauuu); die;
+                    }
+                }
+                _sle(10);
                 continue;
             }
             #print_r($po);
             
             _sle(2);
-            $ve = str_replace('https://', 'http://', $f['url']);
-            Net::X($ve, 'POST', $po, $cookieFile, [], $fa, $userAgent, ip: $ip, foll: false);
-            $cla = Net::X($fa, 'GET', null, $cookieFile, [], '', $userAgent, ip: $ip);
+            $cla = Net::X($f['url'], 'POST', $po, inf::$cookie, $headersCF, '', inf::$uagent);
+            if ($cla === 99) exit;
+            if (empty($cla)) continue;
+            #_put('cla.html', $cla);
             if (stripos($cla, 'rate limited')) goto login;
-            
             if ($ban = isBan($cla)) {
                 logx('err', " kena ban: " . $ban['ti'], false);
                 styler("waiting for unlocked", fn() => _sle($ban['sleep']));
@@ -122,8 +139,7 @@ while (true) {
                 if (stripos($_suc[3][0], 'sufficient')) break;
                 if (stripos($_suc[3][0], 'Shortlink must be completed')) {
                     if ($SLDONE) {
-                        logx('err', 'dah kelar gada sl+jatah faucet');
-                        die;
+                        logx('err', 'dah kelar gada sl+jatah faucet'); die;
                     }
                     $curr = $_c;
                     break 2;
@@ -131,67 +147,146 @@ while (true) {
             }
             styler("waiting for CLAIM", fn() => _sle(10));
         }
-
     }
-    
-    
-    
-    $_sl = Scraper::_xP($dash, "//div[normalize-space()='Shortlinks']/parent::div/following-sibling::div[@class='sub-menu-two']/a/@href");
 
-    $valid = [];
+    $_sl = Scraper::_xP($dash, "//div[normalize-space()='Shortlinks']/parent::div/following-sibling::div[@class='sub-menu-two']/a/@href");
+/*
     foreach ($_sl as $sl) {
-        $sl = str_replace('https://', 'http://', $sl);
         $_c = basename($sl);
-        
         if (trim(strtoupper($_c)) !== trim(strtoupper($curr))) continue;
         $up = ['earnow','shortano', 'shortino', 'coinclix', 'fc-lc'];
 
         do {
-            logx("info", 'start sl ');
-            $sho = Net::C($sl, 'GET', null, $cookieFile, [], '', $userAgent, ip: $ip);
+            $sho = Net::C($sl, 'GET', null, inf::$cookie, $headersCF, '', inf::$uagent);
+            if ($sho === 99) exit;
             if (empty($sho)) {
                 _sle(5); 
                 continue;
             }
             if ($ban = isBan($sho)) {
                 logx('err', " kena ban: " . $ban['ti'], false);
-                logx('ok', " tunggu {$ban['tmr']}");
                 styler("waiting for unlocked", fn() => _sle($ban['sleep']));
-                continue;
+                continue; 
             }
             $f = scraper::payload($sho)[0] ?? [];
-            if (empty($f)) {
-                _sle(3);
-                continue;
-            }
+            if (empty($f)) { _sle(3); continue; }
             
             $pa = $f['payload'];
             $short = sScraper::extract($sho);
+            #print_r($short); die;
             $success_in_page = false; 
-            $found_one = false;
             
             foreach ($short as $links => [$idd, $lmt]) {
-                if (!limit($lmt)) continue;
-                if (isset($skipped[$idd])) continue; 
+                if (!limit($lmt) || isset($skipped[$idd])) continue;
                 
-                $found_one = true;
-                $valid[$links] = [$idd, $lmt];
+                $ud = str_replace("/currency/$_c", "", $sl)."/go/{$idd}/".strtoupper($_c);
+                $cap = solve::exec($sho, $host, $api);
+                $po = array_merge($pa, $cap, ['uf' => md5($login), 'ls' => LANGUAGE(), 'utt' => TIMEZONE()]);
                 
-                $go = str_replace("/currency/$_c", "", $sl);
-                $ud = $go."/go/{$idd}/".strtoupper($_c);
-                
-                $cap = solve::exec($sho, 'https://'.$domain, $api);
-                $cre = ['uf' => md5($login), 'ls' => LANGUAGE(), 'utt' => TIMEZONE()];
-                $po = array_merge($pa, $cap, $cre);
-                
-                $get = Net::X($ud, 'POST', $po, $cookieFile, [], $sl, $userAgent, ip: $ip, foll: false);
+                $get = Net::X($ud, 'POST', $po, inf::$cookie, $headersCF, $sl, inf::$uagent, ip: $ip, foll: false);
+                if ($get === 99) exit;
                 preg_match('/location\.href\s*=\s*["\']([^"\']+)["\']/', $get, $match);
                 $loc = $match[1] ?? '';
-                logx('info', $loc, true, true);
                 
                 if (!$loc) {
                     $skipped[$idd] = true;
-                    break;
+                    break; 
+                }
+                $loc_u = parse_url($loc)['host'];
+                foreach ($up as $blacklisted) {
+                    if (str_contains($loc_u, $blacklisted)) {
+                        logx('warn', "Domain $blacklisted Skipping..");
+                        $skipped[$idd] = true;
+                        break 2; 
+                    }
+                }
+
+                logx('info', "Bypass: $loc", true, true);
+                $bakk = links($api, $loc);
+                if (!$bakk) {
+                    $skipped[$idd] = true; 
+                    break; 
+                }
+                
+                styler("waiting for SL", fn() => _sle(60));
+                $ver = Net::C($bakk, 'GET', null, inf::$cookie, $headersCF, $loc, inf::$uagent);
+                if ($ver === 99) exit;
+                
+                if (!empty($ver)) {
+                    $_suc = scraper::_jP($ver, "/Swal\.fire\(\s*\{.*?icon:\s*'([^']+)'.*?title:\s*'([^']+)'.*?html:\s*'([^']+)'/s");
+                    if (!empty($_suc[1][0])) {
+                        logx('err', " {$_suc[2][0]} ", false, true);
+                        logg(false, "{$_suc[3][0]}");
+
+                        if ($_suc[1][0] === 'success') {
+                            $success_in_page = true;
+                            $curr = ""; 
+                            break 2;
+                        }
+                        if (stripos($_suc[3][0], 'sufficient')) {
+                            break;
+                        }
+                    }
+                }
+                $skipped[$idd] = true;
+                break;
+            }
+            if (!$success_in_page && empty($ud)) {
+                logx('err', 'sl abis kayaknya');
+                $curr = "";
+                $SLDONE = true;
+                break; 
+            }
+        } while (!$success_in_page);
+        
+        if ($success_in_page || $curr === "") {
+            break; 
+        }
+    }
+/*/
+
+    foreach ($_sl as $sl) {
+        $_c = basename($sl);
+        if (trim(strtoupper($_c)) !== trim(strtoupper($curr))) continue;
+        $up = ['earnow','shortano', 'shortino', 'coinclix', 'fc-lc'];
+
+        do {
+            $sho = Net::C($sl, 'GET', null, inf::$cookie, $headersCF, '', inf::$uagent);
+            if ($sho === 99) exit;
+            if (empty($sho)) {
+                _sle(5); 
+                continue;
+            }
+            if ($ban = isBan($sho)) {
+                logx('err', " kena ban: " . $ban['ti'], false);
+                styler("waiting for unlocked", fn() => _sle($ban['sleep']));
+                continue; 
+            }
+            $f = scraper::payload($sho)[0] ?? [];
+            if (empty($f)) { _sle(3); continue; }
+            
+            $pa = $f['payload'];
+            $short = sScraper::extract($sho);
+            #print_r($short) && die;
+            $success_in_page = false; 
+            $found_one = false; 
+            
+            foreach ($short as $links => [$idd, $lmt]) {
+                if (!limit($lmt) || isset($skipped[$idd])) continue;
+                
+                $found_one = true;
+                $ud = str_replace("/currency/$_c", "", $sl)."/go/{$idd}/".strtoupper($_c);
+                $cap = solve::exec($sho, $host, $api);
+                $po = array_merge($pa, $cap, ['uf' => md5($login), 'ls' => LANGUAGE(), 'utt' => TIMEZONE()]);
+                
+                $get = Net::X($ud, 'POST', $po, inf::$cookie, $headersCF, $sl, inf::$uagent, ip: $ip, foll: false);
+                if ($get === 99) exit;
+                preg_match('/location\.href\s*=\s*["\']([^"\']+)["\']/', $get, $match);
+                $loc = $match[1] ?? '';
+                
+                if (!$loc) {
+                    $skipped[$idd] = true;
+                    break; 
                 }
 
                 $loc_u = parse_url($loc)['host'];
@@ -204,8 +299,10 @@ while (true) {
                         break; 
                     }
                 }
-                if ($is_bl) break; 
                 
+                if ($is_bl) break; 
+
+                logx('info', "Bypass: $loc", true, true);
                 $bakk = links($api, $loc);
                 if (!$bakk) {
                     $skipped[$idd] = true; 
@@ -213,13 +310,9 @@ while (true) {
                 }
                 
                 styler("waiting for SL", fn() => _sle(60));
-                $bak = preg_replace('/^https:/i', 'http:', $bakk);
-                Net::C($bak, 'GET', null, $cookieFile, [], '', $userAgent, ip: $ip, foll: false);
-                $baak = str_replace('/back/', '/verify/', $bak);
-                Net::C($baak, 'GET', null, $cookieFile, [], $bakk, $userAgent, ip: $ip, foll: false);
+                $ver = Net::C($bakk, 'GET', null, inf::$cookie, $headersCF, $loc, inf::$uagent);
+                if ($ver === 99) exit;
                 
-                $ver = Net::C($sl, 'GET', null, $cookieFile, [], '', $userAgent, ip: $ip);
-
                 if (!empty($ver)) {
                     $_suc = scraper::_jP($ver, "/Swal\.fire\(\s*\{.*?icon:\s*'([^']+)'.*?title:\s*'([^']+)'.*?html:\s*'([^']+)'/s");
                     if (!empty($_suc[1][0])) {
@@ -227,27 +320,29 @@ while (true) {
                         logg(false, "{$_suc[3][0]}");
 
                         if ($_suc[1][0] === 'success') {
-                            $success_in_page = true; 
+                            $success_in_page = true;
                             $curr = ""; 
-                            break 2; 
+                            break 2;
                         }
                         if (stripos($_suc[3][0], 'sufficient')) {
                             break;
                         }
                     }
                 }
-                break;
-            }
-
-            if (!$found_one) {
-                logx('err', 'sl abis / sisa blacklist');
-                $SLDONE = true;
                 break; 
             }
 
+            if (!$found_one) {
+                logx('err', 'sl abis kayaknya / sisa yang berat');
+                $curr = "";
+                $SLDONE = true;
+                break; 
+            }
         } while (!$success_in_page);
         
-        if ($success_in_page) break;
+        if ($success_in_page || $curr === "") {
+            break; 
+        }
     }
 
 
@@ -255,22 +350,29 @@ while (true) {
 
 
 
-
-
-
-
 tes:
 
 
 
+function stfCF($api, $fa) {
+    $res = execCF($api, $fa, inf::$cookie, inf::$uagent, []);
+    #print_r($res);
+    if (is_array($res) && isset($res['token'])) {
+        logx('success', 'Cloudflare Solved!');
+        $h = inf::netHead(['cf_clearance' => $res['token']]);
 
+        inf::setup($res['ua'], inf::$cookie, inf::$ip);
 
-
+        return [$h, $res['ua']];
+    }
+    
+    return false;
+}
 
 function solveShield($fau) {
     $json = json_decode(Scraper::_jP($fau, '/var D=({.*?});/')[1][0] ?? '', true);
     
-    if (!$json) return "";
+    if (!$json) return [];
 
     $grid = $json['grid'];
     #print_r($grid);

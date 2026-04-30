@@ -132,8 +132,8 @@ class Solve {
         while (true) {
             $t = $solver->token($key, $host, $type, $Params);
             if ($t === 777) {
-            logx('warn', "Switching to Direct API");
-            $t = $api->token($key, $host, $type, $Params);
+                logx('warn', "Switching to Direct API");
+                $t = $api->token($key, $host, $type, $Params);
             }
             if ($t === false) {
                 _sle(1);
@@ -144,7 +144,9 @@ class Solve {
         if ($t === null) exit(1);
         $end = microtime(true);
         $api->getInfo();
-        logg(false, '  elapsed: ' . number_format($end - $set, 3).'s');
+        logx('err', '[ '.get_class($solver).' ] ', false);
+        logg(false, 'elapsed: ' . number_format($end - $set, 3).'s');
+        #die;
         return $t;
     }
 
@@ -154,6 +156,7 @@ class Solve {
         $ip = inf::$ip;
 
         return styler("SOLVING icaptcha", function() use ($html, $host, $ip, $cookie, $ua) {
+            iconcaptcha:
             $endpoint = null;
             $scripts = Scraper::_xP($html, "//script/text()");
             foreach ($scripts as $js) {
@@ -172,6 +175,7 @@ class Solve {
             ]))];
 
             $res = Net::X($endpoint, 'POST', $json, $cookie, ["x-iconcaptcha-token: $token"], $host, $ua, false, false, $ip);
+            if ($res === 99) return 99;
             $r = json_decode(base64_decode($res), true);
             $challengeId = $r['identifier'] ?? null;
             if (!$challengeId) return false;
@@ -188,9 +192,17 @@ class Solve {
                 $boundary = '';
                 $body = self::webkitID(["payload" => $payload], $boundary);
                 $s = Net::X($endpoint, 'POST', $body, $cookie, ["x-iconcaptcha-token: $token", "Content-Type: multipart/form-data; boundary=$boundary"], $host, $ua, false, false, $ip);
+                if ($s === 99) return 99;
                 $r = json_decode(base64_decode($s), true);
                 if (!empty($r['completed'])) {
-                    return ['captcha' => 'icaptcha', '_iconcaptcha-token' => $token, 'ic-rq' => 1, 'ic-wid' => $widgetID, 'ic-cid' => $challengeId, 'ic-hp' => ''];
+                    return [
+                        'captcha' => 'icaptcha',
+                        '_iconcaptcha-token' => $token,
+                        'ic-rq' => 1,
+                        'ic-wid' => $widgetID,
+                        'ic-cid' => $challengeId,
+                        'ic-hp' => ''
+                    ];
                 } 
                 _sle(1);
             }
@@ -199,20 +211,21 @@ class Solve {
     }
 
     public static function eCaptcha($host) {
-        // Ambil data identitas dari pusat (inf)
         $cookie = inf::$cookie;
-        $ua     = inf::$uagent;
-        $ip     = inf::$ip;
+        $ua = inf::$uagent;
+        $ip = inf::$ip;
 
         return styler("SOLVING ecaptcha", function() use ($host, $cookie, $ua, $ip) {
-            // 1. Get Token
-            $resToken = Net::X($host.'ecaptcha/get_token', 'GET', null, $cookie, [], $host, $ua, false, false, $ip);
-            $json = json_decode($resToken, true);
+            $res = Net::X($host.'/ecaptcha/get_token', 'GET', null, $cookie, [], $host, $ua, false, false, $ip);
+            if ($res === 99) return 99;
+            $json = json_decode($res ?: '', true);
             $token = $json['token'] ?? null;
-            
-            // 2. Get Task
-            $resTask = Net::X($host.'ecaptcha/get_captcha', 'GET', null, $cookie, [], $host, $ua, false, false, $ip);
-            $task = json_decode($resTask, true);
+            if (!$token) return false;
+
+            $res = Net::X($host.'/ecaptcha/get_captcha', 'GET', null, $cookie, [], $host, $ua, false, false, $ip);
+            if ($res === 99) return 99;
+            $task = json_decode($res ?: '', true);
+            #print_r($task); die;
             if (empty($task['captcha_key']) || empty($task['question'])) return false;
             
             // 3. Parsing Answer 
@@ -220,19 +233,20 @@ class Solve {
             $answer = strtolower(trim(end($sel))) . '.gif';
             
             $payload = [
-                'key'      => $task['captcha_key'],
+                'key' => $task['captcha_key'],
                 'selected' => $answer,
-                'token'    => $token
+                'token' => $token
             ];
             
             // 4. Validate
-            $resValid = Net::X($host.'ecaptcha/validate_icon', 'POST', $payload, $cookie, [], $host, $ua, false, false, $ip);
-            $v = json_decode($resValid, true);
-            
-            if (($v['status'] ?? '') === 'valid') {
+            $res = Net::X($host.'/ecaptcha/validate_icon', 'POST', $payload, $cookie, [], $host, $ua, false, false, $ip);
+            #print_r($post); die;
+            if ($res === 99) return 99;
+            $post = json_decode($res ?: '', true);
+            if (($post['status'] ?? '') === 'valid') {
                 return [
-                    'captcha'       => 'emoji_captcha',
-                    'captcha_key'   => $task['captcha_key'],
+                    'captcha' => 'emoji_captcha',
+                    'captcha_key' => $post['captcha_key'],
                     'captcha_token' => $token,
                     'selected_icon' => $answer
                 ];

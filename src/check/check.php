@@ -79,7 +79,7 @@ class check {
 
     public static function Geo() {
         $g = underline("checking nett", fn() => self::geoData());
-        if (!is_array($g)) {
+        if (!is_array($g) || ($g === 99)) {
             logx('err', "unstable network");
             exit(99);
         }

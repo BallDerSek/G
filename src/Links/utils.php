@@ -167,13 +167,24 @@ function links($api, $url) {
         exit;
     }
     $solver = config::getKeys($api, 'shortlink', 'tkn');
+    #$solver = $api;
     if (!isset(Api::TKN[get_class($solver)]['shortlink'])) {
-        logx('err', 'unsupported provider');
-        exit;
+        logx('err', get_class($solver).' NOT SUPPORT SHORTLINK');
+        return 30;
     }
 
     if ($solver) {
-        return $solver->shortLink($url);
+        $set = microtime(true);
+        $res = $solver->shortLink($url);
+        $end = microtime(true);
+        $time = number_format($end - $set, 3) . 's';
+        
+        if ($res) {
+            logx('info', '[ ' . get_class($solver) . ' passed in ' . $time . ' ]');
+        } else {
+            logx('err', '[ ' . get_class($solver) . ' failed ]');
+        }
+        return $res;
     }
 
     return false;

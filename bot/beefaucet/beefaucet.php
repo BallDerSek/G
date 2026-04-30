@@ -24,14 +24,10 @@ while (true) {
         logx('err', "\nALL SITES REACHED LIMIT", true, true);
         exit;
     }
-    
-    print(DIMM.BOLD.ITAL.FGo['MAG']."solving  ".RSET);
-    $main_host = array_key_first($sites);
-    $main_key = $sites[$main_host];
-    
-    $token = solve::tkn($api, $main_host, $main_key, 'rc2');
 
     foreach ($sites as $host => $key) {
+        $token = solve::tkn($api, $host, $key, 'rc2');
+        
         $domain = parse_url($host)['host'];
         logx('info', 'SITE: ', false, false);
         logx('info', $domain, true, true);

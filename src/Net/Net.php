@@ -487,7 +487,7 @@ class Net {
             }
         } 
 
-        # EXEC
+        /* EXEC
         try {
             for ($attempt = 0; $attempt <= 3; $attempt++) {
                 $body = curl_exec($ch);
@@ -520,13 +520,72 @@ class Net {
                 usleep(random_int(25, 50) * 10000);
             } 
             throw new Exception("failed");
+        */
+        try {
+            $proxyFailCount = 0; 
+            for ($attempt = 0; $attempt < 10; $attempt++) {
+                $body = curl_exec($ch);
+                $info = curl_getinfo($ch);
+                $errno = curl_errno($ch);
+                $err = curl_error($ch);
+                
+                if ($body !== false) {
+                    if (($info['http_code'] ?? 0) === 407) {
+                        logx('err', "Proxy Auth Failed (407)");
+                        return 99; 
+                    }
+                    if (!empty($opt['debug'])) {
+                        return [
+                            'http_code' => $info['http_code'] ?? null,
+                            'url' => $info['url'] ?? null,
+                            'headers' => $headr ?? null,
+                            'errno' => $errno ?: null,
+                            'error' => $err ?: null,
+                            'info' => $info,
+                            'body' => $body,
+                        ];
+                    } return $body;
+                }
+                
+                $isUsingProxy = !empty($GLOBALS['_CTX']['proxy']) && empty($opt['no_proxy']);
+                #logx('info', " => err ($errno):$err");
+                if ($isUsingProxy) {
+                    $proxyFatalErrors = [7, 52, 56];
+                    if (in_array($errno, $proxyFatalErrors, true)) {
+                        $proxyFailCount++;
+                        
+                        if ($proxyFailCount >= 7) {
+                            logx('warn', "\rUnhealthy Proxy ($errno)");
+                            return 99; 
+                        }
+                        
+                        usleep(random_int(30, 60) * 10000);
+                        continue; 
+                    }
+                }
+                
+                if ($attempt > 0 && in_array($errno, [56, 92], true)) {
+                    curl_setopt($ch, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
+                }
+                
+                $retryCodes = [7, 52, 28, 35, 92, 56];
+                if (!in_array($errno, $retryCodes, true) || $attempt === 9) {
+                    throw new Exception("Net($errno): $err");
+                }
+                
+                usleep(random_int(25, 50) * 10000);
+            } 
+            throw new Exception("unstable connection");
         } catch (Throwable $e) {
             logx('info', " \r {$e->getMessage()} \r", true, true);
             return null;
+        
         } finally { 
             if (is_resource($logFile)) fclose($logFile);
             $ch = null;
         }
+
+
     }
 
     public static function C($url, $type, $data = null, $cookie = null, array $head = [], $reff = '', $ua = 'Mozilla/5.0', $d = false, $v = false, $ip = null, $foll = true, $ins = false, $f= false) {

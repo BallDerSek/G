@@ -30,7 +30,9 @@ function cfGet($url, &$cookie, &$uagent) {
 
         if ($r === null || empty($r['user_agent']) || empty($r['cookie_file'])) {
             logx('err', "Solver failed");
-            $att++; _sle(2); continue;
+            $att++; 
+            _sle(2); 
+            continue;
         }
 
         $ua = (string)$r['user_agent'];
@@ -97,13 +99,12 @@ function cfSet($class, $res) {
  * @param array $data
  * @return array|string|bool|null
  */
-function execCF($api, $url, $cookie, $uagent, array $data = []) {
+function execCF($api, $url, $cookie, $uagent, array $data = [], $input = '') {
     /*
     logx('err', '  1 [local via seledroid]');
     logx('err', '  2 [remote via solver] (DEFAULT)');
     #$input = _rl('solve cloudflare ??  ');
     */
-    $input = '';
     
     if ($input === '' || $input === '2') {
         if (!$api) {
@@ -224,7 +225,11 @@ final class execPython {
                     if (!$this->cfCookie((string)$json['cf_clearance'], (string)$url)) return null;
                     $this->uagent = (string)$json['user_agent'];
                     $GLOBALS['uagent'] = $this->uagent;
-                    return ['cookie_file' => (string)$this->cookie, 'user_agent' => (string)$this->uagent];
+                    $statedSync =  [
+                        'cookie_file' => (string)$this->cookie,
+                        'user_agent' => (string)$this->uagent
+                    ];
+                    return $statedSync;
                 }
                 return $json;
         }
@@ -268,4 +273,5 @@ final class execPython {
         _put($this->cookie, implode("\n", $filtered) . "\n");
         return true;
     }
+    
 }

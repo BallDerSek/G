@@ -468,6 +468,7 @@ final class Api { #contractor
             'ERROR_NO_NODES_AVAILABLE',
             'ERROR_NO_SLOT_CONNECTION',
             'ERROR_REQUEST_COOLDOWN',
+            'ERROR_NO_SLOT_AVAILABLE',
             'Internal solver error',
             'CAPTCHA_NOT_READY',
             'CAPCHA_NOT_READY',
@@ -639,7 +640,7 @@ abstract class Provider {
                 $type = Api::errType($code);
                 #var_dump($code);
                 logx('err', $code);
-                if (stripos($code, 'all nodes unavailable') && (static::class === 'gmxch')) {
+                if (stripos($code, 'nodes unavailable') && (static::class === 'gmxch')) {
                     return 777;
                 }
                 if (in_array($type, ['ret','con','fail'], true)) {

@@ -521,6 +521,7 @@ class _shortlinks {
 }
 
 {
+
 function _ccCode($html) {
     $nodes = scraper::_xP($html, "//div[contains(@class,'accordion-body')]");
     foreach ($nodes as $txt) {
@@ -549,12 +550,12 @@ function _ccPayload($api, $dom, $ver, $pis, $cnn, $bg, $cp) {
             break;
 
         case 'CT':
-            $token = $_token(AUTH_API, '0x4AAAAAAB5TRnwvGvH5b2kw', $dom, 'cft', ['action' => 'linkSubmit'] );
+            $token = solve::tkn($api, $dom, '0x4AAAAAAB5TRnwvGvH5b2kw', 'cft', ['action' => 'linkSubmit']);
             break;
 
         case 'HC':
             #$token = _rl('hcaptcha: ');
-            $token = $_token($api, '2a9619f4-43bc-4e64-afc8-7fbc48f2bf34', $dom, 'hc', ['userAgent'=>$_ua, 'invisible'=>1, 'proxy' => '']);
+            $token = solve::tkn($api, '2a9619f4-43bc-4e64-afc8-7fbc48f2bf34', $dom, 'hc', ['userAgent'=>$_ua, 'invisible'=>1, 'proxy' => '']);
             break;
 
         case 'PC':
@@ -617,3 +618,5 @@ function _payloadCC($pis, $cnn, $response, $bg) {
 
 
 
+
+  

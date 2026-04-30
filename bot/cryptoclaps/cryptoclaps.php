@@ -2,7 +2,7 @@
 if (!defined('ROOT')) { die; }
 $api = onKeys();
 
-$userAgent = getUagent();
+
 if (!is_file(LIBDIR.'/mail.txt')) {
     logx('err', 'mail.txt not found');
     die;
@@ -16,17 +16,23 @@ $ip = '91.204.209.6';
 banner(); 
 
 foreach ($emails as $login) {
-    $cookieFile = getCookie($login); 
+    $userAgent = config::uagent();
+    $cookieFile = config::cookie($login);
+    inf::setup($userAgent, $cookieFile, $ip);
     
     login:
     while (true) {
         $claim = false;
         
         do {
-            $_0 = Net::C($host, 'GET', null, $cookieFile, [], '', $userAgent);
+            $_0 = Net::C($host, 'GET', null, inf::$cookie, [], '', inf::$uagent, ip: $ip);
             if (!empty($_0)) {
                # _put('0.html', $_0);
-                $curr = scraper::_xP($_0, "//select[@id='coin-select']/option[not(@disabled)]/@value") ?? '';
+                $curr = scraper::_xP($_0, "//select[@id='coin-select']/option[not(@disabled)]/@value") ?? [];
+                if (empty($curr)) {
+                    logx('err', 'semua coin habis, coba cek di web dah');
+                    exit;
+                }
                 $csrf = scraper::_jP($_0, "/csrf_token['\"]?\s*,\s*['\"]([a-f0-9]{32,})/i") ?? '';
                 
                 if ($csrf && $curr) {
@@ -37,7 +43,7 @@ foreach ($emails as $login) {
         } while (!$claim);
         
         if (!$claim) continue;
-        logx('ok', 'using '.$login, true, true);
+        logx('ok', '  using '.$login, true, true);
         
         while (true) {
             
@@ -50,7 +56,7 @@ foreach ($emails as $login) {
             $pa = solve::webkitID($_pa, $boundary);
             $head = ["Content-Type: multipart/form-data; boundary=$boundary"];
             
-            $_1 = json_decode(Net::C($host, 'POST', $pa, $cookieFile, $head, $host, $userAgent)?: '', true);
+            $_1 = json_decode(Net::C($host, 'POST', $pa, inf::$cookie, $head, $host, inf::$uagent, ip: $ip)?: '', true);
             
             if (!empty($_1) && empty($v['valid'])) {
                 $_pe = [
@@ -63,7 +69,7 @@ foreach ($emails as $login) {
                 continue;
             }
             
-            $_2 = json_decode(Net::C($host, 'POST', $pe, $cookieFile, $head, $host, $userAgent)?: '', true);
+            $_2 = json_decode(Net::C($host, 'POST', $pe, inf::$cookie, $head, $host, inf::$uagent, ip: $ip)?: '', true);
             
             if (!empty($_2['success']) && !empty($chnl = $_2['channel'])) {
                 $set = microtime(true);
@@ -86,7 +92,7 @@ foreach ($emails as $login) {
                     styler("waiting $wait", fn() => _sle((int)ceil($wait)));
                 }
                 
-                $_3 = json_decode(Net::C($host, 'POST', $po, $cookieFile, $head, $host, $userAgent)?: '', true);
+                $_3 = json_decode(Net::C($host, 'POST', $po, inf::$cookie, $head, $host, inf::$uagent, ip: $ip)?: '', true);
                 #var_dump($_3);
                 if (!empty($_3['success'])) {
                     print(DIMM.BOLD.FGo['MAG']."  $login  ".RSET);
@@ -103,6 +109,7 @@ foreach ($emails as $login) {
             }
         }
     }
+    
 }
 
 logx('ok', 'Semua akun di mail.txt selesai.');

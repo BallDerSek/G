@@ -210,7 +210,7 @@ class tertuyul extends Provider {
 
             if (isset($result['fail'])) {
                 logx('err', $result['fail']);
-                return 33;
+                return false;
             }
             
             return $result['url'];
@@ -352,8 +352,7 @@ class multibot extends Provider {
 }
 
 class gmxch extends Provider {
-    protected $baseUrl = "https://gmxch-to.hf.space";
-    protected $backupUrl = "https://cc0.up.railway.app";
+    protected $baseUrl = "https://route.up.railway.app";
 
     /** submit job ke API */
     protected function get_api($method, array $params) {
@@ -379,8 +378,10 @@ class gmxch extends Provider {
                 , true);
 #var_dump($r);
             
-            if (($r['status'] ?? '') === 'done') 
-                return $r['token'] ?? $r;
+            if (($r['status'] ?? '') === 'done') {
+                return $r['token'] ?? $r['url'] ?? $r['solution'] ?? $r;
+            }
+
             
             if (!is_array($r) || Api::errType($q = ($r['status'] ?? 'unknown')) === 'ret') 
                 continue;
@@ -394,99 +395,15 @@ class gmxch extends Provider {
     
     /** shortlink resolver */
     public function shortLink($link) {
-        $res = styler("requesting.." . (parse_url($link, PHP_URL_HOST)), function() use($link) {
-            return json_decode(Net::S("https://api.gamamoch.workers.dev/solve", "POST", ["url" => $link], ['key: '.$this->apiKey], json: true)?: '', true);
-        });
-
-
-        if (!empty($s = $res['status'])) {
-            if ($s === 'task') {
-                return $this->pollTask($res['taskId']);
-            }
-            if ($s === 'done') {
-                logx('info',"\n". $s.' by '.$res['source']);
-                return $res['url'];
-            }
-            if ($s === 'error') {
-                logx('err', $res['error']);
-                return false;
-            }
-        } else {
-            logx('err', 'some problem');
+        try {
+            return styler("getting.." . (parse_url($link, PHP_URL_HOST)), function() use($link) {
+                    $id = $this->get_api("shortlink", ["url" => $link]);
+                    return $this->res_api($id);
+                });
+        } catch (Exception $e) {
+            logx('err', $e->getMessage());
             return false;
         }
-    }
-    
-    /** poll task result */
-    private function pollTask($taskId) {
-        $attempt = 0;
-        
-        return styler("waiting result", function() use ($taskId, &$attempt) {
-            while (true) {
-                $attempt++;
-                
-                $r = json_decode(Net::S("https://api.gamamoch.workers.dev/check", "POST", ["taskId" => $taskId], ['key: '.$this->apiKey], json: true) ?: '', true);
-                $status = $r['status'] ?? 'error';
-
-                if ($status === 'done') {
-                    return $r['url'];
-                }
-
-                if ($status === 'processing') {
-                    _sle(5); 
-                    continue;
-                }
-
-                if ($status === 'error') {
-                    logx('err', "\n task failed: " . ($r['msg'] ?? 'unknown'));
-                    return false;
-                }
-
-                if ($attempt > 60) {
-                    logx('err', "\n task timeout after 5 mins");
-                    return false;
-                }
-            }
-        });
-    }
-    
-    public function base64($img, $type = 'ocr') {
-        $raw = is_file($img) ? _get($img) : $img;
-        $isBase64 = (!is_file($img) && preg_match('%^[a-zA-Z0-9/+]*={0,2}$%', trim($raw)));
-        $b64 = $isBase64 ? trim($raw) : base64_encode($raw);
-        $targets = [$this->baseUrl, $this->backupUrl];
-        $lastError = 'unknown';
-        foreach ($targets as $url) {
-            $isBackup = ($url === $this->backupUrl);
-            try {
-                return styler("gmxch=>$type", function() use ($url, $type, $b64, $isBackup) {
-                    $res = json_decode(Net::S($url."/solve", "POST", ["type"  => $type, "image" => $b64], ["key:".$this->apiKey], json: true) ?: '', true);
-                    if (!is_array($res)) throw new Exception('invalid_response');
-                    if (($res['status'] ?? '') === 'error') throw new Exception($res['message'] ?? 'submit_fail');
-                    $taskId = $res['taskId'] ?? throw new Exception('no_task_id');
-                    $start = time();
-                    while (time() - $start < 150) {
-                        _sle(5);
-                        $pollUrl = $isBackup ? $url."/solve" : $url."/task";
-                        $r = json_decode(Net::S($pollUrl, "POST", ["taskId" => $taskId], ["key:".$this->apiKey], json: true) ?: '', true);
-                        if (($r['status'] ?? '') === 'done') {
-                            return $r['token'] ?? $r['solution'] ?? $r;
-                        }
-                        if (Api::errType($r['status'] ?? 'ret') === 'ret') continue;
-                        throw new Exception($r['message'] ?? 'task_fail');
-                    }
-                    throw new Exception("ERROR_TIMEOUT");
-                });
-            } catch (Throwable $e) {
-                $lastError = $e->getMessage();
-                logx('err', "Node $url: $lastError");
-                if (!$isBackup && stripos($lastError, 'all nodes unavailable') !== false) {
-                    continue; 
-                }
-                break;
-            }
-        }
-        return 777; 
     }
 
     /** info saldo */

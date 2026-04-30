@@ -161,7 +161,7 @@ foreach ($chunks as $cIdx => $batch) {
 }
 
 logx('ok', "ALL BATCHES FINISHED");
-_rl('mode pesawat'); goto login;
+#_rl('mode pesawat'); goto login;
 
 function mA($q1, $q2, $op) {
     return match($op) {
