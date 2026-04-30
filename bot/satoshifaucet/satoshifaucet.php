@@ -101,7 +101,7 @@ while (true) {
                         $cap = solveShield($fau);
                     }
                 }
-                $cre = ['uf' => md5($login), 'ls' => LANGUAGE(), 'utt' => TIMEZONE()];
+                $cre = ['uf' => md5($login), 'ls' => LANGUAGE(), 'utt' => TIMEZONE(), 'wallet' => $login];
                 $po = array_merge($pa, $cap, $cre);
             } else {
                 if (stripos($fau, 'claim limit for this coin reached')) continue 2;
@@ -119,15 +119,13 @@ while (true) {
                 _sle(10);
                 continue;
             }
-            print_r($po);
+            #print_r($po);
             
             _sle(2);
-            
             $cla = Net::X($f['url'], 'POST', $po, inf::$cookie, $headersCF, '', inf::$uagent);
             if ($cla === 99) exit;
             if (empty($cla)) continue;
             #_put('cla.html', $cla);
-            var_dump($cla); die;
             if (stripos($cla, 'rate limited')) goto login;
             if ($ban = isBan($cla)) {
                 logx('err', " kena ban: " . $ban['ti'], false);
