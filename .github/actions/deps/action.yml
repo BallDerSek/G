@@ -1,130 +1,58 @@
-name: Client Runner
+name: Setup Deps
+description: Installing deps
+runs:
+  using: "composite"
+  steps:
+    - name: Setup OS deps
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y --no-install-recommends \
+          imagemagick \
+          sshpass \
+          tesseract-ocr \
+          tesseract-ocr-eng
+      shell: bash
 
-on:
-  workflow_dispatch:
-    inputs:
-      bot:
-        description: 'bot'
-        default: 'shortlink'
-        required: true
-      login:
-        description: '["user1","user2"]'
-        default: '["0"]'
-        required: true
-      mail:
-        description: '["a@x.com","b@y.com"]'
-        default: '["0"]'
-        required: true
-      pass:
-        description: 'pass'
-        required: false
-      api:
-        type: choice
-        options: [solverify, tertuyul, xevil, skibidixxx, capsolver, multibot, gmxch]
-        required: true
-      key:
-        description: 'key'
-        required: false
-      proxy:
-        description: '["http://u:p@ip:port"]'
-        default: '[""]'
-        required: false
-      matrix_source:
-        type: choice
-        options: [login, mail]
-        required: true
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: "8.2"
+        extensions: gd
+        coverage: none
 
-jobs:
-  prepare:
-    runs-on: ubuntu-latest
-    outputs:
-      pairs: ${{ steps.zip.outputs.pairs }}
-    steps:
-      - id: zip
-        shell: python {0}
-        env:
-          SOURCE: ${{ github.event.inputs.matrix_source }}
-          LOGIN:  ${{ github.event.inputs.login }}
-          MAIL:   ${{ github.event.inputs.mail }}
-        run: |
-          import json, os
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: "20"
 
-          src = os.getenv("SOURCE")
-          logins = json.loads(os.getenv("LOGIN", "[]"))
-          mails  = json.loads(os.getenv("MAIL", "[]"))
+    - name: Fix npm global path
+      run: |
+        echo "$(npm bin -g)" >> $GITHUB_PATH
+      shell: bash
 
-          targets = logins if src == "login" else mails
-          valid_targets = [t for t in targets if str(t) != "0"]
+    - name: Cache npm
+      uses: actions/cache@v4
+      with:
+        path: ~/.npm
+        key: npm-${{ runner.os }}-${{ hashFiles('.github/workflows/run.yml') }}
+        restore-keys: |
+          npm-${{ runner.os }}-
 
-          arr = []
-          for i, item in enumerate(valid_targets):
-              arr.append({src: item, "p_idx": i})
+    - name: Install Node deps
+      run: |
+        npm install -g deobfuscator
+      shell: bash
 
-          with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
-              f.write(f"pairs={json.dumps(arr)}\n")
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.11"
+        cache: "pip"
+        cache-dependency-path: .github/workflows/run.yml
 
-  run:
-    needs: prepare
-    if: needs.prepare.outputs.pairs != '[]'
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      max-parallel: 20
-      matrix:
-        include: ${{ fromJson(needs.prepare.outputs.pairs) }}
-
-    steps:
-      - name: Clone Engine
-        run: |
-          git clone https://github.com/gmxch/71.git engine
-          cp -r engine/. .
-          rm -rf engine
-        shell: bash
-
-      - name: Setup deps
-        uses: ./.github/actions/deps
-        continue-on-error: false
-
-      - name: Start php
-        shell: python {0}
-        env:
-          MAIL_VAL: ${{ matrix.mail || matrix.login }}
-          P_INDEX: ${{ matrix.p_idx }}
-          RAW_PROXIES: ${{ github.event.inputs.proxy }}
-          API: ${{ github.event.inputs.api }}
-          KEY_INPUT: ${{ github.event.inputs.key }}
-          PASS_INPUT: ${{ github.event.inputs.pass }}
-        run: |
-          import os, json, subprocess
-
-          proxies = json.loads(os.getenv("RAW_PROXIES", "[]"))
-          idx = int(os.getenv("P_INDEX", "0"))
-          real_proxy = proxies[idx] if idx < len(proxies) else ""
-
-          api_type = os.getenv("API")
-          manual_key = os.getenv("KEY_INPUT")
-          
-          secrets_map = {
-              "solverify": "${{ secrets.SOLVERIFY }}",
-              "tertuyul": "${{ secrets.TERTUYUL }}",
-              "xevil": "${{ secrets.XEVIL }}",
-              "skibidixxx": "${{ secrets.SKIBIDI }}",
-              "capsolver": "${{ secrets.CAPSOLVER }}",
-              "multibot": "${{ secrets.MULTIBOT }}",
-              "gmxch": "${{ secrets.GMXCH }}"
-          }
-          final_key = manual_key if manual_key else secrets_map.get(api_type, "")
-
-          env = os.environ.copy()
-          env["CI"] = "1"
-          env["PROXY"] = real_proxy
-          env["mail"] = os.getenv("MAIL_VAL")
-          env["login"] = os.getenv("MAIL_VAL")
-          env["KEY"] = final_key
-          env["pass"] = os.getenv("PASS_INPUT") if os.getenv("PASS_INPUT") else "${{ secrets.PASS }}"
-          env["_authApi_"] = "${{ secrets.AUTH }}"
-          env["DG"] = "${{ secrets.DG }}"
-          env["BOT"] = "${{ github.event.inputs.bot }}"
-
-          print(f"--- Running account: {env['mail']} ---")
-          subprocess.run(["php", "run.php"], env=env)
+    - name: Install Python deps
+      env:
+        PIP_CACHE_DIR: ${{ runner.temp }}/pip-cache
+      run: |
+        python -m pip install --upgrade pip
+      shell: bash
