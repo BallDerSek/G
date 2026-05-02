@@ -41,7 +41,7 @@ jobs:
       pairs: ${{ steps.zip.outputs.pairs }}
     steps:
       - id: zip
-        shell: python3
+        shell: python {0}
         env:
           SOURCE: ${{ github.event.inputs.matrix_source }}
           LOGIN:  ${{ github.event.inputs.login }}
@@ -50,7 +50,6 @@ jobs:
         run: |
           import json, os
 
-          # cek source matrix
           src = os.getenv("SOURCE")
           try:
               logins = json.loads(os.getenv("LOGIN", "[]"))
@@ -60,30 +59,34 @@ jobs:
               print(f"Error parsing JSON: {e}")
               exit(1)
 
+          # Bersihin proxy
+          clean_proxies = [p.strip() for p in proxies if p and p.strip()]
+
           arr = []
-          # cek proxy kosong
-          clean_proxies = [p for p in proxies if p and p.strip()]
+          # matrix_source
+          targets = logins if src == "login" else mails
+          
+          # Filter nilai default "0"
+          valid_targets = [t for t in targets if str(t) != "0"]
 
           if not clean_proxies:
-              if src == "login":
-                  arr = [{"login": l, "proxy": ""} for l in logins]
-              else:
-                  arr = [{"mail": m, "proxy": ""} for m in mails]
+              # Jika proxy kosong
+              for item in valid_targets:
+                  arr.append({src: item, "proxy": ""})
           else:
-              # tes pake zip biar jumlah matrix sesuai item terkecil 
-              if src == "login":
-                  arr = [{"login": l, "proxy": p} for l, p in zip(logins, clean_proxies)]
-              else:
-                  arr = [{"mail": m, "proxy": p} for m, p in zip(mails, clean_proxies)]
+              # Pasangan menggunakan zip
+              for item, prx in zip(valid_targets, clean_proxies):
+                  arr.append({src: item, "proxy": prx})
 
-          # docs baru katanya (github output file)
+          # Output ke GitHub Output
           with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
-              f.write(f"pairs={json.dumps(arr)}\n")
+              output_val = json.dumps(arr) if arr else "[]"
+              f.write(f"pairs={output_val}\n")
 
   run:
     needs: prepare
+    if: needs.prepare.outputs.pairs != '[]' && needs.prepare.outputs.pairs != ''
     runs-on: ubuntu-latest
-    if: needs.prepare.outputs.pairs != '[]'
     strategy:
       fail-fast: false
       max-parallel: 20
