@@ -7,7 +7,7 @@ $acc = config::credential([], true);
 $login = $acc['login'];
 
 $cookieFile = config::cookie($login);
-$userAgent = config::uagent();
+$userAgent = config::uagent('mobile');
 
 $host = 'https://onlyfaucet.com';
 $domain = parse_url($host, PHP_URL_HOST);
@@ -90,12 +90,17 @@ while (true) {
             } else {
                 if ((stripos($fau, 'Just a moment') !== false || stripos($fau, 'Attention Required!') !== false)) {
                     logx('warn', 'Cloudflare Detected '.$fa);
-                    if ($cf = onfCF($api, str_replace('/currency/', '/verify/', $fa))) {
+                    
+                    #$fa = str_replace('/currency/', '/verify/', $fa);
+                    if ($cf = onfCF($api, $fa, '1')) {
                         [$he, $ua] = $cf;
                         inf::setup($ua, inf::$cookie);
                         $headersCF = $he;
                         
-                        $fauuu = Net::C($fa, 'GET', null, inf::$cookie, $he, $fa, inf::$uagent);
+                        print_r($headersCF);
+                        logx('info', inf::$uagent);
+                        
+                        $fauuu = Net::C($fa, 'GET', null, inf::$cookie, $headersCF, $fa, inf::$uagent);
                         _put('faa.html', $fauuu); die;
                     } else {
                         logx('err', 'gagal cf');
@@ -111,31 +116,9 @@ while (true) {
     die;
     }
     
-/*
-    foreach ($_fa as $fa) {
-        $fau = Net::C($fa, 'GET', null, $cookieFile, [], $host, $userAgent);
-        $isCF = (stripos($fau, 'Cloudflare Ray ID') !== false || stripos($fau, 'Attention Required!') !== false);
-        if ($isCF) {
-            logx('warn', 'Cloudflare Detected');
-            $data = [
-                'proxy' => $currentProxy 
-            ];
-            $res = execCF($api, $fa, $cookieFile, $userAgent, $data);
-            if ($res) {
-                $fau = Net::C($fa, 'GET', null, $cookieFile, [], $fa, $userAgent);
-            } else {
-                logx('err', 'API Solver failed to solve.');
-                continue;
-            }
-        }
-
-    _put('fau_after_solve.html', $fau);
-    $f = scraper::payload($fau);
-    print_r($f);
-    die; 
-    }
-*/
-
+    
+    
+    $_links = Scraper::_xP($_0, "//ul[@id='links']//a/@href");
     
     
     
@@ -145,18 +128,16 @@ die;
 
 
 
-$_links = Scraper::_xP($_0, "//ul[@id='links']//a/@href");
 
 
+tes:
 
 
-
-
-function onfCF($api, $fa) {
-    $res = execCF($api, $fa, inf::$cookie, inf::$uagent, []);
-    print_r($res);
+function onfCF($api, $fa, $mods = '') {
+    $res = execCF($api, $fa, inf::$cookie, inf::$uagent, [], $mods);
+    #print_r($res);
     if (is_array($res) && isset($res['token'])) {
-        logx('success', 'Cloudflare Solved!');
+        logx('', 'Cloudflare Solved!', true, true);
         $h = inf::netHead(['cf_clearance' => $res['token']]);
 
         inf::setup($res['ua'], inf::$cookie, inf::$ip);
@@ -166,8 +147,6 @@ function onfCF($api, $fa) {
     
     return false;
 }
-
-
 
 function onlyfans($api, $img) {
     $type = 'of_odd';

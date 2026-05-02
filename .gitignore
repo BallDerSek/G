@@ -12,6 +12,7 @@ credentials
 **/credentials/*
 
 **/mail.txt
+**/email.txt
 **/proxy.txt
 
 *.tmp
@@ -20,6 +21,7 @@ credentials
 
 **/*opnssl.php
 bot/tes/
+bot/set/
 bot/bct/
 
 lib/*/

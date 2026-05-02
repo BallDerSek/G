@@ -388,6 +388,7 @@ class KEYS {
         'https://waryono.my.id' => '',
         'http://multibot.in' => '',
         'https://capsolver.com' => '',
+        'https://buxads.com/api-token' => '',
     ];
 
     public static function sync() {
@@ -461,7 +462,8 @@ class KEYS {
                 logx('err', "rejected");
                 return self::CLI_env();
             }
-
+            
+            _cle();
             return Api::use($endpoint, $apiKey);
         }
         

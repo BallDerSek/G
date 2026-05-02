@@ -76,7 +76,7 @@ function logg($clock = true, $msg = '', $n = true, $check = false) {
     }
 
     $time = $clock
-        ? FGo['WHT'] . "[" . date('H:i:s') . "] " . RSET
+        ? BOLD.FGo['WHT']."[" . date('H:i:s') . "] ".RSET
         : "";
 
     if ($check) {

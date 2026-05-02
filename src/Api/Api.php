@@ -52,6 +52,7 @@ final class Api { #contractor
         'capsolver' => ['ep' => 'https://capsolver.com', 'cls' => capsolver::class],
         'multibot' => ['ep' => 'http://multibot.in', 'cls' => multibot::class],
         'gmxch' => ['ep' => 'https://gmxch-to.hf.space', 'cls' => gmxch::class],
+        'glitch' => ['ep' => 'https://buxads.com/api-token', 'cls' => glitch::class],
     ];
 
     public static function use($API, $KEY): Provider {
@@ -84,22 +85,27 @@ final class Api { #contractor
             'cft' => [
                 'k'=>'siteKey','url'=>'domain','api'=>'cloudflare', 'defaults' => ['method' => 'turnstile'], 'map' => ['cdata' => 'cData']
                 ],
-/*
+
+            'cf' => [
+                'k'=>'siteKey','url'=>'domain','api'=>'popularcaptcha', 'defaults' => ['method' => 'turnstile']
+                ],
+            /*
+            */
             'hc' => [
-                'k'=>'siteKey','url'=>'domain','api'=>'hcaptcha'
+                'k'=>'siteKey','url'=>'domain','api'=>'popularcaptcha', 'defaults' => ['method' => 'hcaptcha']
                 ],
             'rc2' => [
-                'k'=>'siteKey','url'=>'domain','api'=>'recaptcha', 'defaults' => ['method' => 'v2']
+                'k'=>'siteKey','url'=>'domain','api'=>'popularcaptcha', 'defaults' => ['method' => 'recaptcha2']
                 ],
-*/
             'rc3' => [
-                'k'=>'siteKey','url'=>'domain','api'=>'recaptcha', 'defaults' => ['method' => 'v3']
+                'k'=>'siteKey','url'=>'domain','api'=>'popularcaptcha', 'defaults' => ['method' => 'recaptcha3']
                 ],
+
             'pcc' => [
-                'k'=>'cpobj','url'=>'domain','api'=>'pc_coinclix'
+                'k'=>'cpobj','url'=>'domain','api'=>'coinclix', 'defaults' => ['method' => 'pc']
                 ],
             'icc' => [
-                'k'=>'cpobj','url'=>'domain','api'=>'ic_coinclix'
+                'k'=>'cpobj','url'=>'domain','api'=>'coinclix', 'defaults' => ['method' => 'ic']
                 ],
         ],
 
@@ -175,12 +181,28 @@ final class Api { #contractor
                 ],
         ],
 
+        glitch::class => [
+            'shortlink' => true,
+            'cft' => [
+                'k' => 'siteKey', 'url' => 'domain', 'api' => 'turnstile'
+                ],
+            'hc' => [
+                'k' => 'siteKey', 'url' => 'domain', 'api' => 'hcaptcha'
+                ],
+            'rc2' => [
+                'k' => 'siteKey', 'url' => 'domain', 'api' => 'recaptchav2'
+                ],
+            'rc3' => [
+                'k' => 'siteKey', 'url' => 'domain', 'api' => 'recaptchav3'
+                ],
+        ],
+
         capsolver::class => [
             'cft' => [
                 'k'=>'websiteKey','url'=>'websiteURL','api'=>'turnstile'
                 ],
             'rc2' => [
-                'k'=>'websiteKey','url'=>'websiteURL','api'=>'recaptcha2',
+                'k'=>'websiteKey','url'=>'websiteURL','api'=>'recaptchav2',
                 ],
             'rc3' => [
                 'k'=>'websiteKey','url'=>'websiteURL','api'=>'recaptcha3', 'need'=>['action'], 
@@ -255,6 +277,14 @@ final class Api { #contractor
             'rs_slide' => ['t' => 'sliders', 'field' => 'body'],
         ],
 
+        glitch::class => [
+            'ocr' => ['t' => 'textcaptcha', 'field' => 'image_base64'],
+            'rs_upside' => ['t' => 'rsv2', 'field' => 'image_base64'],
+            'rs_icon' => ['t' => 'rsv2', 'field' => 'image_base64'],
+            'rs_slide' => ['t' => 'rsv5', 'field' => 'image_base64'],
+            'of_odd' => ['t' => 'onlyfaucet', 'field' => 'body'],
+        ],
+
         xevil::class => [
             'ocr' => ['t' => 'base64', 'field' => 'body'],
             'upside' => ['t' => 'viefaucet', 'field' => 'body'],
@@ -292,8 +322,8 @@ final class Api { #contractor
         ],
 
         gmxch::class => [
-            'fa3_icon' => ['t' => 'fa_3', 'field' => 'image'],
-            'of_odd' => ['t' => 'of_odd', 'field' => 'image'],
+            'onf_odd' => ['t' => 'of_odd', 'field' => 'image'],
+            'stf_rot' => ['t' => 'stf_rot', 'field' => 'image'],
         ],
 
         solverify::class => [
@@ -358,6 +388,13 @@ final class Api { #contractor
             ],
         ],
         
+        glitch::class => [
+            '_proxy_format' => 'object',
+            'interstitial' => [
+                'api' => 'iuam','url' => 'domain', 'need' => ['proxy'], 
+            ],
+        ],
+        
         capsolver::class => [
             'interstitial' => [
                 'api' => 'AntiCloudflareTask','url' => 'domain', 'need' => ['proxy'], 
@@ -397,9 +434,7 @@ final class Api { #contractor
         $cfg = self::ACC[$c][$t] ?? null;
         if (!$cfg) throw new Exception("invalid method, change providers");
 
-        $params = array_merge([
-            $cfg['url'] => $siteUrl
-        ], ($cfg['defaults'] ?? []), $extra);
+        $params = array_merge([$cfg['url'] => $siteUrl], ($cfg['defaults'] ?? []), $extra);
 
         $fmt = self::ACC[$c]['_proxy_format'] ?? null;
 
@@ -430,6 +465,15 @@ final class Api { #contractor
                             $auth = $user ? "{$user}:{$pass}@" : "";
                             $params['proxy'] = "{$auth}{$host}:{$port}";
                         }
+                    } elseif ($fmt === 'object') {
+                        $params['proxy'] = [
+                            'hostname' => $host,
+                            'port' => (int)$port,
+                            'scheme'   => $scheme,
+                            'username' => $user,
+                            'password' => $pass
+                        ];
+                        unset($params['proxytype']);
                     }
                 }
             }
@@ -460,22 +504,23 @@ final class Api { #contractor
             'WRONG_RESULT',
             'IP Address Blocked',
             'totally failed',
-            'Timeout Error'
+            'Timeout Error',
+            'Invalid challenge',
+            'ERROR_NO_NODES_AVAILABLE',
+            'ERROR_NO_SLOT_CONNECTION',
+            'ERROR_NO_SLOT_AVAILABLE',
+            'Internal solver error',
+            'Task not found',
+            'Job not found',
             ],
 
         'ret' => [ 
             'ERROR_UNKNOWN_STATUS',
-            'ERROR_NO_NODES_AVAILABLE',
-            'ERROR_NO_SLOT_CONNECTION',
             'ERROR_REQUEST_COOLDOWN',
-            'ERROR_NO_SLOT_AVAILABLE',
-            'Internal solver error',
             'CAPTCHA_NOT_READY',
             'CAPCHA_NOT_READY',
             'ERROR_RATE_LIMIT',
-            'Task not found',
             'processing',
-            'Invalid challenge',
             'pending',
             'APP_11',
             'APP_14',
@@ -494,6 +539,8 @@ final class Api { #contractor
             'ERROR_SERVICE_UNAVAILABLE',
             'ERROR_PROXY_BANNED',
             'connection close',
+            'Internal server error',
+            'External solver request failed',
             'APP_9',
         ],
 
@@ -530,6 +577,8 @@ final class Api { #contractor
             'HCAPTCHA_NOT_FOUND',
             'Missing domain',
             'Missing siteKey',
+            'invalid mode',
+            'Missing mode or action',
             'APP_10',
             'APP_17',
             'APP_18',
@@ -547,6 +596,8 @@ final class Api { #contractor
             'ERROR_KEY_TEMP_BLOCKED',
             'ERROR_SETTLEMENT_FAILED',
             'ERROR_KEY_DENIED_ACCESS',
+            'Insufficient token balance',
+            'Invalid API key',
             'Invalid Key',
             'missing Key',
             'APP_15',
@@ -678,7 +729,6 @@ abstract class Provider {
         return $res;
     }
 
-
     public function access($siteUrl, $type, array $extraParams = []) {
         try {
             [$method, $params] = Api::cfgAcc(static::class, $type, $siteUrl, $extraParams);
@@ -713,9 +763,9 @@ abstract class Provider {
         }
         
         $pa['main'] = $data['main'];
-        #var_dump($pa);
+        #print_r($pa); 
         $res = $this->run('antibot', $pa);
-        #var_dump($res);
+        #logx('', $res);
         if (!$res) return 77;
         
         $in = explode(',', $res);

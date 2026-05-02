@@ -395,6 +395,8 @@ class gmxch extends Provider {
     
     /** shortlink resolver */
     public function shortLink($link) {
+        #return $this->run("shortLink", ["url" => $link]);
+        
         try {
             return styler("getting.." . (parse_url($link, PHP_URL_HOST)), function() use($link) {
                     $id = $this->get_api("shortlink", ["url" => $link]);
@@ -424,6 +426,83 @@ class gmxch extends Provider {
         return true;
     }
 }
+
+class glitch extends Provider {
+    
+    protected const ATB_MODE = 'rel';
+    
+    protected $baseUrl = "https://buxads.com/api-token/api.php";
+
+    /** submit job ke API */
+    protected function get_api($method, array $params) {
+        $s = json_decode(
+            Net::S($this->baseUrl, "POST", array_merge(["apikey" => $this->apiKey, "mode" => $method], $params), json: true) ?: ''
+            , true);
+var_dump($s);
+        if (!is_array($s) || empty($s["jobId"])) {
+            throw new Exception(is_array($s) ? ($s["error"] ?? 'unknown') : 'unknown');
+        }
+
+        return $s["jobId"];
+    }
+
+    /** polling hasil job */
+    protected function res_api($jobId) {
+        $start = time();
+        do {
+            _sle(10);
+            $r = json_decode(
+                Net::S($this->baseUrl, "POST", ["apikey" => $this->apiKey, "id"  => $jobId, 'action' => 'get'], json: true) ?: ''
+            , true);
+var_dump($r);
+            if (($r['status'] ?? 0) == 1) return $r['solution'];
+
+            if (!is_array($r) || Api::errType($q = ($r['message'] ?? 'unknown')) === 'ret') continue;
+            
+            throw new Exception($q);
+
+        } while (time() - $start < 600);
+
+        throw new Exception("ERROR_TIMEOUT");
+    }
+
+    /** shortlink resolver */
+    public function shortLink($link) {
+        $params = ["url" => $link];
+        $short = $this->run('shortlink', $params);
+        if (!$short) return false;
+        return $short;
+    }
+    
+
+    /** info saldo */
+    public function getInfo(): bool {
+        info:
+        $r = json_decode(
+            Net::S($this->baseUrl, "POST", ["apikey" => $this->apiKey, 'action' => 'getbalance'], json: true) ?: ''
+            , true);
+var_dump($r);
+        if ($r === null) goto info; 
+
+        if (isset($r['error'])) {
+            logx('err', $r['error']);
+            return false;
+        }
+
+        logx('info', "\nglitch: ".$r['balance']);
+        return true;
+    }
+    
+}
+
+
+
+
+
+
+
+
+
 
 
 

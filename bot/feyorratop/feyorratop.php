@@ -20,11 +20,15 @@ login:
 
 $dash = null;
 $limit = false;
-$register = false;
 $shortlink = false;
+$SLDONE = false;
+$skipped = [];
 while (true) {
+    $max = 7;
+    $ret = 0; 
     
     do {
+        $ret++;
         $l = inf::check("$host/dashboard", [], '/register');
         
         if ($l['ok']) {
@@ -32,6 +36,10 @@ while (true) {
             $dash = $l['html'];
             #var_dump($dash); die;
             break;
+        }
+        if ($ret >= $max) {
+            logx('err', 'gak tau');
+            exit; 
         }
         
         @unlink($cookieFile);
@@ -52,27 +60,13 @@ while (true) {
         $ve = Net::C($f['url'], 'POST', $po, $cookieFile, [], "$host/login", $userAgent, false, false, $ip);
         $alert_d = scraper::_xP($ve, "//div[contains(@class, 'alert-danger')]");
         if (!empty($alert_d)) {
-            $msg = $alert_d[0]; 
-            if (str_contains($msg, 'nvalid Credential')) {
-                logx('err', $msg);
-                #$register = true;
-                #break 2;
-            }
-            logx('', $msg);
+            $msg = $alert_d[0];
+            logx('err', $msg);
             die;
         }
         
     } while (empty($dash));
     #_put('dash.html', $dash); 
-
-/*
-    if (str_contains($dash, 'confirm your email')) {
-        logx('info', 'check email');
-        $_re = Net::C("$host/dashboard/resend", 'GET', null, $cookieFile, [], $host.'/dashboard', $userAgent, false, false, $ip);
-        Net::C(_cd($mail), 'GET', null, $cookieFile, [], $host.'/dashboard', $userAgent, false, false, $ip);
-        continue;
-    }
-*/
     
     $claim = false;
     do {
@@ -90,8 +84,21 @@ while (true) {
             logx('info', "[ $vurl ]: ", false);
             logx('', $tim);
             #die;
+            $ret99 = 0; 
+            $max99 = 5;
             while (true) {
                 $view = Net::C($vurl, 'GET', null, $cookieFile, [], '', $userAgent, false, false, $ip);
+                if ($view === 99) {
+                    $ret99++;
+                    logx('warn', "masalah proxy, warm up dulu");
+                    if ($ret99 >= $max99) {
+                        logx('err', "Proxy beneran mati. Exit.");
+                        die(98);
+                    }
+                    _sle(30);
+                    continue;
+                }
+                $ret99 = 0; 
                 if (!empty($view)) {
                     $set = microtime(true);
                     $f = scraper::payload($view) ?? [];
@@ -132,8 +139,21 @@ while (true) {
 
     $box = false;
     if ($claim && !$limit) {
+        $ret99 = 0; 
+        $max99 = 5;
         while (true) {
             $fau = Net::C("$host/faucet", 'GET', null, $cookieFile, [], "$host/dashboard", $userAgent, false, false, $ip);
+            if ($fau === 99) {
+                $ret99++;
+                logx('warn', "masalah proxy, warm up dulu");
+                if ($ret99 >= $max99) {
+                    logx('err', "Proxy beneran mati. Exit.");
+                    die(98);
+                }
+                _sle(30);
+                continue;
+            }
+            $ret99 = 0; 
             if (empty($fau)) continue;
             
             $fo = scraper::payload($fau) ?? [];
@@ -167,67 +187,23 @@ while (true) {
             if (str_contains($fau, 'Write what you see in the picture')) {
                 $src = scraper::_pP($fau, 'src');
                 $_cu = null;
-                
                 foreach ($src as $_u) {
                     if (str_contains($_u, '/images/captcha')) {
                         $_cu = trim($_u);
                         break;
                     }
                 }
-                
                 if ($_cu) {
-                    $tmpDir = _lib($host, $mail); 
-                    $originalImg = $tmpDir . '/raw.png';
-
                     $img = Net::C($_cu, 'GET', null, $cookieFile, [], "$host/faucet", $userAgent);
-                    
-                    if (!getDeps('tesseract')) {
-                        logx('err', 'tesseract missing');
-                        exit;
-                    }
-                    
-                    if (!empty($img)) {
-                        _put($originalImg, $img);
-                        
-                        $t_vote = [];
-                        $psm_stats = [6 => [], 8 => [], 11 => []];
-                        $_th = [80, 90, 100, 110, 120, 140, 160];
-                        $_psms = [6, 8, 11];
-
-                        foreach ($_th as $th) {
-                            $pre = pre($originalImg, $th, 3); 
-
-                            foreach ($_psms as $psm) {
-                                $output = [];
-                                $cmd = "tesseract " . escapeshellarg($pre) . " stdout --psm $psm -c tessedit_char_whitelist=0123456789 2>/dev/null";
-                                @exec($cmd, $output);
-                                
-                                $resText = trim(implode('', $output));
-                                if (ctype_digit($resText) && strlen($resText) === 4) {
-                                    $t_vote[] = $resText;
-                                    $psm_stats[$psm][] = $resText; 
-                                }
-                            }
-                            @unlink($pre);
-                        }
-                        
-                        @unlink($originalImg); 
-                        @rmdir($tmpDir); 
-
-                        if (!empty($t_vote)) {
-                            $counts = array_count_values($t_vote);
-                            arsort($counts); 
-                            $t_text = key($counts); 
-                            logx('ok', "OCR: $t_text (" . reset($counts) . "/" . count($t_vote) . ")");
-                        }
-                    }
+                    $t_text = _text($img, $host, $mail);
                 }
-                
                 if (!$t_text) {
+                    logx('warn', "OCR Zonk");
                     _sle(3);
                     continue; 
                 }
             }
+
             
             $cap = [];
             if (isset($pa['captcha'])) {
@@ -276,6 +252,129 @@ while (true) {
         }
     }
     
+    
+    $ret99 = 0; 
+    $max99 = 5;
+    do {
+        $sho = Net::C("$host/links", 'GET', null, $cookieFile, [], "$host/dashboard", $userAgent, false, false, $ip);
+        
+        if ($sho === 99) {
+            $ret99++;
+            logx('warn', "masalah proxy, warm up dulu");
+            if ($ret99 >= $max99) {
+                logx('err', "Proxy beneran mati. Exit.");
+                die(98);
+            }
+            _sle(30);
+            continue;
+        }
+        $ret99 = 0; 
+        
+        if (empty($sho)) continue;
+        
+        $f = scraper::payload($sho)[0] ?? [];
+        $short = sScraper::extract($sho);
+        $up = ['earnow','shortano', 'shortino', 'coinclix', 'fc-lc'];
+        
+        if (!empty($f) && !empty($short)) {
+            $po = $f['payload'];
+            
+            if (str_contains($sho, 'Write what you see in the picture')) {
+                $t_text = null;
+                $src = scraper::_pP($sho, 'src');
+                $_cu = null;
+                foreach ($src as $_u) {
+                    if (str_contains($_u, '/images/captcha')) {
+                        $_cu = trim($_u);
+                        break;
+                    }
+                }
+                if ($_cu) {
+                    $img = Net::C($_cu, 'GET', null, $cookieFile, [], "$host/links", $userAgent);
+                    $t_text = _text($img, $host, $mail);
+                }
+                if ($t_text) {
+                    foreach ($po as $key => $val) {
+                        if ($val === '' || $val === null) {
+                            $po[$key] = $t_text;
+                        }
+                    }
+                }
+            }
+        } else {
+            continue;
+        }
+
+        $can_process = false; 
+        foreach ($short as $links => [$idd, $lmt]) {
+            
+            if (!limit($lmt) || isset($skipped[$idd])) continue;
+            
+            $can_process = true;
+            
+            $ud = $host.'/links/go/'.$idd;
+            $get = Net::X($ud, 'POST', $po, inf::$cookie, [], $host.'/links', inf::$uagent, ip: $ip, foll: false);
+            if ($get === 99) break;
+            
+            preg_match('/location\.href\s*=\s*["\']([^"\']+)["\']/', $get, $match);
+            $loc = $match[1] ?? '';
+            
+            if (!$loc) {
+                $skipped[$idd] = true;
+                continue; 
+            }
+
+            $loc_u = parse_url($loc)['host'];
+            $is_bl = false;
+            foreach ($up as $blacklisted) {
+                if (str_contains($loc_u, $blacklisted)) {
+                    logx('warn', "Domain $blacklisted Skipping..");
+                    $skipped[$idd] = true;
+                    $is_bl = true;
+                    break; 
+                }
+            }
+            if ($is_bl) continue; 
+            
+            logx('info', "Bypass: $loc", true, true);
+            $bakk = links($api, $loc);
+            
+            if (!$bakk) {
+                $skipped[$idd] = true; 
+                continue; 
+            }
+            
+            styler("waiting for SL", fn() => _sle(15));
+            
+            $retVer = 0;
+            while (true) {
+                $ver = Net::C($bakk, 'GET', null, inf::$cookie, [], $loc, inf::$uagent);
+                if ($ver === 99) {
+                    $retVer++;
+                    if ($retVer >= 5) die(98);
+                    _sle(30);
+                    continue;
+                }
+                break;
+            }
+            
+            if (!empty($ver)) {
+                $m = scraper::_jP($ver, "/Swal\.fire\(\{.*?title\s*:\s*(['\"])(.*?)\\1.*?\}\)/s") ?? [];
+                if (isset($m[2][0])) {
+                    logg(true, $m[2][0], true, true);
+                }
+            }
+            
+            break; 
+        }
+
+        if (!$can_process) {
+            logx('info', "sl abis");
+            $SLDONE = true;
+        }
+        
+    } while (!$SLDONE);
+
     if ($limit) {
         $wd = Net::C("$host/withdraw", 'GET', null, $cookieFile, [], "$host/faucet", $userAgent, false, false, $ip);
         if (empty($wd)) continue;
@@ -291,10 +390,11 @@ while (true) {
             $wd = Net::C($jajan['url'], 'POST', $po, $cookieFile, [], "$host/faucet", $userAgent, false, false, $ip);
             _put('wd.html', $wd);
             if (!empty($wd)) {
-                $m= scraper::_jP($wd, "/Swal\.fire\(\{.*?title\s*:\s*(['\"])(.*?)\\1.*?\}\)/s") ?? [];
+                $m = scraper::_jP($wd, "/Swal\.fire\(\{.*?title\s*:\s*(['\"])(.*?)\\1.*?\}\)/s") ?? [];
                 if (isset($m[2][0])) {
                     logx('info', $m[2][0], true, true);
                     $pttr = '/<h3>([^<]+)<\/h3>\s*<p>Balance<\/p>/';
+                    die;
                 }
             }
         } else {
@@ -305,31 +405,6 @@ while (true) {
     
 }
 
-if ($register) {
-    @unlink($cookieFile);
-    $po_ = null;
-    while (true) {
-        $_0 = Net::C("$host/register", 'GET', null, $cookieFile, [], '', $userAgent, false, false, $ip);
-        if (!empty($_0)) {
-            #_put('0.html', $_0);
-            $f = scraper::payload($_0)[0];
-            $pa = $f['payload'];
-            #print_r($f);
-            $c = capt::cha($_0);
-            $t = tK(getKeys($api), $host, $c['keys'][0], $c['type'], $userAgent);
-            $ca = ['cf-turnstile-response' => $t, 'g-recaptcha-response' => $t];
-            $cre = ['email' => $mail, 'password' => $pass, 'confirm_password' => $pass];
-            $po_ = array_merge($pa, $ca, $cre);
-            break;
-        }
-    }
-    if (!empty($po_)) {
-        #print_r($po_);
-        $_1 = Net::C($f['url'], 'POST', $po_, $cookieFile, [], $host.'/register', $userAgent, false, false, $ip);
-        #_put('1.html', $_1);
-    }
-    goto login;
-}
 
 
 
@@ -393,6 +468,54 @@ function pre($in_put, $threshold = 128) {
     return $put_in;
 }
 
+function _text($imgData, $host, $mail) {
+    if (empty($imgData)) return null;
+
+    $tmpDir = _lib($host, $mail); 
+    $originalImg = $tmpDir . '/raw.png';
+
+    _put($originalImg, $imgData);
+    
+    $t_vote = [];
+    $_th = [80, 90, 100, 110, 120, 140, 160];
+    $_psms = [6, 8, 11];
+
+    try {
+        foreach ($_th as $th) {
+            $preFile = pre($originalImg, $th, 3); 
+            
+            if (!$preFile || !file_exists($preFile)) continue;
+
+            foreach ($_psms as $psm) {
+                $output = [];
+                $cmd = "tesseract " . escapeshellarg($preFile) . " stdout --psm $psm -c tessedit_char_whitelist=0123456789 2>/dev/null";
+                @exec($cmd, $output);
+                
+                $resText = trim(implode('', $output));
+                
+                if (ctype_digit($resText) && strlen($resText) === 4) {
+                    $t_vote[] = $resText;
+                }
+            }
+            if (file_exists($preFile)) @unlink($preFile);
+        }
+    } finally {
+        if (file_exists($originalImg)) @unlink($originalImg);
+        if (is_dir($tmpDir)) @rmdir($tmpDir);
+    }
+
+    if (!empty($t_vote)) {
+        $counts = array_count_values($t_vote);
+        arsort($counts); 
+        $t_text = (string)key($counts); 
+        logx('ok', "OCR: $t_text (" . reset($counts) . "/" . count($t_vote) . ")");
+        return $t_text;
+    }
+
+    return null;
+}
+
+
 function _wd($html) {
     $res = Scraper::payload($html)[0] ?? null;
     if (!$res) return false;
@@ -415,39 +538,4 @@ function _wd($html) {
         }
     }
     return false;
-}
-
-function _cd($key = 'code') {
-    $baseUrl = getenv('DG');
-    if (!$baseUrl) return _rl("$key: ");
-
-    $url = rtrim($baseUrl, '/') . '/get';
-    $deadline = time() + 320;
-    $payload = ['type' => $key];
-
-    while (time() < $deadline) {
-        logx('info', "checking $key");
-        $html = Net::X($url, 'POST', $payload, null, [], '', null, true);
-        
-        if ($html) {
-            if (preg_match('/.*[=]\s*(\S+)/i', $html, $m)) {
-                $result = trim($m[1]);
-                logx('ok', "Data found: $result");
-                return $result;
-            }
-            
-            if (strlen(trim($html)) > 0 && !str_contains($html, 'error')) {
-                return trim($html);
-            }
-        }
-        
-        if (str_contains($html, 'error')) {
-            logx('warn', "Remote: $html");
-        }
-
-        sleep(5);
-    }
-
-    logx('err', "Timeout: $key");
-    exit(1);
 }

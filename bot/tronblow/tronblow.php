@@ -20,7 +20,7 @@ $urls = ['https://usdtblow.xyz', 'https://tronblow.site'];
 banner();
 login:
     
-$chunks = array_chunk($emails, 60);
+$chunks = array_chunk($emails, 50);
 
 if (ctype_digit((string)$login)) {
     $idx = (int)$login - 1;

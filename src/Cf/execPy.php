@@ -7,54 +7,62 @@
  */
 function cfGet($url, &$cookie, &$uagent) {
     $att = 0;
+    $execPy = null; 
     while ($att < 10) {
-        $html = Net::C($url, 'GET', null, $cookie, [], '', $uagent);
-        if (!$html) { $att++; _sle(2); continue; }
-
-        $isCloudflare = (
-            stripos($html, 'Cloudflare Ray ID') !== false || 
-            stripos($html, 'Attention Required!') !== false || 
-            stripos($html, 'just a moment') !== false ||
-            stripos($html, 'sucuri') !== false ||
-            stripos($html, 'been blocked') !== false 
-        );
-
-        if (!$isCloudflare && !empty($html)) {
-            return $html;
+        $_00 = Net::C($url, 'GET', null, $cookie, [], '', $uagent);
+        
+        if (!$_00) { 
+            $att++; 
+            logx('warn', "Empty response, retry $att");
+            _sle(2); 
+            continue; 
         }
 
-        logx('err', "Cloudflare detected");
+        $isCloudflare = (
+            stripos($_00, 'Cloudflare Ray ID') !== false || 
+            stripos($_00, 'just a moment') !== false ||
+            stripos($_00, 'challenge-platform') !== false
+        );
 
-        $execPy = new execPython($cookie, $uagent);
+        if (!$isCloudflare) {
+            return $_00;
+        }
+
+        logx('warn', "Cloudflare/JS Challenge detected");
+
+        if (!$execPy) $execPy = new execPython($cookie, $uagent);
         $r = $execPy->run('inter', $url);
 
-        if ($r === null || empty($r['user_agent']) || empty($r['cookie_file'])) {
-            logx('err', "Solver failed");
+        if ($r === null) {
+            logx('err', "Solver failed to return result");
             $att++; 
-            _sle(2); 
+            _sle(3); 
             continue;
         }
 
-        $ua = (string)$r['user_agent'];
-        $ck = (string)$r['cookie_file'];
+        $uagent = (string)$r['user_agent'];
+        $cookie = (string)$r['cookie_file'];
 
-        $html_fix = Net::C($url, 'GET', null, $ck, [], $url, $ua);
+        $_11 = Net::C($url, 'GET', null, $cookie, [], $url, $uagent);
         
-        $isStillCF = (stripos($html_fix, 'challenge-platform') !== false || stripos($html_fix, 'just a moment') !== false);
+        $isStillCF = (
+            stripos($_11, 'challenge-platform') !== false || 
+            stripos($_11, 'just a moment') !== false ||
+            strpos($_11, 'id="cf-wrapper"') !== false
+        );
 
-        if ($html_fix && !$isStillCF) {
-            $cookie = $ck;
-            $uagent = $ua;
-            return $html_fix;
+        if ($_11 && !$isStillCF) {
+            logx('success', "Cloudflare bypassed!");
+            return $_11;
         }
 
+        logx('err', "Bypass failed, retrying...");
         $att++;
         _sle(2);
     }
     
     return false; 
 }
-
 
 /** @function cfSet
  * @param string $class
@@ -100,16 +108,11 @@ function cfSet($class, $res) {
  * @return array|string|bool|null
  */
 function execCF($api, $url, $cookie, $uagent, array $data = [], $input = '') {
-    /*
-    logx('err', '  1 [local via seledroid]');
-    logx('err', '  2 [remote via solver] (DEFAULT)');
-    #$input = _rl('solve cloudflare ??  ');
-    */
     
     if ($input === '' || $input === '2') {
         if (!$api) {
             logx('err', 'undefined provider');
-            return null; 
+            die;
         }
 
         $param = array_filter([
@@ -125,7 +128,8 @@ function execCF($api, $url, $cookie, $uagent, array $data = [], $input = '') {
         $solve = $solver->access($url, 'interstitial', $param);
         
         if ($solve === 777 || (is_array($solve) && isset($solve[1]) && $solve[1] === 777)) {
-            logx('warn', "Failover to Direct API Provider...");
+            logx('warn', "Switching to Direct API provider", false);
+            _clr();
             $solve = $api->access($url, 'interstitial', $param);
             
             if ($solve && is_array($solve)) {
@@ -145,12 +149,23 @@ function execCF($api, $url, $cookie, $uagent, array $data = [], $input = '') {
     } 
     
     if ($input === '1') {
-        $local = cfGet($url, $cookie, $uagent);
-        return 'stated';
+        $execPy = new execPython($cookie, $uagent); 
+        $r = $execPy->run('inter', $url);
+        #print_r($r) && die;
+        if (is_array($r) && !empty($r['token'])) {
+            $uagent = (string)$r['ua'];
+            return [
+                'token' => (string)$r['token'],
+                'ua' => $uagent
+            ];
+        }
+        logx('err', "Direct Seledroid Solver failed");
+        return false;
     }
     
     return null;
 }
+
 
 /** @class execPython
  * @method __construct
@@ -177,89 +192,124 @@ final class execPython {
     private string $scriptPath;
     private ?string $cookie;
     private ?string $uagent;
+    private string $lockFile;
 
-    public function __construct($cookie = null, $ua = null) {
+    public function __construct($ck = null, $ua = null) {
+        /*
+        logx('', ' set: '.$ck);
+        logx('', ' set: '.$ua);
+        logx();
+        #die;
+        */
         if (!getDeps('seledroid@py')) {
             logx('err', 'seledroid@py missing');
-            exit(9);
+            exit;
         }
         
-        $this->cookie = $cookie;
+        $this->cookie = $ck;
         $this->uagent = $ua;
+        $this->lockFile = sys_get_temp_dir() . '/seledroid_global.lock';
 
-        if (($py = realpath(LIBDIR . 'python/execPy.py')) === false) {
+        if (($py = realpath(LIBDIR . '/python/execPy.py')) === false) {
             logx('err', "execPy file not found");
-            exit(9);
+            exit;
         }
         $this->scriptPath = $py;
+
+        $proxy = $GLOBALS['_CTX']['proxy']['src'] ?? null;
+        
+        if (!empty($proxy) && getDeps('gost')) {
+            logx('warn', " setting up proxy for seledroid, will consume much execution, USE WITH CAUTION", true, true);
+            $check = $this->run('check');
+            if (!$check || isset($check['error'])) {
+                $err = $check['error'] ?? 'No Response';
+                logx('err', "Proxy Tunnel Failed: $err");
+                exit;
+            }
+            logx('success', "Seledroid Proxy: " . ($check['ip'] ?? 'Unknown'));
+        } else {
+            logx('info', "Seledroid Direct");
+        }
     }
 
     public function run($type, $url = null, $act = null): array|string|null {
         $m = strtolower($type);
-        if (!in_array($m, ['turnstile', 'inter', 'recaptcha3', 'build', 'ua'], true)) return null;
-        if (!in_array($m, ['build', 'ua'], true) && empty($url)) return null;
+        if (!in_array($m, ['turnstile', 'inter', 'recaptcha3', 'check', 'ua'], true)) return null;
+        if (!in_array($m, ['check', 'ua'], true) && empty($url)) return null;
 
         $sync = ($this->cookie !== null && $this->uagent !== null);
         $out = $this->exec($m, $url, $sync, $act);
+        #var_dump($out) && die;
 
         if (empty(trim($out))) return null;
         $trim = trim($out);
-
         if ($m === 'ua') return $trim;
-        if ($m === 'build') {
-            $json = json_decode($trim, true);
-            return is_array($json) ? $json : $trim;
-        }
 
         $json = json_decode($trim, true);
-        if (!is_array($json)) return null;
+        if (!is_array($json) || isset($json['error'])) {
+            if (isset($json['error'])) logx('err', "Py: " . $json['error']);
+            return null;
+        }
 
         switch ($m) {
+            case 'check': return $json; 
             case 'turnstile':
             case 'recaptcha3':
                 return (strlen($json['token'] ?? '') > 20) ? (string)$json['token'] : null;
-
             case 'inter':
                 if (empty($json['cf_clearance']) || empty($json['user_agent'])) return null;
+                $token = str_ireplace('cf_clearance=', '', trim((string)$json['cf_clearance']));
                 if ($sync) {
-                    if (!$this->cfCookie((string)$json['cf_clearance'], (string)$url)) return null;
-                    $this->uagent = (string)$json['user_agent'];
-                    $GLOBALS['uagent'] = $this->uagent;
-                    $statedSync =  [
-                        'cookie_file' => (string)$this->cookie,
-                        'user_agent' => (string)$this->uagent
-                    ];
-                    return $statedSync;
+                    if (!$this->cfCookie("cf_clearance=$token", (string)$url)) return null;
+                    $this->uagent = $GLOBALS['uagent'] = (string)$json['user_agent'];
                 }
-                return $json;
+                
+                return [
+                    'token' => $token,
+                    'ua' => (string)$json['user_agent']
+                ];
         }
         return null;
     }
-
+    
     private function exec($m, $url, $sync, $act = null) {
         $py = escapeshellcmd($this->python);
         $sc = escapeshellarg($this->scriptPath);
         $cmd = "{$py} {$sc} " . escapeshellarg($m);
+        
+        $proxy = $GLOBALS['_CTX']['proxy']['src'] ?? null;
 
-        if (!in_array($m, ['build','ua'], true)) $cmd .= " " . escapeshellarg($url);
+        if (!empty($proxy) && getDeps('gost')) {
+            $cmd .= " --px " . escapeshellarg($proxy);
+        }
+
+        if (!in_array($m, ['check','ua'], true)) $cmd .= " " . escapeshellarg($url);
         if ($m === 'recaptcha3') $cmd .= " " . escapeshellarg($act);
-
+        
         if ($sync) {
             $cmd .= " " . escapeshellarg($this->uagent);
-            if (in_array($m, ['turnstile','recaptcha3'], true)) $cmd .= " " . escapeshellarg($this->cookie);
+            if (in_array($m, ['turnstile','recaptcha3', 'inter'], true)) {
+                $cmd .= " " . escapeshellarg($this->cookie);
+            }
         }
-        return shell_exec($cmd);
+        
+        $fp = fopen($this->lockFile, "w+");
+        if ($fp && flock($fp, LOCK_EX)) {
+            $out = shell_exec($cmd); 
+            flock($fp, LOCK_UN);
+            fclose($fp);
+            return $out;
+        }
+        if ($fp) fclose($fp);
+        return null;
     }
 
     public function cfCookie($cfString, $url) {
-        # manual inject cookiefile netscape format
         if (empty($this->cookie)) return false;
         if (!preg_match('/cf_clearance=([^;]+)/', $cfString, $m)) return false;
-
         $domain = parse_url($url)['host'];
         $cookieDomain = '.' . ltrim($domain, '.');
         $secure = (parse_url($url)['scheme'] === 'https') ? "TRUE" : "FALSE";
-
         $lines = file_exists($this->cookie) ? file($this->cookie, FILE_IGNORE_NEW_LINES) : ["# Netscape HTTP Cookie File", ""];
         $filtered = [];
         foreach ($lines as $l) {
@@ -268,10 +318,8 @@ final class execPython {
             if (count($cols) >= 7 && $cols[5] === 'cf_clearance') continue;
             $filtered[] = $l;
         }
-
         $filtered[] = implode("\t", [$cookieDomain, "TRUE", "/", $secure, time() + 1800, "cf_clearance", $m[1]]);
         _put($this->cookie, implode("\n", $filtered) . "\n");
         return true;
     }
-    
 }

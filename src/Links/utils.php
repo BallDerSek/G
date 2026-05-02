@@ -28,13 +28,27 @@ class sScraper {
         return preg_match('~(\d+)\s*/\s*(\d+)~', $txt, $m) ? ($m[1].'/'.$m[2]) : null;
     }
 
-    private static function _getCont(DOMNode $node): DOMNode {
+    private static function _getContt(DOMNode $node): DOMNode {
         $cur = $node;
         for ($i=0; $i<8 && $cur && $cur->parentNode; $i++) {
             if (in_array($cur->nodeName, ['div','section','article','li'], true)) return $cur;
             $cur = $cur->parentNode;
         }
         return $node;
+    }
+    
+    private static function _getCont(DOMNode $node, DOMXPath $xp): DOMNode {
+        $cur = $node;
+        for ($i=0; $i<8 && $cur && $cur->parentNode; $i++) {
+            if (in_array($cur->nodeName, ['div', 'section', 'article', 'li', 'td'], true)) {
+                $txt = self::_getNodes($xp, $cur);
+                if (mb_strlen($txt) > 20 || preg_match('~\d+/\d+~', $txt)) {
+                    return $cur;
+                }
+            }
+            $cur = $cur->parentNode;
+        }
+        return $node->parentNode ?? $node;
     }
 
     private static function _badName($s) {
@@ -133,7 +147,7 @@ class sScraper {
             if (isset($seen[$id])) continue;
             $seen[$id] = true;
 
-            $container = self::_getCont($n);
+            $container = self::_getCont($n, $xp);
 
             $containerText = self::_getNodes($xp, $container);
             $limit = self::_getLimit($containerText);
@@ -160,32 +174,43 @@ function limit($id) {
     return $current > 0;
 }
 
-
 function links($api, $url) {
     if (!$api) {
         logx('err', 'undefined provider');
         exit;
     }
+    
+    try {
+        
+        $bypass = new _shortlinks($url);
+        $f_url = $bypass->links($api); 
+        
+        if ($f_url && is_string($f_url)) {
+            logx('info', " [ direct SL success ");
+            return $f_url;
+        }
+    } catch (Throwable $e) {
+        logx('warn', " [ direct SL " . $e->getMessage());
+    }
+    
     $solver = config::getKeys($api, 'shortlink', 'tkn');
-    #$solver = $api;
-    if (!isset(Api::TKN[get_class($solver)]['shortlink'])) {
+    
+    if (!$solver || !isset(Api::TKN[get_class($solver)]['shortlink'])) {
         logx('err', get_class($solver).' NOT SUPPORT SHORTLINK');
-        return 30;
+        return false;
     }
 
-    if ($solver) {
-        $set = microtime(true);
-        $res = $solver->shortLink($url);
-        $end = microtime(true);
-        $time = number_format($end - $set, 3) . 's';
-        
-        if ($res) {
-            logx('info', '[ ' . get_class($solver) . ' passed in ' . $time . ' ]');
-        } else {
-            logx('err', '[ ' . get_class($solver) . ' failed ]');
-        }
+    $set = microtime(true);
+    $res = $solver->shortLink($url);
+    $end = microtime(true);
+    $time = number_format($end - $set, 3) . 's';
+    
+    if ($res && $res !== 99) {
+        logx('info', '[ ' . get_class($solver) . ' passed in ' . $time . ' ]');
         return $res;
     }
 
+    logx('err', ' [ ' . get_class($solver) . ' failed ]');
     return false;
 }
+

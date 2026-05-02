@@ -118,14 +118,11 @@ class ExecPy:
         for i in range(3):
             driver = self._make_driver(ua=ua)
             try:
-                # 1. Cek IP & UA (tetap jalan sesuai kemauan lo)
+                #log(f"Check Attempt ({i+1}/3)...")
                 check_res = self._internal_check(driver)
+                #log(f"Proxy Verified: {check_res['ip']}")
 
-                # --- PATCH: HAPUS/KOMENTAR BARIS DI BAWAH INI ---
-                # if url: self.init_session(driver, url, cookie_file=cookie_file)
-                # -----------------------------------------------
-
-                # 2. Langsung jalankan fungsi job (injeksi dilakukan di sana)
+                if url: self.init_session(driver, url, cookie_file=cookie_file)
                 return fn(driver)
 
             except Exception as e:
@@ -145,64 +142,32 @@ class ExecPy:
         return {"error": f"{last_err}"}
 
     def init_session(self, driver, url, cookie_file=None):
-        if not cookie_file: return
         u = urlparse(url)
         origin = f"{u.scheme}://{u.netloc}/"
-        
-        # Buka origin sekali saja untuk context
         driver.get(origin)
-        time.sleep(1) # Jeda singkat saja
-        
-        cookies = self._load_netscape(cookie_file, url)
-        for name, value in cookies:
-            try:
-                driver.set_cookie(name, value, url=origin)
-            except: pass
+        if cookie_file:
+            cookies = self._load_netscape(cookie_file, url)
+            for name, value in cookies:
+                try: driver.set_cookie(name, value, url=origin)
+                except: pass
 
     def _load_netscape(self, cookie_file, url):
-        if not cookie_file or not os.path.exists(cookie_file):
-            log(f"COOKIE_ERROR: File not found: {cookie_file}")
-            return []
-        
+        if not cookie_file or not os.path.exists(cookie_file): return []
         host = (urlparse(url).hostname or "").lower()
         now = int(time.time())
         cookies = []
-        
-        try:
-            with open(cookie_file, "r", encoding="utf-8", errors="ignore") as f:
-                lines = f.readlines()
-                for line in lines:
-                    line = line.strip()
-                    # Lewati baris kosong atau komentar biasa, tapi biarkan #HttpOnly_
-                    if not line or (line.startswith("#") and not line.startswith("#HttpOnly_")):
-                        continue
-                    
-                    # Bersihkan prefix #HttpOnly_ agar domainnya terbaca
-                    if line.startswith("#HttpOnly_"):
-                        line = line[10:]
-                    
-                    # Gunakan split() tanpa argumen untuk menangani Tab maupun Spasi
-                    cols = line.split()
-                    if len(cols) < 7: continue
-                    
-                    domain, _, _, _, expires, name, value = cols[:7]
-                    
-                    # Validasi kadaluarsa
-                    try:
-                        if int(expires) != 0 and int(expires) < now: continue
-                    except: pass
-                    
-                    # Cek kecocokan domain (Logic Barbar)
-                    clean_domain = domain.lower().lstrip(".")
-                    if clean_domain in host:
-                        cookies.append((name, value))
-            
-            log(f"COOKIE_DEBUG: Loaded {len(cookies)} cookies for {host}")
-            return cookies
-            
-        except Exception as e:
-            log(f"COOKIE_ERROR: {e}")
-            return []
+        with open(cookie_file, "r", encoding="utf-8", errors="ignore") as f:
+            for line in f:
+                if not line.strip() or (line.startswith("#") and not line.startswith("#HttpOnly_")): continue
+                cols = line.strip().split("\t")
+                if len(cols) < 7: continue
+                domain, _, _, _, expires, name, value = cols[:7]
+                try:
+                    if int(expires) != 0 and int(expires) < now: continue
+                except: pass
+                if host == domain.lower().lstrip(".") or host.endswith("." + domain.lower().lstrip(".")):
+                    cookies.append((name, value))
+        return cookies
 
     def reactor(self, driver):
         try:
@@ -221,42 +186,51 @@ class ExecPy:
 
     def interstitial(self, url, ua=None, cookie_file=None):
         def job(d):
-            if cookie_file:
-                self.init_session(d, url, cookie_file=cookie_file)
-
             log(f"Capturing Interstitial: {url}")
             d.get(url)
             
-            # 1. Tunggu title stabil
-            for _ in range(15):
+            for _ in range(10):
                 title = (d.title or "").lower()
                 if title: break
-                time.sleep(1)
+                time.sleep(0.5)
 
-            # 2. JANGAN LANGSUNG RETURN. Panggil wait_cookie dulu.
-            def wait_cookie(max_wait=40):
+            c_instant = d.get_cookie("cf_clearance")
+            
+            if "just a moment" not in title and "cloudflare" not in title:
+                all_c = d.get_cookies()
+                if all_c and not self._check_browser_error(d):
+                    #log("Direct access confirmed.")
+                    return {
+                        "waf": d.get_cookie("waf_what_a_faucet_session"),
+                        "cf_clearance": c_instant if c_instant else "",
+                        "user_agent": d.user_agent,
+                        "cookie": all_c
+                    }
+
+            #log("Challenge suspected, waiting...")
+            def wait_cookie(max_wait=30):
                 elapsed = 0
                 while elapsed < max_wait:
                     if self._check_browser_error(d): 
                         raise RuntimeError("PROXY_TUNNEL_FAILED")
                     
                     c = d.get_cookie("cf_clearance")
+                    # Tunggu sampai cf_clearance ADA
                     if c: 
-                        return c
+                        return c, d.get_cookie("waf_what_a_faucet_session")
                     
-                    time.sleep(1)
-                    elapsed += 1
-                return None
+                    time.sleep(0.5)
+                    elapsed += 0.5
+                return None, None
 
-            clearance = wait_cookie()
+            clearance, waf = wait_cookie()
             
             if not clearance:
+                log("Retry trigger...")
                 d.get(url)
-                time.sleep(5)
-                clearance = wait_cookie(max_wait=20)
+                time.sleep(3)
+                clearance, waf = wait_cookie(25)
 
-            waf = d.get_cookie("waf_what_a_faucet_session")
-            
             return {
                 "waf": waf if waf else "", 
                 "cf_clearance": clearance if clearance else "", 
@@ -265,7 +239,7 @@ class ExecPy:
             }
         
         return self.execute(job, url=url, ua=ua, cookie_file=cookie_file)
-
+        
     def turnstile(self, url, ua=None, cookie_file=None):
         def job(d):
             log(f"Capturing Turnstile: {url}")
@@ -317,12 +291,7 @@ def pop_px_arg(argv):
 
 if __name__ == "__main__":
     try:
-        #log(f" ARGS: {sys.argv}")
-        
         px_data = pop_px_arg(sys.argv)
-        
-        #log(f" ARGS AFTER PROXY: {sys.argv}")
-
         if len(sys.argv) < 2:
             log("Usage: python execPy.py <method> [url/action] [--px ...]")
             sys.exit(1)
@@ -332,34 +301,15 @@ if __name__ == "__main__":
 
         if method == "check":
             ua = sys.argv[2] if len(sys.argv) >= 3 else None
-            #log(f"UA MASUK: {ua}")
             print(json.dumps(app.check_only(ua_in=ua)))
-
         elif method == "inter":
-            url = sys.argv[2]
-            ua = sys.argv[3] if len(sys.argv) >= 4 else None
-            ck = sys.argv[4] if len(sys.argv) >= 5 else None
-            #log(f"UA INTER: {ua}")
-            #log(f"CK INTER: {ck}")
-            print(json.dumps(app.interstitial(url, ua=ua, cookie_file=ck)))
-
+            print(json.dumps(app.interstitial(sys.argv[2], ua=sys.argv[3] if len(sys.argv) >= 4 else None)))
         elif method == "turnstile":
-            url = sys.argv[2]
-            ua = sys.argv[3] if len(sys.argv) >= 4 else None
-            ck = sys.argv[4] if len(sys.argv) >= 5 else None
-            #log(f"UA TURNSTILE: {ua}")
-            #log(f"CK TURNSTILE: {ck}")
-            print(json.dumps(app.turnstile(url, ua=ua, cookie_file=ck)))
-
+            print(json.dumps(app.turnstile(sys.argv[2], ua=sys.argv[3] if len(sys.argv) >= 4 else None)))
         elif method == "recaptcha3":
-            url = sys.argv[2]
-            act = sys.argv[3]
-            ua = sys.argv[4] if len(sys.argv) >= 5 else None
-            ck = sys.argv[5] if len(sys.argv) >= 6 else None
-            #log(f"UA RC3: {ua}")
-            #log(f"CK RC3: {ck}")
-            print(json.dumps(app.recaptcha3(url, act, ua=ua, cookie_file=ck)))
-
+            print(json.dumps(app.recaptcha3(sys.argv[2], sys.argv[3], ua=sys.argv[4] if len(sys.argv) >= 5 else None)))
+        else:
+            log(f"Unknown method: {method}")
     except KeyboardInterrupt: log("\nAborted")
     except Exception as e:
         log(f"\nFATAL: {e}")

@@ -44,12 +44,13 @@ class check {
             return [
                 'gd@php' => extension_loaded('gd'),
                 'python3' => self::depCmd('python3'),
+                'seledroid@py' => $hasSeledroid,
+                'gost' => self::depCmd('gost'),
                 'ssh' => self::depCmd('ssh'),
                 'sshpass' => self::depCmd('sshpass'),
                 'nodejs' => $hasNode,
                 'npm' => self::depCmd('npm'),
                 'synchrony@npm' => $hasSynchrony,
-                'seledroid@py' => $hasSeledroid,
                 'tesseract' => self::depCmd('tesseract'),
             ];
         });

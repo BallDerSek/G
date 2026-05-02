@@ -23,6 +23,7 @@ if (empty($_0)) goto login;
 
 $skipped = [];
 $SLDONE = false;
+$curr = '';
 while (true) {
     $max = 7;
     $ret = 0; 
@@ -47,7 +48,7 @@ while (true) {
         $_0 = Net::C($host.$r, 'GET', null, inf::$cookie, ['detail-hints:false'], '', inf::$uagent, ip: $ip);
         if (empty($_0)) continue;
         
-       # _put('0.html', $_0);
+        #_put('0.html', $_0);
         $f = scraper::payload($_0)[0] ?? [];
         if (empty($f)) continue;
         $pa = $f['payload'];
@@ -79,6 +80,10 @@ while (true) {
         print(FGd['CYN']." ".UNDR.$login.RSET."  ");
         logx('err', strtoupper($_c));
         
+        if (!empty($curr) && stripos($_c, $curr) === false) {
+            continue; 
+        }
+        
         while (true) {
             _sle(3);
             $fau = Net::C($fa, 'GET', null, $cookieFile, [], '', $userAgent, ip: $ip);
@@ -88,13 +93,26 @@ while (true) {
             $f = scraper::payload($fau)[0] ?? [];
             if (!empty($f)) {
                 $pa = $f['payload'];
-                #print_r($pa);
                 $cap = solve::exec($fau, 'https://'.$domain, $api);
+                
                 if ($cap['nocaptcha'] === true) {
-                    if (($pa['captcha'] === 'shield') && isset($pa['shield_answer'])) {
-                        $cap = solveShield($fau);
+                    switch ($pa['captcha']) {
+                        case 'shield':
+                            if (isset($pa['shield_answer'])) {
+                                $cap = solveShield($fau);
+                            }
+                            break;
+                        case 'rot_captcha':
+                            if (isset($pa['rot_captcha_val'])) {
+                                $cap = solveRotate($fau);
+                            }
+                            break;
+                        default:
+                            logx('warn', "Unknown captcha type: " . $pa['captcha']);
+                            break;
                     }
                 }
+                
                 $cre = ['uf' => md5($login), 'ls' => LANGUAGE(), 'utt' => TIMEZONE()];
                 $po = array_merge($pa, $cap, $cre);
             } else {
@@ -104,7 +122,7 @@ while (true) {
             }
             #print_r($po);
             
-            _sle(2);
+            _sle(2); 
             $ve = str_replace('https://', 'http://', $f['url']);
             Net::X($ve, 'POST', $po, $cookieFile, [], $fa, $userAgent, ip: $ip, foll: false);
             $cla = Net::X($fa, 'GET', null, $cookieFile, [], '', $userAgent, ip: $ip);
@@ -120,7 +138,7 @@ while (true) {
                 logx('err', " {$_suc[2][0]} ", false, true);
                 logg(false, "{$_suc[3][0]}");
                 if (stripos($_suc[3][0], 'sufficient')) break;
-                if (stripos($_suc[3][0], 'Shortlink must be completed')) {
+                if (stripos($_suc[3][0], 'Shortlink must be completed') ||stripos($_suc[3][0], 'Shortlink to refill')) {
                     if ($SLDONE) {
                         logx('err', 'dah kelar gada sl+jatah faucet');
                         die;
@@ -139,6 +157,7 @@ while (true) {
     $_sl = Scraper::_xP($dash, "//div[normalize-space()='Shortlinks']/parent::div/following-sibling::div[@class='sub-menu-two']/a/@href");
 
     $valid = [];
+    $success_in_page = false;
     foreach ($_sl as $sl) {
         $sl = str_replace('https://', 'http://', $sl);
         $_c = basename($sl);
@@ -165,8 +184,11 @@ while (true) {
                 continue;
             }
             
+            #_put('sho.html', $sho); 
+            
             $pa = $f['payload'];
             $short = sScraper::extract($sho);
+            #print_r($short); die;
             $success_in_page = false; 
             $found_one = false;
             
@@ -185,6 +207,7 @@ while (true) {
                 $po = array_merge($pa, $cap, $cre);
                 
                 $get = Net::X($ud, 'POST', $po, $cookieFile, [], $sl, $userAgent, ip: $ip, foll: false);
+                #print_r($get);
                 preg_match('/location\.href\s*=\s*["\']([^"\']+)["\']/', $get, $match);
                 $loc = $match[1] ?? '';
                 logx('info', $loc, true, true);
@@ -201,10 +224,11 @@ while (true) {
                         logx('warn', "Domain $blacklisted Skipping..");
                         $skipped[$idd] = true;
                         $is_bl = true;
+                        _sle(30);
                         break; 
                     }
                 }
-                if ($is_bl) break; 
+                if ($is_bl) break;
                 
                 $bakk = links($api, $loc);
                 if (!$bakk) {
@@ -227,8 +251,7 @@ while (true) {
                         logg(false, "{$_suc[3][0]}");
 
                         if ($_suc[1][0] === 'success') {
-                            $success_in_page = true; 
-                            $curr = ""; 
+                            $success_in_page = true;
                             break 2; 
                         }
                         if (stripos($_suc[3][0], 'sufficient')) {
@@ -265,6 +288,153 @@ tes:
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+function solveRotate($html) {
+    if (!getDeps('gd@php')) {
+        logx('err', "gd@php is missing");
+        exit(9);
+    }
+    
+    $_targetText = Scraper::_xP($html, "//div[@id='rc-title']//strong");
+    $targetStr = isset($_targetText[0]) ? strtoupper($_targetText[0]) : 'UP';
+    
+    $targetDegrees = 270; 
+    if (strpos($targetStr, 'DOWN') !== false)  $targetDegrees = 90;
+    if (strpos($targetStr, 'RIGHT') !== false) $targetDegrees = 0;
+    if (strpos($targetStr, 'LEFT') !== false)  $targetDegrees = 180;
+
+    $_b = Scraper::find($html, 'rc-img', 'img', 'src', 'id')[0];
+    $b64 = substr($_b, strrpos($_b, ',') + 1);
+
+    $_img = base64_decode($b64);
+    if (!$_img) return ['rot_captcha_val' => 0];
+    
+    $img = imagecreatefromstring($_img);
+    $W = imagesx($img);
+    $H = imagesy($img);
+    $_slc = max(5, (int)round(max($W, $H) * 0.08));
+
+    $_brdr = [];
+    for ($x = 0; $x < $W; $x++) {
+        $_brdr[] = imagecolorat($img, $x, 0);
+        $_brdr[] = imagecolorat($img, $x, $H - 1);
+    }
+    for ($y = 1; $y < $H - 1; $y++) {
+        $_brdr[] = imagecolorat($img, 0, $y);
+        $_brdr[] = imagecolorat($img, $W - 1, $y);
+    }
+    $counts = array_count_values($_brdr);
+    arsort($counts);
+    $bgRaw = key($counts);
+    $bgR = ($bgRaw >> 16) & 0xFF;
+    $bgG = ($bgRaw >> 8)  & 0xFF;
+    $bgB = $bgRaw & 0xFF;
+
+
+    $_bnr = [];
+    for ($y = 0; $y < $H; $y++) {
+        for ($x = 0; $x < $W; $x++) {
+            $c = imagecolorat($img, $x, $y);
+            $r = ($c >> 16) & 0xFF;
+            $g = ($c >> 8)  & 0xFF;
+            $b =  $c        & 0xFF;
+            $_dst = sqrt(($r-$bgR)**2 + ($g-$bgG)**2 + ($b-$bgB)**2);
+            $_bnr[$y][$x] = ($_dst > 50) ? 1 : 0;
+        }
+    }
+
+    $_vst = [];
+    $_bst = [];
+    for ($sy = 0; $sy < $H; $sy++) {
+        for ($sx = 0; $sx < $W; $sx++) {
+            if (!($_bnr[$sy][$sx] ?? 0) || ($_vst[$sy][$sx] ?? false)) continue;
+            $p_a = [];
+            $q_a = [[$sx, $sy]];
+            $_vst[$sy][$sx] = true;
+            while (!empty($q_a)) {
+                [$cx2, $cy2] = array_pop($q_a);
+                $p_a[] = [$cx2, $cy2];
+                foreach ([[1,0],[-1,0],[0,1],[0,-1]] as [$dx2,$dy2]) {
+                    $nx2 = $cx2 + $dx2; $ny2 = $cy2 + $dy2;
+                    if ($nx2 < 0 || $nx2 >= $W || $ny2 < 0 || $ny2 >= $H) continue;
+                    if (!($_bnr[$ny2][$nx2] ?? 0) || ($_vst[$ny2][$nx2] ?? false)) continue;
+                    $_vst[$ny2][$nx2] = true;
+                    $q_a[] = [$nx2, $ny2];
+                }
+            }
+            if (count($p_a) > count($_bst)) $_bst = $p_a;
+        }
+    }
+
+    $n = count($_bst);
+    if ($n < 10) return ['rot_captcha_val' => 0];
+
+    $sumX = $sumY = 0.0;
+    foreach ($_bst as [$px, $py]) { $sumX += $px; $sumY += $py; }
+    $cxC = $sumX / $n; $cyC = $sumY / $n;
+
+    $mu20 = $mu02 = $mu11 = 0.0;
+    foreach ($_bst as [$px, $py]) {
+        $dx2 = $px - $cxC; $dy2 = $py - $cyC;
+        $mu20 += $dx2 * $dx2; $mu02 += $dy2 * $dy2; $mu11 += $dx2 * $dy2;
+    }
+    $mu20 /= $n; $mu02 /= $n; $mu11 /= $n;
+
+    $angle = 0.5 * atan2(2 * $mu11, $mu20 - $mu02);
+    $cosA  = cos($angle); $sinA  = sin($angle);
+
+    $t_V = [];
+    foreach ($_bst as [$px, $py]) {
+        $t_V[] = ($px - $cxC) * $cosA + ($py - $cyC) * $sinA;
+    }
+    $tMin = min($t_V); $tMax = max($t_V);
+
+    $avgDev = function($t_C) use ($_bst, $cxC, $cyC, $cosA, $sinA, $t_V, $_slc) {
+        $sum = 0.0; $cnt = 0;
+        foreach ($_bst as $i => [$px, $py]) {
+            if (abs($t_V[$i] - $t_C) <= $_slc) {
+                $sum += abs(-($px - $cxC) * $sinA + ($py - $cyC) * $cosA);
+                $cnt++;
+            }
+        }
+        return $cnt > 0 ? $sum / $cnt : INF;
+    };
+
+    $_minn = $avgDev($tMin);
+    $_maxx = $avgDev($tMax);
+    
+    $v_A = ($_minn < $_maxx) ? 'min' : 'max';
+
+    $cntPos = 0; $cntNeg = 0;
+    foreach ($t_V as $t) { if ($t >= 0) $cntPos++; else $cntNeg++; }
+    
+    $v_B = ($cntNeg < $cntPos) ? 'min' : 'max';
+
+    $he_ = $v_A; 
+
+    $he_T = ($he_ === 'min') ? $tMin : $tMax;
+    $te_T = ($he_ === 'min') ? $tMax : $tMin;
+
+    $vecDx = ($he_T - $te_T) * $cosA;
+    $vecDy = ($he_T - $te_T) * $sinA;
+
+    $arr_D = fmod(rad2deg(atan2($vecDy, $vecDx)) + 360, 360);
+    
+    $rot_V = (int) round(fmod($targetDegrees - $arr_D + 360, 360));
+
+    #imagedestroy($img);
+    return ['rot_captcha_val' => $rot_V];
+}
 
 
 function solveShield($fau) {

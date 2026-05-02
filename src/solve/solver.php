@@ -132,7 +132,8 @@ class Solve {
         while (true) {
             $t = $solver->token($key, $host, $type, $Params);
             if ($t === 777) {
-                logx('warn', "Switching to Direct API");
+                logx('warn', "Switching to Direct API provider", false);
+                _clr();
                 $t = $api->token($key, $host, $type, $Params);
             }
             if ($t === false) {
@@ -144,10 +145,35 @@ class Solve {
         if ($t === null) exit(1);
         $end = microtime(true);
         $api->getInfo();
-        logx('err', '[ '.get_class($solver).' ] ', false);
         logg(false, 'elapsed: ' . number_format($end - $set, 3).'s');
         #die;
         return $t;
+    }
+
+    public static function img($api, $host, $type, $img) {
+        if ($api) {
+            $solver = config::getKeys($api, $type, 'b64');
+            if (!isset(Api::B64[get_class($solver)][$type])) {
+                logx('err', 'unsupported provider');
+                exit;
+            }
+            $res = $solver->base64($img, $type);
+            if ($res === 777) {
+                logx('warn', "Switching to Direct API provider", false);
+                _clr();
+                $res = $api->base64($img, $type);
+                if ($res === 77) return 'reload';
+                if ($res && $res !== 777) {
+                    $api->getInfo();
+                    return $res;
+                }
+            }
+            if ($res === 77) return 'reload';
+            if ($res) return $res;
+        } else {
+            logx('err', 'undefined provider');
+            exit;
+        }
     }
 
     public static function iCaptcha($html, $host) {
@@ -431,7 +457,7 @@ class locally {
                 }
             }
         }
-        return "";
+        return [];
     }
 
     public static function oddCaptcha($base64) {
