@@ -48,7 +48,7 @@ jobs:
           MAIL:   ${{ github.event.inputs.mail }}
           PROXY:  ${{ github.event.inputs.proxy }}
         run: |
-          import json, os, base64
+          import json, os
 
           src = os.getenv("SOURCE")
           try:
@@ -71,22 +71,22 @@ jobs:
               for item, prx in zip(valid_targets, clean_proxies):
                   arr.append({src: item, "proxy": prx})
 
-          # Encode ke Base64 supaya tidak kena filter "Secret Detection" GitHub
+          # Langsung kirim JSON string. 
+          # Agar tidak kena filter Secret, jangan lakukan 'print' ke console log.
           output_json = json.dumps(arr) if arr else "[]"
-          encoded_output = base64.b64encode(output_json.encode()).decode()
-
+          
           with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
-              f.write(f"pairs={encoded_output}\n")
+              f.write(f"pairs={output_json}\n")
 
   run:
     needs: prepare
-    if: needs.prepare.outputs.pairs != '' && needs.prepare.outputs.pairs != 'W10='
+    if: needs.prepare.outputs.pairs != '[]' && needs.prepare.outputs.pairs != ''
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       max-parallel: 20
       matrix:
-        include: ${{ fromJson(base64Decode(needs.prepare.outputs.pairs)) }}
+        include: ${{ fromJson(needs.prepare.outputs.pairs) }}
 
     steps:
       - name: Clone Engine
