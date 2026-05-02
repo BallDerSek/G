@@ -16,17 +16,17 @@ on:
         default: '["0"]'
         required: true
       pass:
-        description: 'Password (opsional, default ambil dari secrets)'
+        description: 'pass'
         required: false
       api:
         type: choice
         options: [solverify, tertuyul, xevil, skibidixxx, capsolver, multibot, gmxch]
         required: true
       key:
-        description: 'Manual API Key (kalo kosong pakai secrets)'
+        description: 'key'
         required: false
       proxy:
-        description: '["socks5://u:p@ip:port"]'
+        description: '["http://u:p@ip:port"]'
         default: '[""]'
         required: false
       matrix_source:
@@ -46,41 +46,26 @@ jobs:
           SOURCE: ${{ github.event.inputs.matrix_source }}
           LOGIN:  ${{ github.event.inputs.login }}
           MAIL:   ${{ github.event.inputs.mail }}
-          PROXY:  ${{ github.event.inputs.proxy }}
         run: |
           import json, os
 
           src = os.getenv("SOURCE")
-          try:
-              logins = json.loads(os.getenv("LOGIN", "[]"))
-              mails  = json.loads(os.getenv("MAIL", "[]"))
-              proxies= json.loads(os.getenv("PROXY", "[]"))
-          except Exception as e:
-              print(f"Error parsing JSON: {e}")
-              exit(1)
+          logins = json.loads(os.getenv("LOGIN", "[]"))
+          mails  = json.loads(os.getenv("MAIL", "[]"))
 
-          clean_proxies = [p.strip() for p in proxies if p and p.strip()]
-          arr = []
           targets = logins if src == "login" else mails
           valid_targets = [t for t in targets if str(t) != "0"]
 
-          if not clean_proxies:
-              for item in valid_targets:
-                  arr.append({src: item, "proxy": ""})
-          else:
-              for item, prx in zip(valid_targets, clean_proxies):
-                  arr.append({src: item, "proxy": prx})
+          arr = []
+          for i, item in enumerate(valid_targets):
+              arr.append({src: item, "p_idx": i})
 
-          # Langsung kirim JSON string. 
-          # Agar tidak kena filter Secret, jangan lakukan 'print' ke console log.
-          output_json = json.dumps(arr) if arr else "[]"
-          
           with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
-              f.write(f"pairs={output_json}\n")
+              f.write(f"pairs={json.dumps(arr)}\n")
 
   run:
     needs: prepare
-    if: needs.prepare.outputs.pairs != '[]' && needs.prepare.outputs.pairs != ''
+    if: needs.prepare.outputs.pairs != '[]'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -100,34 +85,46 @@ jobs:
         uses: ./.github/actions/deps
         continue-on-error: false
 
-      - name: Setup Keys
-        shell: bash
-        run: |
-          if [ -n "${{ github.event.inputs.key }}" ]; then
-            echo "KEY=${{ github.event.inputs.key }}" >> "$GITHUB_ENV"
-          else
-            case "${{ github.event.inputs.api }}" in
-              solverify)  echo "KEY=${{ secrets.SOLVERIFY }}" >> "$GITHUB_ENV" ;;
-              tertuyul)   echo "KEY=${{ secrets.TERTUYUL }}" >> "$GITHUB_ENV" ;;
-              xevil)      echo "KEY=${{ secrets.XEVIL }}" >> "$GITHUB_ENV" ;;
-              skibidixxx) echo "KEY=${{ secrets.SKIBIDI }}" >> "$GITHUB_ENV" ;;
-              capsolver)  echo "KEY=${{ secrets.CAPSOLVER }}" >> "$GITHUB_ENV" ;;
-              multibot)   echo "KEY=${{ secrets.MULTIBOT }}" >> "$GITHUB_ENV" ;;
-              gmxch)      echo "KEY=${{ secrets.GMXCH }}" >> "$GITHUB_ENV" ;;
-              *)          echo "KEY=" >> "$GITHUB_ENV" ;;
-            esac
-          fi
-
       - name: Start php
-        run: php run.php
+        shell: python {0}
         env:
-          CI: "1"
-          _authApi_: ${{ secrets.AUTH }}
-          DG: ${{ secrets.DG }}
-          BOT: ${{ github.event.inputs.bot }}
+          MAIL_VAL: ${{ matrix.mail || matrix.login }}
+          P_INDEX: ${{ matrix.p_idx }}
+          RAW_PROXIES: ${{ github.event.inputs.proxy }}
           API: ${{ github.event.inputs.api }}
-          KEY: ${{ env.KEY }}
-          PROXY: ${{ matrix.proxy }}
-          login: ${{ matrix.login || '0' }}
-          mail: ${{ matrix.mail || '0' }}
-          pass: ${{ github.event.inputs.pass || secrets.PASS }}
+          KEY_INPUT: ${{ github.event.inputs.key }}
+          PASS_INPUT: ${{ github.event.inputs.pass }}
+        run: |
+          import os, json, subprocess
+
+          proxies = json.loads(os.getenv("RAW_PROXIES", "[]"))
+          idx = int(os.getenv("P_INDEX", "0"))
+          real_proxy = proxies[idx] if idx < len(proxies) else ""
+
+          api_type = os.getenv("API")
+          manual_key = os.getenv("KEY_INPUT")
+          
+          secrets_map = {
+              "solverify": "${{ secrets.SOLVERIFY }}",
+              "tertuyul": "${{ secrets.TERTUYUL }}",
+              "xevil": "${{ secrets.XEVIL }}",
+              "skibidixxx": "${{ secrets.SKIBIDI }}",
+              "capsolver": "${{ secrets.CAPSOLVER }}",
+              "multibot": "${{ secrets.MULTIBOT }}",
+              "gmxch": "${{ secrets.GMXCH }}"
+          }
+          final_key = manual_key if manual_key else secrets_map.get(api_type, "")
+
+          env = os.environ.copy()
+          env["CI"] = "1"
+          env["PROXY"] = real_proxy
+          env["mail"] = os.getenv("MAIL_VAL")
+          env["login"] = os.getenv("MAIL_VAL")
+          env["KEY"] = final_key
+          env["pass"] = os.getenv("PASS_INPUT") if os.getenv("PASS_INPUT") else "${{ secrets.PASS }}"
+          env["_authApi_"] = "${{ secrets.AUTH }}"
+          env["DG"] = "${{ secrets.DG }}"
+          env["BOT"] = "${{ github.event.inputs.bot }}"
+
+          print(f"--- Running account: {env['mail']} ---")
+          subprocess.run(["php", "run.php"], env=env)
