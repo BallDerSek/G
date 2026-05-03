@@ -82,11 +82,11 @@ final class Api { #contractor
 
         gmxch::class => [
             'shortlink' => true,
-            'cf' => [
+            'cft' => [
                 'k'=>'siteKey','url'=>'domain','api'=>'cloudflare', 'defaults' => ['method' => 'turnstile'], 'map' => ['cdata' => 'cData']
                 ],
 
-            'cft' => [
+            'cf' => [
                 'k'=>'siteKey','url'=>'domain','api'=>'popularcaptcha', 'defaults' => ['method' => 'turnstile']
                 ],
             /*
