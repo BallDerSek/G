@@ -129,6 +129,9 @@ class Solve {
         
         tes:
         $set = microtime(true);
+        $max_retries = 3;
+        $retry_count = 0;
+        
         while (true) {
             $t = $solver->token($key, $host, $type, $Params);
             if ($t === 777) {
@@ -136,13 +139,19 @@ class Solve {
                 _clr();
                 $t = $api->token($key, $host, $type, $Params);
             }
+            
             if ($t === false) {
+                $retry_count++;
+                if ($retry_count >= $max_retries) {
+                    break;
+                }
                 _sle(1);
                 continue;
             }
-            break; 
+            break;
         }
-        if ($t === null) exit(1);
+
+        if ($t === null) return 471;
         $end = microtime(true);
         $api->getInfo();
         logg(false, 'elapsed: ' . number_format($end - $set, 3).'s');

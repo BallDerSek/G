@@ -59,7 +59,7 @@ class xevil extends Provider {
             logx('err', 'xevil: '.$r['request']);
             return false;
         }
-        logx('info', "\nxevil: ".$r['request']);
+        logx('info', "xevil: ".$r['request']);
         return true;
     }
     
@@ -73,10 +73,11 @@ class skibidixxx extends Provider {
 
     /** submit job ke API */
     protected function get_api($method, array $params) {
+        skibidixxxget:
         $s = json_decode(
             Net::S($this->baseUrl."/in.php", "POST", array_merge(["apikey" => $this->apiKey, "methods" => $method], $params), json: true) ?: ''
             , true);
-#var_dump($s);
+#var_dump($s); goto skibidixxxget;
         if (!is_array($s) || ($s["status"] ?? 0) != 1) {
             throw new Exception(is_array($s) ? ($s["request"] ?? 'unknown') : 'unknown');
         }
@@ -153,7 +154,7 @@ class skibidixxx extends Provider {
             return false;
         }
 
-        logx('info', "\nwaryono: ".$r['balance']);
+        logx('info', "waryono: ".$r['balance']);
         return true;
     }
     
@@ -285,7 +286,7 @@ class tertuyul extends Provider {
             return false;
         }
 
-        logx('info', "\nTertuyul: ".$i['balance']);
+        logx('info', "Tertuyul: ".$i['balance']);
         return true;
     }
     
@@ -341,7 +342,7 @@ class multibot extends Provider {
 #var_dump($r);
         if (($b = $r['balance'] ?? null) !== null && strncmp($b, '-0.00', 5) !== 0) {
             
-            logx('info', "\nmultibot: ".$b);
+            logx('info', "multibot: ".$b);
             return true;
         }
 
@@ -388,7 +389,7 @@ class gmxch extends Provider {
 
             throw new Exception($r['message'] ?? 'unknown');
 
-        } while (time() - $start < 200);
+        } while (time() - $start < 300);
 
         throw new Exception("ERROR_TIMEOUT");
     }
@@ -422,7 +423,7 @@ class gmxch extends Provider {
             return $i['authorized'];
         }
 
-        logx('info', "\ngmxch: ".$i['message']);
+        logx('info', "gmxch: ".$i['message']);
         return true;
     }
 }
@@ -489,7 +490,7 @@ var_dump($r);
             return false;
         }
 
-        logx('info', "\nglitch: ".$r['balance']);
+        logx('info', "glitch: ".$r['balance']);
         return true;
     }
     
@@ -569,7 +570,7 @@ class solverify extends Provider {
             return false;
         }
 
-        logx('info', "\nSolverify: ".$r["balance"]);
+        logx('info', "Solverify: ".$r["balance"]);
         return true;
     }
 }
@@ -786,7 +787,7 @@ class capsolver extends Provider {
 
         if (($r["errorId"] ?? 0) !== 0) return false;
 
-        logx('info', "\ncapsolver: ".$r["balance"]);
+        logx('info', "capsolver: ".$r["balance"]);
         return true;
     }
 }
@@ -891,7 +892,7 @@ class nopecha { /* https://nopecha.com/ */
             logx('err', $r["message"]);
             return false;
         }
-        logx('info', "\nnopecha: ".$r["credit"]);
+        logx('info', "nopecha: ".$r["credit"]);
         return true;
     }
 

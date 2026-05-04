@@ -12,20 +12,41 @@ class _shortlinks {
     private $oldCtx;
 
     public function __construct($url) {
+        
+        if (!is_string($url) || trim($url) === '') {
+            throw new RuntimeException("jangan kosong");
+        }
+        
         $this->oldProxy = getenv('PROXY');
         $this->oldCtx = $GLOBALS['_CTX']['proxy'] ?? null;
         putenv("PROXY=");
         unset($GLOBALS['_CTX']['proxy']);
         
+        $part = parse_url($url);
+        $host = $part['host'] ?? (parse_url($url, PHP_URL_PATH) ?? $url);
+        $path = trim($part['path'] ?? '', '/');
+        
+        $_H = preg_replace('/[^a-zA-Z0-9]/', '_', $host);
+        $_P = preg_replace('/[^a-zA-Z0-9]/', '_', str_replace('/', '_', $path));
+        
+        $_H = preg_replace('/_+/', '_', $_H);
+        $_P = preg_replace('/_+/', '_', $_P);
+        $_D = _lib('shortlink');
+        $key = $_H;
+        if ($_P !== '') {
+            $key .= '_' . $_P;
+        }
+        
+        $key = trim(preg_replace('/_+/', '_', $key), '_');
+        
         $this->url = $url;
-        $this->host = parse_url($url)['host'];
-        $this->path = ltrim(parse_url($url)['path'], '/');
-        $this->path = str_replace('/', '_', $this->path);
-        $this->cookie = SLDIR."/".$this->host."_".$this->path.".tmp";
+        $this->cookie = $_D . '/' . $key . '.tmp';
+        $this->host = $host;
+        $this->path = $path;
+        
         $this->uagent = config::uagent("desktop");
         $this->proxied = Proxy::_enable();
         $this->proxy = "http://gamamoch-rotate:playernoob@p.webshare.io:3128";
-        
     }
 
     public function links($api) {
@@ -123,10 +144,10 @@ class _shortlinks {
         #_put('0.html', $html); die;
         if (!$html) {
             if (!$this->proxied) {
-                putenv("PROXY=".$this->proxy);
+                putenv("PROXY=".$this->oldProxy ?? $this->proxy);
                 Proxy::Load();
+                $this->proxied = true;
                 goto low;
-                throw new RuntimeException("need proxy");
             }
             throw new RuntimeException("blocked");
         }
@@ -343,10 +364,10 @@ class _shortlinks {
                             } while ($inputName === false);
                         }
                     
-                        #$parts = array_map('trim', explode(',', $inputName));
-                        $parts = $inputName['solution'] ?? [];
+                        #$part = array_map('trim', explode(',', $inputName));
+                        $part = $inputName['solution'] ?? [];
                         $sel   = [];
-                        foreach ($parts as $p) {
+                        foreach ($part as $p) {
                             if (is_numeric($p)) {
                                 $idx = (int)$p;
                                 if (isset($icons[$idx])) $sel[] = $idx;
@@ -414,15 +435,29 @@ class _shortlinks {
         if (!AUTH_KEY) {
             throw new RuntimeException("unauthorized");
         }
+        
         $_code = null;
         do {
             $_0 = Net::C($this->url, 'GET', null, $cookie, [], '', $uagent);
-            if ($_0 !== '') {
+            if (!empty($_0)) {
+                #_put('0.html', $_0);
+                if (stripos($_0, ' disable your proxy')) {
+                    if (!$this->proxied) {
+                        putenv("PROXY=".$this->oldProxy ?? $this->proxy);
+                        Proxy::Load();
+                        $this->proxied = true;
+                        goto coinclix;
+                    }
+                    throw new RuntimeException("blocked");
+                    
+                }
+                
                 $code = _ccCode($_0);
                 #print_r($code);
                 if (isset($code[1])) {
                     $_code = $code[1];
                 }
+                
             }
         } while (!$_code);
         
@@ -459,9 +494,7 @@ class _shortlinks {
         if ($error) {
             $errorCount++;
             if ($errorCount >= 5) {
-                #throw new RuntimeException("captcha failed");
-                logx('err', 'captcha failed');
-                goto coinclix;
+                throw new RuntimeException("captcha failed");
             }
             _sle(2);
             $_g1 = Net::C($lastreload, 'GET', null, $cookie, [], $lastreload, $uagent);
@@ -493,11 +526,10 @@ class _shortlinks {
                 styler("waiting", fn() => _sle((int)ceil($wait)));
             }
         }
-        if (!$po) {
-            throw new RuntimeException("blocked");
-        }
+        
         
         $_v1 = json_decode(Net::C($dom.'/link/process', 'POST', $po, $cookie, [], $dom, $uagent), true);
+        if (empty($_v1) || ($_v1 === 99)) throw new RuntimeException('totally failed');
         #print_r($_v1['message']); logx();
         $matches = scraper::_jP($_v1['message'], '/<code class="link_code">([A-Za-z0-9]+)<\/code>/i') ?? [];
         if (!empty($matches[1][0])) {
@@ -564,28 +596,24 @@ function _ccPayload($api, $dom, $ver, $pis, $cnn, $bg, $cp) {
             break;
 
         case 'CT':
-            $token = solve::tkn($api, $dom, '0x4AAAAAAB5TRnwvGvH5b2kw', 'cf', ['action' => 'linkSubmit']);
+            $token = solve::tkn($api, $dom, '0x4AAAAAAB5TRnwvGvH5b2kw', 'cft', ['action' => 'linkSubmit']);
             break;
 
         case 'HC':
             #$token = _rl('hcaptcha: ');
-            $token = solve::tkn($api, '2a9619f4-43bc-4e64-afc8-7fbc48f2bf34', $dom, 'hc', ['invisible'=>1]);
+            $token = solve::tkn($api, $dom, '2a9619f4-43bc-4e64-afc8-7fbc48f2bf34', 'hc', ['invisible'=>1]);
             break;
 
         case 'PC':
-            $token = solve::tkn($api, $dom, $cpobj, 'pcc'); 
-            break;
-
         case 'IC':
-            $token = solve::tkn($api, $dom, $cpobj, 'icc'); 
+            $token = solve::tkn($api, $dom, $cpobj, $ver.'c'); 
             break;
 
         default:
-            return false;
+            return null;
     }
 
-    if ($token === null) return false;
-    #print_r($token); logx();
+    if ($token === 471) return null;
     return _payloadCC($pis, $cnn, $token, $bg);
 }
 

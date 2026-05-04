@@ -62,14 +62,6 @@ while (true) {
         _sle(5);
     } while (empty($dash));
 
-    /*
-    $task = Net::C($host.'/challenge', 'GET', null, $cookieFile, [], '', $userAgent, ip: $ip);
-    _put('task.html', $task);
-    $f = scraper::payload($task)[0]['payload'];
-    print_r($f);
-    
-    solve::eCaptcha($host);
-    */
     
     $_fa = Scraper::_xP($dash, "//div[normalize-space()='Faucets']/ancestor::li//div[@class='sub-menu-two']/a/@href");
     
@@ -88,7 +80,11 @@ while (true) {
             _sle(3);
             $fau = Net::C($fa, 'GET', null, $cookieFile, [], '', $userAgent, ip: $ip);
             if (empty($fau)) continue;
-            
+            if ($ban = isBan($fau)) {
+                logx('err', " kena ban: " . $ban['ti'], false);
+                styler("waiting for unlocked", fn() => _sle($ban['sleep']));
+                continue; 
+            }
             #_put('fau.html', $fau);
             $f = scraper::payload($fau)[0] ?? [];
             if (!empty($f)) {

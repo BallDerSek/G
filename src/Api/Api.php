@@ -500,6 +500,7 @@ final class Api { #contractor
             'ERROR_TASK_FAILED',
             'ERROR_CAPTCHA_TIMEOUT',
             'ERROR_TIMEOUT',
+            'TIMEOUT',
             'ERROR_TASK_TIMEOUT',
             'WRONG_RESULT',
             'IP Address Blocked',

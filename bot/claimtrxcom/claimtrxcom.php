@@ -23,6 +23,7 @@ $limit = false;
 $shortlink = false;
 $SLDONE = false;
 $skipped = [];
+$can_withdraw = true;
 while (true) {
     $max = 7;
     $ret = 0; 
@@ -61,17 +62,22 @@ while (true) {
         $alert_d = scraper::_xP($ve, "//div[contains(@class, 'alert-danger')]");
         if (!empty($alert_d)) {
             $msg = $alert_d[0];
+            if (stripos($msg, 'nvalid Captcha')) continue;
             logx('', $msg);
             die;
         }
         
     } while (empty($dash));
     #_put('dash.html', $dash); 
-
+    
+    if ($dash && str_contains($dash, 'confirm your email')) {
+        $can_withdraw = false;
+    }
+    
     $claim = false;
     do {
         $ads = Net::C("$host/ptc", 'GET', null, $cookieFile, [], "$host/dashboard", $userAgent, false, false, $ip);
-
+        if ($ads === 99) { _sle(30); continue 2; }
         $_tim = scraper::_xP($ads, "//div[contains(@class, 'card-badge')]//span[contains(@class, 'badge-primary')]");
         $_onclick = scraper::_xP($ads, "//div[@class='card-body']//button/@onclick");
         $url_list = array_map(fn($u) => explode("'", $u)[1] ?? null, $_onclick);
@@ -214,7 +220,7 @@ while (true) {
             }
             
             $cla = Net::C($f['url'], 'POST', $po, $cookieFile, [], "$host/faucet", $userAgent, false, false, $ip);
-            if (empty($cla)) continue;
+            if (empty($cla) || ($cla === 99)) continue;
             $m = scraper::_jP($cla, "/Swal\.fire\(\{.*?title\s*:\s*(['\"])(.*?)\\1.*?\}\)/s") ?? [];
             
             if (isset($m[2][0])) {
@@ -264,7 +270,7 @@ while (true) {
         $f = scraper::payload($sho)[0] ?? [];
         $short = sScraper::extract($sho);
         #print_r($short); die;
-        $up = ['earnow','shortano', 'shortino', 'coinclix', 'fc-lc'];
+        $up = ['earnow','shortano', 'shortino', 'fc-lc'];
         
         if (!empty($f) && !empty($short)) {
             $po = $f['payload'];
@@ -372,9 +378,10 @@ while (true) {
     } while (!$SLDONE);
     
     if ($limit) {
+        if (!$can_withdraw) die;
         $wd = Net::C("$host/withdraw", 'GET', null, $cookieFile, [], "$host/faucet", $userAgent, false, false, $ip);
         #_put('wd.html', $wd);
-        if (empty($wd)) continue;
+        if (empty($wd) || ($wd === 99)) continue;
         $jajan = _wd($wd);
         #print_r($jajan);
         if (!$jajan) {

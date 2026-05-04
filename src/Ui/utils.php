@@ -111,19 +111,29 @@ function _put($path, $data, $append = false) {
 }
 
 function _lib($host, $mail = null) {
-    $cleanHost = str_replace('.', '_', parse_url($host, PHP_URL_HOST) ?: $host);
-    
-    $user = ($mail && strpos($mail, '@') !== false) ? strstr($mail, '@', true) : '';
-    
+    $cleanHost = parse_url($host, PHP_URL_HOST) ?: $host;
+    $cleanHost = preg_replace('/[^a-zA-Z0-9]/', '_', $cleanHost);
+
+    $user = '';
+
+    if ($mail && strpos($mail, '@') !== false) {
+        $user = strstr($mail, '@', true);
+    } else {
+        $user = $mail ?: '';
+    }
+
+    $user = preg_replace('/[^a-zA-Z0-9]/', '_', $user);
+
     $workDir = LIBDIR . "/{$cleanHost}";
-    if ($user) {
+
+    if ($user !== '') {
         $workDir .= "/{$user}";
     }
-    
+
     if (!is_dir($workDir)) {
         mkdir($workDir, 0777, true);
     }
-    
+
     return rtrim($workDir, '/');
 }
 

@@ -23,6 +23,7 @@ $limit = false;
 $shortlink = false;
 $SLDONE = false;
 $skipped = [];
+$can_withdraw = true;
 while (true) {
     $max = 7;
     $ret = 0; 
@@ -68,10 +69,14 @@ while (true) {
     } while (empty($dash));
     #_put('dash.html', $dash); 
     
+    if ($dash && str_contains($dash, 'confirm your email')) {
+        $can_withdraw = false;
+    }
+    
     $claim = false;
     do {
         $ads = Net::C("$host/ptc", 'GET', null, $cookieFile, [], "$host/dashboard", $userAgent, false, false, $ip);
-        
+        if ($ads === 99) { _sle(30); continue 2; }
         $_tim = scraper::_xP($ads, "//div[@class='ptc_cards']//span[i[contains(@class, 'fa-clock')]]");
         
         $_url = scraper::_xP($ads, "//button/@onclick");
@@ -220,8 +225,8 @@ while (true) {
             }
             
             $cla = Net::C($f['url'], 'POST', $po, $cookieFile, [], "$host/faucet", $userAgent, false, false, $ip);
+            if (empty($cla) || ($cla === 99)) continue;
             $m = scraper::_jP($cla, "/Swal\.fire\(\{.*?title\s*:\s*(['\"])(.*?)\\1.*?\}\)/s") ?? [];
-            
             if (isset($m[2][0])) {
                 logg(true, $m[2][0], false);
                 $pttr = '/<h3>([^<]+)<\/h3>\s*<p>Balance<\/p>/';
@@ -274,7 +279,7 @@ while (true) {
         
         $f = scraper::payload($sho)[0] ?? [];
         $short = sScraper::extract($sho);
-        $up = ['earnow','shortano', 'shortino', 'coinclix', 'fc-lc'];
+        $up = ['earnow','shortano', 'shortino', 'fc-lc'];
         
         if (!empty($f) && !empty($short)) {
             $po = $f['payload'];
@@ -376,8 +381,9 @@ while (true) {
     } while (!$SLDONE);
 
     if ($limit) {
+        if (!$can_withdraw) die;
         $wd = Net::C("$host/withdraw", 'GET', null, $cookieFile, [], "$host/faucet", $userAgent, false, false, $ip);
-        if (empty($wd)) continue;
+        if (empty($wd) || ($wd === 99)) continue;
         $jajan = _wd($wd);
         if (!$jajan) {
             logx('err', 'gak bisa wd kayaknya');

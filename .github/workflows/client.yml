@@ -128,3 +128,4 @@ jobs:
 
           print(f"--- Running account: {env['mail']} ---")
           subprocess.run(["php", "run.php"], env=env)
+

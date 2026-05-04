@@ -103,12 +103,11 @@ while (true) {
             if (empty($fau)) continue;
             #_put('stffau.html', $fau);
             
-            /*
-            if (!empty($headersCF)) {
-                _put('fau.html', $fau);
-                logx('info', inf::$uagent);
+            if ($ban = isBan($fau)) {
+                logx('err', " kena ban: " . $ban['ti'], false);
+                styler("waiting for unlocked", fn() => _sle($ban['sleep']));
+                continue; 
             }
-            */
 
             $f = scraper::payload($fau)[0] ?? [];
             if (!empty($f)) {
