@@ -62,6 +62,7 @@ while (true) {
         $alert_d = scraper::_xP($ve, "//div[contains(@class, 'alert-danger')]");
         if (!empty($alert_d)) {
             $msg = $alert_d[0];
+            if (stripos($msg, 'nvalid Captcha')) continue;
             logx('err', $msg);
             die;
         }
