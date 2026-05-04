@@ -510,6 +510,7 @@ final class Api { #contractor
             'ERROR_NO_NODES_AVAILABLE',
             'ERROR_NO_SLOT_CONNECTION',
             'ERROR_NO_SLOT_AVAILABLE',
+            'ERROR_INVALID_RESPONSE1',
             'Internal solver error',
             'Task not found',
             'Job not found',
@@ -696,7 +697,8 @@ abstract class Provider {
                     return 777;
                 }
                 if (in_array($type, ['ret','con','fail'], true)) {
-                    _sle(3); continue;
+                    _sle(3); 
+                    continue;
                 }
                 return null;
             }
@@ -709,7 +711,7 @@ abstract class Provider {
             [$method, $params] = Api::cfgTkn(static::class, $type, $siteKey, $siteUrl, $extraParams);
         } catch (Throwable $e) {
             logx('warn', $e->getMessage());
-            return null;
+            return 71;
         }
         return $this->run($method, $params);
     }
@@ -722,7 +724,7 @@ abstract class Provider {
             [$m, $params] = Api::cfgB64(static::class, $type, $b64);
         } catch (Throwable $e) {
             logx('warn', $e->getMessage());
-            return null; 
+            return 71; 
         }
         $res = $this->run($m, $params);
         if (!$res) return 77;
@@ -738,7 +740,7 @@ abstract class Provider {
             foreach (($cfg['need'] ?? []) as $k) {
                 if (!isset($params[$k])) {
                     logx('warn', "missing required arg: $k for $type");
-                    return null;
+                    return 73;
                 }
             }
             #print_r($params); die;
@@ -747,7 +749,7 @@ abstract class Provider {
 
         } catch (Exception $e) {
             logx('warn', $e->getMessage(), true, true);
-            return null;
+            return 71;
         }
     }
     

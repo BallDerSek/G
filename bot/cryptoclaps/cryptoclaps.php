@@ -53,7 +53,7 @@ foreach ($emails as $login) {
                 'csrf_token' => $csrf[1][0]
             ];
             $boundary = '';
-            $pa = solve::webkitID($_pa, $boundary);
+            $pa = locally::webkitID($_pa, $boundary);
             $head = ["Content-Type: multipart/form-data; boundary=$boundary"];
             
             $_1 = json_decode(Net::C($host, 'POST', $pa, inf::$cookie, $head, $host, inf::$uagent, ip: $ip)?: '', true);
@@ -64,7 +64,7 @@ foreach ($emails as $login) {
                     'action' => 'get_channel',
                     'csrf_token' => $csrf[1][1] ?? $csrf[1][0]
                 ];
-                $pe = solve::webkitID($_pe, $boundary);
+                $pe = locally::webkitID($_pe, $boundary);
             } else {
                 continue;
             }
@@ -84,7 +84,7 @@ foreach ($emails as $login) {
                     'channel_url' => $chnl['url'],
                     'coin' => $curr[0]
                 ];
-                $po = solve::webkitID(array_merge($_po, $cap), $boundary);
+                $po = locally::webkitID(array_merge($_po, $cap), $boundary);
                 
                 $end = microtime(true);
                 $wait = $chnl['watch_time'] - ($end - $set);

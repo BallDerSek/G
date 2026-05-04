@@ -73,7 +73,7 @@ class skibidixxx extends Provider {
 
     /** submit job ke API */
     protected function get_api($method, array $params) {
-        skibidixxxget:
+
         $s = json_decode(
             Net::S($this->baseUrl."/in.php", "POST", array_merge(["apikey" => $this->apiKey, "methods" => $method], $params), json: true) ?: ''
             , true);
