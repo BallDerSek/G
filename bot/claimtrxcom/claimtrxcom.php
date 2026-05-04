@@ -53,6 +53,10 @@ while (true) {
         
         $cap = null;
         $cap = solve::exec($_0, $host, $api);
+        if (isset($cap['trouble'])) {
+            _sle(60);
+            continue;
+        }
         
         $cre = ['email' => $mail, 'password' => $pass];
         $po = array_merge($pa, $cap, $cre);
@@ -89,8 +93,20 @@ while (true) {
             logx('info', "[ $vurl ]: ", false);
             logx('', $tim);
             #die;
+            $ret99 = 0;
             while (true) {
                 $view = Net::C($vurl, 'GET', null, $cookieFile, [], '', $userAgent, false, false, $ip);
+                if ($view === 99) {
+                    $ret99++;
+                    logx('warn', "masalah proxy, warm up dulu");
+                    if ($ret99 >= 5) {
+                        logx('err', "Proxy beneran mati. Exit.");
+                        die(98);
+                    }
+                    _sle(30);
+                    continue;
+                }
+                $ret99 = 0; 
                 if (!empty($view)) {
                     $set = microtime(true);
                     $f = scraper::payload($view) ?? [];
@@ -99,6 +115,10 @@ while (true) {
 
                         $cap = null;
                         $cap = solve::exec($view, $host, $api);
+                        if (isset($cap['trouble'])) {
+                            _sle(60);
+                            continue;
+                        }
                         $po = array_merge($pa, $cap);
                         #print_r($po);
                         
@@ -119,7 +139,7 @@ while (true) {
             if (!empty($cla)) {
                 $m = scraper::_jP($cla, "/Swal\.fire\(\{.*?title\s*:\s*(['\"])(.*?)\\1.*?\}\)/s");
                 if (isset($m[2][0])) {
-                    logg(true, $m[2][0], true, true);
+                    logg(true, $m[2][0]);
                 }
             }
         } else {
@@ -133,13 +153,12 @@ while (true) {
     if ($claim && !$limit) {
         while (true) {
             $ret99 = 0; 
-            $max99 = 5;
             $fau = Net::C("$host/faucet", 'GET', null, $cookieFile, [], "$host/dashboard", $userAgent, false, false, $ip);
             #_put('fau.html', $fau);
             if ($fau === 99) {
                 $ret99++;
                 logx('warn', "masalah proxy, warm up dulu");
-                if ($ret99 >= $max99) {
+                if ($ret99 >= 5) {
                     logx('err', "Proxy beneran mati. Exit.");
                     die(98);
                 }
@@ -208,6 +227,10 @@ while (true) {
             $cap = [];
             if (isset($pa['captcha'])) {
                 $cap = solve::exec($fau, $host, $api);
+                if (isset($cap['trouble'])) {
+                    _sle(60);
+                    continue;
+                }
             }
             
             $po = array_merge($pa, $cap);
@@ -250,14 +273,14 @@ while (true) {
         }
     }
     
+    $ret99 = 0; 
     do {
-        $ret99 = 0; 
         $max99 = 5;
         $sho = Net::C("$host/links", 'GET', null, $cookieFile, [], "$host/dashboard", $userAgent, false, false, $ip);
         if ($fau === 99) {
             $ret99++;
             logx('warn', "masalah proxy, warm up dulu");
-            if ($ret99 >= $max99) {
+            if ($ret99 >= 7) {
                 logx('err', "Proxy beneran mati. Exit.");
                 die(98);
             }
