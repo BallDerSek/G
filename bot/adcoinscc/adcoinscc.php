@@ -10,10 +10,12 @@ $userAgent = config::uagent('mobile');
 
 $host = 'https://adcoins.cc';
 $r = '/?ref=6851'; 
+$ip = '';
 
 inf::setup($userAgent, $cookieFile, $ip);
 
-banner();
+banner(); 
+taskPrintCenter($login, 'info');
 login:
 
 $dash = null;
@@ -27,18 +29,20 @@ while (true) {
         $l = inf::check($host.'/dashboard', [], 'loginForm');
         
         if ($l['ok']) {
-            taskPrintCenter('logged in', 'ok');
             $dash = $l['html'];
-            break; 
+            logx('info', "logged in", false); 
+            _sle(3); _clr();
+            #var_dump($dash); die;
+            break;
         }
         if ($ret >= $max) {
             logx('err', 'gak tau');
             exit; 
         }
         
-        @unlink(inf::$cookie);
-        taskPrintCenter('logging in', 'err');
-        
+        @unlink($cookieFile);
+        logx('err', "logging in", false); 
+        _sle(3); _clr();
         $_0 = Net::C($host.$r, 'GET', null, $cookieFile, [], '', $userAgent);
         if ($_0 === 99) {
             $ret99++;
@@ -60,8 +64,19 @@ while (true) {
     #_put('dash.html', $dash);
     
     while (true) {
+        $ret99 = 0; 
         $fau = Net::C($host.'/faucet', 'GET', null, $cookieFile, [], '', $userAgent);
         #_put('fau.html', $fau);
+        if ($fau === 99) {
+            $ret99++;
+            logx('warn', "masalah proxy, warm up dulu");
+            if ($ret99 >= 5) {
+                goto login;
+            }
+            _sle(30);
+            continue;
+        }
+        $ret99 = 0; 
         
         if (!empty($fau)) {
 
@@ -97,7 +112,7 @@ while (true) {
         
     }
 
-die;
+
 }
     
 

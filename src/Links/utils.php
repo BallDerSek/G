@@ -186,11 +186,11 @@ function links($api, $url) {
         $f_url = $bypass->links($api); 
         
         if ($f_url && is_string($f_url)) {
-            logx('info', " [ direct SL success ");
+            logx('info', '  SL Direct ');
             return $f_url;
         }
     } catch (Throwable $e) {
-        logx('warn', " [ direct SL " . $e->getMessage());
+        logx('warn', '  SL Direct ' . $e->getMessage());
     }
     
     $solver = config::getKeys($api, 'shortlink', 'tkn');
@@ -206,11 +206,11 @@ function links($api, $url) {
     $time = number_format($end - $set, 3) . 's';
     
     if ($res && $res !== 99) {
-        logx('info', '[ ' . get_class($solver) . ' passed in ' . $time . ' ]');
+        logx('info', '  SL' . get_class($solver) . ' passed in ' . $time);
         return $res;
     }
 
-    logx('err', ' [ ' . get_class($solver) . ' failed ]');
+    logx('err', '  SL' . get_class($solver) . ' failed');
     return false;
 }
 

@@ -16,6 +16,7 @@ $ip = null;
 inf::setup($userAgent, $cookieFile, $ip);
 
 banner();
+taskPrintCenter($login, 'info');
 login:
 
 
@@ -37,9 +38,11 @@ while (true) {
         $l = inf::check($host.'/dashboard', $headersCF, '/auth/login');
         
         if ($l['ok']) {
-            taskPrintCenter('logged in', 'ok');
             $dash = $l['html'];
-            break; 
+            logx('info', "logged in", false); 
+            _sle(3); _clr();
+            #var_dump($dash); die;
+            break;
         }
 
         if ($ret >= $max) {
@@ -48,8 +51,8 @@ while (true) {
         }
 
         @unlink(inf::$cookie);
-        taskPrintCenter('logging in', 'err');
-        
+        logx('err', "logging in", false); 
+        _sle(3); _clr();
         $_0 = Net::C($host.$r, 'GET', null, inf::$cookie, $headersCF, '', inf::$uagent);
         
         if ($_0 === 99) {
@@ -287,7 +290,7 @@ while (true) {
                     break; 
                 }
                 
-                styler("waiting for SL verification", fn() => _sle(60));
+                styler("waiting for SL", fn() => _sle(60));
                 
                 $retVer = 0;
                 while (true) {

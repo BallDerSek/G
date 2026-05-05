@@ -16,6 +16,7 @@ $ip = '148.251.78.240';
 inf::setup($userAgent, $cookieFile, $ip);
 
 banner(); 
+taskPrintCenter($mail, 'info');
 login:
 
 $dash = null;
@@ -33,8 +34,9 @@ while (true) {
         $l = inf::check("$host/dashboard", [], '/register');
         
         if ($l['ok']) {
-            taskPrintCenter('logged in', 'ok');
             $dash = $l['html'];
+            logx('info', "logged in", false); 
+            _sle(3); _clr();
             #var_dump($dash); die;
             break;
         }
@@ -44,7 +46,8 @@ while (true) {
         }
         
         @unlink($cookieFile);
-        taskPrintCenter('logging in', 'err');
+        logx('err', "logging in", false); 
+        _sle(3); _clr();
         $_0 = Net::C("$host/login", 'GET', null, $cookieFile, [], '', $userAgent, false, false, $ip);
         
         if ($_0 === 99) {
