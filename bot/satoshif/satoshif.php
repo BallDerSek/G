@@ -131,13 +131,15 @@ while (true) {
             $_suc = scraper::_jP($cla, "/Swal\.fire\(\s*\{.*?icon:\s*'([^']+)'.*?title:\s*'([^']+)'.*?html:\s*'([^']+)'/s");
             
             if (!empty($_suc[1][0])) {
-                logx('info', " {$_suc[2][0]} | {$_suc[3][0]} ");
+                $status = $_suc[1][0]; 
+                logx($status === 'success' ? 'ok' : 'err', "{$_suc[2][0]} ", false);
+                logg(false, "{$_suc[3][0]}");
                 
                 if (stripos($_suc[3][0], 'sufficient') !== false) break;
                 
                 if (stripos($_suc[3][0], 'Shortlink') !== false) {
                     if ($SLDONE) {
-                        logx('err', 'Gak ada jatah shortlink lagi.');
+                        logx('err', 'Gada jatah SL lagi');
                         die;
                     }
                     $curr = $_c; 
@@ -208,7 +210,6 @@ while (true) {
                 $loc = $match[1] ?? '';
                 
                 if (!$loc) {
-                    logx('warn', "ID $idd gagal dapat location redirect");
                     $skipped[$idd] = true;
                     break;
                 }
@@ -236,16 +237,18 @@ while (true) {
                 styler("waiting for SL", fn() => _sle(5));
                 
                 $b1 = preg_replace('/^https:/i', 'http:', $bak);
+                #logx('', $b1, true, true);
                 Net::C($b1, 'GET', null, $cookieFile, [], '', $userAgent, ip: $ip, foll: false);
-                $b2 = str_replace('/back/', '/verify/', $bak);
-                Net::C($b2, 'GET', null, $cookieFile, [], $bakk, $userAgent, ip: $ip, foll: false);
+                $b2 = str_replace('/back/', '/verify/', $b1);
+                #logx('', $b2, true, true);
+                Net::C($b2, 'GET', null, $cookieFile, [], $b1, $userAgent, ip: $ip, foll: false);
                 
                 $ver = Net::C($sl, 'GET', null, $cookieFile, [], '', $userAgent, ip: $ip);
 
                 if (!empty($ver)) {
                     $_suc = scraper::_jP($ver, "/Swal\.fire\(\s*\{.*?icon:\s*'([^']+)'.*?title:\s*'([^']+)'.*?html:\s*'([^']+)'/s");
                     if (!empty($_suc[1][0])) {
-                        logx('err', " {$_suc[2][0]} ", false, true);
+                        logx('err', "{$_suc[2][0]} ", false, true);
                         logg(false, "{$_suc[3][0]}");
 
                         if ($_suc[1][0] === 'success') {
@@ -253,6 +256,8 @@ while (true) {
                             break 2; 
                         }
                     }
+                } else {
+                    $skipped[$idd] = true;
                 }
                 break; 
             }

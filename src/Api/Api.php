@@ -691,19 +691,23 @@ abstract class Provider {
             } catch (Throwable $e) {
                 $code = $e->getMessage();
                 $type = Api::errType($code);
-                #var_dump($code);
                 logx('err', $code);
+                
                 if (stripos($code, 'nodes unavailable') && (static::class === 'gmxch')) {
                     return 777;
                 }
+                
                 if (in_array($type, ['ret','con','fail'], true)) {
                     _sle(3); 
-                    continue;
+                    continue; 
                 }
-                return null;
+                return null; 
             }
         }
-        return false;
+
+        if (static::class === 'gmxch') return 777;
+
+        return false; 
     }
 
     public function token($siteKey, $siteUrl, $type, array $extraParams = []) {

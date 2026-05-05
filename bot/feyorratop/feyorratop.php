@@ -46,6 +46,11 @@ while (true) {
         @unlink($cookieFile);
         taskPrintCenter('logging in', 'err');
         $_0 = Net::C("$host/login", 'GET', null, $cookieFile, [], '', $userAgent, false, false, $ip);
+        
+        if ($_0 === 99) {
+            _sle(60);
+            continue;
+        }
         if (empty($_0)) continue;
         #var_dump($_0); die;
         $f = scraper::payload($_0)[0];
@@ -81,7 +86,7 @@ while (true) {
     $claim = false;
     do {
         $ads = Net::C("$host/ptc", 'GET', null, $cookieFile, [], "$host/dashboard", $userAgent, false, false, $ip);
-        if ($ads === 99) { _sle(30); continue 2; }
+        if ($ads === 99) { _sle(60); continue 2; }
         $_tim = scraper::_xP($ads, "//div[@class='ptc_cards']//span[i[contains(@class, 'fa-clock')]]");
         
         $_url = scraper::_xP($ads, "//button/@onclick");
@@ -101,8 +106,7 @@ while (true) {
                     $ret99++;
                     logx('warn', "masalah proxy, warm up dulu");
                     if ($ret99 >= 5) {
-                        logx('err', "Proxy beneran mati. Exit.");
-                        die(98);
+                        goto login;
                     }
                     _sle(30);
                     continue;
@@ -132,6 +136,7 @@ while (true) {
                             claim:
                             $cla = Net::C($f[0]['url'], 'POST', $po, $cookieFile, [], $vurl, $userAgent, false, false, $ip);
                             if (empty($cla)) goto claim;
+                            if ($cla === 99) goto login;
                             break;
                         }
                     }
@@ -159,8 +164,7 @@ while (true) {
                 $ret99++;
                 logx('warn', "masalah proxy, warm up dulu");
                 if ($ret99 >= 5) {
-                    logx('err', "Proxy beneran mati. Exit.");
-                    die(98);
+                    goto login;
                 }
                 _sle(30);
                 continue;
@@ -197,20 +201,22 @@ while (true) {
             
             $t_text = null;
             if (str_contains($fau, 'Write what you see in the picture')) {
-                $src = scraper::_pP($fau, 'src');
                 $_cu = null;
-                foreach ($src as $_u) {
+                foreach (scraper::_pP($fau, 'src') as $_u) {
                     if (str_contains($_u, '/images/captcha')) {
                         $_cu = trim($_u);
                         break;
                     }
                 }
+                
                 if ($_cu) {
                     $img = Net::C($_cu, 'GET', null, $cookieFile, [], "$host/faucet", $userAgent);
-                    $t_text = _text($img, $host, $mail);
+                    if (!empty($img) || ($img !== 99)) {
+                        $t_text = _text($img, $host, $mail);
+                    }
                 }
+                
                 if (!$t_text) {
-                    logx('warn', "OCR Zonk");
                     _sle(3);
                     continue; 
                 }
@@ -237,6 +243,7 @@ while (true) {
             $cla = Net::C($f['url'], 'POST', $po, $cookieFile, [], "$host/faucet", $userAgent, false, false, $ip);
             if (empty($cla) || ($cla === 99)) continue;
             $m = scraper::_jP($cla, "/Swal\.fire\(\{.*?title\s*:\s*(['\"])(.*?)\\1.*?\}\)/s") ?? [];
+                
             if (isset($m[2][0])) {
                 logg(true, $m[2][0], false);
                 $pttr = '/<h3>([^<]+)<\/h3>\s*<p>Balance<\/p>/';
@@ -271,19 +278,16 @@ while (true) {
     $ret99 = 0;
     do {
         $sho = Net::C("$host/links", 'GET', null, $cookieFile, [], "$host/dashboard", $userAgent, false, false, $ip);
-        
         if ($sho === 99) {
             $ret99++;
             logx('warn', "masalah proxy, warm up dulu");
             if ($ret99 >= 7) {
-                logx('err', "Proxy beneran mati. Exit.");
-                die(98);
+                goto login;
             }
             _sle(30);
             continue;
         }
         $ret99 = 0; 
-        
         if (empty($sho)) continue;
         
         $f = scraper::payload($sho)[0] ?? [];
@@ -295,9 +299,8 @@ while (true) {
             
             if (str_contains($sho, 'Write what you see in the picture')) {
                 $t_text = null;
-                $src = scraper::_pP($sho, 'src');
                 $_cu = null;
-                foreach ($src as $_u) {
+                foreach (scraper::_pP($sho, 'src') as $_u) {
                     if (str_contains($_u, '/images/captcha')) {
                         $_cu = trim($_u);
                         break;
@@ -328,8 +331,7 @@ while (true) {
             
             $ud = $host.'/links/go/'.$idd;
             $get = Net::X($ud, 'POST', $po, inf::$cookie, [], $host.'/links', inf::$uagent, ip: $ip, foll: false);
-            if ($get === 99) break;
-            
+            if ($get === 99) goto login;
             preg_match('/location\.href\s*=\s*["\']([^"\']+)["\']/', $get, $match);
             $loc = $match[1] ?? '';
             
@@ -365,7 +367,7 @@ while (true) {
                 $ver = Net::C($bakk, 'GET', null, inf::$cookie, [], $loc, inf::$uagent);
                 if ($ver === 99) {
                     $retVer++;
-                    if ($retVer >= 5) die(98);
+                    if ($retVer >= 5) goto login;
                     _sle(30);
                     continue;
                 }
@@ -375,7 +377,7 @@ while (true) {
             if (!empty($ver)) {
                 $m = scraper::_jP($ver, "/Swal\.fire\(\{.*?title\s*:\s*(['\"])(.*?)\\1.*?\}\)/s") ?? [];
                 if (isset($m[2][0])) {
-                    logg(true, $m[2][0], true, true);
+                    logg(true, $m[2][0]);
                 }
             }
             
@@ -403,7 +405,7 @@ while (true) {
             logg(true, '  tes ilmu: '. $jajan['info']['coin'], false);
             logx('info', ' [ '.$po['wallet'].' ]');
             $wd = Net::C($jajan['url'], 'POST', $po, $cookieFile, [], "$host/faucet", $userAgent, false, false, $ip);
-            _put('wd.html', $wd);
+            #_put('wd.html', $wd);
             if (!empty($wd)) {
                 $m = scraper::_jP($wd, "/Swal\.fire\(\{.*?title\s*:\s*(['\"])(.*?)\\1.*?\}\)/s") ?? [];
                 if (isset($m[2][0])) {

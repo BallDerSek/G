@@ -83,6 +83,13 @@ class Capt {
                 'extra'  => ['action' => $mAct[1][0] ?? 'homepage']
             ];
         }
+        
+        if (str_contains($html, 'iconcaptcha-widget') || str_contains($html, '_iconcaptcha-token')) {
+            $found['ic_fw'] = [
+                'type' => 'iconcaptcha',
+                'keys' => Scraper::find($html, '_iconcaptcha-token')[0] ?? null
+            ];
+        }
 
         foreach ($scripts as $src) {
             if (preg_match('/rscaptcha\.com.*\?(.*)$/', $src, $m)) {

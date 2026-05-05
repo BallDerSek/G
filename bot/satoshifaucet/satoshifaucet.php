@@ -179,13 +179,16 @@ while (true) {
             
             if (!empty($_suc[1][0])) {
                 $status = $_suc[1][0]; 
-                logx($status === 'success' ? 'ok' : 'err', " {$_suc[2][0]} ");
+                logx($status === 'success' ? 'ok' : 'err', " {$_suc[2][0]} ", false);
                 logg(false, "{$_suc[3][0]}");
 
                 if (stripos($_suc[3][0], 'sufficient') !== false) break;
                 
                 if (stripos($_suc[3][0], 'Shortlink') !== false) {
-                    if ($SLDONE) die('SL Done & Faucet jatah habis.');
+                    if ($SLDONE) {
+                        logx('err', 'Gada jatah SL lagi');
+                        die;
+                    }
                     $curr = $_c;
                     break 2; 
                 }

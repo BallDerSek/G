@@ -9,7 +9,6 @@ banner();
 
 while(true) {
     $shortLink = _rl('shortlink: ');
-    ;
     try {
         $bypass = new _shortlinks("$shortLink");
         $finalUrl = $bypass->links($api);
