@@ -427,6 +427,8 @@ while (true) {
         }
         if ($jajan['payload']['amount'] > 0.04) {
             $po = $jajan['payload'];
+            $walletKey = isset($po['address']) ? 'address' : (isset($po['wallet']) ? 'wallet' : 'email');
+            if (empty($po[$walletKey])) $po[$walletKey] = $mail;
             $original = $po['amount'];
             if (str_contains($original, '.')) {
                 $decimal_count = strlen(substr(strrchr($original, "."), 1));

@@ -20,7 +20,7 @@ taskPrintCenter($mail, 'info');
 login:
 
 $dash = null;
-$limit = true;
+$limit = false;
 $shortlink = false;
 $SLDONE = false;
 $skipped = [];
@@ -425,6 +425,8 @@ while (true) {
         }
         if ($jajan['payload']['amount'] > 2000) {
             $po = $jajan['payload'];
+            $walletKey = isset($po['address']) ? 'address' : (isset($po['wallet']) ? 'wallet' : 'email');
+            if (empty($po[$walletKey])) $po[$walletKey] = $mail;
             logg(true, '  tes ilmu: '. $jajan['info']['coin'], false);
             logx('info', ' [ '.$po['wallet'].' ]');
             $wd = Net::C($jajan['url'], 'POST', $po, $cookieFile, [], "$host/faucet", $userAgent, false, false, $ip);
