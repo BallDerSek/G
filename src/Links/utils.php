@@ -1,26 +1,24 @@
 <?php
-/**
- * 
- * 
- * 
- */
-if (!defined('ROOT')) exit;
 
-#EXTRACT
 class sScraper {
+    /**
+     * kalau kurang akurat bisa tambah nodenya
+     * bawaannya udah max nested ambil limit nya.
+     * klo emang ada yang gak keambil, bisa cek htmlDOM nya dan tambah query di method extract
+     */
     
-    private static function dom(string $html): DOMXPath {
+    private static function dom($html): DOMXPath {
         libxml_use_internal_errors(true);
         $dom = new DOMDocument();
         $dom->loadHTML($html, LIBXML_NOWARNING | LIBXML_NOERROR | LIBXML_NONET);
         return new DOMXPath($dom);
     }
 
-    private static function norm(string $s): string {
+    private static function norm($s) {
         return trim(preg_replace('/\s+/', ' ', html_entity_decode($s, ENT_QUOTES | ENT_HTML5)));
     }
 
-    private static function _getNodes(DOMXPath $xp, DOMNode $node): string {
+    private static function _getNodes(DOMXPath $xp, DOMNode $node) {
         return self::norm((string)$xp->evaluate("normalize-space(string(.))", $node));
     }
 
@@ -177,31 +175,26 @@ function limit($id) {
 function links($api, $url) {
     if (!$api) {
         logx('err', 'undefined provider');
-        exit;
+        return false;
     }
-
-    $backupProxy = getenv('PROXY');
-    $backupCtx = $GLOBALS['_CTX']['proxy'] ?? null;
     
     try {
         $bypass = new _shortlinks($url);
         $f_url = $bypass->links($api); 
         
         if ($f_url && is_string($f_url)) {
-            logx('info', '  SL Direct ');
+            logx('ok', " SL Direct passed", true, true);
             return $f_url;
         }
     } catch (Throwable $e) {
-        if ($backupProxy !== false) putenv("PROXY=$backupProxy");
-        if ($backupCtx !== null) $GLOBALS['_CTX']['proxy'] = $backupCtx;
-
-        logx('warn', '  SL Direct ' . $e->getMessage());
+        logx('err', " SL Direct failed: ".$e->getMessage());
     }
     
+    logx('info', " Switching to solver API...");
     $solver = config::getKeys($api, 'shortlink', 'tkn');
     
-    if (!$solver || !isset(Api::TKN[get_class($solver)]['shortlink'])) {
-        logx('err', get_class($solver).' NOT SUPPORT SHORTLINK');
+    if (!$solver) {
+        logx('err', ' unsupported provider');
         return false;
     }
 
@@ -211,10 +204,11 @@ function links($api, $url) {
     $time = number_format($end - $set, 3) . 's';
     
     if ($res && $res !== 99) {
-        logx('info', '  SL ' . get_class($solver) . ' passed in ' . $time);
+        logx('ok', ' SL ' . get_class($solver) . ' passed in ' . $time);
         return $res;
     }
 
-    logx('err', '  SL ' . get_class($solver) . ' failed');
+    logx('err', ' SL ' . get_class($solver) . ' failed');
     return false;
 }
+

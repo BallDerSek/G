@@ -40,8 +40,9 @@ while (true) {
             #var_dump($dash); die;
             break;
         }
+        
         if ($ret >= $max) {
-            logx('err', 'gak tau');
+            logx('warn', 'RETRY LIMIT REACHED, CHECK BROWSER');
             exit; 
         }
         
@@ -51,32 +52,48 @@ while (true) {
         $_0 = Net::C("$host/login", 'GET', null, $cookieFile, [], '', $userAgent, false, false, $ip);
         
         if ($_0 === 99) {
+            logx('warn', 'Proxy issue, wait 30s');
             _sle(60);
             continue;
         }
         if (empty($_0)) continue;
         #var_dump($_0); die;
-        $f = scraper::payload($_0)[0];
-        $pa = $f['payload'];
+        $f = scraper::payload($_0)[0] ?? null;
         
-        $cap = null;
-        $cap = solve::exec($_0, $host, $api);
-        if (isset($cap['trouble'])) {
-            _sle(60);
-            continue;
+        $po = null;
+        if (!empty($f)) {
+            $pa = $f['payload'];
+            $cre = ['email' => $mail, 'password' => $pass];
+            
+            $cap = Solve::exec($_0, $host, $api, $pa);
+            
+            if (isset($cap['trouble'])) {
+                $tro = $cap['trouble'];
+                logx('warn', "Solver trouble: $tro");
+                ($tro === 'proxy') ? _sle(30) : _sle(10);
+                continue;
+            }
+            $cleanCap = array_filter((array)$cap, fn($v, $k) => $k !== 'nocaptcha', ARRAY_FILTER_USE_BOTH);
+            
+            $po = array_merge($pa, $cleanCap, $cre);
         }
         
-        $cre = ['email' => $mail, 'password' => $pass];
-        $po = array_merge($pa, $cap, $cre);
-        #print_r($po);
-        
-        $ve = Net::C($f['url'], 'POST', $po, $cookieFile, [], "$host/login", $userAgent, false, false, $ip);
-        $alert_d = scraper::_xP($ve, "//div[contains(@class, 'alert-danger')]");
-        if (!empty($alert_d)) {
-            $msg = $alert_d[0];
-            if (stripos($msg, 'nvalid Captcha')) continue;
-            logx('err', $msg);
-            die;
+        if (!empty($po)) {
+            $ve = Net::C($f['url'], 'POST', $po, $cookieFile, [], "$host/login", $userAgent, false, false, $ip);
+            
+            if ($lo === 99) {
+                logx('warn', 'Proxy issue, wait 30s');
+                _sle(30);
+                continue;
+            }
+            
+            $alert_d = scraper::_xP($ve, "//div[contains(@class, 'alert-danger')]");
+            if (!empty($alert_d)) {
+                $msg = $alert_d[0];
+                if (stripos($msg, 'nvalid Captcha')) continue;
+                logx('', $msg);
+                die;
+            }
         }
         
     } while (empty($dash));

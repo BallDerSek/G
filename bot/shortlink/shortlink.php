@@ -1,25 +1,28 @@
 <?php
 if (!defined('ROOT')) {die;}
 
-$api = '';
+$api = null;
 $api = onKeys();
     
 
 banner();
 
 while(true) {
-    $shortLink = _rl('shortlink: ');
+    $shortLink = getenv('login');
+    if (!$shortLink || empty($shortLink)) {
+        $shortLink = _rl('shortlink: ');
+    }
     try {
         $bypass = new _shortlinks("$shortLink");
         $finalUrl = $bypass->links($api);
         logg(true, $shortLink);
-        logx('ok', $finalUrl, true, true);
+        logx('ok', "[  done  ] ".$finalUrl, true, true);
 
     } catch (RuntimeException $e) {
-        logg(true, $shortLink, false);
-        logx('err', ' '.$e->getMessage());
+        logg(true, $shortLink);
+        logx('err', "[  fail  ] ".$e->getMessage(), true, true);
     }
-    die;
+die;
 }
 
     
