@@ -20,7 +20,7 @@ taskPrintCenter($mail, 'info');
 login:
 
 $dash = null;
-$limit = false;
+$limit = true;
 $shortlink = false;
 $SLDONE = false;
 $skipped = [];
@@ -299,6 +299,7 @@ while (true) {
         
         $f = scraper::payload($sho)[0] ?? [];
         $short = sScraper::extract($sho);
+        #print_r($short);
         $up = ['earnow','shortano', 'shortino', 'fc-lc'];
         
         if (!empty($f) && !empty($short)) {
@@ -337,8 +338,18 @@ while (true) {
             $can_process = true;
             
             $ud = $host.'/links/go/'.$idd;
-            $get = Net::X($ud, 'POST', $po, inf::$cookie, [], $host.'/links', inf::$uagent, ip: $ip, foll: false);
-            if ($get === 99) goto login;
+            $getVer = 0;
+            while (true) {
+                $get = Net::X($ud, 'POST', $po, inf::$cookie, [], $host.'/links', inf::$uagent, ip: $ip, foll: false);
+                if ($get === 99) {
+                    $getVer++;
+                    if ($getVer >= 5) goto login;
+                    _sle(30);
+                    continue;
+                }
+                if (!empty($get)) break;
+            }
+            
             preg_match('/location\.href\s*=\s*["\']([^"\']+)["\']/', $get, $match);
             $loc = $match[1] ?? '';
             
@@ -357,17 +368,22 @@ while (true) {
                     break; 
                 }
             }
-            if ($is_bl) continue; 
-            
-            logx('info', "Bypass: $loc", true, true);
-            $bakk = links($api, $loc);
-            
-            if (!$bakk) {
-                $skipped[$idd] = true; 
+            if ($is_bl) {
+                _sle(5);
                 continue; 
             }
             
-            styler("waiting for SL", fn() => _sle(15));
+            logx('info', "Bypass: $loc", true, true);
+            $bakk = links($api, $loc);
+            #var_dump($bakk);
+            
+            if (!$bakk) {
+                $skipped[$idd] = true; 
+                _sle(5);
+                continue; 
+            }
+            
+            styler("waiting for SL", fn() => _sle(50));
             
             $retVer = 0;
             while (true) {

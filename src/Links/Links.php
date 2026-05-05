@@ -74,13 +74,22 @@ class _shortlinks {
     }
 
     private function cleanup() {
-        #print_r($GLOBALS['_CTX']['proxy'] ?? []);
         @unlink($this->cookie);
-        putenv("PROXY=");
+        if ($this->oldProxy !== false && $this->oldProxy !== '') {
+            putenv("PROXY=" . $this->oldProxy);
+        }
+        
+        if ($this->oldCtx !== null) {
+            $GLOBALS['_CTX']['proxy'] = $this->oldCtx;
+        }
+        
+        if (getenv('PROXY')) {
+            Proxy::load(); 
+        }
+        
         unset($this->cookie, $this->uagent, $this->proxied);
-        if ($this->oldProxy !== false) putenv("PROXY=".$this->oldProxy);
-        if ($this->oldCtx !== null) $GLOBALS['_CTX']['proxy'] = $this->oldCtx;
     }
+
 
     private function clk() {
         $reff = [

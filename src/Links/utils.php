@@ -179,9 +179,11 @@ function links($api, $url) {
         logx('err', 'undefined provider');
         exit;
     }
+
+    $backupProxy = getenv('PROXY');
+    $backupCtx = $GLOBALS['_CTX']['proxy'] ?? null;
     
     try {
-        
         $bypass = new _shortlinks($url);
         $f_url = $bypass->links($api); 
         
@@ -190,6 +192,9 @@ function links($api, $url) {
             return $f_url;
         }
     } catch (Throwable $e) {
+        if ($backupProxy !== false) putenv("PROXY=$backupProxy");
+        if ($backupCtx !== null) $GLOBALS['_CTX']['proxy'] = $backupCtx;
+
         logx('warn', '  SL Direct ' . $e->getMessage());
     }
     
@@ -206,11 +211,10 @@ function links($api, $url) {
     $time = number_format($end - $set, 3) . 's';
     
     if ($res && $res !== 99) {
-        logx('info', '  SL' . get_class($solver) . ' passed in ' . $time);
+        logx('info', '  SL ' . get_class($solver) . ' passed in ' . $time);
         return $res;
     }
 
-    logx('err', '  SL' . get_class($solver) . ' failed');
+    logx('err', '  SL ' . get_class($solver) . ' failed');
     return false;
 }
-

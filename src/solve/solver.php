@@ -133,10 +133,8 @@ class Solve {
         for ($retry = 0; $retry < 3; $retry++) {
             $t = $solver->token($key, $host, $type, $Params);
             if ($t === 777) {
-                logx('warn', "Internal Node Busy, fallback direct api");
                 
                 if (!isset(Api::TKN[get_class($api)][$type]))                    return 471; 
-                _clr();
                 logx('ok', "Switching to ".get_class($api));
                 $t = $api->token($key, $host, $type, $Params);
                 if ($t === 71) return 471;

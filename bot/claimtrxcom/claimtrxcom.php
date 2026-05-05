@@ -343,8 +343,18 @@ while (true) {
             $can_process = true;
             
             $ud = $host.'/links/go/'.$idd;
-            $get = Net::X($ud, 'POST', $po, inf::$cookie, [], $host.'/links', inf::$uagent, ip: $ip, foll: false);
-            if ($get === 99) goto login;
+            $getVer = 0;
+            while (true) {
+                $get = Net::X($ud, 'POST', $po, inf::$cookie, [], $host.'/links', inf::$uagent, ip: $ip, foll: false);
+                if ($get === 99) {
+                    $getVer++;
+                    if ($getVer >= 5) goto login;
+                    _sle(30);
+                    continue;
+                }
+                if (!empty($get)) break;
+            }
+            
             preg_match('/location\.href\s*=\s*["\']([^"\']+)["\']/', $get, $match);
             $loc = $match[1] ?? '';
             
