@@ -123,9 +123,20 @@ while (true) {
         $bal = Scraper::_xP($dash, "//p[contains(text(), 'Balance')]/following-sibling::p")[0] ?? '0';
         $saldo = preg_replace('/[^0-9.]/', '', $bal);
         
+        $ret99 = 0; 
         while (true) {
             $fau = Net::C($host.'/faucet', 'GET', null, inf::$cookie, [], '', inf::$uagent);
-            if (!empty($fau) && $fau !== 99) {
+            if ($fau === 99) {
+                $ret99++;
+                logx('warn', "masalah proxy, warm up dulu");
+                if ($ret99 >= 7) {
+                    break;
+                }
+                _sle(30);
+                continue;
+            }
+            $ret99 = 0; 
+            if (!empty($fau)) {
                 $tmr = Scraper::_jP($fau, '/initCooldown\((?<v>\d+)\)/');
                 $ti = (int)($tmr['v'][0] ?? 0);
                 if ($ti > 0) {
