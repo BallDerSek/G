@@ -440,7 +440,7 @@ class _bypassSL {
         #print_r($pa);
         
         if (!empty($pa)) {
-            _sle(15);
+            _sle(20);
             $r = json_decode(Net::X("https://{$this->host}/links/go", 'POST', $pa, $this->cookie, [], $reff, $this->uagent), true);
             #print_r($r);
             #_put("r.html", $r);
@@ -481,7 +481,7 @@ class _bypassSL {
         $p = scraper::payload($html)[0]['payload'] ?? null;
         #print_r($p);
         
-        _sle(15);
+        _sle(20);
         $r = json_decode(Net::X("https://{$link}/links/go", 'POST', $p, $this->cookie, [], $reff, $this->uagent), true);
         if (empty($r['url'])) {
             throw new RuntimeException("failed");

@@ -81,7 +81,7 @@ while (true) {
         if (!empty($po)) {
             $ve = Net::C($f['url'], 'POST', $po, $cookieFile, [], "$host/login", $userAgent, false, false, $ip);
             
-            if ($lo === 99) {
+            if ($ve === 99) {
                 logx('warn', 'Proxy issue, wait 30s');
                 _sle(30);
                 continue;

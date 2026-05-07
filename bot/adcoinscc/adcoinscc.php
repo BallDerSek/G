@@ -1,24 +1,26 @@
 <?php
 if (!defined('ROOT')) { die; }
-$api = onKeys();
+#$api = onKeys();
+$api = null;
 
 $acc = config::credential([], true);
 $login = $acc['login'];
 
-$cookieFile = config::cookie($login);
-$userAgent = config::uagent('mobile');
-
+login:
 $host = 'https://adcoins.cc';
 $r = '/?ref=6851'; 
 $ip = '';
-
-inf::setup($userAgent, $cookieFile, $ip);
-
-banner(); 
-taskPrintCenter($login, 'info');
-login:
+(function ($login, $ip) {
+    $cookieFile = config::cookie($login);
+    $userAgent = config::uagent('mobile');
+    inf::setup($userAgent, $cookieFile, $ip);
+    banner();
+    taskPrintCenter($login, 'info');
+})($login, $ip);
 
 $dash = null;
+$saldo = 0;
+$withdraw = false;
 while (true) {
     $max = 7;
     $ret = 0;
@@ -40,10 +42,10 @@ while (true) {
             exit; 
         }
         
-        @unlink($cookieFile);
+        @unlink(inf::$cookie);
         logx('err', "logging in", false); 
         _sle(3); _clr();
-        $_0 = Net::C($host.$r, 'GET', null, $cookieFile, [], '', $userAgent);
+        $_0 = Net::C($host.$r, 'GET', null, inf::$cookie, [], '', inf::$uagent);
         if ($_0 === 99) {
             $ret99++;
             logx('warn', "masalah proxy, warm up dulu");
@@ -58,32 +60,64 @@ while (true) {
             $pa = solveUtils::webkitID(['action' => 'login', 'email' => $login, 'csrf_token' => ''], $boundary);
             $ha = ["Content-Type: multipart/form-data; boundary=$boundary"];
 
-            Net::C($host.'/api.php', 'POST', $pa, $cookieFile, $ha, $host.$r, $userAgent);
+            Net::C($host.'/api.php', 'POST', $pa, inf::$cookie, $ha, $host.$r, inf::$uagent);
         }
     } while (empty($dash));
     #_put('dash.html', $dash);
+
+    {
+    $bon = Net::C($host.'/achievements', 'GET', null, inf::$cookie, [], '', inf::$uagent);
     
+    if (!empty($bon) && $bon !== 99) {
+        $claims = Scraper::_xP($bon, "//button[contains(@*, 'claim')]/@*");
+
+        foreach ($claims as $act) {
+            if (preg_match('/claim\((\d+)/', $act, $m)) {
+                $boundary = '';
+                $po = SolveUtils::webkitID(['action' => 'claim_achievement', 'achievement_id' => $m[1]], $boundary);
+                
+                $ver = json_decode(Net::C($host.'/api.php', 'POST', $po, inf::$cookie, ["Content-Type: multipart/form-data; boundary=$boundary"], '', inf::$uagent) ?: '', true);
+                
+                if (filter_var($ver['success'] ?? false, FILTER_VALIDATE_BOOLEAN)) {
+                    logg(true, 'success ', false);
+                    logx('info', ' reward: '.($ver['reward'] ?? 'OK'), true, true);
+                }
+                usleep(500000);
+            }
+        }
+    }
+}
+    
+    $bal = Scraper::_xP($dash, "//p[contains(text(), 'Balance')]/following-sibling::p")[0] ?? '0';
+    $saldo = preg_replace('/[^0-9.]/', '', $bal);
+    
+    $faucetCount = 0; 
     while (true) {
+        if ($faucetCount >= 10) break;
+        if ($saldo >= (int)1000) {
+            $withdraw = true;
+            break;
+        }
+
         $ret99 = 0; 
-        $fau = Net::C($host.'/faucet', 'GET', null, $cookieFile, [], '', $userAgent);
-        #_put('fau.html', $fau);
+        $fau = Net::C($host.'/faucet', 'GET', null, inf::$cookie, [], '', inf::$uagent);
+        
         if ($fau === 99) {
             $ret99++;
             logx('warn', "masalah proxy, warm up dulu");
-            if ($ret99 >= 5) {
-                goto login;
-            }
+            if ($ret99 >= 5) goto login;
             _sle(30);
             continue;
         }
-        $ret99 = 0; 
         
         if (!empty($fau)) {
-
+            #_put('fau.html', $fau);
             $tmr = Scraper::_jP($fau, '/initCooldown\((?<v>\d+)\)/');
             $ti = (int)($tmr['v'][0] ?? 0);
+            
             if ($ti > 0) {
                 styler("WAITING for CLAIM", fn() => _sle($ti));
+                $faucetCount++; 
                 continue;
             }
 
@@ -97,24 +131,72 @@ while (true) {
                 $boundary = '';
                 $body = SolveUtils::webkitID($pa, $boundary);
                 $ha = ["Content-Type: multipart/form-data; boundary=$boundary"];
-                $cla = json_decode(Net::C($host.'/api.php', 'POST', $body, $cookieFile, $ha, $host.$r, $userAgent)?: '', true);
+                $cla = json_decode(Net::C($host.'/api.php', 'POST', $body, inf::$cookie, $ha, $host.$r, inf::$uagent)?: '', true);
+                
                 $suc = filter_var($cla['success'] ?? false, FILTER_VALIDATE_BOOLEAN);
                 if ($suc) {
-                    logx('ok', 'success ', false, true);
-                    logg(false, ' roll: '.$cla['random_number'], false);
+                    logg(true, 'success ', false);
+                    logx('info', ' roll: '.$cla['random_number'], false);
                     logx('', " [ {$cla['new_balance']} ]", true, true);
+                    $saldo = $cla['new_balance'];
+                    $faucetCount++;
                 } else {
-                    logx('err', 'failed ', false, true);
-                    logg(false, $cla['message']);
+                    logg(true, 'failed ', false);
+                    logx('err', $cla['message']);
+                    _sle(10);
                 }
             }
         }
+    } 
+    
+    if ($withdraw) {
+        $wd = Net::C($host.'/withdraw', 'GET', null, inf::$cookie, [], '', inf::$uagent);
         
+        if (!empty($wd) && $wd !== 99) {
+            $coins = Scraper::_xP($wd, "//select[@x-model='crypto']/option/@value");
+            
+            foreach ($coins as $coin) {
+                logg(true, '  tes ilmu: '. strtoupper($coin), false);
+                logx('info', ' [ '.$login.' ]');
+
+                $boundary = '';
+                $jajan = [
+                    'action' => 'withdraw',
+                    'amount' => $saldo,
+                    'crypto' => $coin
+                ];
+                $ic = null;
+                $attempt = 0;
+                while (!$ic && $attempt < 5) {
+                    $ic = locally::iCaptcha($wd, $host);
+                    if ($ic === 99) goto login;
+                    $attempt++;
+                }
+                if ($ic) $pa = array_merge($jajan, $ic);
+                $pa = SolveUtils::webkitID($pa, $boundary);
+                
+                $wd = null;
+                $wd = json_decode(Net::C($host.'/api.php', 'POST', $pa, inf::$cookie, ["Content-Type: multipart/form-data; boundary=$boundary"], $host.'/withdraw', inf::$uagent)?: '', true);
+                print_r($wd);
+                $suc = filter_var($wd['success'] ?? false, FILTER_VALIDATE_BOOLEAN);
+                logx('info', 'withdraw ', false, true);
+                if ($suc) {
+                    logg(false, $wd['message']);
+                    break;
+                } else {
+                    logx('err', $wd['message']);
+                }
+            }
+        }
     }
 
-
+    
 }
     
+
+tes:
+$ptc = Net::C($host.'/ptc', 'GET', null, inf::$cookie, [], '', inf::$uagent);
+_put('ptc.html', $ptc);
 
 
 

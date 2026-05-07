@@ -25,6 +25,7 @@ while(true) {
 die;
 }
 
+
     
 tes:
 $supportedSL = [
@@ -59,10 +60,7 @@ $supportedSL = [
         $erno = "https://earnow.online/pqmu",
     ],
 ];
-#print_r($supportedSL);
 
-$cookie = config::cookie();
-$uagent = config::uagent();
 
 
 

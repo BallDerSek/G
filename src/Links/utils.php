@@ -193,22 +193,34 @@ function links($api, $url) {
     logx('info', " Switching to solver API...");
     $solver = config::getKeys($api, 'shortlink', 'tkn');
     
-    if (!$solver) {
-        logx('err', ' unsupported provider');
+    if (!$solver || $solver === $api || !method_exists($solver, 'shortLink')) {
+        logx('err', " (" . get_class($api) . ") doesn't support shortLink!");
         return false;
     }
 
     $set = microtime(true);
     $res = $solver->shortLink($url);
+    $winner = $solver; 
+    if ($res === 777 || $res === false) {
+        if (method_exists($api, 'shortLink')) {
+            logx('warn', " Switching back to primary API...");
+            $res = $api->shortLink($url); 
+            $winner = $api; 
+        } else {
+            logx('err', " (" . get_class($api) . ") doesn't support shortLink!");
+            $res = false; 
+        }
+    }
+    
     $end = microtime(true);
     $time = number_format($end - $set, 3) . 's';
     
     if ($res && $res !== 99) {
-        logx('ok', ' SL ' . get_class($solver) . ' passed in ' . $time);
+        logx('ok', ' SL ' . get_class($winner) . ' passed in ' . $time);
         return $res;
     }
 
-    logx('err', ' SL ' . get_class($solver) . ' failed');
+    logx('err', ' SL ' . get_class($winner) . ' failed');
+
     return false;
 }
-

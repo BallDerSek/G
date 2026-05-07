@@ -81,7 +81,7 @@ while (true) {
         if (!empty($po)) {
             $ve = Net::C($f['url'], 'POST', $po, $cookieFile, [], "$host/login", $userAgent, false, false, $ip);
             
-            if ($lo === 99) {
+            if ($ve === 99) {
                 logx('warn', 'Proxy issue, wait 30s');
                 _sle(30);
                 continue;
@@ -180,6 +180,7 @@ while (true) {
         $ret99 = 0; 
         while (true) {
             $fau = Net::C("$host/faucet", 'GET', null, $cookieFile, [], "$host/dashboard", $userAgent, false, false, $ip);
+            #_put('fau.html', $fau);
             if ($fau === 99) {
                 $ret99++;
                 logx('warn', "masalah proxy, warm up dulu");
@@ -246,7 +247,7 @@ while (true) {
             if (isset($pa['captcha'])) {
                 if ($pa['captcha'] === 'hcaptcha') {
                     /* comment ini kalo mau lanjut solve*/
-                    $limit = true; break;
+                    #$limit = true; break;
                 }
                 $cap = solve::exec($fau, $host, $api);
                 if (isset($cap['trouble'])) {
@@ -273,6 +274,7 @@ while (true) {
                 $pttr = '/<h3>([^<]+)<\/h3>\s*<p>Balance<\/p>/';
                 $_bal = scraper::_jP($cla, $pttr)[1];
                 logx('ok', ' [ '.$_bal[0].' ]', true, true);
+                if (stripos($m[2][0], 'has been added')) break;
             }
             
         }
@@ -421,7 +423,8 @@ while (true) {
                 }
             }
             
-            break; 
+            #break; 
+            break 2; 
         }
 
         if (!$can_process) {
@@ -584,6 +587,8 @@ function _wd($html) {
     $stocks = Scraper::_xP($html, "//div[contains(@class, 'col-2') and contains(text(), '%')]");
 
     foreach ($names as $i => $name) {
+        if (stripos($name, 'btc') !== false || stripos($name, 'bitcoin') !== false) continue;
+
         $stokValue = (int) ($stocks[$i] ?? 0);
         
         if ($stokValue > 20) {

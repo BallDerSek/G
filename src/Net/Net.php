@@ -487,40 +487,6 @@ class Net {
             }
         } 
 
-        /* EXEC
-        try {
-            for ($attempt = 0; $attempt <= 3; $attempt++) {
-                $body = curl_exec($ch);
-                $info = curl_getinfo($ch);
-                $errno = curl_errno($ch);
-                $err = curl_error($ch);
-                
-                if ($body !== false) {
-                    if (!empty($opt['debug'])) {
-                        return [
-                            'http_code' => $info['http_code'] ?? null,
-                            'url' => $info['url'] ?? null,
-                            'headers' => $headr ?? null,
-                            'errno' => $errno ?: null,
-                            'error' => $err ?: null,
-                            'info' => $info,
-                            'body' => $body,
-                        ];
-                    } return $body;
-                }
-
-                if ($attempt > 0 && in_array($errno, [56, 92], true)) {
-                    curl_setopt($ch, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
-                }
-
-                $retry = in_array($errno, [28, 35, 52, 56, 92], true);
-                if (!$retry || $attempt === 3) {
-                    throw new Exception("Net($errno): $err");
-                } 
-                usleep(random_int(25, 50) * 10000);
-            } 
-            throw new Exception("failed");
-        */
         try {
             $proxyFailCount = 0; 
             for ($attempt = 0; $attempt < 10; $attempt++) {
@@ -577,7 +543,7 @@ class Net {
             } 
             throw new Exception("unstable connection");
         } catch (Throwable $e) {
-            logx('info', " \r {$e->getMessage()} \r", true, true);
+            logx('info', " \r {$e->getMessage()}", true, true);
             return null;
         
         } finally { 
@@ -637,8 +603,8 @@ class Net {
         }
         
         if ($json && in_array($type, ['POST','PUT','PATCH'], true)) {
-            if (!self::hasHeader($head, 'Content-Type')) $head[] = 'Content-Type: application/json';
             if (!self::hasHeader($head, 'Accept')) $head[] = 'Accept: application/json, text/javascript';
+            if (!self::hasHeader($head, 'Content-Type')) $head[] = 'Content-Type: application/json';
         } else {
             if (!self::hasHeader($head, 'Accept')) $head[] = 'Accept: */*';
             if (!self::hasHeader($head, 'Content-Type')) $head[] = 'Content-Type: application/x-www-form-urlencoded';

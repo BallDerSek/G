@@ -349,8 +349,9 @@ class SolveUtils {
     }
 
     public static function hamming($h1, $h2) {
-        $dist = 0; $len = strlen($h1);
-        for ($i=0; $i<$len; $i++) if ($h1[$i] !== $h2[$i]) $dist++;
+        $dist = 0; 
+        $len = strlen($h1);
+        for ($i = 0; $i < $len; $i++) if ($h1[$i] !== $h2[$i]) $dist++;
         return $dist;
     }
 
@@ -504,7 +505,7 @@ class locally {
             ]))];
 
             $res = Net::X($endpoint, 'POST', $json, $cookie, ["x-iconcaptcha-token: $token"], $host, $ua, false, false, $ip);
-            if ($res === 99) return 99;
+            if ($res === 99 || (empty($res))) return 99;
             $r = json_decode(base64_decode($res), true);
             #print_r($r);
             $challengeId = $r['identifier'] ?? null;
@@ -523,7 +524,7 @@ class locally {
                 $boundary = '';
                 $body = SolveUtils::webkitID(["payload" => $payload], $boundary);
                 $s = Net::X($endpoint, 'POST', $body, $cookie, ["x-iconcaptcha-token: $token", "Content-Type: multipart/form-data; boundary=$boundary"], $host, $ua, false, false, $ip);
-                if ($s === 99) return 99;
+                if ($s === 99 || empty($s)) return 99;
                 $r = json_decode(base64_decode($s), true);
                 #print_r($r);
                 if (!empty($r['completed'])) {
