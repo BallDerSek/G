@@ -29,11 +29,6 @@ final class execPython {
 
     public function __construct($ck = null, $ua = null) {
         
-        if (!getDeps('seledroid@py')) {
-            logx('err', 'seledroid@py missing');
-            exit;
-        }
-        
         $this->cookie = $ck;
         $this->uagent = $ua;
         $this->lockFile = sys_get_temp_dir() . '/seledroid_global.lock';
@@ -52,6 +47,11 @@ final class execPython {
     }
 
     public function run($type, $url = null, $act = null): array|string|null {
+        if (!getDeps('seledroid@py')) {
+            logx('err', 'seledroid@py missing');
+            exit;
+        }
+        
         $m = strtolower($type);
         if (!in_array($m, ['turnstile', 'inter', 'recaptcha3', 'check', 'ua'], true)) return null;
         if (!in_array($m, ['check', 'ua'], true) && empty($url)) return null;
