@@ -22,7 +22,7 @@ $ip = null;
     inf::setup($userAgent, $cookieFile, $ip);
     banner();
     taskPrintCenter($login, 'info');
-})($login, $ip);
+} ) ($login, $ip);
 
 if (empty($GLOBALS['_CTX']['proxy']['src'])) {
     logx('err', '  MANA PROXY NYA !!!');
@@ -53,7 +53,7 @@ while (true) {
             exit; 
         }
         
-        logx('err', "logging in", false); 
+        logx('err', "logging in ", false); 
         _sle(3); _clr();
         $_0 = Net::X($host.$r, 'GET', null, inf::$cookie, $headersCF, '', inf::$uagent);
         if ($_0 === 99) {
@@ -104,6 +104,7 @@ while (true) {
             $_err = Scraper::_jP($ve, "/html: '(.*?)'/");
             if (isset($_err[1][0])) {
                 if (stripos($_err[1][0], 'elcome back')) continue;
+                if (stripos($_err[1][0], 'has been created')) continue;
                 print_r($_err);
                 logx('info', $_err[1][0], true, true);
                 die;
