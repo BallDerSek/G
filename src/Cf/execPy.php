@@ -1,68 +1,4 @@
 <?php
-/** @function cfGet
- * @param string $url
- * @param string &$cookie
- * @param string &$uagent
- * @return string|null
- */
-function cfGet($url, &$cookie, &$uagent) {
-    $att = 0;
-    $execPy = null; 
-    while ($att < 10) {
-        $_00 = Net::C($url, 'GET', null, $cookie, [], '', $uagent);
-        
-        if (!$_00) { 
-            $att++; 
-            logx('warn', "Empty response, retry $att");
-            _sle(2); 
-            continue; 
-        }
-
-        $isCloudflare = (
-            stripos($_00, 'Cloudflare Ray ID') !== false || 
-            stripos($_00, 'just a moment') !== false ||
-            stripos($_00, 'challenge-platform') !== false
-        );
-
-        if (!$isCloudflare) {
-            return $_00;
-        }
-
-        logx('warn', "Cloudflare/JS Challenge detected");
-
-        if (!$execPy) $execPy = new execPython($cookie, $uagent);
-        $r = $execPy->run('inter', $url);
-
-        if ($r === null) {
-            logx('err', "Solver failed to return result");
-            $att++; 
-            _sle(3); 
-            continue;
-        }
-
-        $uagent = (string)$r['user_agent'];
-        $cookie = (string)$r['cookie_file'];
-
-        $_11 = Net::C($url, 'GET', null, $cookie, [], $url, $uagent);
-        
-        $isStillCF = (
-            stripos($_11, 'challenge-platform') !== false || 
-            stripos($_11, 'just a moment') !== false ||
-            strpos($_11, 'id="cf-wrapper"') !== false
-        );
-
-        if ($_11 && !$isStillCF) {
-            logx('success', "Cloudflare bypassed!");
-            return $_11;
-        }
-
-        logx('err', "Bypass failed, retrying...");
-        $att++;
-        _sle(2);
-    }
-    
-    return false; 
-}
 
 /** @function cfSet
  * @param string $class
@@ -81,6 +17,7 @@ function cfSet($class, $res) {
             ];
 
         case str_contains(strtolower($class), 'gmxch'):
+        case str_contains(strtolower($class), 'glitch'):
             return [
                 'token' => $res['cf_clearance'] ?? null,
                 'ua'    => $res['user_agent'] ?? null,
@@ -126,7 +63,8 @@ function execCF($api, $url, $cookie, $uagent, array $data = [], $input = '') {
         
         // --- HANDLE SWITCH SIGNAL (777) ---
         if ($solve === 777 || (is_array($solve) && ($solve[1] ?? null) === 777)) {
-            logx('warn', "Internal Node Busy, fallback direct api");
+            logx('warn', "Internal Node Busy, fallback direct api", false);
+            _clr();
             
             if (!isset(Api::ACC[get_class($api)]['interstitial'])) {
                 $input = '1';
@@ -202,12 +140,7 @@ final class execPython {
     private string $lockFile;
 
     public function __construct($ck = null, $ua = null) {
-        /*
-        logx('', ' set: '.$ck);
-        logx('', ' set: '.$ua);
-        logx();
-        #die;
-        */
+        
         if (!getDeps('seledroid@py')) {
             logx('err', 'seledroid@py missing');
             exit;
@@ -216,26 +149,17 @@ final class execPython {
         $this->cookie = $ck;
         $this->uagent = $ua;
         $this->lockFile = sys_get_temp_dir() . '/seledroid_global.lock';
-
+        
         if (($py = realpath(LIBDIR . '/python/execPy.py')) === false) {
             logx('err', "execPy file not found");
             exit;
         }
         $this->scriptPath = $py;
-
         $proxy = $GLOBALS['_CTX']['proxy']['src'] ?? null;
-        
         if (!empty($proxy) && getDeps('gost')) {
-            logx('warn', " setting up proxy for seledroid, will consume much execution, USE WITH CAUTION", true, true);
-            $check = $this->run('check');
-            if (!$check || isset($check['error'])) {
-                $err = $check['error'] ?? 'No Response';
-                logx('err', "Proxy Tunnel Failed: $err");
-                exit;
-            }
-            logx('success', "Seledroid Proxy: " . ($check['ip'] ?? 'Unknown'));
+            #logx('info', "Seledroid: Proxy mode");
         } else {
-            logx('info', "Seledroid Direct");
+            #logx('info', "Seledroid: Direct mode");
         }
     }
 
@@ -325,7 +249,7 @@ final class execPython {
             if (count($cols) >= 7 && $cols[5] === 'cf_clearance') continue;
             $filtered[] = $l;
         }
-        $filtered[] = implode("\t", [$cookieDomain, "TRUE", "/", $secure, time() + 1800, "cf_clearance", $m[1]]);
+        $filtered[] = implode("\t", [$cookieDomain, "TRUE", "/", $secure, time() + 43200, "cf_clearance", $m[1]]);
         _put($this->cookie, implode("\n", $filtered) . "\n");
         return true;
     }

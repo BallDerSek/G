@@ -3,11 +3,11 @@ if (!defined('ROOT')) { die; }
 $api = onKeys();
 
 
-if (!is_file(LIBDIR.'/mail.txt')) {
-    logx('err', 'mail.txt not found');
+if (!is_file(LIBDIR.'/email.txt')) {
+    logx('err', 'email.txt not found');
     die;
 }
-$emails = file(LIBDIR.'/mail.txt', FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+$emails = file(LIBDIR.'/email.txt', FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
 
 $host = 'https://cryptoclaps.com';
 $domain = parse_url($host, PHP_URL_HOST);

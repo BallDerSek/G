@@ -203,19 +203,10 @@ class tertuyul extends Provider {
 
     /** shortlink resolver */
     public function shortLink($link) {
-        return styler("getting.." . (parse_url($link, PHP_URL_HOST)), function() use($link) {
-            $result = json_decode(
-                Net::S("https://tertuyul.my.id/apikey/", "POST", ["method" => "result_link", "url" => $link, "apikey" => $this->apiKey], json: true)
-                , true);
-            #var_dump($result);
-
-            if (isset($result['fail'])) {
-                logx('err', $result['fail']);
-                return false;
-            }
-            
-            return $result['url'];
-        });
+        $params = ["pageurl" => $link];
+        $short = $this->run('shortlink', $params);
+        if (!$short) return false;
+        return $short;
     }
     
     public function bct($path) {
@@ -251,25 +242,6 @@ class tertuyul extends Provider {
         }
 
         return $res;
-    }
-    
-    public function rss($html, $co) {
-        if (empty($html)) return false;
-        if ($co) {
-            preg_match_all('/\d+/', $co, $_co);
-            if (count($_co[0]) >= 2) {
-                $x = $_co[0][0];
-                $y = $_co[0][1];
-            }
-        }
-        $src = xtractJs($html);
-        $data = [
-            "script" => base64_encode($src[0]),
-            "clickX" => (int)$x,
-            "clickY" => (int)$y
-            ];
-            
-        return $this->run('rstoken', $data);
     }
     
     /** info saldo */
@@ -439,7 +411,7 @@ class glitch extends Provider {
         $s = json_decode(
             Net::S($this->baseUrl, "POST", array_merge(["apikey" => $this->apiKey, "mode" => $method], $params), json: true) ?: ''
             , true);
-var_dump($s);
+#var_dump($s);
         if (!is_array($s) || empty($s["jobId"])) {
             throw new Exception(is_array($s) ? ($s["error"] ?? 'unknown') : 'unknown');
         }
@@ -455,8 +427,16 @@ var_dump($s);
             $r = json_decode(
                 Net::S($this->baseUrl, "POST", ["apikey" => $this->apiKey, "id"  => $jobId, 'action' => 'get'], json: true) ?: ''
             , true);
-var_dump($r);
-            if (($r['status'] ?? 0) == 1) return $r['solution'];
+#var_dump($r);
+            if (($r['status'] ?? 0) == 1) {
+                $solution = ['token', 'index', 'indices', 'text', 'order'];
+                foreach ($solution as $key) {
+                    if (isset($r[$key])) {
+                        return $r[$key];
+                    }
+                }
+                return $r;
+            }
 
             if (!is_array($r) || Api::errType($q = ($r['message'] ?? 'unknown')) === 'ret') continue;
             
@@ -472,17 +452,16 @@ var_dump($r);
         $params = ["url" => $link];
         $short = $this->run('shortlink', $params);
         if (!$short) return false;
-        return $short;
+        return $short['original_url'];
     }
     
-
     /** info saldo */
     public function getInfo(): bool {
         info:
         $r = json_decode(
             Net::S($this->baseUrl, "POST", ["apikey" => $this->apiKey, 'action' => 'getbalance'], json: true) ?: ''
             , true);
-var_dump($r);
+#var_dump($r);
         if ($r === null) goto info; 
 
         if (isset($r['error'])) {

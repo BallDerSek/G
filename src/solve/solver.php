@@ -130,7 +130,7 @@ class Solve {
         $set = microtime(true);
         $t = null;
         
-        for ($retry = 0; $retry < 3; $retry++) {
+        for ($retry = 0; $retry < 2; $retry++) {
             $t = $solver->token($key, $host, $type, $Params);
             if ($t === 777) {
                 

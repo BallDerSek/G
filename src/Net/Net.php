@@ -516,7 +516,7 @@ class Net {
                 $isUsingProxy = !empty($GLOBALS['_CTX']['proxy']) && empty($opt['no_proxy']);
                 #logx('info', " => err ($errno):$err");
                 if ($isUsingProxy) {
-                    $proxyFatalErrors = [7, 52, 56];
+                    $proxyFatalErrors = [7, 52, 56, 97];
                     if (in_array($errno, $proxyFatalErrors, true)) {
                         $proxyFailCount++;
                         
@@ -530,7 +530,7 @@ class Net {
                     }
                 }
                 
-                if ($attempt > 0 && in_array($errno, [56, 92], true)) {
+                if ($attempt > 0 && in_array($errno, [56, 92, 97], true)) {
                     curl_setopt($ch, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
                 }
                 

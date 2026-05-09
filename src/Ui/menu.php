@@ -388,7 +388,7 @@ class KEYS {
         'https://waryono.my.id' => '',
         'http://multibot.in' => '',
         'https://capsolver.com' => '',
-        'https://buxads.com/api-token' => '',
+        #'https://buxads.com/api-token' => '',
     ];
 
     public static function sync() {

@@ -500,7 +500,7 @@ final class Api { #contractor
             'ERROR_TASK_FAILED',
             'ERROR_CAPTCHA_TIMEOUT',
             'ERROR_TIMEOUT',
-            'TIMEOUT',
+            'TIMEOUT after',
             'ERROR_TASK_TIMEOUT',
             'WRONG_RESULT',
             'IP Address Blocked',
@@ -514,6 +514,8 @@ final class Api { #contractor
             'Internal solver error',
             'Task not found',
             'Job not found',
+            'ERR_EMPTY_RESPONSE',
+            'node unreachable',
             ],
 
         'ret' => [ 
@@ -543,6 +545,7 @@ final class Api { #contractor
             'connection close',
             'Internal server error',
             'External solver request failed',
+            'returned HTTP 502',
             'APP_9',
         ],
 

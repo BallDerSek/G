@@ -11,7 +11,7 @@ if (!defined('LIBDIR')) define('LIBDIR', ROOT . '/lib');
 if (!defined('SRCDIR')) define('SRCDIR', ROOT . '/src');
 if (!defined('UPDDIR')) define('UPDDIR', ROOT . '/upd');
 if (!defined('BOTDIR')) define('BOTDIR', ROOT . '/bot');
-if (!defined('SLDIR')) define('SLDIR', ROOT . '/sl');
+#if (!defined('SLDIR')) define('SLDIR', ROOT . '/sl');
 
 (function() {
     
@@ -66,7 +66,7 @@ function bootApp() {
     
     $k = Config::credential()['_authApi_'];
     $a = Api::use('gmxch', $k);
+    $GLOBALS['_CTX']['AUTH_API'] = $a;
     if (!defined('AUTH_KEY')) define('AUTH_KEY', $a->getInfo());
-    if (!defined('AUTH_API')) define('AUTH_API', $a);
     
 }

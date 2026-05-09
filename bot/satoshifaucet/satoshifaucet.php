@@ -1,24 +1,28 @@
 <?php
 if (!defined('ROOT')) { die; }
+
 $api = onKeys();
 
 $acc = config::credential([], true);
 $login = $acc['login'];
 
-$cookieFile = config::cookie($login);
-$userAgent = config::uagent('mobile');
-
+login:
 $host = 'https://satoshifaucet.io';
 $domain = parse_url($host, PHP_URL_HOST);
 $r = '/?r=124158';
 $ip = null;
 
-inf::setup($userAgent, $cookieFile, $ip);
+(function ($login, $ip) {
+    $cookieFile = config::cookie($login);
+    
+    $creds = config::credential(['uagent' => fn() => config::uagent('desktop')], true);
+    
+    $userAgent = $creds['uagent'];
 
-banner();
-taskPrintCenter($login, 'info');
-login:
-
+    inf::setup($userAgent, $cookieFile, $ip);
+    banner();
+    taskPrintCenter($login, 'info');
+})($login, $ip);
 
 if (empty($GLOBALS['_CTX']['proxy']['src'])) {
     logx('err', '  MANA PROXY NYA !!!');
@@ -95,14 +99,13 @@ while (true) {
         
         _sle(5);
     } while (empty($dash));
-
     #_put('dash.html', $dash);
     
     $_fa = Scraper::_xP($dash, "//div[normalize-space()='Faucets']/ancestor::li//div[@class='sub-menu-two']/a/@href");
     foreach ($_fa as $fa) {
         $_c = basename(parse_url($fa)['path']);
         
-        print(FGd['CYN']." ".UNDR.maskEmail($login).RSET."  ");
+        print(FGd['CYN']." ".ITAL.UNDR.'processing'.RSET."  ");
         logx('err', strtoupper($_c));
         
         if (!empty($curr) && stripos($_c, $curr) === false) continue; 
@@ -129,6 +132,7 @@ while (true) {
                     [$he, $ua] = $cf;
                     inf::setup($ua, inf::$cookie);
                     $headersCF = $he;
+                    _sle(3);
                     continue;
                 }
             }
@@ -343,13 +347,19 @@ tes:
 
 
 function stfCF($api, $fa) {
-    $res = execCF($api, $fa, inf::$cookie, inf::$uagent, [], '2');
-    #print_r($res);
-    if (is_array($res) && isset($res['token'])) {
-        logx('success', 'Cloudflare Solved!');
-        $h = inf::netHead(['cf_clearance' => $res['token']]);
+    $res = execCF($api, $fa, inf::$cookie, inf::$uagent, []);
 
+    if (is_array($res) && isset($res['token'])) {
+        logx('', 'Cloudflare Solved!', true, true);
+        
+        config::credential()['uagent'] = $res['ua']; 
+        
         inf::setup($res['ua'], inf::$cookie, inf::$ip);
+        
+        $execPy = new execPython(inf::$cookie, $res['ua']);
+        $execPy->cfCookie("cf_clearance=".$res['token'], $fa);
+        
+        $h = inf::netHead(['cf_clearance' => $res['token']]);
 
         return [$h, $res['ua']];
     }

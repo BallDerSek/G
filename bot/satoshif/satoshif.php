@@ -1,23 +1,28 @@
 <?php
 if (!defined('ROOT')) { die; }
+
 $api = onKeys();
 
 $acc = config::credential([], true);
 $login = $acc['login'];
 
-$cookieFile = config::cookie($login);
-$userAgent = config::uagent('mobile');
-
+login:
 $host = 'http://satoshifaucet.io';
 $domain = parse_url($host, PHP_URL_HOST);
 $r = '/?r=124158';
 $ip = '173.249.41.150';
 
-inf::setup($userAgent, $cookieFile, $ip);
+(function ($login, $ip) {
+    $cookieFile = config::cookie($login);
+    
+    $creds = config::credential(['uagent' => fn() => config::uagent('desktop')], true);
+    
+    $userAgent = $creds['uagent'];
 
-banner();
-taskPrintCenter($login, 'info');
-login:
+    inf::setup($userAgent, $cookieFile, $ip);
+    banner();
+    taskPrintCenter($login, 'info');
+})($login, $ip);
 
 $_0 = Net::C($host, 'GET', null, inf::$cookie, ['detail-hints:false'], '', inf::$uagent, ip: $ip);
 if (empty($_0)) goto login;
@@ -86,14 +91,14 @@ while (true) {
         $fa = str_replace('https://', 'http://', $fa);
         $_c = basename(parse_url($fa)['path']);
         
-        print(FGd['CYN']." ".UNDR.maskEmail($login).RSET."  ");
+        print(FGd['CYN']." ".ITAL.UNDR.'processing'.RSET."  ");
         logx('err', strtoupper($_c));
         
         if (!empty($curr) && stripos($_c, $curr) === false) continue; 
         
         while (true) {
             _sle(3);
-            $fau = Net::C($fa, 'GET', null, $cookieFile, [], '', $userAgent, ip: $ip);
+            $fau = Net::C($fa, 'GET', null, inf::$cookie, [], '', inf::$uagent, ip: $ip);
             if (empty($fau)) continue;
 
             if ($ban = isBan($fau)) {
@@ -126,9 +131,9 @@ while (true) {
 
             _sle(2); 
             $ve = str_replace('https://', 'http://', $f['url']);
-            Net::X($ve, 'POST', $po, $cookieFile, [], $fa, $userAgent, ip: $ip, foll: false);
+            Net::X($ve, 'POST', $po, inf::$cookie, [], $fa, inf::$uagent, ip: $ip, foll: false);
             
-            $cla = Net::X($fa, 'GET', null, $cookieFile, [], '', $userAgent, ip: $ip);
+            $cla = Net::X($fa, 'GET', null, inf::$cookie, [], '', inf::$uagent, ip: $ip);
             
             if (stripos($cla, 'rate limited') !== false) goto login;
             
@@ -173,7 +178,7 @@ while (true) {
         $up = ['earnow','shortano', 'shortino', 'fc-lc'];
 
         do {
-            $sho = Net::C($sl, 'GET', null, $cookieFile, [], '', $userAgent, ip: $ip);
+            $sho = Net::C($sl, 'GET', null, inf::$cookie, [], '', inf::$uagent, ip: $ip);
             if (empty($sho)) { _sle(5); continue; }
             
             if ($ban = isBan($sho)) {
@@ -212,7 +217,7 @@ while (true) {
                 $cleanCap = array_filter((array)$cap, fn($k) => $k !== 'nocaptcha', ARRAY_FILTER_USE_KEY);
                 $po = array_merge($pa, $cleanCap, $cre);
                 
-                $get = Net::X($ud, 'POST', $po, $cookieFile, [], $sl, $userAgent, ip: $ip, foll: false);
+                $get = Net::X($ud, 'POST', $po, inf::$cookie, [], $sl, inf::$uagent, ip: $ip, foll: false);
                 
                 preg_match('/location\.href\s*=\s*["\']([^"\']+)["\']/', $get, $match);
                 $loc = $match[1] ?? '';
@@ -246,12 +251,12 @@ while (true) {
                 
                 $b1 = preg_replace('/^https:/i', 'http:', $bak);
                 #logx('', $b1, true, true);
-                Net::C($b1, 'GET', null, $cookieFile, [], '', $userAgent, ip: $ip, foll: false);
+                Net::C($b1, 'GET', null, inf::$cookie, [], '', inf::$uagent, ip: $ip, foll: false);
                 $b2 = str_replace('/back/', '/verify/', $b1);
                 #logx('', $b2, true, true);
-                Net::C($b2, 'GET', null, $cookieFile, [], $b1, $userAgent, ip: $ip, foll: false);
+                Net::C($b2, 'GET', null, inf::$cookie, [], $b1, inf::$uagent, ip: $ip, foll: false);
                 
-                $ver = Net::C($sl, 'GET', null, $cookieFile, [], '', $userAgent, ip: $ip);
+                $ver = Net::C($sl, 'GET', null, inf::$cookie, [], '', inf::$uagent, ip: $ip);
 
                 if (!empty($ver)) {
                     $_suc = scraper::_jP($ver, "/Swal\.fire\(\s*\{.*?icon:\s*'([^']+)'.*?title:\s*'([^']+)'.*?html:\s*'([^']+)'/s");

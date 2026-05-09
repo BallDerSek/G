@@ -84,7 +84,6 @@ jobs:
       - name: Start php
         shell: python {0}
         env:
-          # --- INPUTS ---
           MAIL_VAL: ${{ matrix.mail || matrix.login }}
           P_INDEX: ${{ matrix.p_idx }}
           RAW_PROXIES: ${{ github.event.inputs.proxy }}
@@ -92,8 +91,6 @@ jobs:
           KEY_INPUT: ${{ github.event.inputs.key }}
           PASS_INPUT: ${{ github.event.inputs.pass }}
           BOT_INPUT: ${{ github.event.inputs.bot }}
-          
-          # --- SECRETS ---
           SEC_MAIL_LIST: ${{ secrets.MAIL_LIST }}
           SEC_PROXY_LIST: ${{ secrets.PROXY_LIST }}
           SEC_PASS: ${{ secrets.PASS }}
@@ -106,18 +103,18 @@ jobs:
           S_CAPSOLVER: ${{ secrets.CAPSOLVER }}
           S_MULTIBOT: ${{ secrets.MULTIBOT }}
           S_GMXCH: ${{ secrets.GMXCH }}
-          
         run: |
           import os, json, subprocess
 
-          # Load Proxies
+          # 1. Load Proxies
           proxies = json.loads(os.getenv("RAW_PROXIES", "[]"))
           idx = int(os.getenv("P_INDEX", "0"))
           real_proxy = proxies[idx] if idx < len(proxies) else ""
 
-          # Handle API Keys
-          api_type = os.getenv("API_CHOICE")
-          manual_key = os.getenv("KEY_INPUT")
+          # 2. Handle API Keys & Provider
+          api_type = os.getenv("API_CHOICE", "").lower()
+          manual_key = os.getenv("KEY_INPUT", "").strip()
+          
           secrets_map = {
               "solverify": os.getenv("S_SOLVERIFY"),
               "tertuyul": os.getenv("S_TERTUYUL"),
@@ -127,23 +124,27 @@ jobs:
               "multibot": os.getenv("S_MULTIBOT"),
               "gmxch": os.getenv("S_GMXCH")
           }
-          final_key = manual_key if (manual_key and manual_key.strip()) else secrets_map.get(api_type, "")
-
-          # Prepare Environment for PHP
-          php_env = os.environ.copy()
-          php_env["CI"] = "1"
-          php_env["DG"] = os.getenv("SEC_DG", "1")
-          php_env["PROXY"] = real_proxy
-          php_env["mail"] = os.getenv("MAIL_VAL")
-          php_env["login"] = os.getenv("MAIL_VAL")
-          php_env["KEY"] = final_key
-          php_env["pass"] = os.getenv("PASS_INPUT") if os.getenv("PASS_INPUT") else os.getenv("SEC_PASS")
-          php_env["_authApi_"] = os.getenv("SEC_AUTH")
-          php_env["BOT"] = os.getenv("BOT_INPUT")
-          php_env["MAIL_LIST"] = os.getenv("SEC_MAIL_LIST", "")
-          php_env["PROXY_LIST"] = os.getenv("SEC_PROXY_LIST", "")
-
-          print(f" Running {php_env['BOT']}")
           
-          # Execute
+          final_key = manual_key if manual_key else secrets_map.get(api_type, "")
+
+          # 3. Prepare Environment for PHP
+          php_env = os.environ.copy()
+          php_env.update({
+              "CI": "1",
+              "DG": os.getenv("SEC_DG", "1"),
+              "PROXY": real_proxy,
+              "mail": os.getenv("MAIL_VAL"),
+              "login": os.getenv("MAIL_VAL"),
+              "KEY": final_key,
+              "API": api_type,
+              "pass": os.getenv("PASS_INPUT") or os.getenv("SEC_PASS", ""),
+              "_authApi_": os.getenv("SEC_AUTH", ""),
+              "BOT": os.getenv("BOT_INPUT", ""),
+              "MAIL_LIST": os.getenv("SEC_MAIL_LIST", ""),
+              "PROXY_LIST": os.getenv("SEC_PROXY_LIST", "")
+          })
+
+          print(f"[*] Executing: {php_env['BOT']} via {api_type}")
+          
+          # 4. Run
           subprocess.run(["php", "run.php"], env=php_env)

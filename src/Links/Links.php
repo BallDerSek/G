@@ -78,7 +78,8 @@ class _shortlinks {
         low_start:
         $html = Net::C($_0, 'GET', null, $this->cookie, [], $reff, $this->uagent);
         
-        if (!$html || $html === 99 || strlen($html) < 1000) {
+        if (!$html || $html === 99) {
+            low_check:
             if (!$this->proxied) {
                 @unlink($this->cookie); 
                 $pTarget = ($this->oldProxy ?: $this->proxy);
@@ -91,16 +92,22 @@ class _shortlinks {
             }
             throw new RuntimeException("blocked");
         }
+        #var_dump($html);
 
         $p = scraper::payload($html)[0]['payload'] ?? null;
-        if (!$p) throw new RuntimeException("payload empty");
+        if (!$p) goto low_check;
+        
         
         _sle(17);
         $res = Net::X("https://{$link}/links/go", 'POST', $p, $this->cookie, [], $reff, $this->uagent);
+        if (!$res || $res === 99) {
+            throw new RuntimeException("totally failed");
+        }
         $r = json_decode($res, true);
-        
-        if (empty($r['url'])) throw new RuntimeException("failed");
-        return $r['url'];
+        if (!empty($r['url'])) {
+            return $r['url'];
+        }
+        throw new RuntimeException("totally failed");
     }
 
     private function clk() {
@@ -117,6 +124,7 @@ class _shortlinks {
         $_0 = Net::C($this->url, 'GET', null, $this->cookie, [], $reff, $this->uagent);
         
         if (!$_0 || $_0 === 99 || strlen($_0) < 1000) {
+            clk_check:
             if (!$this->proxied) {
                 @unlink($this->cookie); 
                 $pTarget = (!empty($this->oldProxy)) ? $this->oldProxy : $this->proxy;
@@ -130,7 +138,7 @@ class _shortlinks {
         } 
 
         $f = scraper::payload($_0)[0] ?? null;
-        if (!$f) throw new RuntimeException("no initial payload found");
+        if (!$f) goto clk_check;
 
         $_1 = Net::C($this->url, 'POST', $f['payload'], $this->cookie, [], $reff, $this->uagent);
         if (!$_1 || $_1 === 99) throw new RuntimeException("failed");
@@ -151,7 +159,6 @@ class _shortlinks {
         $res = Net::X("https://{$this->host}/links/go", 'POST', $pa, $this->cookie, [], $reff, $this->uagent);
         
         if (!$res || $res === 99) {
-            _sle(5);
             throw new RuntimeException("totally failed");
         }
 
@@ -504,7 +511,7 @@ class _bypassSL {
         if (!AUTH_KEY) {
             throw new RuntimeException("unauthorized");
         }
-        $_fp = AUTH_API->access('earnow', 'fingerprint', ['userAgent' => $uagent]);
+        $_fp = AUTH_API()->access('earnow', 'fingerprint', ['userAgent' => $uagent]);
         
         $aapi = '1';
         $ip = "45.14.135.47";
@@ -685,7 +692,7 @@ class _bypassSL {
                             @unlink('captcha.png');
                         } else {
                             do {
-                                $inputName = AUTH_API->base64($img, 'fa3_icon');
+                                $inputName = AUTH_API()->base64($img, 'fa3_icon');
                                 #print_r($inputName);
                             } while ($inputName === false);
                         }

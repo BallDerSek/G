@@ -36,14 +36,25 @@ class check {
 
     public static function Dep() {
         self::$deps = underline("checking deps", function () {
+            $isWin = (PHP_OS_FAMILY === 'Windows');
+            $null  = $isWin ? 'NUL' : '/dev/null';
+            $pyBin = $isWin ? 'python' : 'python3';
+
             $hasNode = self::depCmd('node') || self::depCmd('nodejs');
-            $hasSynchrony = self::depCmd('synchrony') || (($npm = trim((string)shell_exec('npm root -g 2>/dev/null'))) !== '' && is_file($npm . DIRECTORY_SEPARATOR . 'synchrony' . DIRECTORY_SEPARATOR . 'package.json'));
             
-            $hasSeledroid = trim((string)shell_exec('python3 -c ' . escapeshellarg('import importlib.util; print(importlib.util.find_spec("seledroid") is not None)') . ' 2>/dev/null')) === 'True';
+            $npmRoot = trim((string)shell_exec("npm root -g 2>$null"));
+            $hasSynchrony = self::depCmd('synchrony') || (
+                $npmRoot !== '' && 
+                is_file($npmRoot . DIRECTORY_SEPARATOR . 'synchrony' . DIRECTORY_SEPARATOR . 'package.json')
+            );
+            
+            $pyCheck = 'import importlib.util; print(importlib.util.find_spec("seledroid") is not None)';
+            $pyCmd = "$pyBin -c " . escapeshellarg($pyCheck) . " 2>$null";
+            $hasSeledroid = trim((string)shell_exec($pyCmd)) === 'True';
             
             return [
                 'gd@php' => extension_loaded('gd'),
-                'python3' => self::depCmd('python3'),
+                'python3' => self::depCmd($pyBin),
                 'seledroid@py' => $hasSeledroid,
                 'gost' => self::depCmd('gost'),
                 'ssh' => self::depCmd('ssh'),
@@ -61,6 +72,7 @@ class check {
         }
         $GLOBALS['_CTX']['deps'] = self::$deps;
     }
+
 
     private static function depCmd($cmd) {
         $cmd = trim($cmd);

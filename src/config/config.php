@@ -191,7 +191,7 @@ class Config {
                     break;
             }
             if (isset($targetArray[gmxch::class][$type])) {
-                return AUTH_API;
+                return AUTH_API();
             }
         }
         
@@ -202,3 +202,6 @@ class Config {
 
 }
 
+function AUTH_API() {
+    return $GLOBALS['_CTX']['AUTH_API'];
+}

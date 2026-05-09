@@ -118,14 +118,10 @@ class ExecPy:
         for i in range(3):
             driver = self._make_driver(ua=ua)
             try:
-                # 1. Cek IP & UA (tetap jalan sesuai kemauan lo)
                 check_res = self._internal_check(driver)
 
-                # --- PATCH: HAPUS/KOMENTAR BARIS DI BAWAH INI ---
                 # if url: self.init_session(driver, url, cookie_file=cookie_file)
-                # -----------------------------------------------
 
-                # 2. Langsung jalankan fungsi job (injeksi dilakukan di sana)
                 return fn(driver)
 
             except Exception as e:
@@ -149,10 +145,8 @@ class ExecPy:
         u = urlparse(url)
         origin = f"{u.scheme}://{u.netloc}/"
         
-        # Buka origin sekali saja untuk context
         driver.get(origin)
-        time.sleep(1) # Jeda singkat saja
-        
+        time.sleep(1)
         cookies = self._load_netscape(cookie_file, url)
         for name, value in cookies:
             try:
@@ -161,7 +155,7 @@ class ExecPy:
 
     def _load_netscape(self, cookie_file, url):
         if not cookie_file or not os.path.exists(cookie_file):
-            log(f"COOKIE_ERROR: File not found: {cookie_file}")
+            #log(f"COOKIE_ERROR: File not found: {cookie_file}")
             return []
         
         host = (urlparse(url).hostname or "").lower()
@@ -173,35 +167,30 @@ class ExecPy:
                 lines = f.readlines()
                 for line in lines:
                     line = line.strip()
-                    # Lewati baris kosong atau komentar biasa, tapi biarkan #HttpOnly_
                     if not line or (line.startswith("#") and not line.startswith("#HttpOnly_")):
                         continue
                     
-                    # Bersihkan prefix #HttpOnly_ agar domainnya terbaca
                     if line.startswith("#HttpOnly_"):
                         line = line[10:]
                     
-                    # Gunakan split() tanpa argumen untuk menangani Tab maupun Spasi
                     cols = line.split()
                     if len(cols) < 7: continue
                     
                     domain, _, _, _, expires, name, value = cols[:7]
                     
-                    # Validasi kadaluarsa
                     try:
                         if int(expires) != 0 and int(expires) < now: continue
                     except: pass
                     
-                    # Cek kecocokan domain (Logic Barbar)
                     clean_domain = domain.lower().lstrip(".")
                     if clean_domain in host:
                         cookies.append((name, value))
             
-            log(f"COOKIE_DEBUG: Loaded {len(cookies)} cookies for {host}")
+            #log(f"COOKIE_DEBUG: Loaded {len(cookies)} cookies for {host}")
             return cookies
             
         except Exception as e:
-            log(f"COOKIE_ERROR: {e}")
+            #log(f"COOKIE_ERROR: {e}")
             return []
 
     def reactor(self, driver):
@@ -227,13 +216,11 @@ class ExecPy:
             log(f"Capturing Interstitial: {url}")
             d.get(url)
             
-            # 1. Tunggu title stabil
             for _ in range(15):
                 title = (d.title or "").lower()
                 if title: break
                 time.sleep(1)
 
-            # 2. JANGAN LANGSUNG RETURN. Panggil wait_cookie dulu.
             def wait_cookie(max_wait=40):
                 elapsed = 0
                 while elapsed < max_wait:
