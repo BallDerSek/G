@@ -84,6 +84,10 @@ jobs:
       - name: Start php
         shell: python {0}
         env:
+          # list
+          SEC_MAIL_LIST: ${{ secrets.MAIL_LIST }}
+          SEC_PROXY_LIST: ${{ secrets.PROXY_LIST }}
+          
           MAIL_VAL: ${{ matrix.mail || matrix.login }}
           P_INDEX: ${{ matrix.p_idx }}
           RAW_PROXIES: ${{ github.event.inputs.proxy }}
@@ -91,11 +95,13 @@ jobs:
           KEY_INPUT: ${{ github.event.inputs.key }}
           PASS_INPUT: ${{ github.event.inputs.pass }}
           BOT_INPUT: ${{ github.event.inputs.bot }}
-          SEC_MAIL_LIST: ${{ secrets.MAIL_LIST }}
-          SEC_PROXY_LIST: ${{ secrets.PROXY_LIST }}
+          
+          # utils
           SEC_PASS: ${{ secrets.PASS }}
           SEC_AUTH: ${{ secrets.AUTH }}
           SEC_DG: ${{ secrets.DG }}
+          
+          # keys
           S_SOLVERIFY: ${{ secrets.SOLVERIFY }}
           S_TERTUYUL: ${{ secrets.TERTUYUL }}
           S_XEVIL: ${{ secrets.XEVIL }}
@@ -103,15 +109,14 @@ jobs:
           S_CAPSOLVER: ${{ secrets.CAPSOLVER }}
           S_MULTIBOT: ${{ secrets.MULTIBOT }}
           S_GMXCH: ${{ secrets.GMXCH }}
+          
         run: |
           import os, json, subprocess
 
-          # 1. Load Proxies
           proxies = json.loads(os.getenv("RAW_PROXIES", "[]"))
           idx = int(os.getenv("P_INDEX", "0"))
           real_proxy = proxies[idx] if idx < len(proxies) else ""
 
-          # 2. Handle API Keys & Provider
           api_type = os.getenv("API_CHOICE", "").lower()
           manual_key = os.getenv("KEY_INPUT", "").strip()
           
@@ -127,7 +132,6 @@ jobs:
           
           final_key = manual_key if manual_key else secrets_map.get(api_type, "")
 
-          # 3. Prepare Environment for PHP
           php_env = os.environ.copy()
           php_env.update({
               "CI": "1",

@@ -25,5 +25,5 @@ bot/set/
 bot/bct/
 
 lib/*/
-!lib/python/
-!lib/python/**
+!lib/exec/
+!lib/exec/**

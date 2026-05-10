@@ -89,14 +89,14 @@ final class Api { #contractor
             'cf' => [
                 'k'=>'siteKey','url'=>'domain','api'=>'popularcaptcha', 'defaults' => ['method' => 'turnstile']
                 ],
-            /*
-            */
             'hc' => [
                 'k'=>'siteKey','url'=>'domain','api'=>'popularcaptcha', 'defaults' => ['method' => 'hcaptcha']
                 ],
+            /*
             'rc2' => [
                 'k'=>'siteKey','url'=>'domain','api'=>'popularcaptcha', 'defaults' => ['method' => 'recaptcha2']
                 ],
+            */
             'rc3' => [
                 'k'=>'siteKey','url'=>'domain','api'=>'popularcaptcha', 'defaults' => ['method' => 'recaptcha3']
                 ],
