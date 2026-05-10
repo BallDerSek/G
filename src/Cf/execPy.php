@@ -33,7 +33,7 @@ final class execPython {
         $this->uagent = $ua;
         $this->lockFile = sys_get_temp_dir() . '/seledroid_global.lock';
         
-        if (($py = realpath(LIBDIR . '/python/execPy.py')) === false) {
+        if (($py = realpath(LIBDIR . '/exec/execPy.py')) === false) {
             logx('err', "execPy file not found");
             exit;
         }

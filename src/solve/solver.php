@@ -31,7 +31,7 @@ class Solve {
         
         $solution = [];
         $_cap = Capt::cha($html);
-
+#var_dump($_cap);
         if (!empty($_cap['antibot'])) {
             $resAtb = locally::ATB($_cap['antibot']['type'], $api, $html);
             if ($resAtb === 77) return ['trouble' => 'reload'];

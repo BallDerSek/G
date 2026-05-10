@@ -48,6 +48,7 @@ function execCF($api, $url, $cookie, $uagent, array $data = [], $input = '') {
     
     if ($input === '' || $input === '2') {
         if (!$api) {
+            die('undefined preovider')
             logx('err', 'undefined provider, fallback local');
             $input = '1';
             goto Seledroid;
@@ -67,6 +68,7 @@ function execCF($api, $url, $cookie, $uagent, array $data = [], $input = '') {
             _clr();
             
             if (!isset(Api::ACC[get_class($api)]['interstitial'])) {
+                return false;
                 $input = '1';
                 goto Seledroid;
             }
@@ -75,6 +77,7 @@ function execCF($api, $url, $cookie, $uagent, array $data = [], $input = '') {
             $solve = $api->access($url, 'interstitial', $param);
             
             if ($solve === 71) {
+                return false;
                 $input = '1';
                 goto Seledroid;
             }

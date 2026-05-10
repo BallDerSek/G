@@ -86,7 +86,6 @@ while (true) {
 #_put("dash.html", $dash); die;
     
     $_fa = Scraper::_xP($dash, "//div[normalize-space()='Faucets']/ancestor::li//div[@class='sub-menu-two']/a/@href");
-    
     foreach ($_fa as $fa) {
         $fa = str_replace('https://', 'http://', $fa);
         $_c = basename(parse_url($fa)['path']);
@@ -165,6 +164,7 @@ while (true) {
             styler("waiting for next claim", fn() => _sle(15));
         }
     }
+    
     
     $_sl = Scraper::_xP($dash, "//div[normalize-space()='Shortlinks']/parent::div/following-sibling::div[@class='sub-menu-two']/a/@href");
 

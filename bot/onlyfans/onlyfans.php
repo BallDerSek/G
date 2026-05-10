@@ -105,7 +105,7 @@ while (true) {
             if (isset($_err[1][0])) {
                 if (stripos($_err[1][0], 'elcome back')) continue;
                 if (stripos($_err[1][0], 'has been created')) continue;
-                print_r($_err);
+                #print_r($_err);
                 logx('info', $_err[1][0], true, true);
                 die;
             }
