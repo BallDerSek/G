@@ -48,7 +48,7 @@ function execCF($api, $url, $cookie, $uagent, array $data = [], $input = '') {
     
     if ($input === '' || $input === '2') {
         if (!$api) {
-            die('undefined preovider')
+            die('undefined preovider');
             logx('err', 'undefined provider, fallback local');
             $input = '1';
             goto Seledroid;

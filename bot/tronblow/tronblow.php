@@ -5,7 +5,7 @@ $login = config::credential()['login'];
 $userAgent = config::uagent();
 $r = '/?ref=gamamoch%40gmail.com';
 
-$mailPath = LIBDIR.'/mail.txt';
+$mailPath = LIBDIR.'/email.txt';
 if (!is_file($mailPath)) {
     logx('err', 'mail.txt not found');
     die();
