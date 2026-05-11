@@ -115,7 +115,7 @@ while (true) {
         
     } while (empty($dash));
     #_put('dash.html', $dash); die;
-
+#goto sl;
     $_fa = Scraper::_xP($dash, "//ul[@id='faucet']//a/@href");
     foreach ($_fa as $fa) {
         $_c = basename(parse_url($fa)['path']);
@@ -216,7 +216,7 @@ while (true) {
             }
         }
     }
-
+sl:
     $valid = [];
     $success_in_page = false;
     $_sl = Scraper::_xP($dash, "//ul[@id='links']//a/@href");
@@ -368,7 +368,7 @@ while (true) {
                             
                             $ver = Net::X("$host/links/complete_claim", 'POST', $po, inf::$cookie, $he, $sl, inf::$uagent);
                             
-                            #_put('ver.html', $ver);
+                            _put('ver.html', $ver);
                             
                             if (!empty($ver) && ($ver !== 99)) {
                                 $cla = json_decode($ver, true);
@@ -380,6 +380,8 @@ while (true) {
                                 
                                 logx($suc ? 'ok' : 'err', $suc ? "Success " : "error ", false);
                                 logg(false, $cla['message'] ?? "{$_sucH[2][0]}" ?? 'no message');
+                                if (stripos($ver, 'has been sent to your')) $suc = true;
+                                
                                 if ($suc) {
                                     $success_in_page = true;
                                     break 3;
