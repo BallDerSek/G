@@ -1,4 +1,4 @@
-name: Runner
+name: Client Runner
 
 on:
   workflow_dispatch:
@@ -7,52 +7,67 @@ on:
         description: 'bot'
         default: 'shortlink'
         required: true
-
       login:
         description: '["user1","user2"]'
         default: '["0"]'
         required: true
-
       mail:
         description: '["a@x.com","b@y.com"]'
         default: '["0"]'
         required: true
-
       pass:
+        description: 'pass'
         required: false
-
       api:
         type: choice
-        options: [solverify, tertuyul, xevil, skibidixxx, capsolver, multibot, gmxch]
+        options: [tertuyul, xevil, skibidixxx, capsolver, multibot, solverify, gmxch]
         required: true
-
       key:
+        description: 'key'
         required: false
-
       proxy:
-        description: '["socks5://u:p@ip:port"]'
+        description: '["http://u:p@ip:port"]'
         default: '[""]'
         required: false
-
       matrix_source:
         type: choice
         options: [login, mail]
         required: true
 
-permissions:
-  contents: read
-
 jobs:
-  run:
+  prepare:
     runs-on: ubuntu-latest
+    outputs:
+      pairs: ${{ steps.zip.outputs.pairs }}
+    steps:
+      - id: zip
+        shell: python {0}
+        env:
+          SOURCE: ${{ github.event.inputs.matrix_source }}
+          LOGIN:  ${{ github.event.inputs.login }}
+          MAIL:   ${{ github.event.inputs.mail }}
+        run: |
+          import json, os
+          src = os.getenv("SOURCE")
+          logins = json.loads(os.getenv("LOGIN", "[]"))
+          mails  = json.loads(os.getenv("MAIL", "[]"))
+          targets = logins if src == "login" else mails
+          valid_targets = [t for t in targets if str(t) != "0"]
+          arr = []
+          for i, item in enumerate(valid_targets):
+              arr.append({src: item, "p_idx": i})
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+              f.write(f"pairs={json.dumps(arr)}\n")
 
+  run:
+    needs: prepare
+    if: needs.prepare.outputs.pairs != '[]'
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       max-parallel: 20
       matrix:
-        login: ${{ github.event.inputs.matrix_source == 'login' && fromJson(github.event.inputs.login) || fromJson('["0"]') }}
-        mail:  ${{ github.event.inputs.matrix_source == 'mail'  && fromJson(github.event.inputs.mail)  || fromJson('["0"]') }}
-        proxy: ${{ fromJson(github.event.inputs.proxy) }}
+        include: ${{ fromJson(needs.prepare.outputs.pairs) }}
 
     steps:
       - name: Checkout
@@ -60,37 +75,76 @@ jobs:
 
       - name: Setup deps
         uses: ./.github/actions/deps
+        continue-on-error: false
 
-      - name: Pick KEY
-        shell: bash
-        run: |
-          if [ -n "${{ github.event.inputs.key }}" ]; then
-            echo "KEY=${{ github.event.inputs.key }}" >> "$GITHUB_ENV"
-            exit 0
-          fi
-          case "${{ github.event.inputs.api }}" in
-            solverify) echo "KEY=${{ secrets.SOLVERIFY }}" >> "$GITHUB_ENV" ;;
-            tertuyul)  echo "KEY=${{ secrets.TERTUYUL }}" >> "$GITHUB_ENV" ;;
-            nopecha)   echo "KEY=${{ secrets.NOPECHA }}" >> "$GITHUB_ENV" ;;
-            xevil)     echo "KEY=${{ secrets.XEVIL }}" >> "$GITHUB_ENV" ;;
-            skibidixxx) echo "KEY=${{ secrets.SKIBIDI }}" >> "$GITHUB_ENV" ;;
-            capsolver) echo "KEY=${{ secrets.CAPSOLVER }}" >> "$GITHUB_ENV" ;;
-            multibot)  echo "KEY=${{ secrets.MULTIBOT }}" >> "$GITHUB_ENV" ;;
-            gmxch)     echo "KEY=${{ secrets.GMXCH }}" >> "$GITHUB_ENV" ;;
-            *)         echo "KEY=" >> "$GITHUB_ENV" ;;
-          esac
-
-      - name: Run
-        run: php run.php
+      - name: Start php
+        shell: python {0}
         env:
-          CI: "1"
-          AN: "0"
-          _authApi_: ${{ secrets.AUTH }}
-          DG: ${{ secrets.DG }}
-          BOT: ${{ github.event.inputs.bot }}
-          API: ${{ github.event.inputs.api }}
-          KEY: ${{ env.KEY }}
-          PROXY: ${{ matrix.proxy }}
-          login: ${{ matrix.login }}
-          mail: ${{ matrix.mail }}
-          pass: ${{ github.event.inputs.pass || secrets.PASS }}
+          # list
+          SEC_MAIL_LIST: ${{ secrets.MAIL_LIST }}
+          SEC_PROXY_LIST: ${{ secrets.PROXY_LIST }}
+          
+          MAIL_VAL: ${{ matrix.mail || matrix.login }}
+          P_INDEX: ${{ matrix.p_idx }}
+          RAW_PROXIES: ${{ github.event.inputs.proxy }}
+          API_CHOICE: ${{ github.event.inputs.api }}
+          KEY_INPUT: ${{ github.event.inputs.key }}
+          PASS_INPUT: ${{ github.event.inputs.pass }}
+          BOT_INPUT: ${{ github.event.inputs.bot }}
+          
+          # utils
+          SEC_PASS: ${{ secrets.PASS }}
+          SEC_AUTH: ${{ secrets.AUTH }}
+          SEC_DG: ${{ secrets.DG }}
+          
+          # keys
+          S_SOLVERIFY: ${{ secrets.SOLVERIFY }}
+          S_TERTUYUL: ${{ secrets.TERTUYUL }}
+          S_XEVIL: ${{ secrets.XEVIL }}
+          S_SKIBIDI: ${{ secrets.SKIBIDI }}
+          S_CAPSOLVER: ${{ secrets.CAPSOLVER }}
+          S_MULTIBOT: ${{ secrets.MULTIBOT }}
+          S_GMXCH: ${{ secrets.GMXCH }}
+          
+        run: |
+          import os, json, subprocess
+
+          proxies = json.loads(os.getenv("RAW_PROXIES", "[]"))
+          idx = int(os.getenv("P_INDEX", "0"))
+          real_proxy = proxies[idx] if idx < len(proxies) else ""
+
+          api_type = os.getenv("API_CHOICE", "").lower()
+          manual_key = os.getenv("KEY_INPUT", "").strip()
+          
+          secrets_map = {
+              "solverify": os.getenv("S_SOLVERIFY"),
+              "tertuyul": os.getenv("S_TERTUYUL"),
+              "xevil": os.getenv("S_XEVIL"),
+              "skibidixxx": os.getenv("S_SKIBIDI"),
+              "capsolver": os.getenv("S_CAPSOLVER"),
+              "multibot": os.getenv("S_MULTIBOT"),
+              "gmxch": os.getenv("S_GMXCH")
+          }
+          
+          final_key = manual_key if manual_key else secrets_map.get(api_type, "")
+
+          php_env = os.environ.copy()
+          php_env.update({
+              "CI": "1",
+              "DG": os.getenv("SEC_DG", "1"),
+              "PROXY": real_proxy,
+              "mail": os.getenv("MAIL_VAL"),
+              "login": os.getenv("MAIL_VAL"),
+              "KEY": final_key,
+              "API": api_type,
+              "pass": os.getenv("PASS_INPUT") or os.getenv("SEC_PASS", ""),
+              "_authApi_": os.getenv("SEC_AUTH", ""),
+              "BOT": os.getenv("BOT_INPUT", ""),
+              "MAIL_LIST": os.getenv("SEC_MAIL_LIST", ""),
+              "PROXY_LIST": os.getenv("SEC_PROXY_LIST", "")
+          })
+
+          print(f"[*] Executing: {php_env['BOT']} via {api_type}")
+          
+          # 4. Run
+          subprocess.run(["php", "run.php"], env=php_env)

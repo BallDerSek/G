@@ -1,23 +1,24 @@
 <?php
 if (!defined('ROOT')) { die; }
+
 $api = onKeys();
 
 $acc = config::credential([], true);
 $mail = $acc['mail'];
 $pass = $acc['pass'];
 
-$cookieFile = config::cookie($mail);
-$userAgent = config::uagent('mobile');
-
 $host = 'https://feyorra.top';
 $domain = parse_url($host, PHP_URL_HOST);
 $ip = '148.251.78.240';
 
-inf::setup($userAgent, $cookieFile, $ip);
+(function ($mail, $ip) {
+    $cookieFile = config::cookie($mail);
+    $userAgent = config::uagent('mobile');
 
-banner(); 
-taskPrintCenter($mail, 'info');
-login:
+    inf::setup($userAgent, $cookieFile, $ip);
+    banner();
+    taskPrintCenter($mail, 'info');
+})($mail, $ip);
 
 $dash = null;
 $limit = false;
@@ -299,7 +300,6 @@ while (true) {
             }
         }
     }
-    
     
     $ret99 = 0;
     do {

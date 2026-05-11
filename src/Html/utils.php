@@ -5,7 +5,7 @@
      * @return array|null
  */
 class Capt {
-
+    
     public static function cha($html): ?array {
         if (empty($html)) return null;
 
@@ -27,60 +27,73 @@ class Capt {
             if (!empty($hc) && isset($hc[0])) {
                 $found['hc'] = [
                     'type' => 'hc',
-                    'keys'   => $hc[0],
-                    'extra'  => ['invisible' => str_contains($html, 'data-size="invisible"')]
+                    'keys' => $hc[0],
+                    'extra' => ['invisible' => str_contains($html, 'data-size="invisible"')]
                 ];
             }
         }
         
         if ($has_turnstile) {
-            $cft = array_merge(
+            $cft = array_filter(array_merge(
                 Scraper::_xP($xp, "//div[contains(@class,'cf-turnstile')]/@data-sitekey") ?: [],
+                Scraper::_xP($xp, "//*[@data-sitekey][contains(@id,'cf-turnstile')]/@data-sitekey") ?: [],
                 Scraper::_xP($xp, "//div[contains(@class,'g-recaptcha')]/@data-sitekey") ?: []
-            );
+            ));
+
             if (!empty($cft)) {
+                $keys = array_values(array_unique($cft));
                 $mCda = Scraper::_jP($html, "/cdata\s*:\s*['\"]([^'\"]+)['\"]/");
                 $found['cft'] = [
                     'type' => 'cft',
-                    'keys'   => array_values(array_unique($cft))[0],
-                    'extra'  => [
-                        'cdata' => $mCda[1][0] ?? null,
-                    ]
+                    'keys' => $keys[0],
+                    'extra' => ['cdata' => $mCda[1][0] ?? null]
                 ];
+            } else {
+                if (preg_match('/data-sitekey=["\'](0x[a-zA-Z0-9_-]+)["\']/', $html, $matches)) {
+                    $found['cft'] = [
+                        'type' => 'cft',
+                        'keys' => $matches[1],
+                    ];
+                }
             }
         }
 
-        if ($has_recaptcha && !isset($found['cft'])) {
+        if ($has_recaptcha) {
             $v2 = Scraper::find($xp, 'g-recaptcha', 'div', 'data-sitekey') 
                ?? Scraper::find($xp, 'sitekey', '*', 'data-sitekey');
 
             if (!empty($v2) && isset($v2[0])) {
                 $found['rc2'] = [
                     'type' => 'rc2',
-                    'keys'   => $v2[0],
-                    'extra'  => [
+                    'keys' => $v2[0],
+                    'extra' => [
                         'invisible' => str_contains($html, 'data-size="invisible"'),
-                        'data-s'    => Scraper::find($xp, 'data-s', '*', 'data-s')[0] ?? null
+                        'data-s' => Scraper::find($xp, 'data-s', '*', 'data-s')[0] ?? null
                     ]
                 ];
             }
         }
 
-        $v3 = [];
+        // --- 4. RECAPTCHA V3 ---
+        $v3_raw = [];
         foreach ($scripts as $src) {
-            if (preg_match('/render=([^&]+)/', $src, $m)) $v3[] = $m[1];
+            if (preg_match('/render=([^&]+)/', $src, $m)) {
+                if (strlen($m[1]) > 20 && $m[1] !== 'explicit') {
+                    $v3_raw[] = $m[1];
+                }
+            }
         }
         if (preg_match_all('/grecaptcha\.execute\(\s*[\'"]([^\'"]+)/', $html, $m)) {
-            $v3 = array_merge($v3, $m[1]);
+            $v3_raw = array_merge($v3_raw, $m[1]);
         }
 
-        if (!empty($v3)) {
-            $v3_keys = array_values(array_unique($v3));
-            $mAct = Scraper::_jP($html, "/action\s*[:=]\s*['\"]([^'\"]+)['\"]/");
+        $v3_keys = array_values(array_unique($v3_raw));
+        if (!empty($v3_keys)) {
+            $mAct = Scraper::_jP($html, "/action\s*[:=]\s*['\"]((?!http)[^'\"]+)['\"]/");
             $found['rc3'] = [
                 'type' => 'rc3',
-                'keys'   => $v3_keys[0],
-                'extra'  => ['action' => $mAct[1][0] ?? 'homepage']
+                'keys' => $v3_keys[0],
+                'extra' => ['action' => $mAct[1][0] ?? 'homepage']
             ];
         }
         
@@ -93,29 +106,23 @@ class Capt {
 
         foreach ($scripts as $src) {
             if (preg_match('/rscaptcha\.com.*\?(.*)$/', $src, $m)) {
-                $queryStr = $m[1] ?? null;
-                if ($queryStr) {
-                    parse_str($queryStr, $params);
-                    if (!empty($params['public_key'])) {
-                        $found['rss'] = [
-                            'type' => 'rsc_' . preg_replace('/^v/', '', $params['version'] ?? '1'),
-                            'keys'   => $params['public_key'],
-                            'extra'  => $params
-                        ];
-                        break;
-                    }
+                parse_str($m[1] ?? '', $params);
+                if (!empty($params['public_key'])) {
+                    $found['rss'] = [
+                        'type' => 'rsc_' . preg_replace('/^v/', '', $params['version'] ?? '1'),
+                        'keys' => $params['public_key'],
+                        'extra' => $params
+                    ];
+                    break;
                 }
             } 
         }
+
         if (str_contains($html, 'rscaptcha_token')) {
             $rs_token = Scraper::find($html, 'rscaptcha_token')[0] ?? null;
-            $rs_image = scraper::_xP($html, "//img[@id='rscaptcha_img']/@src")[0];
-            #var_dump($rs_token);
+            $rs_image = Scraper::_xP($xp, "//img[@id='rscaptcha_img']/@src")[0] ?? null;
             if ($rs_token && $rs_image) {
-                $_i = 'the least amount of times';
-                $_u = 'select the upside-down';
-                $_t = str_contains($html, $_i) ? 'icon' : 'upside';
-                
+                $_t = str_contains($html, 'the least amount of times') ? 'icon' : 'upside';
                 $found['rss'] = [
                     'type' => "rs_{$_t}",
                     'keys' => $rs_image,
@@ -130,6 +137,7 @@ class Capt {
 
         return !empty($found) ? $found : null;
     }
+
 }
 
 
