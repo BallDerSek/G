@@ -45,7 +45,8 @@ jobs:
           batches = []
           for i in range(0, len(valid_targets), size):
               chunk = valid_targets[i:i + size]
-              batches.append({"chunk": chunk, "offset": i})
+              # Kirim chunk sebagai JSON string di dalam object matrix
+              batches.append({"chunk_str": json.dumps(chunk), "offset": i})
           
           with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
               f.write(f"batches={json.dumps(batches)}\n")
@@ -71,8 +72,7 @@ jobs:
       - name: Start PHP Parallel
         shell: python
         env:
-          # Data Batch
-          CHUNK_JSON: ${{ json.dumps(matrix.chunk) }}
+          CHUNK_RAW: ${{ matrix.chunk_str }}
           OFFSET: ${{ matrix.offset }}
           
           # Inputs
@@ -93,14 +93,12 @@ jobs:
           S_CAPSOLVER: ${{ secrets.CAPSOLVER }}
           S_MULTIBOT: ${{ secrets.MULTIBOT }}
           S_GMXCH: ${{ secrets.GMXCH }}
-          SEC_MAIL_LIST: ${{ secrets.MAIL_LIST }}
-          SEC_PROXY_LIST: ${{ secrets.PROXY_LIST }}
           
         run: |
           import os, json, subprocess
           from concurrent.futures import ThreadPoolExecutor
 
-          accounts = json.loads(os.getenv("CHUNK_JSON", "[]"))
+          accounts = json.loads(os.getenv("CHUNK_RAW", "[]"))
           proxies = json.loads(os.getenv("RAW_PROXIES", "[]"))
           offset = int(os.getenv("OFFSET", "0"))
           
