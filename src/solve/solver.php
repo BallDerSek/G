@@ -138,13 +138,13 @@ class Solve {
                 logx('ok', "Switching to ".get_class($api));
                 $t = $api->token($key, $host, $type, $Params);
                 if ($t === 71) return 471;
-                if ($t === null) exit();
+                if ($t === null) return 404;
                 if ($t === false) return 404;
                 if ($t) break;
             }
             
             if ($t === 71) return 471; 
-            if ($t === null) exit();
+            if ($t === null) return 404;
             if ($t && $t !== 777) break;
             _sle(1);
         }

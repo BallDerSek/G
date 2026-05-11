@@ -192,12 +192,14 @@ while (true) {
                     $_suc = scraper::_jP($cla, "/Toast\.fire\(\s*\{.*?icon:\s*'([^']+)'.*?html:\s*'([^']+)'/s") ?? [];
                     if (!empty($_suc[1][0])) {
                         $status = $_suc[1][0]; 
+                        print(FGd['CYN'].maskEmail($login).RSET." ");
                         logx($status === 'success' ? 'ok' : 'err', "{$_suc[1][0]} ", false);
                         logg(false, "{$_suc[2][0]}");
                         
                         if (stripos($_suc[2][0], 'nvalid') !== false) _put('fau.html', $fau);
                         if (stripos($_suc[2][0], 'sufficient') !== false) break;
                         if (stripos($_suc[2][0], 'ecurity token')) _sle(10);
+                        if (stripos($_suc[2][0], 'flagged')) die;
                         
                         if (stripos($_suc[2][0], 'Shortlink') !== false) {
                             if ($SLDONE) {

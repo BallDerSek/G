@@ -1,4 +1,4 @@
-name: Client Runner
+name: Runner
 
 on:
   workflow_dispatch:

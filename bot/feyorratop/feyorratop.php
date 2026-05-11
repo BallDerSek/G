@@ -7,6 +7,7 @@ $acc = config::credential([], true);
 $mail = $acc['mail'];
 $pass = $acc['pass'];
 
+login:
 $host = 'https://feyorra.top';
 $domain = parse_url($host, PHP_URL_HOST);
 $ip = '148.251.78.240';
@@ -47,10 +48,10 @@ while (true) {
             exit; 
         }
         
-        @unlink($cookieFile);
+        @unlink(inf::$cookie);
         logx('err', "logging in", false); 
         _sle(3); _clr();
-        $_0 = Net::C("$host/login", 'GET', null, $cookieFile, [], '', $userAgent, false, false, $ip);
+        $_0 = Net::C("$host/login", 'GET', null, inf::$cookie, [], '', inf::$uagent, false, false, $ip);
         
         if ($_0 === 99) {
             logx('warn', 'Proxy issue, wait 30s');
@@ -80,7 +81,7 @@ while (true) {
         }
         
         if (!empty($po)) {
-            $ve = Net::C($f['url'], 'POST', $po, $cookieFile, [], "$host/login", $userAgent, false, false, $ip);
+            $ve = Net::C($f['url'], 'POST', $po, inf::$cookie, [], "$host/login", inf::$uagent, false, false, $ip);
             
             if ($ve === 99) {
                 logx('warn', 'Proxy issue, wait 30s');
@@ -106,7 +107,7 @@ while (true) {
     
     $claim = false;
     do {
-        $ads = Net::C("$host/ptc", 'GET', null, $cookieFile, [], "$host/dashboard", $userAgent, false, false, $ip);
+        $ads = Net::C("$host/ptc", 'GET', null, inf::$cookie, [], "$host/dashboard", inf::$uagent, false, false, $ip);
         if ($ads === 99) { _sle(60); continue 2; }
         $_tim = scraper::_xP($ads, "//div[@class='ptc_cards']//span[i[contains(@class, 'fa-clock')]]");
         
@@ -122,7 +123,7 @@ while (true) {
             #die;
             $ret99 = 0;
             while (true) {
-                $view = Net::C($vurl, 'GET', null, $cookieFile, [], '', $userAgent, false, false, $ip);
+                $view = Net::C($vurl, 'GET', null, inf::$cookie, [], '', inf::$uagent, false, false, $ip);
                 if ($view === 99) {
                     $ret99++;
                     logx('warn', "masalah proxy, warm up dulu");
@@ -155,7 +156,7 @@ while (true) {
                                 styler("waiting for ads: $wait", fn() => _sle($wait));
                             }
                             claim:
-                            $cla = Net::C($f[0]['url'], 'POST', $po, $cookieFile, [], $vurl, $userAgent, false, false, $ip);
+                            $cla = Net::C($f[0]['url'], 'POST', $po, inf::$cookie, [], $vurl, inf::$uagent, false, false, $ip);
                             if (empty($cla)) goto claim;
                             if ($cla === 99) goto login;
                             break;
@@ -166,6 +167,7 @@ while (true) {
             if (!empty($cla)) {
                 $m = scraper::_jP($cla, "/Swal\.fire\(\{.*?title\s*:\s*(['\"])(.*?)\\1.*?\}\)/s");
                 if (isset($m[2][0])) {
+                    print(FGd['CYN'].maskEmail($mail).RSET." ");
                     logg(true, $m[2][0]);
                 }
             }
@@ -180,7 +182,7 @@ while (true) {
     if ($claim && !$limit) {
         $ret99 = 0; 
         while (true) {
-            $fau = Net::C("$host/faucet", 'GET', null, $cookieFile, [], "$host/dashboard", $userAgent, false, false, $ip);
+            $fau = Net::C("$host/faucet", 'GET', null, inf::$cookie, [], "$host/dashboard", inf::$uagent, false, false, $ip);
             #_put('fau.html', $fau);
             if ($fau === 99) {
                 $ret99++;
@@ -232,7 +234,7 @@ while (true) {
                 }
                 
                 if ($_cu) {
-                    $img = Net::C($_cu, 'GET', null, $cookieFile, [], "$host/faucet", $userAgent);
+                    $img = Net::C($_cu, 'GET', null, inf::$cookie, [], "$host/faucet", inf::$uagent);
                     if (!empty($img) || ($img !== 99)) {
                         $t_text = _text($img, $host, $mail);
                     }
@@ -266,15 +268,16 @@ while (true) {
                 }
             }
             
-            $cla = Net::C($f['url'], 'POST', $po, $cookieFile, [], "$host/faucet", $userAgent, false, false, $ip);
+            $cla = Net::C($f['url'], 'POST', $po, inf::$cookie, [], "$host/faucet", inf::$uagent, false, false, $ip);
             if (empty($cla) || ($cla === 99)) continue;
             $m = scraper::_jP($cla, "/Swal\.fire\(\{.*?title\s*:\s*(['\"])(.*?)\\1.*?\}\)/s") ?? [];
                 
             if (isset($m[2][0])) {
+                print(FGd['CYN'].maskEmail($mail).RSET." ");
                 logg(true, $m[2][0], false);
                 $pttr = '/<h3>([^<]+)<\/h3>\s*<p>Balance<\/p>/';
                 $_bal = scraper::_jP($cla, $pttr)[1];
-                logx('ok', ' [ '.$_bal[0].' ]', true, true);
+                logx('ok', '[ '.$_bal[0].' ]', true, true);
                 if (stripos($m[2][0], 'has been added')) break;
             }
             
@@ -285,12 +288,12 @@ while (true) {
         for ($i = 1; $i <= $co; $i++) {
             logx('info', "box $i/$co.");
             
-            $box = Net::C("$host/pickabox", 'GET', null, $cookieFile, [], "$host/dashboard", $userAgent, false, false, $ip);
+            $box = Net::C("$host/pickabox", 'GET', null, inf::$cookie, [], "$host/dashboard", inf::$uagent, false, false, $ip);
             $f = scraper::payload($box);
             if (!empty($f)) {
                 $pa = $f[0]['payload'];
                 $pa['selected_box'] = rand(1,3);
-                $bet = Net::C($f[0]['url'], 'POST', $pa, $cookieFile, [], "$host/faucet", $userAgent, false, false, $ip);
+                $bet = Net::C($f[0]['url'], 'POST', $pa, inf::$cookie, [], "$host/faucet", inf::$uagent, false, false, $ip);
                 $_aa = scraper::_xP($bet, "//div[contains(@class, 'alert')]");
                 if (!empty($_aa)) {
                     $resMsg = preg_replace('/\s+/', ' ', trim(strip_tags($_aa[0])));
@@ -303,7 +306,7 @@ while (true) {
     
     $ret99 = 0;
     do {
-        $sho = Net::C("$host/links", 'GET', null, $cookieFile, [], "$host/dashboard", $userAgent, false, false, $ip);
+        $sho = Net::C("$host/links", 'GET', null, inf::$cookie, [], "$host/dashboard", inf::$uagent, false, false, $ip);
         if ($sho === 99) {
             $ret99++;
             logx('warn', "masalah proxy, warm up dulu");
@@ -334,7 +337,7 @@ while (true) {
                     }
                 }
                 if ($_cu) {
-                    $img = Net::C($_cu, 'GET', null, $cookieFile, [], "$host/links", $userAgent);
+                    $img = Net::C($_cu, 'GET', null, inf::$cookie, [], "$host/links", inf::$uagent);
                     $t_text = _text($img, $host, $mail);
                 }
                 if ($t_text) {
@@ -419,7 +422,9 @@ while (true) {
             if (!empty($ver)) {
                 $m = scraper::_jP($ver, "/Swal\.fire\(\{.*?title\s*:\s*(['\"])(.*?)\\1.*?\}\)/s") ?? [];
                 if (isset($m[2][0])) {
+                    print(FGd['CYN'].maskEmail($mail).RSET." ");
                     logg(true, $m[2][0]);
+                    break 2;
                 }
             }
             
@@ -436,7 +441,7 @@ while (true) {
 
     if ($limit) {
         if (!$can_withdraw) die;
-        $wd = Net::C("$host/withdraw", 'GET', null, $cookieFile, [], "$host/faucet", $userAgent, false, false, $ip);
+        $wd = Net::C("$host/withdraw", 'GET', null, inf::$cookie, [], "$host/faucet", inf::$uagent, false, false, $ip);
         if (empty($wd) || ($wd === 99)) continue;
         $jajan = _wd($wd);
         if (!$jajan) {
@@ -449,7 +454,7 @@ while (true) {
             if (empty($po[$walletKey])) $po[$walletKey] = $mail;
             logg(true, '  tes ilmu: '. $jajan['info']['coin'], false);
             logx('info', ' [ '.$po['wallet'].' ]');
-            $wd = Net::C($jajan['url'], 'POST', $po, $cookieFile, [], "$host/faucet", $userAgent, false, false, $ip);
+            $wd = Net::C($jajan['url'], 'POST', $po, inf::$cookie, [], "$host/faucet", inf::$uagent, false, false, $ip);
             #_put('wd.html', $wd);
             if (!empty($wd)) {
                 $m = scraper::_jP($wd, "/Swal\.fire\(\{.*?title\s*:\s*(['\"])(.*?)\\1.*?\}\)/s") ?? [];

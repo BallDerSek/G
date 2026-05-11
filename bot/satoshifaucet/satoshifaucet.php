@@ -186,6 +186,7 @@ while (true) {
             
             if (!empty($_suc[1][0])) {
                 $status = $_suc[1][0]; 
+                print(FGd['CYN'].maskEmail($login).RSET." ");
                 logx($status === 'success' ? 'ok' : 'err', " {$_suc[2][0]} ", false);
                 logg(false, "{$_suc[3][0]}");
 
