@@ -1,51 +1,56 @@
-name: Runner Multi Batch Easy
+name: Multi Runner
 
 on:
   workflow_dispatch:
     inputs:
       bot:
-        description: 'bott'
+        description: 'bot'
         default: 'shortlink'
         required: true
-      accounts_list:
-        description: 'list'
+      accounts:
+        description: 'Akun ["a","b"]'
+        default: '["0"]'
         required: true
+      pass:
+        description: 'pass'
+        required: false
       api:
         type: choice
         options: [tertuyul, xevil, skibidixxx, capsolver, multibot, solverify, gmxch]
         required: true
-      matrix_source:
-        description: 'type'
-        type: choice
-        options: [login, mail]
-        default: 'mail'
-        required: true
+      key:
+        description: 'key'
+        required: false
+      proxy:
+        description: 'Proxy ["p1","p2"]'
+        default: '[""]'
+        required: false
 
 jobs:
   prepare:
     runs-on: ubuntu-latest
     outputs:
-      batches: ${{ steps.set-batches.outputs.batches }}
+      batches: ${{ steps.split.outputs.batches }}
     steps:
-      - id: set-batches
-        shell: python {0}
+      - id: split
+        shell: python
         env:
-          RAW_ACCOUNTS: ${{ github.event.inputs.accounts_list }}
+          ACCOUNTS: ${{ github.event.inputs.accounts }}
         run: |
-          import os, json
-          raw = os.getenv("RAW_ACCOUNTS", "")
-          targets = [line.strip() for line in raw.splitlines() if line.strip()]
+          import json, os
+          targets = json.loads(os.getenv("ACCOUNTS", "[]"))
+          valid_targets = [t for t in targets if str(t) != "0"]
           
-          batch_size = 10
-          matrix_data = []
-          for i in range(0, len(targets), batch_size):
-              batch = targets[i:i + batch_size]
-              matrix_data.append({"accounts": batch, "offset": i})
-
+          size = 10
+          batches = []
+          for i in range(0, len(valid_targets), size):
+              chunk = valid_targets[i:i + size]
+              batches.append({"chunk": chunk, "offset": i})
+          
           with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
-              f.write(f"batches={json.dumps(matrix_data)}\n")
+              f.write(f"batches={json.dumps(batches)}\n")
 
-  run-all:
+  run:
     needs: prepare
     if: needs.prepare.outputs.batches != '[]'
     runs-on: ubuntu-latest
@@ -54,7 +59,7 @@ jobs:
       max-parallel: 20
       matrix:
         include: ${{ fromJson(needs.prepare.outputs.batches) }}
-    
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -63,17 +68,21 @@ jobs:
         uses: ./.github/actions/deps
         continue-on-error: false
 
-      - name: Start Batch Parallel
-        shell: python {0}
+      - name: Start PHP Parallel
+        shell: python
         env:
-          # --- DATA ---
-          CURRENT_BATCH: ${{ json.dumps(matrix.accounts) }}
+          # Data Batch
+          CHUNK_JSON: ${{ json.dumps(matrix.chunk) }}
           OFFSET: ${{ matrix.offset }}
-          LIST_PROXY: ${{ secrets.PROXY_LIST }}
           
-          # --- INPUTS & SECRETS ---
+          # Inputs
+          RAW_PROXIES: ${{ github.event.inputs.proxy }}
           API_CHOICE: ${{ github.event.inputs.api }}
+          KEY_INPUT: ${{ github.event.inputs.key }}
+          PASS_INPUT: ${{ github.event.inputs.pass }}
           BOT_INPUT: ${{ github.event.inputs.bot }}
+          
+          # Secrets
           SEC_PASS: ${{ secrets.PASS }}
           SEC_AUTH: ${{ secrets.AUTH }}
           SEC_DG: ${{ secrets.DG }}
@@ -84,24 +93,24 @@ jobs:
           S_CAPSOLVER: ${{ secrets.CAPSOLVER }}
           S_MULTIBOT: ${{ secrets.MULTIBOT }}
           S_GMXCH: ${{ secrets.GMXCH }}
-
+          SEC_MAIL_LIST: ${{ secrets.MAIL_LIST }}
+          SEC_PROXY_LIST: ${{ secrets.PROXY_LIST }}
+          
         run: |
           import os, json, subprocess
           from concurrent.futures import ThreadPoolExecutor
 
-          def get_list(env_name):
-              raw = os.getenv(env_name, "")
-              return [line.strip() for line in raw.splitlines() if line.strip()]
-
-          accounts = json.loads(os.getenv("CURRENT_BATCH", "[]"))
-          proxies = get_list("LIST_PROXY")
+          accounts = json.loads(os.getenv("CHUNK_JSON", "[]"))
+          proxies = json.loads(os.getenv("RAW_PROXIES", "[]"))
           offset = int(os.getenv("OFFSET", "0"))
-
+          
+          api_type = os.getenv("API_CHOICE", "").lower()
+          manual_key = os.getenv("KEY_INPUT", "").strip()
+          
           def run_worker(target, local_idx):
               global_idx = offset + local_idx
-              raw_target = str(target)
+              real_proxy = proxies[global_idx] if global_idx < len(proxies) else ""
               
-              api_type = os.getenv("API_CHOICE", "").lower()
               secrets_map = {
                   "solverify": os.getenv("S_SOLVERIFY"),
                   "tertuyul": os.getenv("S_TERTUYUL"),
@@ -112,27 +121,25 @@ jobs:
                   "gmxch": os.getenv("S_GMXCH")
               }
               
-              final_key = secrets_map.get(api_type, "")
-              real_proxy = proxies[global_idx] if global_idx < len(proxies) else ""
+              final_key = manual_key if manual_key else secrets_map.get(api_type, "")
 
               php_env = os.environ.copy()
               php_env.update({
                   "CI": "1",
                   "DG": os.getenv("SEC_DG", "1"),
                   "PROXY": real_proxy,
-                  "mail": raw_target,
-                  "login": raw_target,
+                  "mail": str(target),
+                  "login": str(target),
                   "KEY": final_key,
                   "API": api_type,
-                  "pass": os.getenv("SEC_PASS", ""),
+                  "pass": os.getenv("PASS_INPUT") or os.getenv("SEC_PASS", ""),
                   "_authApi_": os.getenv("SEC_AUTH", ""),
-                  "BOT": os.getenv("BOT_INPUT", "")
+                  "BOT": os.getenv("BOT_INPUT", ""),
               })
 
-              print(f"[*] [Acc-{global_idx}] Starting: {raw_target}")
+              print(f"[*] [Acc-{global_idx}] Executing: {target}")
               subprocess.run(["php", "run.php"], env=php_env)
-              print(f"[!] [Acc-{global_idx}] Finished: {raw_target}")
 
           with ThreadPoolExecutor(max_workers=len(accounts)) as executor:
-              for i, t in enumerate(accounts):
-                  executor.submit(run_worker, t, i)
+              for i, acc in enumerate(accounts):
+                  executor.submit(run_worker, acc, i)
