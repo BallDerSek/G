@@ -98,6 +98,7 @@ while (true) {
         while (true) {
             _sle(3);
             $fau = Net::C($fa, 'GET', null, inf::$cookie, [], '', inf::$uagent, ip: $ip);
+            
             if (empty($fau)) continue;
 
             if ($ban = isBan($fau)) {
@@ -127,7 +128,9 @@ while (true) {
                 styler("waiting for CLAIM", fn() => _sle(10));
                 continue;
             }
-
+            
+            _put('fau.html', $fau);
+            #die;
             _sle(2); 
             $ve = str_replace('https://', 'http://', $f['url']);
             Net::X($ve, 'POST', $po, inf::$cookie, [], $fa, inf::$uagent, ip: $ip, foll: false);

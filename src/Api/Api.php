@@ -516,6 +516,7 @@ final class Api { #contractor
             'Job not found',
             'ERR_EMPTY_RESPONSE',
             'node unreachable',
+            'failed to respond',
             ],
 
         'ret' => [ 
