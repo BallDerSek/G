@@ -142,7 +142,7 @@ function execCF($api, $url, $cookie, $uagent, array $data = []) {
         [$_cl, $_cf] = $solve;
         #return setCF(cfSet($_cl, $_cf), $cookie, $url);
         $solution = cfSet($_cl, $_cf);
-        return setCF($res, $cookie, $url);
+        return setCF($solution, $cookie, $url);
         
     }
     return false;
