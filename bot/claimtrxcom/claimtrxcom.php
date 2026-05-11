@@ -497,6 +497,8 @@ function _wd($html) {
     $stocks = Scraper::_xP($html, "//div[contains(@class, 'col-2') and contains(text(), '%')]");
 
     foreach ($names as $i => $name) {
+        if (stripos($name, 'btc') !== false || stripos($name, 'bitcoin') !== false) continue;
+        
         $stokValue = (int) ($stocks[$i] ?? 0);
         
         if ($stokValue > 20) {
