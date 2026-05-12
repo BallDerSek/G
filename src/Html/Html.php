@@ -57,29 +57,56 @@ class Scraper {
                 'payload' => []
             ];
 
-            foreach ($xp->query(".//input[@name]", $form) as $input) {
-                $name  = $input->getAttribute('name');
-                $type  = strtolower($input->getAttribute('type') ?: 'text');
-                $value = $input->getAttribute('value');
-
-                if (in_array($type, ['checkbox', 'radio'], true) && !$input->hasAttribute('checked')) {
-                    continue;
+            /**
+             * Helper untuk memasukkan data ke payload.
+             * Jika key sudah ada, otomatis jadi array (push).
+             */
+            $addPayload = function($name, $value) use (&$entry) {
+                if (isset($entry['payload'][$name])) {
+                    if (!is_array($entry['payload'][$name])) {
+                        $entry['payload'][$name] = [$entry['payload'][$name]];
+                    }
+                    $entry['payload'][$name][] = $value;
+                } else {
+                    $entry['payload'][$name] = $value;
                 }
-                $entry['payload'][$name] = $value;
+            };
+
+            // 1. Handle INPUT (Text, Hidden, Radio, Checkbox)
+            foreach ($xp->query(".//input[@name]", $form) as $input) {
+                $name = $input->getAttribute('name');
+                $type = strtolower($input->getAttribute('type') ?: 'text');
+                $val  = $input->getAttribute('value');
+
+                // Untuk radio/checkbox, kita ambil SEMUA nilainya supaya bot tahu opsinya apa saja
+                // (Browser normal hanya kirim yang 'checked', tapi bot butuh list opsi)
+                if (in_array($type, ['checkbox', 'radio'])) {
+                    $addPayload($name, $val);
+                } else {
+                    $addPayload($name, $val);
+                }
             }
 
+            // 2. Handle SELECT (Dropdown) - AMBIL SEMUA OPTION
             foreach ($xp->query(".//select[@name]", $form) as $select) {
                 $name = $select->getAttribute('name');
-                $opt = $xp->query(".//option[@selected]", $select)->item(0)
-                    ?? $xp->query(".//option", $select)->item(0);
+                $options = $xp->query(".//option", $select);
                 
+                foreach ($options as $opt) {
+                    $val = $opt->getAttribute('value');
+                    // Kita ambil semua value yang ada di dalam <option>
+                    $addPayload($name, $val);
+                }
+                
+                // Jika select kosong tanpa option
                 if (!isset($entry['payload'][$name])) {
-                    $entry['payload'][$name] = $opt ? $opt->getAttribute('value') : '';
+                    $entry['payload'][$name] = '';
                 }
             }
 
+            // 3. Handle TEXTAREA
             foreach ($xp->query(".//textarea[@name]", $form) as $ta) {
-                $entry['payload'][$ta->getAttribute('name')] = trim($ta->textContent);
+                $addPayload($ta->getAttribute('name'), trim($ta->textContent));
             }
 
             $out[] = $entry;

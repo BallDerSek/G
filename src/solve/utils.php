@@ -187,9 +187,9 @@ function rsResponseORI($jsFile, $x, $y, $timestamp, $ua, $_img = null) {
     $delay = rand(2, 5); 
     
     if (!preg_match('/btoa\((.*?)\)/s', $jsContent, $matches)) return false;
-    print_r($matches);
+    #print_r($matches);
     $rawVars = explode(',', str_replace(['+', "'", '"', ' ', "\n", "\r"], '', $matches[1]));
-    print_r($rawVars);
+    #print_r($rawVars);
     
     if (stripos($ua, 'Windows') !== false) {
         $platform = 'Win32';
@@ -253,9 +253,77 @@ function rsResponseORI($jsFile, $x, $y, $timestamp, $ua, $_img = null) {
             $payloadArray[] = 0;
         }
     }
-    print_r($payloadArray);
+    #print_r($payloadArray);
     return base64_encode(implode(',', $payloadArray));
 }
+
+function rsResponse($jsFile, $x, $y, $timestamp, $ua) {
+    if (!file_exists($jsFile)) return false;
+    $jsContent = file_get_contents($jsFile);
+
+    /** Dumbass RSSHORT with Auto-Scaling */
+    $startPos = strpos($jsContent, 'btoa(');
+    if ($startPos === false) return false;
+    
+    $start = $startPos + 5;
+    $end = strpos($jsContent, ')', $start);
+    $btoaBody = substr($jsContent, $start, $end - $start);
+
+    $rawVars = explode(',', str_replace(['+', "'", '"', ' ', "\n", "\r"], '', $btoaBody));
+    
+    $platform = (stripos($ua, 'Windows') !== false) ? 'Win32' : 'Linux x86_64';
+    
+    $payloadArray = [];
+    foreach ($rawVars as $v) {
+        $v = trim($v);
+        $qv = preg_quote($v, '/');
+
+        if (preg_match('/' . $qv . '\s*=\s*Math\.round\(.*?\.pageX\s*-\s*.*?\)/', $jsContent)) {
+            $payloadArray[] = (int)$x;
+        } 
+        elseif (preg_match('/' . $qv . '\s*=\s*Math\.round\(.*?\.pageY\s*-\s*.*?\)/', $jsContent)) {
+            $payloadArray[] = (int)$y;
+        }
+        
+        elseif (preg_match('/' . $qv . '\s*=\s*~~\(Date\.now/', $jsContent)) {
+            $payloadArray[] = (int)$timestamp;
+        }
+
+        elseif (preg_match('/' . $qv . '\s*=\s*screen\.width/', $jsContent)) {
+            $payloadArray[] = 1440; 
+        } 
+        elseif (preg_match('/' . $qv . '\s*=\s*screen\.height/', $jsContent)) {
+            $payloadArray[] = 900;
+        }
+        elseif (preg_match('/' . $qv . '\s*=\s*navigator\.platform/', $jsContent)) {
+            $payloadArray[] = $platform;
+        }
+        
+        elseif (preg_match('/' . $qv . '\s*=\s*Math\.round\(window\.pageXOffset\)/', $jsContent)) {
+            $payloadArray[] = 0;
+        } 
+        elseif (preg_match('/' . $qv . '\s*=\s*Math\.round\(window\.pageYOffset\)/', $jsContent)) {
+            $payloadArray[] = rand(0, 30);
+        }
+        elseif (preg_match('/' . $qv . '\s*=\s*navigator\.onLine/', $jsContent)) {
+            $payloadArray[] = 1;
+        }
+        elseif (preg_match('/' . $qv . '\s*=\s*document\.hasFocus\(\)/', $jsContent)) {
+            $payloadArray[] = 1;
+        }
+        
+        else {
+            if (strpos($v, 'Depth') !== false) $payloadArray[] = 24;
+            else $payloadArray[] = rand(1, 10);
+        }
+    }
+
+    return base64_encode(implode(',', $payloadArray));
+}
+
+
+
+
 
 
 

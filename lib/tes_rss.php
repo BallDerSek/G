@@ -94,7 +94,9 @@ class RsCaptchaBuilder
 
     public function build(int $x, int $y, string $html): string {
         $js    = $this->deobfuscate($html);
+        #_put('ccap1.js', $js);
         $order = $js ? $this->extractFieldOrder($js) : $this->defaultOrder();
+        #print_r($order);
         return $this->generateToken($x, $y, $order);
     }
 
@@ -114,7 +116,7 @@ class RsCaptchaBuilder
 
         $values = [];
         foreach ($order as $field) {
-            $key      = self::SOURCE_TO_VALUE[$field['source']] ?? null;
+            $key      = self::SOURCE_TO_VALUE[$field['source']] ?? '';
             $values[] = $dynamic[$key] ?? $static[$key] ?? '0';
         }
 

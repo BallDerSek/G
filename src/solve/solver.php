@@ -24,7 +24,7 @@
  */
 class Solve {
     
-    public static function exec($html, $host, ?Provider $api, $pa = null, $ins = false) {
+    public static function eexec($html, $host, ?Provider $api, $pa = null, $ins = false) {
         $ua = inf::$uagent;
         $cookie = inf::$cookie;
         $ip = inf::$ip;
@@ -123,6 +123,146 @@ class Solve {
         return !empty($solution) ? $solution : null;
     }
     
+    public static function exec($html, $host, ?Provider $api, $pa = null, $ins = false) {
+        
+        $ua = inf::$uagent;
+        $cookie = inf::$cookie;
+        $ip = inf::$ip;
+        
+        $solution = [];
+        $_cap = Capt::cha($html);
+#var_dump($_cap);
+#return _put('cap.js', $_cap['rss']['extra']['js']);
+
+        $_fields = null; 
+        $_select = '';
+
+        if (is_array($pa)) {
+            foreach ($pa as $key => $val) {
+                if (str_contains(strtolower($key), 'captcha')) {
+                    $_fields = $key;
+                    $_option = is_array($val) ? $val : [$val];
+                    
+                    $pref = ['shield', 'rot', 'smart', 'turnstile', 'hcaptcha', 'recaptcha'];
+                    
+                    foreach ($pref as $p) {
+                        foreach ($_option as $opt) {
+                            if (str_contains(str_replace(['-', '_'], '', strtolower($opt)), $p)) {
+                                $_select = $opt;
+                                break 2;
+                            }
+                        }
+                    }
+                    if (!$_select) $_select = $_option[0];
+                    break; 
+                }
+            }
+        } else {
+            $_select = (string)$pa;
+        }
+
+        if ($_fields && $_select) {
+            $solution[$_fields] = $_select;
+            #logx('info', "Using field [$_fields] with value: $_select");
+        }
+
+        // --- 2. ANTIBOT LINKS ---
+        if (!empty($_cap['antibot'])) {
+            $resAtb = locally::ATB($_cap['antibot']['type'], $api, $html);
+            if ($resAtb === 77) return ['trouble' => 'reload'];
+            if ($resAtb) $solution['antibotlinks'] = $resAtb;
+        }
+
+        if ($_select) {
+            $_checks = str_replace(['-', '_'], '', strtolower($_select));
+            
+            switch ($_checks) {
+                case 'shield':
+                    if (isset($pa['shield_answer'])) {
+                        $resShi = locally::shiCaptcha($html);
+                        if ($resShi) $solution = array_merge($solution, $resShi);
+                    }
+                    break;
+                
+                case 'rotcaptcha':
+                case 'rot':
+                    if (isset($pa['rot_captcha_val'])) {
+                        $resRot = locally::rotCaptcha($html);
+                        if ($resRot) $solution = array_merge($solution, $resRot);
+                    }
+                    break;
+                
+                case 'smartcaptcha':
+                case 'smart':
+                    if (isset($pa['smart_token'])) {
+                        $resSmt = locally::smartFP($html);
+                        if ($resSmt) $solution['smart_token'] = $resSmt;
+                    }
+                    break;
+            }
+        }
+
+        // --- 4. ICONCAPTCHA ---
+        if (isset($_cap['ic_fw'])) {
+            $ic = null; $attempt = 0;
+            while (!$ic && $attempt < 5) {
+                $ic = locally::iCaptcha($html, $host);
+                if ($ic === 99) return ['trouble' => 'proxy'];
+                $attempt++;
+            }
+            if ($ic) $solution = array_merge($solution, $ic);
+        }
+
+        $mainSolved = count(array_diff(array_keys($solution), ['antibotlinks', $_fields])) > 0;
+
+        if ($api && !$mainSolved) {
+            $priority = [];
+            $lowType = str_replace(['-', '_'], '', strtolower($_select));
+
+            if (str_contains($lowType, 'turnstile')) {
+                $priority = ['cft'];
+            } elseif (str_contains($lowType, 'hcaptcha') || str_contains($lowType, 'hc')) {
+                $priority = ['hc'];
+            } elseif (str_contains($lowType, 'recaptcha')) {
+                $priority = ['rc3', 'rc2'];
+            } else {
+                $priority = ['cft', 'rc3', 'rc2', 'hc'];
+            }
+
+            foreach ($priority as $t) {
+                if (!isset($_cap[$t])) continue;
+                
+                $_ty = $_cap[$t]['type'] ?? $t; 
+                $_ke = $_cap[$t]['keys'] ?? null;
+                $_ex = array_filter($_cap[$t]['extra'] ?? [], fn($v) => !is_null($v));
+
+                if (!$_ke) continue;
+                
+                $token = self::tkn($api, $host, $_ke, $_ty, $_ex);
+                if ($token === 471) continue; 
+                if ($token === 404) return ['trouble' => 'reload']; 
+                
+                if (is_string($token) && !empty($token)) {
+                    $solution = array_merge($solution, [
+                        'g-recaptcha-response'    => $token,
+                        'cf-turnstile-response'   => $token,
+                        'h-captcha-response'      => $token,
+                        'hcaptcha-response'       => $token,
+                        'g-recaptcha-response-v3' => $token
+                    ]);
+                    break; 
+                }
+            }
+        }
+
+        if (empty($solution) && empty($_cap)) {
+            logx('info', 'no captcha detected');
+            return ['nocaptcha' => true];
+        }
+
+        return !empty($solution) ? $solution : null;
+    }
+
     public static function tkn($api, $host, $key, $type, array $Params = []) {
         
         $solver = config::getKeys($api, $type);

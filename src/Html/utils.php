@@ -99,7 +99,6 @@ class Capt {
         
         if (str_contains($html, 'iconcaptcha-widget') || str_contains($html, '_iconcaptcha-token')) {
             $found['ic_fw'] = [
-                'type' => 'iconcaptcha',
                 'keys' => Scraper::find($html, '_iconcaptcha-token')[0] ?? null
             ];
         }
@@ -118,17 +117,25 @@ class Capt {
             } 
         }
 
-        if (str_contains($html, 'rscaptcha_token')) {
+        if (stripos($html, 'rscaptcha_token')) {
             $rs_token = Scraper::find($html, 'rscaptcha_token')[0] ?? null;
             $rs_image = Scraper::_xP($xp, "//img[@id='rscaptcha_img']/@src")[0] ?? null;
+            
+            $js_content = Scraper::_xP($xp, "//div[@id='rscap_js']/script/text()")[0] ?? null;
+
             if ($rs_token && $rs_image) {
-                $_t = str_contains($html, 'the least amount of times') ? 'icon' : 'upside';
+                $_t = stripos($html, 'the least amount of times') ? 'icon' : 'upside';
                 $found['rss'] = [
-                    'type' => "rs_{$_t}",
-                    'keys' => $rs_image,
+                    'type'  => "rs_{$_t}",
+                    'keys'  => $rs_image,
+                    'extra' => [
+                        'token' => $rs_token,
+                        'js' => $js_content 
+                    ]
                 ];
             }
         }
+
 
         if (str_contains($html, 'antibotlinks_reset')) {
             $is_emoji = Scraper::_jP($html, '/data-token=\\\\"(?<token>[^"\\\\]+)\\\\"/');
