@@ -66,8 +66,8 @@ while (true) {
         if (stripos($_0, 'Just a moment') !== false || stripos($_0, 'Attention Required!') !== false) {
                 logx('warn', 'Cloudflare Detected, solving CF...');
                 if ($cf = execCF($api, $host."/faucet/ltc", inf::$cookie, inf::$uagent)) {
-                #if ($cf = onfCF($api, $host."/faucet/ltc")) {
                     [$headersCF, $ua] = $cf;
+                    config::credential()['uagent'] = $ua; 
                     inf::setup($ua, inf::$cookie);
                     _sle(3);
                     continue;
@@ -144,8 +144,8 @@ while (true) {
             
             if (stripos($fau, 'Just a moment') !== false || stripos($fau, 'Attention Required!') !== false) {
                 if ($cf = execCF($api, $fa, inf::$cookie, inf::$uagent)) {
-                #if ($cf = onfCF($api, $fa)) {
                     [$headersCF, $ua] = $cf;
+                    config::credential()['uagent'] = $ua; 
                     inf::setup($ua, inf::$cookie);
                     _sle(3);
                     continue;
@@ -312,8 +312,9 @@ sl:
                         #_put('get.html', $get);
                         
                         if (stripos($get, 'Just a moment') !== false || stripos($get, 'Attention Required!') !== false) {
-                            if ($cf = onfCF($api, $bakk)) {
+                            if ($cf = execCF($api, $bakk, inf::$cookie, inf::$uagent)) {
                                 [$he, $ua] = $cf;
+                                config::credential()['uagent'] = $ua; 
                                 inf::setup($ua, inf::$cookie);
                                 $headersCF = $he;
                                 _sle(3);
@@ -368,7 +369,7 @@ sl:
                             
                             $ver = Net::X("$host/links/complete_claim", 'POST', $po, inf::$cookie, $he, $sl, inf::$uagent);
                             
-                            _put('ver.html', $ver);
+                            #_put('ver.html', $ver);
                             
                             if (!empty($ver) && ($ver !== 99)) {
                                 $cla = json_decode($ver, true);
@@ -431,7 +432,7 @@ tes:
 
 
 function onfCF($api, $fa) {
-    $res = execCF($api, $fa, inf::$cookie, inf::$uagent, []);
+    $res = execCF0($api, $fa, inf::$cookie, inf::$uagent, []);
     
     if (is_array($res) && isset($res['token'])) {
         logx('', 'Cloudflare Solved!', true, true);

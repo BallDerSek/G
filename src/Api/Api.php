@@ -517,6 +517,7 @@ final class Api { #contractor
             'ERR_EMPTY_RESPONSE',
             'node unreachable',
             'failed to respond',
+            'nodes unavailable',
             ],
 
         'ret' => [ 
@@ -696,11 +697,11 @@ abstract class Provider {
                 $code = $e->getMessage();
                 $type = Api::errType($code);
                 logx('err', $code);
-                
+/*
                 if (stripos($code, 'nodes unavailable') && (static::class === 'gmxch')) {
                     return 777;
                 }
-                
+*/
                 if (in_array($type, ['ret','con','fail'], true)) {
                     _sle(3); 
                     continue; 

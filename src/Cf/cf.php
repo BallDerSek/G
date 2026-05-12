@@ -44,76 +44,6 @@ function cfSet($class, $res) {
  * @param array $data
  * @return array|string|bool|null
  */
-function execCF0($api, $url, $cookie, $uagent, array $data = [], $input = '') {
-    
-    if ($input === '' || $input === '2') {
-        if (!$api) {
-            die('undefined provider');
-            logx('err', 'undefined provider, fallback local');
-            $input = '1';
-            goto Seledroid;
-        }
-
-        $param = array_filter([
-            'body' => !empty($data['html']) ? base64_encode($data['html']) : null,
-            'proxy' => $GLOBALS['_CTX']['proxy']['src'] ?? null
-        ]);
-
-        $solver = config::getKeys($api, 'interstitial', 'acc');
-        $solve = $solver->access($url, 'interstitial', $param);
-        
-        // --- HANDLE SWITCH SIGNAL (777) ---
-        if ($solve === 777 || (is_array($solve) && ($solve[1] ?? null) === 777)) {
-            logx('warn', "Internal Node Busy, fallback direct api", false);
-            _clr();
-            
-            if (!isset(Api::ACC[get_class($api)]['interstitial'])) {
-                return false;
-                $input = '1';
-                goto Seledroid;
-            }
-
-            _clr();
-            $solve = $api->access($url, 'interstitial', $param);
-            
-            if ($solve === 71) {
-                return false;
-                $input = '1';
-                goto Seledroid;
-            }
-        }
-        
-        if (is_array($solve) && !empty($solve[1])) {
-            if ($solver instanceof Provider) $api->getInfo();
-            
-            [$_cl, $_cf] = $solve;
-            return cfSet($_cl, $_cf); 
-        }
-        
-        return false;
-    } 
-    
-    Seledroid:
-    if ($input === '1') {
-        logx('info', "Starting Seledroid Solver...");
-        $execPy = new execPython($cookie, $uagent); 
-        $r = $execPy->run('inter', $url);
-        
-        if (is_array($r) && !empty($r['token'])) {
-            logx('ok', "Seledroid Success");
-            return [
-                'token' => (string)$r['token'],
-                'ua' => (string)($r['ua'] ?? $uagent)
-            ];
-        }
-        logx('err', "Direct Seledroid Solver failed");
-        return false;
-    }
-    
-    return null;
-}
-
-
 function execCF($api, $url, $cookie, $uagent, array $data = []) {
     
     if (!$api) die('undefined provider');
@@ -140,8 +70,8 @@ function execCF($api, $url, $cookie, $uagent, array $data = []) {
     if (is_array($solve) && !empty($solve[1])) {
         if ($solver instanceof Provider) $api->getInfo();
         [$_cl, $_cf] = $solve;
-        #return setCF(cfSet($_cl, $_cf), $cookie, $url);
         $solution = cfSet($_cl, $_cf);
+        #print_r($solution);
         return setCF($solution, $cookie, $url);
         
     }
@@ -151,8 +81,9 @@ function execCF($api, $url, $cookie, $uagent, array $data = []) {
 
 #$res = execCF($api, $fa, inf::$cookie, inf::$uagent, []);
 function setCF($r, $c, $host) {
-    
-    if (is_array($r) && isset($res['token'])) {
+    #print_r($r);
+    if (is_array($r) && isset($r['token'])) {
+        logx('ok', 'cloudflare solved', true, true);
         # cari aman, inject cookie, biar gak boros kalau rerun karna solution headers hanya ada di memory
         $execPy = new execPython($c, $r['ua']);
         $clearance = "cf_clearance={$r['token']}";

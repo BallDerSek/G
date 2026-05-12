@@ -114,7 +114,7 @@ class inf {
     public static function check($host, array $h = [], $pattern = '', $ins = false) {
         $ip = self::$ip; 
         
-        $html = Net::C($host, 'GET', null, self::$cookie, $h, $host, self::$uagent, false, false, $ip, true, $ins);
+        $html = Net::X($host, 'GET', null, self::$cookie, $h, $host, self::$uagent, false, false, $ip, $ins);
         if (!is_string($html)) {
             return ['ok' => false, 'html' => null, 'err' => 'Network error'];
         }

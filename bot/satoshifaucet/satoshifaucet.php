@@ -127,11 +127,10 @@ while (true) {
             if (empty($fau)) continue;
 
             if (stripos($fau, 'Just a moment') !== false || stripos($fau, 'Attention Required!') !== false) {
-                logx('warn', 'Cloudflare Detected, solving CF...');
-                if ($cf = stfCF($api, $fa)) {
-                    [$he, $ua] = $cf;
+                if ($cf = execCF($api, $fa, inf::$cookie, inf::$uagent)) {
+                    [$headersCF, $ua] = $cf;
+                    config::credential()['uagent'] = $ua; 
                     inf::setup($ua, inf::$cookie);
-                    $headersCF = $he;
                     _sle(3);
                     continue;
                 }
