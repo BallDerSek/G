@@ -35,17 +35,20 @@ jobs:
       - id: split
         shell: python
         env:
-          ACCOUNTS: ${{ github.event.inputs.accounts }}
+          ACCOUNTS: '${{ github.event.inputs.accounts }}'
         run: |
           import json, os
-          targets = json.loads(os.getenv("ACCOUNTS", "[]"))
+          try:
+              targets = json.loads(os.getenv("ACCOUNTS", "[]"))
+          except:
+              targets = []
+          
           valid_targets = [t for t in targets if str(t) != "0"]
           
           size = 10
           batches = []
           for i in range(0, len(valid_targets), size):
               chunk = valid_targets[i:i + size]
-              # Kirim chunk sebagai JSON string di dalam object matrix
               batches.append({"chunk_str": json.dumps(chunk), "offset": i})
           
           with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
@@ -72,27 +75,27 @@ jobs:
       - name: Start PHP Parallel
         shell: python
         env:
-          CHUNK_RAW: ${{ matrix.chunk_str }}
-          OFFSET: ${{ matrix.offset }}
+          CHUNK_RAW: '${{ matrix.chunk_str }}'
+          OFFSET: '${{ matrix.offset }}'
           
           # Inputs
-          RAW_PROXIES: ${{ github.event.inputs.proxy }}
-          API_CHOICE: ${{ github.event.inputs.api }}
-          KEY_INPUT: ${{ github.event.inputs.key }}
-          PASS_INPUT: ${{ github.event.inputs.pass }}
-          BOT_INPUT: ${{ github.event.inputs.bot }}
+          RAW_PROXIES: '${{ github.event.inputs.proxy }}'
+          API_CHOICE: '${{ github.event.inputs.api }}'
+          KEY_INPUT: '${{ github.event.inputs.key }}'
+          PASS_INPUT: '${{ github.event.inputs.pass }}'
+          BOT_INPUT: '${{ github.event.inputs.bot }}'
           
           # Secrets
-          SEC_PASS: ${{ secrets.PASS }}
-          SEC_AUTH: ${{ secrets.AUTH }}
-          SEC_DG: ${{ secrets.DG }}
-          S_SOLVERIFY: ${{ secrets.SOLVERIFY }}
-          S_TERTUYUL: ${{ secrets.TERTUYUL }}
-          S_XEVIL: ${{ secrets.XEVIL }}
-          S_SKIBIDI: ${{ secrets.SKIBIDI }}
-          S_CAPSOLVER: ${{ secrets.CAPSOLVER }}
-          S_MULTIBOT: ${{ secrets.MULTIBOT }}
-          S_GMXCH: ${{ secrets.GMXCH }}
+          SEC_PASS: '${{ secrets.PASS }}'
+          SEC_AUTH: '${{ secrets.AUTH }}'
+          SEC_DG: '${{ secrets.DG }}'
+          S_SOLVERIFY: '${{ secrets.SOLVERIFY }}'
+          S_TERTUYUL: '${{ secrets.TERTUYUL }}'
+          S_XEVIL: '${{ secrets.XEVIL }}'
+          S_SKIBIDI: '${{ secrets.SKIBIDI }}'
+          S_CAPSOLVER: '${{ secrets.CAPSOLVER }}'
+          S_MULTIBOT: '${{ secrets.MULTIBOT }}'
+          S_GMXCH: '${{ secrets.GMXCH }}'
           
         run: |
           import os, json, subprocess
