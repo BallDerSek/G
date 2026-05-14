@@ -19,6 +19,7 @@ $ip = '148.251.78.240';
     $userAgent = config::uagent('mobile');
 
     inf::setup($userAgent, $cookieFile, $ip);
+    _cle();
     banner();
     taskPrintCenter($mail, 'info');
 })($mail, $ip);
@@ -107,7 +108,7 @@ while (true) {
     if ($dash && str_contains($dash, 'confirm your email')) {
         $can_withdraw = false;
     }
-    
+
     do {
         $ads = Net::C("$host/ptc", 'GET', null, inf::$cookie, [], "$host/dashboard", inf::$uagent, false, false, $ip);
         if ($ads === 99) { _sle(60); continue 2; }
@@ -305,7 +306,7 @@ while (true) {
             }
         }
     }
-    
+    sl:
     $ret99 = 0;
     do {
         $sho = Net::C("$host/links", 'GET', null, inf::$cookie, [], "$host/dashboard", inf::$uagent, false, false, $ip);
@@ -323,10 +324,15 @@ while (true) {
         
         $f = scraper::payload($sho)[0] ?? [];
         $short = sScraper::extract($sho);
+        if (empty($short)) {
+            logx('info', "sl abis");
+            $SLDONE = true;
+            break;
+        }
         #print_r($short);
         $up = ['earnow','shortano', 'shortino', 'fc-lc'];
         
-        if (!empty($f) && !empty($short)) {
+        if (!empty($f)) {
             $po = $f['payload'];
             
             if (str_contains($sho, 'Write what you see in the picture')) {
@@ -350,9 +356,7 @@ while (true) {
                     }
                 }
             }
-        } else {
-            continue;
-        }
+        } 
 
         $can_process = false; 
         foreach ($short as $links => [$idd, $lmt]) {

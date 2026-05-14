@@ -21,6 +21,7 @@ $ip = null;
     $userAgent = $creds['uagent'];
 
     inf::setup($userAgent, $cookieFile, $ip);
+    _cle();
     banner();
     taskPrintCenter($login, 'info');
 } ) ($login, $ip);
@@ -96,19 +97,7 @@ while (true) {
                 _sle(30);
                 continue;
             }
-            
-            $_err = Scraper::_jP($ve, "/html: '(.*?)'/");
-            if (isset($_err[1][0])) {
-                if (stripos($_err[1][0], 'elcome back')) continue;
-                if (stripos($_err[1][0], 'has been created')) continue;
-                #print_r($_err);
-                logx('info', $_err[1][0], true, true);
-                die;
-            }
-            
-            
         }
-        
     } while (empty($dash));
     #_put('dash.html', $dash); die;
 #goto sl;

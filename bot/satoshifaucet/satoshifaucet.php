@@ -21,6 +21,7 @@ $ip = null;
     $userAgent = $creds['uagent'];
 
     inf::setup($userAgent, $cookieFile, $ip);
+    _cle();
     banner();
     taskPrintCenter($login, 'info');
 })($login, $ip);

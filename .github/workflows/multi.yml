@@ -125,22 +125,24 @@ jobs:
               final_key = manual_key if manual_key else secrets_map.get(api_type, "")
 
               php_env = os.environ.copy()
+              
               php_env.update({
-                  "CI": "1",
-                  "DG": os.getenv("SEC_DG", "1"),
-                  "PROXY": real_proxy,
-                  "mail": str(target),
-                  "login": str(target),
-                  "KEY": final_key,
-                  "API": api_type,
-                  "pass": os.getenv("PASS_INPUT") or os.getenv("SEC_PASS", ""),
-                  "_authApi_": os.getenv("SEC_AUTH", ""),
-                  "BOT": os.getenv("BOT_INPUT", ""),
+                 "CI": "1",
+                 "DG": os.getenv("SEC_DG", "1"),
+                 "PROXY": real_proxy,
+                 "mail": str(target).strip().replace('"', '').replace("'", ""),
+                 "login": str(target).strip().replace('"', '').replace("'", ""),
+                 "KEY": final_key,
+                 "API": api_type,
+                 "pass": (os.getenv("PASS_INPUT") or os.getenv("SEC_PASS", "")).strip(),
+                 "_authApi_": os.getenv("SEC_AUTH", ""),
+                 "BOT": os.getenv("BOT_INPUT", ""),
               })
+              
+              print(f"[*] [Acc-{global_idx}] Executing: |{clean_target}|")
 
-              print(f"[*] [Acc-{global_idx}] Executing: {target}")
               subprocess.run(["php", "run.php"], env=php_env)
-
+              
           with ThreadPoolExecutor(max_workers=len(accounts)) as executor:
               for i, acc in enumerate(accounts):
                   executor.submit(run_worker, acc, i)

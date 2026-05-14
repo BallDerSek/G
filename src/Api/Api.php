@@ -322,9 +322,11 @@ final class Api { #contractor
         ],
 
         gmxch::class => [
-            #'ocr' => ['t' => 'ocr', 'field' => 'image'],
-            #'math' => ['t' => 'ocr', 'field' => 'image', 'extra' => ['method' => 'math']],
-            #'4num' => ['t' => 'ocr', 'field' => 'image', 'extra' => ['method' => 'text', 'instruct' => '4digits']],
+            /*
+            'ocr' => ['t' => 'ocr', 'field' => 'image'],
+            'math' => ['t' => 'ocr', 'field' => 'image', 'extra' => ['method' => 'math']],
+            '4num' => ['t' => 'ocr', 'field' => 'image', 'extra' => ['method' => 'text', 'instruct' => '4digits']],
+            */
             'onf_odd' => ['t' => 'of_odd', 'field' => 'image'],
             'stf_rot' => ['t' => 'stf_rot', 'field' => 'image'],
         ],
@@ -531,6 +533,8 @@ final class Api { #contractor
             'CAPTCHA_NOT_READY',
             'CAPCHA_NOT_READY',
             'ERROR_RATE_LIMIT',
+            'ERROR_TOO_MANY_REQUESTS',
+            'ERROR_INTERNAL_SERVER',
             'processing',
             'pending',
             'APP_11',
@@ -538,7 +542,6 @@ final class Api { #contractor
         ],
 
         'con' => [
-            'ERROR_INTERNAL_SERVER',
             'ERROR_INTERNAL',
             'ERROR_BANNED',
             'ERROR_TASK_CREATION_FAILED',

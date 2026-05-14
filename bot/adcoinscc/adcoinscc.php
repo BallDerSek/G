@@ -14,6 +14,7 @@ $ip = '';
     $cookieFile = config::cookie($login);
     $userAgent = config::uagent('mobile');
     inf::setup($userAgent, $cookieFile, $ip);
+    _cle();
     banner();
     taskPrintCenter($login, 'info');
 })($login, $ip);

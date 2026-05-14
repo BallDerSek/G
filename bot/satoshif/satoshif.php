@@ -13,13 +13,12 @@ $r = '/?r=124158';
 $ip = '173.249.41.150';
 
 (function ($login, $ip) {
+    Proxy::load();
     $cookieFile = config::cookie($login);
-    
-    $creds = config::credential(['uagent' => fn() => config::uagent('desktop')], true);
-    
-    $userAgent = $creds['uagent'];
+    $userAgent = config::uagent('mobile');
 
     inf::setup($userAgent, $cookieFile, $ip);
+    _cle();
     banner();
     taskPrintCenter($login, 'info');
 })($login, $ip);
