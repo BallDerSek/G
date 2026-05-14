@@ -28,6 +28,7 @@ $limit = false;
 $shortlink = false;
 $SLDONE = false;
 $skipped = [];
+$claim = true;
 $can_withdraw = true;
 while (true) {
     $max = 7;
@@ -107,7 +108,6 @@ while (true) {
         $can_withdraw = false;
     }
     
-    $claim = false;
     do {
         $ads = Net::C("$host/ptc", 'GET', null, inf::$cookie, [], "$host/dashboard", inf::$uagent, false, false, $ip);
         if ($ads === 99) { _sle(60); continue 2; }
