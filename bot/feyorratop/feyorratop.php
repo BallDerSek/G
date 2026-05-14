@@ -3,9 +3,10 @@ if (!defined('ROOT')) { die; }
 
 $api = onKeys();
 
-$acc = config::credential([], true);
+$acc = config::credential([], false, ['mail', 'pass', 'PROXY']);
 $mail = $acc['mail'];
 $pass = $acc['pass'];
+putenv("PROXY=".$acc['PROXY']);
 
 login:
 $host = 'https://feyorra.top';
@@ -13,6 +14,7 @@ $domain = parse_url($host, PHP_URL_HOST);
 $ip = '148.251.78.240';
 
 (function ($mail, $ip) {
+    Proxy::load();
     $cookieFile = config::cookie($mail);
     $userAgent = config::uagent('mobile');
 
@@ -111,7 +113,7 @@ while (true) {
         if ($ads === 99) { _sle(60); continue 2; }
         $_tim = scraper::_xP($ads, "//div[@class='ptc_cards']//span[i[contains(@class, 'fa-clock')]]");
         
-        $_url = scraper::_xP($ads, "//button/@onclick");
+        $_url = scraper::_xP($ads, "//button[not(contains(@onclick, 'bitcotask'))]/@onclick");
         $url = array_map(fn($u) => explode("'", $u)[1], $_url);
         $vurl = $url[0] ?? null;
         
@@ -140,7 +142,7 @@ while (true) {
                     if (!empty($f)) {
                         $pa = $f[0]['payload'] ?? [];
 
-                        $cap = null;
+                        $cap = [];
                         $cap = solve::exec($view, $host, $api);
                         if (isset($cap['trouble'])) {
                             _sle(60);
@@ -581,7 +583,6 @@ function _text($imgData, $host, $mail) {
 
     return null;
 }
-
 
 function _wd($html) {
     $res = Scraper::payload($html)[0] ?? null;

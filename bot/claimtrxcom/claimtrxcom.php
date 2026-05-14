@@ -3,9 +3,10 @@ if (!defined('ROOT')) { die; }
 
 $api = onKeys();
 
-$acc = config::credential([], true);
+$acc = config::credential([], false, ['mail', 'pass', 'PROXY']);
 $mail = $acc['mail'];
 $pass = $acc['pass'];
+putenv("PROXY=".$acc['PROXY']);
 
 login:
 $host = 'https://claimtrx.com';
@@ -13,6 +14,7 @@ $domain = parse_url($host, PHP_URL_HOST);
 $ip = '148.251.78.240';
 
 (function ($mail, $ip) {
+    Proxy::load();
     $cookieFile = config::cookie($mail);
     $userAgent = config::uagent('mobile');
 
@@ -109,8 +111,8 @@ while (true) {
     do {
         $ads = Net::C("$host/ptc", 'GET', null, inf::$cookie, [], "$host/dashboard", inf::$uagent, false, false, $ip);
         if ($ads === 99) { _sle(60); continue 2; }
-        $_tim = scraper::_xP($ads, "//div[contains(@class, 'card-badge')]//span[contains(@class, 'badge-primary')]");
-        $_onclick = scraper::_xP($ads, "//div[@class='card-body']//button/@onclick");
+        $_onclick = scraper::_xP($ads, "//div[@class='card-body']//button[not(contains(@onclick, 'bitcotask'))]/@onclick");
+        $_tim = scraper::_xP($ads, "//div[contains(@class, 'card-badge')]//span[contains(@class, 'badge-primary')][ancestor::div[contains(@class, 'card')]//button[not(contains(@onclick, 'bitcotask'))]]");
         $url_list = array_map(fn($u) => explode("'", $u)[1] ?? null, $_onclick);
         $vurl = $url_list[0] ?? null;
 
@@ -139,7 +141,7 @@ while (true) {
                     if (!empty($f)) {
                         $pa = $f[0]['payload'] ?? [];
 
-                        $cap = null;
+                        $cap = [];
                         $cap = solve::exec($view, $host, $api);
                         if (isset($cap['trouble'])) {
                             _sle(60);

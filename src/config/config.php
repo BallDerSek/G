@@ -42,47 +42,70 @@ class Config {
     private static array $cred_cache = [];
     private static ?string $ua_static = null;
 
-    public static function credential(array $defaults = [], $required = false, $customPath = null): ArrayAccess {
-        if ($customPath === null) {
-            $trace = debug_backtrace();
-            $customPath = dirname($trace[0]['file']);
-        }
+    public static function credential(array $defaults = [], $required = false, array|bool $ask = false): ArrayAccess {
+        $trace = debug_backtrace();
+        $baseDir = dirname($trace[0]['file']);
+        $filePath = rtrim($baseDir, '/') . '/credentials';
         
-        $filePath = rtrim($customPath, '/') . '/credentials';
-
-        return new class($filePath, $defaults, $required) implements ArrayAccess {
+        return new class($filePath, $defaults, $required, $ask) implements ArrayAccess {
             private array $cache = [];
             private string $file;
             private array $defaults;
             private bool $required;
-
-            public function __construct($file, array $defaults, bool $required) {
+            private array|bool $ask;
+            
+            public function __construct($file, array $defaults, $required, array|bool $ask) {
                 $this->defaults = $defaults;
                 $this->required = $required;
+                $this->ask = $ask;
                 $this->file = $file;
-
+                
                 if (is_file($this->file)) {
                     foreach (file($this->file, FILE_IGNORE_NEW_LINES) as $l) {
                         if ($l === '' || $l[0] === '#') continue;
                         if (strpos($l, '=') === false) continue;
+                        
                         [$k, $v] = explode('=', $l, 2);
                         $this->cache[$k] = $v;
                     }
                 }
             }
-
-            public function offsetExists($key): bool { return true; }
-
+            
+            public function offsetExists($key): bool {
+                return true;
+            }
+            
+            private function shouldAsk($key): bool {
+                if ($this->ask === false) return false;
+                
+                if ($this->ask === true) return true;
+                
+                return in_array($key, $this->ask, true);
+            }
+            
             public function offsetGet($key): mixed {
-                # ENV
+                # ENV 
                 $env = getenv($key);
-                if ($env !== false && $env !== '') return $this->cache[$key] = $env;
-
+                if ($env !== false && $env !== '') {
+                    return $this->cache[$key] = $this->enforce($key, $env);
+                }
+                
                 # CACHE
                 if (array_key_exists($key, $this->cache) && $this->cache[$key] !== '') {
-                    return $this->enforce($key, $this->cache[$key]);
+                    $current = $this->cache[$key];
+                    
+                    if ($this->shouldAsk($key)) {
+                        logx('warn', "found saved {$key} => {$current}, change?", true, true);
+                        $change = trim(_rl("[empty to use as is]: "));
+                        if ($change !== '') {
+                            $current = $change;
+                            $this->cache[$key] = $current;
+                            $this->save($key, $current);
+                        }
+                    }
+                    return $this->enforce($key, $current);
                 }
-
+                
                 # DEFAULT
                 if (array_key_exists($key, $this->defaults)) {
                     $def = $this->defaults[$key];
@@ -92,32 +115,35 @@ class Config {
                         return $this->cache[$key] = $this->enforce($key, $value);
                     }
                 }
-
+                
                 # INPUT
                 $value = trim(_rl("{$key}: "));
                 if ($value === '' && !$this->required) {
                     $value = "__{$key}__"; # PLACEHOLDER
                     logx('err', "{$key} empty");
                 }
-
                 $this->save($key, $value);
                 return $this->cache[$key] = $this->enforce($key, $value);
             }
-
+            
             public function offsetSet($key, $value): void {
                 $this->cache[$key] = $value;
                 $this->save($key, $value);
             }
-
-            public function offsetUnset($key): void { unset($this->cache[$key]); }
-
-            private function enforce($key, $value) {
-                if ($this->required && ($value === null || $value === '' || $value === "__{$key}__")) {
-                    die(logx('err', "{$key} is required!"));
-                }
-                return $value;
+            
+            public function offsetUnset($key): void {
+                unset($this->cache[$key]);
             }
-
+            
+            private function enforce($key, $value) {
+                $isPlaceholder = ($value === "__{$key}__");
+                if ($this->required && ($value === null || $value === '' || $isPlaceholder)) {
+                    logx('err', "{$key} is required!");
+                    die;
+                }
+                return $isPlaceholder ? '' : $value;
+            }
+            
             private function save($key, $value): void {
                 $lines = is_file($this->file) ? file($this->file, FILE_IGNORE_NEW_LINES) : [];
                 $found = false;
@@ -128,9 +154,11 @@ class Config {
                         break;
                     }
                 }
-                if (!$found) $lines[] = $key . '=' . $value;
+                
+                if (!$found) {
+                    $lines[] = $key . '=' . $value;
+                }
                 _put($this->file, implode(PHP_EOL, $lines) . PHP_EOL);
-                #var_dump($this-file); die;
             }
         };
     }
@@ -197,8 +225,6 @@ class Config {
         
         return $api;
     }
-
-
 
 }
 

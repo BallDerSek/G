@@ -3,8 +3,9 @@ if (!defined('ROOT')) { die; }
 
 $api = onKeys();
 
-$acc = config::credential([], true);
+$acc = config::credential([], true, ['login', 'PROXY']);
 $login = $acc['login'];
+putenv("PROXY=".$acc['PROXY']);
 
 login:
 $host = 'https://satoshifaucet.io';
@@ -13,8 +14,8 @@ $r = '/?r=124158';
 $ip = null;
 
 (function ($login, $ip) {
+    Proxy::load();
     $cookieFile = config::cookie($login);
-    
     $creds = config::credential(['uagent' => fn() => config::uagent('desktop')], true);
     
     $userAgent = $creds['uagent'];
@@ -23,11 +24,6 @@ $ip = null;
     banner();
     taskPrintCenter($login, 'info');
 })($login, $ip);
-
-if (empty($GLOBALS['_CTX']['proxy']['src'])) {
-    logx('err', '  MANA PROXY NYA !!!');
-    die;
-}
 
 $headersCF = [];
 $skipped = [];

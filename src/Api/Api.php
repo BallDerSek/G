@@ -322,6 +322,9 @@ final class Api { #contractor
         ],
 
         gmxch::class => [
+            'ocr' => ['t' => 'ocr', 'field' => 'image'],
+            'math' => ['t' => 'ocr', 'field' => 'image', 'extra' => ['method' => 'math']],
+            '4num' => ['t' => 'ocr', 'field' => 'image', 'extra' => ['method' => 'text', 'instruct' => '4digits']],
             'onf_odd' => ['t' => 'of_odd', 'field' => 'image'],
             'stf_rot' => ['t' => 'stf_rot', 'field' => 'image'],
         ],
@@ -334,14 +337,15 @@ final class Api { #contractor
     
     public static function cfgB64($c, $t, $b64): array {
         $cfg = self::B64[$c][$t] ?? null;
-
-        if (!is_array($cfg) || empty($cfg['t']) || empty($cfg['field'])) {
-            throw new Exception("invalid method, change providers");
-        }
-        $extra = $cfg['extra'] ?? [];
-        if ($extra && !is_array($extra)) $extra = [];
-
-        return [$cfg['t'], [$cfg['field'] => $b64] + $extra];
+        
+        if (!$cfg && in_array($t, ['math', '4num'])) $cfg = self::B64[$c]['ocr'] ?? null;
+        
+        if (!is_array($cfg) || empty($cfg['t']) || empty($cfg['field'])) throw new Exception("invalid method, change providers");
+        
+        $extra = $cfg['extra'] ?? []; 
+        if (!is_array($extra)) $extra = [];
+        
+        return [$cfg['t'], array_merge([$cfg['field'] => $b64], $extra)];
     }
 
     public const ACC = [
@@ -511,6 +515,7 @@ final class Api { #contractor
             'ERROR_NO_SLOT_CONNECTION',
             'ERROR_NO_SLOT_AVAILABLE',
             'ERROR_INVALID_RESPONSE1',
+            'ERROR_SOLVER_RESPONSE',
             'Internal solver error',
             'Task not found',
             'Job not found',

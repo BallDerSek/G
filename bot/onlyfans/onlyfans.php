@@ -1,10 +1,11 @@
 <?php
 if (!defined('ROOT')) { die; }
-#logx('err', ' beloman bener'); die;
+
 $api = onKeys();
 
-$acc = config::credential([], true);
+$acc = config::credential([], true, ['login', 'PROXY']);
 $login = $acc['login'];
+putenv("PROXY=".$acc['PROXY']);
 
 login:
 $host = 'https://onlyfaucet.com';
@@ -13,8 +14,8 @@ $r = '/?r=88049';
 $ip = null;
 
 (function ($login, $ip) {
+    Proxy::load();
     $cookieFile = config::cookie($login);
-    
     $creds = config::credential(['uagent' => fn() => config::uagent('desktop')], true);
     
     $userAgent = $creds['uagent'];
@@ -23,11 +24,6 @@ $ip = null;
     banner();
     taskPrintCenter($login, 'info');
 } ) ($login, $ip);
-
-if (empty($GLOBALS['_CTX']['proxy']['src'])) {
-    logx('err', '  MANA PROXY NYA !!!');
-    die;
-}
 
 $headersCF = [];
 $skipped = [];
@@ -130,7 +126,7 @@ while (true) {
             $fau = null;
             $fau = Net::X($fa, 'GET', null, inf::$cookie, $headersCF, $host, inf::$uagent);
             
-            #_put('fau.html', $fau); die;
+            #_put('fau.html', $fau); #die;
             
             if ($fau === 99) {
                 $ret99++;
@@ -156,35 +152,24 @@ while (true) {
             if ($f) {
                 $cap = [];
                 $pa = $f['payload'];
-                $need_c = Scraper::_jP($fau, '/captchaNeeded\s*=\s*(true|false)/')[1][0] ?? '';
-                if ($need_c === 'true') {
-                    
-                    if (stripos($fau, 'rag the piece to the slot')) {
-                        $cfg_c = Scraper::_jP($fau, '/var CFG\s*=\s*(\{.*?\});/s')[1][0] ?? null;
-                        if ($cfg_c) {
-                            $cap = onlyfans($cfg_c, $fa);
-                        }
-                    } else {
-                        logx('err', 'ada captcha lain mungkin');
-                        die;
-                    }
-                }
+                $cap = onfCap($fau, $host, $api, $pa, $headersCF);
+
                 if (empty($cap)) {
                     $cap = Solve::exec($fau, $host, $api, $pa);
                 }
-                if (isset($cap['trouble'])) {
-                        $tro = $cap['trouble'];
-                        ($tro === 'proxy') ? _sle(30) : _sle(10);
-                        continue;
-                    }
                 
+                if (isset($cap['trouble'])) {
+                    $tro = $cap['trouble'];
+                    ($tro === 'proxy') ? _sle(30) : _sle(10);
+                    continue;
+                }
                 $po = array_merge($pa, $cap);
             }
             #_put('fau.html', $fau); die;
             
             if (!empty($po)) {
                 #print_r($po);
-                _sle(7);
+                _sle(3);
                 $cla = Net::X($f['url'], 'POST', $po, inf::$cookie, $headersCF, $host, inf::$uagent);
                 if ($cla && $cla !== 99) { 
                     #_put('cla.html', $cla);
@@ -192,16 +177,13 @@ while (true) {
                     $_suc = scraper::_jP($cla, "/Toast\.fire\(\s*\{.*?icon:\s*'([^']+)'.*?html:\s*'([^']+)'/s") ?? [];
                     if (!empty($_suc[1][0])) {
                         $status = $_suc[1][0]; 
-                        print(FGd['CYN'].maskEmail($login).RSET." ");
-                        logx($status === 'success' ? 'ok' : 'err', "{$_suc[1][0]} ", false);
-                        logg(false, "{$_suc[2][0]}");
-                        
-                        if (stripos($_suc[2][0], 'nvalid') !== false) _put('fau.html', $fau);
-                        if (stripos($_suc[2][0], 'sufficient') !== false) break;
-                        if (stripos($_suc[2][0], 'ecurity token')) _sle(10);
-                        if (stripos($_suc[2][0], 'flagged')) die;
-                        
-                        if (stripos($_suc[2][0], 'Shortlink') !== false) {
+                        $msg = $_suc[2][0];
+                        print(FGd['CYN'] . maskEmail($login) . RSET . " ");
+                        logx($status === 'success' ? 'ok' : 'err', "$status ", false);
+                        logg(false, $msg);
+                        if (preg_match('/sufficient|could not be processed/i', $msg)) break;
+                        if (stripos($msg, 'flagged')) die;
+                        if (stripos($msg, 'Shortlink')) {
                             if ($SLDONE) {
                                 logx('err', 'Gada jatah SL lagi');
                                 die;
@@ -309,7 +291,7 @@ sl:
                     }
                     
                     if (!empty($get)) {
-                        #_put('get.html', $get);
+                        _put('get.html', $get); die;
                         
                         if (stripos($get, 'Just a moment') !== false || stripos($get, 'Attention Required!') !== false) {
                             if ($cf = execCF($api, $bakk, inf::$cookie, inf::$uagent)) {
@@ -431,26 +413,8 @@ tes:
 
 
 
-function onfCF($api, $fa) {
-    $res = execCF0($api, $fa, inf::$cookie, inf::$uagent, []);
-    
-    if (is_array($res) && isset($res['token'])) {
-        logx('', 'Cloudflare Solved!', true, true);
-        
-        config::credential()['uagent'] = $res['ua']; 
 
-        inf::setup($res['ua'], inf::$cookie, inf::$ip);
-        
-        $execPy = new execPython(inf::$cookie, $res['ua']);
-        $execPy->cfCookie("cf_clearance=".$res['token'], $fa);
-        
-        $h = inf::netHead(['cf_clearance' => $res['token']]);
 
-        return [$h, $res['ua']];
-    }
-    
-    return false;
-}
 
 function onfSL($linkId, $reff, $curr) {
 
@@ -542,4 +506,74 @@ function onlyFans($json_cfg, $reff) {
     }
 
     return ['trouble' => 'reload'];
+}
+
+
+function onfCap($fau, $host, $api, $payload, $he) {
+    $need_c = Scraper::_jP($fau, '/(?:captchaNeeded|captchaRequired)\s*=\s*(true|false)/')[1][0] ?? '';
+    #var_dump($need_c); die;
+    if ($need_c === 'true') {
+        if (stripos($fau, 'rag the piece to the slot')) {
+            $cfg_c = Scraper::_jP($fau, '/var CFG\s*=\s*(\{.*?\});/s')[1][0] ?? null;
+            if ($cfg_c) return onlyfans($cfg_c, $fa);
+        }
+        
+        if (stripos($fau, 'lect the correct answer')) {
+            $ans = '';
+            $img_u = Scraper::_xP($fau, "//img[@id='captcha-img']/@src")[0] ?? '';
+            #var_dump($img_u);
+            $img_o = Scraper::_xP($fau, "//button[contains(@class, 'captcha-opt-btn')]/@data-value");
+            #var_dump($img_o);
+            if ($img_o && $img_u) {
+                $img = Net::X($img_u, 'GET', [], inf::$cookie, $he, $host, inf::$uagent);
+                if (empty($img) || $img === 99) return ['trouble' => 'proxy'];
+                $ans = Solve::img($api, $host, 'math', $img);
+                #var_dump($ans); #die;
+                if (isset($ans['trouble'])) return $ans;
+            }
+            if ($ans) {
+                $clean = str_replace(['=', '?', ' '], '', $ans);
+                $n = Scraper::_jP($ans, '/\d+/')[0] ?? [];
+                $_final_ans = null;
+                
+                if (count($n) >= 2) {
+                    $q1 = (int)$n[0];
+                    $q2 = (int)$n[1];
+                    $op = null;
+                    if (stripos($ans, '+') !== false) $op = '+';
+                    elseif (stripos($ans, '-') !== false) $op = '-';
+                    elseif (stripos($ans, '*') !== false || stripos($ans, 'x') !== false) $op = '*';
+                    
+                    if ($op) {
+                        $res = SolveUtils::math($q1, $q2, $op);
+                        if (in_array((string)$res, $img_o)) $_final_ans = $res;
+                    }
+                    
+                    if ($_final_ans === null) {
+                        foreach (['+', '-', '*'] as $type) {
+                            $res = SolveUtils::math($q1, $q2, $type);
+                            if (in_array((string)$res, $img_o)) {
+                                $_final_ans = $res;
+                                break;
+                            }
+                        }
+                    }
+                }
+                
+                if ($_final_ans === null) {
+                    $maa = filter_var($clean, FILTER_SANITIZE_NUMBER_INT);
+                    if (in_array((string)$maa, $img_o)) {
+                        $_final_ans = $maa;
+                    }
+                }
+                
+                if ($_final_ans !== null) {
+                    return ['captcha_answer' => (string)$_final_ans];
+                }
+                return ['trouble' => 'reload'];
+            }
+        }
+    }
+    
+    return [];
 }

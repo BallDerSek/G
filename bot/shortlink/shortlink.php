@@ -6,7 +6,7 @@ $api = onKeys();
     
 
 banner();
-
+#goto tes;
 while(true) {
     $shortLink = getenv('login');
     if (!$shortLink || empty($shortLink)) {
@@ -22,7 +22,7 @@ while(true) {
         logg(true, $shortLink);
         logx('err', "[  fail  ] ".$e->getMessage(), true, true);
     }
-die;
+#die;
 }
 
 
@@ -30,7 +30,7 @@ die;
 tes:
 $supportedSL = [
     'mid' => [
-        $cuty = 'https://cuttlinks.com/WrPYm6ec3EhF',
+        $cuty = 'https://cuty.io/WrPYm6ec3EhF',
         $exe = 'https://exe.io/HWljFgW',
         $rsShort = "https://rsshort.com/ek2206",
         $btcut = "https://btcut.io/tmT1BM",
@@ -41,7 +41,7 @@ $supportedSL = [
     'low' => [
         $lpay = "https://linkpay.top/O7jjc", #done
         $horr = "https://horrorpay.online/1pkuD", #done
-        $ad = "https://link.adlink.click/HimD", #done
+        $ad = "https://blog.adlink.click/HimD", #done
         $xut = "https://xut.io/ZijDK", 
         $shme = "https://shrinkme.click/9QPFs0B", #done
         $ez4s = "https://ez4short.com/onTnapdn",
@@ -63,9 +63,9 @@ $supportedSL = [
 
 
 
-
-
-
+$url = $exe;
+$_0 = Net::C($url, 'GET');
+_put('0.html', $_0);
 
 
 

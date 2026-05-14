@@ -24,105 +24,6 @@
  */
 class Solve {
     
-    public static function eexec($html, $host, ?Provider $api, $pa = null, $ins = false) {
-        $ua = inf::$uagent;
-        $cookie = inf::$cookie;
-        $ip = inf::$ip;
-        
-        $solution = [];
-        $_cap = Capt::cha($html);
-#var_dump($_cap); #die;
-        if (!empty($_cap['antibot'])) {
-            $resAtb = locally::ATB($_cap['antibot']['type'], $api, $html);
-            if ($resAtb === 77) return ['trouble' => 'reload'];
-            if ($resAtb) $solution['antibotlinks'] = $resAtb;
-        }
-
-        if (!empty($pa['captcha'])) {
-            switch ($pa['captcha']) {
-                case 'shield':
-                    if (isset($pa['shield_answer'])) {
-                        $resShi = locally::shiCaptcha($html);
-                        if ($resShi) $solution = array_merge($solution, $resShi);
-                    }
-                    break;
-                
-                case 'rot_captcha':
-                    if (isset($pa['rot_captcha_val'])) {
-                        $resRot = locally::rotCaptcha($html);
-                        if ($resRot) $solution = array_merge($solution, $resRot);
-                    }
-                    break;
-                
-                case 'smart_captcha':
-                    if (isset($pa['smart_token'])) {
-                        $resSmt = locally::smartFP($html);
-                        if ($resSmt) $solution['smart_token'] = $resSmt;
-                    }
-                    break;
-                    
-            }
-        }
-
-        if (isset($_cap['ic_fw'])) {
-            $ic = null;
-            $attempt = 0;
-            while (!$ic && $attempt < 5) {
-                $ic = locally::iCaptcha($html, $host);
-                if ($ic === 99) return ['trouble' => 'proxy'];
-                $attempt++;
-            }
-            if ($ic) $solution = array_merge($solution, $ic);
-        }
-
-        $mainSolved = count(array_diff(array_keys($solution), ['antibotlinks'])) > 0;
-
-        if ($api) {
-            if (!$mainSolved) {
-                $priority = ['cft', 'rc3', 'rc2', 'hc'];
-                foreach ($priority as $t) {
-                    if (!isset($_cap[$t])) continue;
-                    
-                    $_ty = $_cap[$t]['type'] ?? $t; 
-                    $_ke = $_cap[$t]['keys'] ?? null;
-                    $_ex = array_filter($_cap[$t]['extra'] ?? [], fn($v) => !is_null($v));
-
-                    if (!$_ke) continue;
-                    
-                    $token = self::tkn($api, $host, $_ke, $_ty, $_ex);
-                    if ($token === 471) continue; 
-                    
-                    if ($token === 404) {
-                        logx('err', "api bermasalah");
-                        return ['trouble' => 'reload']; 
-                    }
-                    
-                    if (is_string($token) && !empty($token)) {
-                        $solution = array_merge($solution, [
-                            'g-recaptcha-response' => $token,
-                            'cf-turnstile-response' => $token,
-                            'h-captcha-response' => $token,
-                            'g-recaptcha-response-v3' => $token
-                        ]);
-                        break; 
-                    }
-                }
-            }
-        } else {
-            if (!$mainSolved && (!empty($_cap['cft']) || !empty($_cap['rc2']) || !empty($_cap['rc3']) || !empty($_cap['hc']))) {
-                logx('err', 'wajib solver provider untuk captcha ini');
-                die;
-            }
-        }
-        
-        if (empty($solution) && empty($_cap)) {
-            logx('info', 'no captcha detected');
-            return ['nocaptcha' => true];
-        }
-
-        return !empty($solution) ? $solution : null;
-    }
-    
     public static function exec($html, $host, ?Provider $api, $pa = null, $ins = false) {
         
         $ua = inf::$uagent;
@@ -253,6 +154,8 @@ class Solve {
                     break; 
                 }
             }
+        } elseif (!$api) {
+            if (!$api) (logx('err', 'undefined provider') ?: die);
         }
 
         if (empty($solution) && empty($_cap)) {
@@ -300,20 +203,36 @@ class Solve {
         if (!$api) (logx('err', 'undefined provider') ?: die);
         
         $solver = config::getKeys($api, $type, 'b64');
-        if (!isset(Api::B64[get_class($solver)][$type])) (logx('err', 'unsupported provider') ?: die);
-        $res = $solver->base64($img, $type);
+        $res = null;
         
+        if (isset(Api::B64[get_class($solver)][$type])) {
+            $set = microtime(true);
+            $res = $solver->base64($img, $type);
+        } else {
+            $res = 777;
+        }
+        #var_dump($res);
         if ($res === 777) {
-            logx('warn', "Switching to Direct API provider", false);
-            _clr();
+            logx('ok', "Switching to " . get_class($api));
+            $set = microtime(true);
+            
             $res = $api->base64($img, $type);
-            if ($res && $res !== 777) $api->getInfo();
+            
+            if ($res && $res !== 777) {
+                $api->getInfo();
+            }
         }
         
         if ($res === 77) return ['trouble' => 'reload'];
-        return $res ?: null;
+        if ($res === 71) (logx('err', 'unsupported provider') ?: die);
+        
+        if ($res && $res !== 777) {
+            logg(false, 'elapsed: ' . number_format(microtime(true) - ($set ?? microtime(true)), 3).'s');
+            return $res;
+        }
+        return null;
     }
-    
+
 }
 
 /** @class SolveUtils
@@ -355,6 +274,16 @@ class Solve {
  * @return string
  */
 class SolveUtils {
+    
+    public static function math($q1, $q2, $op) {
+        return match($op) {
+            '+' => $q1 + $q2,
+            '-' => $q1 - $q2,
+            '*' => $q1 * $q2,
+            '/' => $q2 != 0 ? (int)($q1 / $q2) : 0,
+            default => 0,
+        };
+    }
     
     public static function widgetID() {
         $uuid = '';
@@ -579,6 +508,7 @@ class SolveUtils {
         foreach ($h as $val) $res .= sprintf('%08x', $val);
         return $res;
     }
+
     
 }
 

@@ -46,7 +46,7 @@ function cfSet($class, $res) {
  */
 function execCF($api, $url, $cookie, $uagent, array $data = []) {
     
-    if (!$api) die('undefined provider');
+    if (!$api) (logx('err', 'undefined provider') ?: die);
     $param = array_filter([
         'body' => !empty($data['html']) ? base64_encode($data['html']) : null,
         'proxy' => $GLOBALS['_CTX']['proxy']['src'] ?? null

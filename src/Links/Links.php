@@ -171,7 +171,7 @@ class _shortlinks {
     }
 
     private function coinclix($api) {
-        throw new RuntimeException("maintenance");
+        #throw new RuntimeException("maintenance");
         $cookie = $this->cookie;
         $uagent = $this->uagent;
         $host = $this->host;
