@@ -14,6 +14,7 @@
      * @return string
  */
 class check {
+    
     public static $deps = [];
     public static $geo = [];
 
@@ -72,7 +73,6 @@ class check {
         }
         $GLOBALS['_CTX']['deps'] = self::$deps;
     }
-
 
     private static function depCmd($cmd) {
         $cmd = trim($cmd);
@@ -147,6 +147,7 @@ class check {
         $base = $map[$cc] ?? 'en-US,en';
         return (stripos($base, 'en') === false) ? "$base,en-US,en" : $base;
     }
+    
 }
 
 /** @function getDeps

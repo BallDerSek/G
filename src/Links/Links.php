@@ -27,13 +27,28 @@ class _shortlinks {
         $this->proxy = "http://gamamoch-rotate:playernoob@p.webshare.io:3128";
     }
 
+    private function enableProxy() {
+        if ($this->proxied) {
+            throw new RuntimeException("blocked"); 
+        }
+
+        @unlink($this->cookie); 
+        $pTarget = ($this->oldProxy ?: $this->proxy);
+        putenv("PROXY=" . $pTarget);
+        Proxy::load();
+        
+        $this->proxied = true;
+        _sle(2);
+        return true;
+    }
+
     public function links($api) {
+        
         $rules = [
             'coinclix' => ['coinclix.co'],
             'clk' => ['lnbz.la','tpi.li','oii.la','aii.sh'],
             'low' => ['xut.io','shrinkme.click','link.adlink.click','horrorpay.online','linkpay.top'],
         ];
-
         try {
             foreach ($rules as $func => $hosts) {
                 if (in_array($this->host, $hosts)) {
@@ -44,22 +59,19 @@ class _shortlinks {
         } finally {
             $this->cleanup();
         }
+        
     }
 
     private function cleanup() {
-        @unlink($this->cookie);
         
-        if ($this->oldProxy !== false && $this->oldProxy !== '') {
-            putenv("PROXY=" . $this->oldProxy);
-        } else {
-            putenv("PROXY=");
-        }
+        @unlink($this->cookie);
+        putenv("PROXY=" . ($this->oldProxy ?: ""));
         
         if ($this->oldCtx !== null) {
             $GLOBALS['_CTX']['proxy'] = $this->oldCtx;
         }
+        Proxy::load();
         
-        Proxy::load(); 
     }
 
     private function low($api) {
@@ -77,96 +89,83 @@ class _shortlinks {
         
         low_start:
         $html = Net::C($_0, 'GET', null, $this->cookie, [], $reff, $this->uagent);
-        
         if (!$html || $html === 99) {
-            low_check:
-            if (!$this->proxied) {
-                @unlink($this->cookie); 
-                $pTarget = ($this->oldProxy ?: $this->proxy);
-                putenv("PROXY=" . $pTarget);
-                Proxy::load();
-                
-                $this->proxied = true;
-                _sle(2);
-                goto low_start; 
-            }
-            throw new RuntimeException("blocked");
+            $this->enableProxy();
+            goto low_start;
         }
-        #var_dump($html);
 
         $p = scraper::payload($html)[0]['payload'] ?? null;
-        if (!$p) goto low_check;
-        
+        if (!$p) {
+            $this->enableProxy();
+            goto low_start;
+        }
         
         _sle(17);
         $res = Net::X("https://{$link}/links/go", 'POST', $p, $this->cookie, [], $reff, $this->uagent);
-        if (!$res || $res === 99) {
-            throw new RuntimeException("totally failed");
-        }
+        
         $r = json_decode($res, true);
-        if (!empty($r['url'])) {
-            return $r['url'];
-        }
+        if (!empty($r['url'])) return $r['url'];
+
         throw new RuntimeException("totally failed");
     }
 
     private function clk() {
         $reffs = [
-            'https://healthmyst.com',
-            'https://techbixby.com',
-            'https://carensureplan.com',
-            'https://blogmystt.com',
+            'https://healthmyst.com', 'https://techbixby.com',
+            'https://carensureplan.com', 'https://blogmystt.com',
         ];
         
         clk_start:
         $reff = $reffs[array_rand($reffs)];
+        $get = Net::C($this->url, 'GET', null, $this->cookie, [], $reff, $this->uagent, d: true);
         
-        $_0 = Net::C($this->url, 'GET', null, $this->cookie, [], $reff, $this->uagent);
+        if (!$get || $get === 99) {
+            $this->enableProxy();
+            goto clk_start;
+        }
         
-        if (!$_0 || $_0 === 99 || strlen($_0) < 1000) {
-            clk_check:
-            if (!$this->proxied) {
-                @unlink($this->cookie); 
-                $pTarget = (!empty($this->oldProxy)) ? $this->oldProxy : $this->proxy;
-                putenv("PROXY=" . $pTarget);
-                Proxy::load();
-                $this->proxied = true;
-                _sle(2);
-                goto clk_start; 
-            }
-            throw new RuntimeException("blocked");
-        } 
-
-        $f = scraper::payload($_0)[0] ?? null;
-        if (!$f) goto clk_check;
-
-        $_1 = Net::C($this->url, 'POST', $f['payload'], $this->cookie, [], $reff, $this->uagent);
-        if (!$_1 || $_1 === 99) throw new RuntimeException("failed");
-
-        $f_list = scraper::payload($_1);
-        $pa = [];
-        foreach ($f_list as $fo) {
-            if (!empty($fo['url'])) {
-                $pa = $fo['payload'];
-                break;
+        $code = $get['http_code'];
+        $html = $get['body'] ?? '';
+        
+        if ($code !== 200 && stripos($html, 'just a moment')) {
+            $this->enableProxy();
+            goto clk_start;
+        }
+        
+        $token = null;
+        $fo = scraper::payload($html);
+        if ($fo) {
+            foreach ($fo as $f) {
+                $pa = $f['payload'] ?? [];
+                if (!empty($pa) && isset($pa['token'])) {
+                    $token = $pa['token'];
+                    break;
+                }
             }
         }
         
-        if (empty($pa)) throw new RuntimeException("blocked");
-        
-        _sle(16);
-        
-        $res = Net::X("https://{$this->host}/links/go", 'POST', $pa, $this->cookie, [], $reff, $this->uagent);
-        
-        if (!$res || $res === 99) {
-            throw new RuntimeException("totally failed");
+        if ($token) {
+            
+            $pos = strpos($token, 'aHR0c');
+            if ($pos !== false) {
+                $rawPart = substr($token, $pos);
+                if (preg_match('/(aHR0c[a-zA-Z0-9+\/]+={0,2})/', $rawPart, $match)) {
+                    $url = base64_decode($match[1]);
+                    if (filter_var($url, FILTER_VALIDATE_URL)) {
+                        return $url;
+                    }
+                }
+            }
+            
+            if (preg_match('/(aHR0c[a-zA-Z0-9+\/]+={0,2})/', $token, $m)) {
+                $url = base64_decode($m[1]);
+                if (filter_var($url, FILTER_VALIDATE_URL)) {
+                    return $url;
+                }
+            }
         }
 
-        $r = json_decode($res, true);
-        if (!empty($r['url'])) {
-            return $r['url'];
-        }
-        
+
         throw new RuntimeException("totally failed");
     }
 
@@ -184,7 +183,7 @@ class _shortlinks {
         while (!$_code) {
             if ($initTry++ > 5) throw new RuntimeException("failed init");
             $_0 = Net::C($this->url, 'GET', null, $cookie, [], '', $uagent);
-            if (!empty($_0)) {
+            if (!empty($_0) && $_0 !== 99) {
                 if (stripos($_0, ' disable your proxy')) {
                     if (!$this->proxied) {
                         putenv("PROXY=" . ($this->oldProxy ?? $this->proxy));
@@ -201,7 +200,8 @@ class _shortlinks {
         }
 
         $_dome = ['vitalityvista.net', 'geekgrove.net'];
-        $html = null; $dom = '';
+        $dom = '';
+        $html = null; 
         foreach ($_dome as $_domain) {
             $dom = "https://" . $_domain;
             $maxRetries = 7;
@@ -238,8 +238,8 @@ class _shortlinks {
             }
         }
         
-        if (!$html) throw new RuntimeException("bad network");
-
+        if (!$html) throw new RuntimeException("unstable net");
+        
         $code = null; 
         $errorCount = 0;
         while (true) {
@@ -261,12 +261,12 @@ class _shortlinks {
                 $cnn = scraper::_xP($html, "//*[contains(@class,'cnnc')]/@id");
                 $_bg = scraper::find($html, 'cpres2', 'input', 'value', 'id');
                 $_cp = scraper::find($html, 'cpobj', 'input', 'value', 'id');
-
+                
                 $start = microtime(true);
-                $po = _ccPayload($api, $dom, $ver[0], $pis[0], $cnn[0], $_bg[0] ?? null, $_cp[0] ?? null);
+                $po = _ccForm($api, $dom, $ver[0], $pis[0], $cnn[0], $_bg[0] ?? null, $_cp[0] ?? null);
                 $wait = (int)($lpt[0] ?? 0) - (int)(microtime(true) - $start);
                 if ($wait > 0) styler("waiting", fn() => _sle((int)ceil($wait)));
-
+                
                 $retTry = 0;
                 $maxTry = 3;
                 while (true) {
@@ -280,14 +280,16 @@ class _shortlinks {
                     break; 
                 }
                 #print_r($_v1);
+                
                 $matches = scraper::_jP($_v1['message'] ?? '', '/<code class="link_code">([A-Za-z0-9]+)<\/code>/i') ?? [];
                 if (!empty($matches[1][0])) {
                     $code = $matches[1][0];
                     break;
                 }
-
+                
                 $next_url = scraper::_jP($_v1['message'] ?? '', '/window\.location\.href\s*=\s*"([^"]+)"/') ?? [];
                 $_n = $next_url[1][0] ?? '';
+                
                 if ($_n !== '') {
                     if (!preg_match('/^https?:\/\//', $_n)) $_n = $dom.$_n;
                     $html = Net::C($_n, 'GET', null, $cookie, [], '', $uagent);
@@ -305,6 +307,7 @@ class _shortlinks {
                     _sle(3);
                     $html = Net::C($lastreload, 'GET', null, $cookie, [], $lastreload, $uagent);
                 }
+                
             } else {
                 $errorCount++;
                 if ($errorCount >= 5) throw new RuntimeException("totally failed");
@@ -312,8 +315,9 @@ class _shortlinks {
                 $html = Net::C($lastreload, 'GET', null, $cookie, [], $lastreload, $uagent);
             }
         }
-
+        
         if (!$code) throw new RuntimeException("no code found");
+        
         $res_ver = Net::X("https://$host/members/shortener/linkprocess/", 'POST', ['linkVerify' => $code], $cookie, [], $this->url, $uagent);
         $ver_fin = json_decode($res_ver, true);
         $msg = $ver_fin['message'] ?? '';
@@ -322,181 +326,9 @@ class _shortlinks {
         if (isset($match[1][0])) return $match[1][0];
         
         throw new RuntimeException($msg ?: 'invalid session');
-    }
     
-}
-
-class _bypassSL {
-    private $url;
-    private $host;
-    private $path;
-    private $cookie;
-    private $uagent;
-    private $proxied;
-    private $proxy;
-    private $oldProxy;
-    private $oldCtx;
-
-    public function __construct($url) {
-        
-        if (!is_string($url) || trim($url) === '') {
-            throw new RuntimeException("jangan kosong");
-        }
-        
-        $this->oldProxy = getenv('PROXY');
-        $this->oldCtx = $GLOBALS['_CTX']['proxy'] ?? null;
-        putenv("PROXY=");
-        unset($GLOBALS['_CTX']['proxy']);
-        
-        $part = parse_url($url);
-        $host = $part['host'] ?? (parse_url($url, PHP_URL_PATH) ?? $url);
-        $path = trim($part['path'] ?? '', '/');
-        
-        $_H = preg_replace('/[^a-zA-Z0-9]/', '_', $host);
-        $_P = preg_replace('/[^a-zA-Z0-9]/', '_', str_replace('/', '_', $path));
-        
-        $_H = preg_replace('/_+/', '_', $_H);
-        $_P = preg_replace('/_+/', '_', $_P);
-        $_D = _lib('shortlink');
-        $key = $_H;
-        if ($_P !== '') {
-            $key .= '_' . $_P;
-        }
-        
-        $key = trim(preg_replace('/_+/', '_', $key), '_');
-        
-        $this->url = $url;
-        $this->cookie = $_D . '/' . $key . '.tmp';
-        $this->host = $host;
-        $this->path = $path;
-        
-        $this->uagent = config::uagent("desktop");
-        $this->proxied = Proxy::_enable();
-        $this->proxy = "http://gamamoch-rotate:playernoob@p.webshare.io:3128";
     }
 
-    public function links($api) {
-        
-        $rules = [
-            'clk' => ['lnbz.la','tpi.li','oii.la','aii.sh'],
-            'low' => ['xut.io','shrinkme.click','link.adlink.click','horrorpay.online','linkpay.top'],
-            'nono' => ['earnow.online','shortino.link','shortano.link'],
-            'coinclix' => ['coinclix.co']
-        ];
-
-        foreach ($rules as $func => $hosts) {
-            if (in_array($this->host, $hosts)) {
-                try {
-                    $result = $this->$func($api);
-                    return $result;
-                } catch (Exception $e) {
-                    throw $e; 
-                } finally {
-                    $this->cleanup();
-                }
-            }
-        }
-        throw new RuntimeException("not supported");
-    }
-
-    private function cleanup() {
-        @unlink($this->cookie);
-        if ($this->oldProxy !== false && $this->oldProxy !== '') {
-            putenv("PROXY=" . $this->oldProxy);
-        }
-        
-        if ($this->oldCtx !== null) {
-            $GLOBALS['_CTX']['proxy'] = $this->oldCtx;
-        }
-        
-        if (getenv('PROXY')) {
-            Proxy::load(); 
-        }
-        
-        unset($this->cookie, $this->uagent, $this->proxied);
-    }
-
-    private function clk() {
-        $reff = [
-            'https://healthmyst.com',
-            'https://techbixby.com',
-            'https://carensureplan.com',
-            'https://blogmystt.com',
-        ];
-        $reff = $reff[array_rand($reff)];
-        
-        $_0 = Net::C($this->url, 'GET', null, $this->cookie, [], $reff, $this->uagent);
-        if (!$_0) {
-            throw new RuntimeException("blocked");
-        } 
-       # _put("0.html", $_0);
-        $f = scraper::payload($_0)[0] ?? null;
-        #print_r($f);
-
-        $_1 = Net::C($this->url, 'POST', $f['payload'], $this->cookie, [], $reff, $this->uagent);
-        #_put("1.html", $_1);
-#die;
-        $f = scraper::payload($_1);
-        $pa = [];
-        foreach ($f as $fo) {
-            #print_r($fo);
-            if (!empty($fo['url'])) {
-                $pa = $fo['payload'];
-                break;
-            }
-        }
-        #print_r($pa);
-        
-        if (!empty($pa)) {
-            _sle(20);
-            $r = json_decode(Net::X("https://{$this->host}/links/go", 'POST', $pa, $this->cookie, [], $reff, $this->uagent), true);
-            #print_r($r);
-            #_put("r.html", $r);
-            if (!empty($r['url'])) {
-                return $r['url'];
-            }
-        }
-        throw new RuntimeException("failed");
-    }
-
-    private function low() {
-        $map = [
-            'xut.io' => ['xut.io','https://cryptorex.net/'],
-            'link.adlink.click' => ['blog.adlink.click','https://www.diudemy.com/'],
-            'shrinkme.click' => ['en.mrproblogger.com','https://themezon.net/'],
-            'horrorpay.online' => ['horrorpay.online','https://aradmag.online/'],
-            'linkpay.top' => ['linkpay.top','https://coinsimulator.online/'],
-        ];
-        if (!isset($map[$this->host])) {
-            throw new RuntimeException("unavailable");
-        }
-
-        [$link, $reff] = $map[$this->host];
-        $_0 = str_replace($this->host, $link, $this->url);
-        low:
-        $html = Net::C($_0, 'GET', null, $this->cookie, [], $reff, $this->uagent);
-        #_put('0.html', $html); die;
-        if (!$html) {
-            if (!$this->proxied) {
-                putenv("PROXY=".$this->oldProxy ?? $this->proxy);
-                Proxy::Load();
-                $this->proxied = true;
-                goto low;
-            }
-            throw new RuntimeException("blocked");
-        }
-
-        $p = scraper::payload($html)[0]['payload'] ?? null;
-        #print_r($p);
-        
-        _sle(20);
-        $r = json_decode(Net::X("https://{$link}/links/go", 'POST', $p, $this->cookie, [], $reff, $this->uagent), true);
-        if (empty($r['url'])) {
-            throw new RuntimeException("failed");
-        }
-        return $r['url'];
-    }
-    
     private function nono($api) {
         throw new RuntimeException("maintenance");
         
@@ -509,9 +341,8 @@ class _bypassSL {
         $path = $this->path;
         
         
-        if (!AUTH_KEY) {
-            throw new RuntimeException("unauthorized");
-        }
+        if (!AUTH_KEY) throw new RuntimeException("unauthorized");
+        
         $_fp = AUTH_API()->access('earnow', 'fingerprint', ['userAgent' => $uagent]);
         
         $aapi = '1';
@@ -758,153 +589,17 @@ class _bypassSL {
         goto bbypass;
     }
     
-    private function coinclix($api) {
-
-        $cookie = $this->cookie;
-        $uagent = $this->uagent;
-        $host = $this->host;
-        $path = $this->path;
-        
-        coinclix:
-        if (!AUTH_KEY) {
-            throw new RuntimeException("unauthorized");
-        }
-        
-        $_code = null;
-        do {
-            $_0 = Net::C($this->url, 'GET', null, $cookie, [], '', $uagent);
-            if (!empty($_0)) {
-                #_put('0.html', $_0);
-                if (stripos($_0, ' disable your proxy')) {
-                    if (!$this->proxied) {
-                        putenv("PROXY=".$this->oldProxy ?? $this->proxy);
-                        Proxy::Load();
-                        $this->proxied = true;
-                        goto coinclix;
-                    }
-                    throw new RuntimeException("blocked");
-                    
-                }
-                
-                $code = _ccCode($_0);
-                #print_r($code);
-                if (isset($code[1])) {
-                    $_code = $code[1];
-                }
-                
-            }
-        } while (!$_code);
-        
-        $_dome = ['vitalityvista.net','geekgrove.net'];
-        $ccpayloadcomponents = false;
-        $_error = false;
-        $errorCount = 0;
-        $error = false;
-        $code = null;
-        $_g1 = null;
-        
-        foreach ($_dome as $_domain) {
-            $dom = "https://".$_domain;
-            #logx('', $dom);
-            $_1 = json_decode(Net::C($dom.'/link/process', 'POST', ['linkInit' => $_code], $cookie, [], $dom, $uagent), true);
-            #print_r($_1);
-            $next = scraper::_xP($_1['message'] ?? '', "//a/@href") ?? null;
-            if (isset($next[0])) {
-                $_g1 = Net::C($dom.$next[0], 'GET', null, $cookie, [], $dom, $uagent);
-                $lastreload = $dom.$next[0];
-                break;
-            }
-            $msgs = scraper::_xP($_1['message'] ?? '', "//div[contains(@class,'alert-danger')]");
-            if (!empty($msgs[0])) {
-                $_error = $msgs[0];
-                continue;
-            }
-        }
-        if (!$_g1) {
-            throw new RuntimeException($_error ?? "invalid code");
-        }
-        $dom = "https://".$_domain;
-        start:
-        if ($error) {
-            $errorCount++;
-            if ($errorCount >= 5) {
-                throw new RuntimeException("captcha failed");
-            }
-            _sle(2);
-            $_g1 = Net::C($lastreload, 'GET', null, $cookie, [], $lastreload, $uagent);
-            $error = false;
-        }
-        
-        #_put('g1.html', $_g1); die;
-        $st = scraper::_xP($_g1, "//*[@id='linkResHeader']//h4") ?? '';
-        if (isset($st[0])) {
-            $step = trim(preg_replace('/\s+/', ' ', $st[0]));
-            $pis =scraper::find($_g1, 'pissoff', 'input', 'value', 'id')?? null;
-            $lpt =scraper::find($_g1, 'lpt', 'input', 'value', 'id') ?? null;
-            $ver =scraper::find($_g1, 'linkVer', 'input', 'value', 'id') ?? null;
-            $cnn = scraper::_xP($_g1, "//*[contains(@class,'cnnc')]/@id") ?? null;
-            $_bg =scraper::find($_g1, 'cpres2', 'input', 'value', 'id') ?? null;
-            $_cp =scraper::find($_g1, 'cpobj', 'input', 'value', 'id') ?? null;
-            $ccpayloadcomponents = true;
-        } 
-        #logx('info', $step, false, true);
-        logx('info', $step." [".$ver[0]."] ", true, true);
-        $po = null;
-        if ($ccpayloadcomponents) {
-            $start = microtime(true);
-            $po = _ccPayload($api, $dom, $ver[0], $pis[0], $cnn[0], $_bg[0] ?? null, $_cp[0] ?? null);
-            $end = microtime(true) - $start;
-            $wait = (int)$lpt[0] - $end;
-            if ($wait > 0) {
-                styler("waiting", fn() => _sle((int)ceil($wait)));
-            }
-        }
-        
-        
-        $_v1 = json_decode(Net::C($dom.'/link/process', 'POST', $po, $cookie, [], $dom, $uagent), true);
-        if (empty($_v1) || ($_v1 === 99)) throw new RuntimeException('totally failed');
-        $matches = scraper::_jP($_v1['message'], '/<code class="link_code">([A-Za-z0-9]+)<\/code>/i') ?? [];
-        if (!empty($matches[1][0])) {
-            $code = $matches[1][0];
-            goto verify;
-            #return "Verification code: ".$code;
-        } else {
-            $next = scraper::_jP($_v1['message'], '/window\.location\.href\s*=\s*"([^"]+)"/') ?? [];
-            $_n = $next[1][0] ?? '';
-            if ($_n !== '') {
-                $errorCount = 0;
-                if (!preg_match('/^https?:\/\//', $_n)) {
-                    $_n = $dom.$_n;
-                }
-                $_g1 = Net::C($_n, 'GET', null, $cookie, [], '', $uagent);
-                $lastreload = $_n;
-                $matches = scraper::_jP($_g1, '/<a href="([^"]+)"/i');
-                if (!empty($matches[1][0])) {
-                    $_n = $matches[1][0];
-                    $_g1 = Net::C($_n, 'GET', null, $cookie, [], '', $uagent);
-                    $lastreload = $_n;
-                }
-            } else {
-                $error = true;
-            }
-        }
-        goto start;
-        
-        verify:
-        $ver = json_decode(Net::X("https://$host/members/shortener/linkprocess/", 'POST', ['linkVerify' => $code], $cookie, [], $this->url, $uagent), true);
-        $msg = $ver['message'] ?? '';
-        if (str_contains($msg, 'Invalid verification code')) {
-            throw new RuntimeException('invalid code');
-        }
-        $match = scraper::_jP($msg, '/href="([^"]+)"/') ?? [];
-        if (!isset($match[1][0])) {
-            throw new RuntimeException($msg ?: 'invalid session');
-        }
-        return $match[1][0];
-    }
-    
 }
 
+
+
+
+
+
+
+
+
+  
 {
 
 function _ccCode($html) {
@@ -917,7 +612,7 @@ function _ccCode($html) {
     return null;
 }
 
-function _ccPayload($api, $dom, $ver, $pis, $cnn, $bg, $cp) {
+function _ccForm($api, $dom, $ver, $pis, $cnn, $bg, $cp) {
 
     $cpobj = $cp ? json_decode(html_entity_decode($cp), true) : null;
     
@@ -946,10 +641,11 @@ function _ccPayload($api, $dom, $ver, $pis, $cnn, $bg, $cp) {
     }
 
     if ($token === 471) return null;
-    return _payloadCC($pis, $cnn, $token, $bg);
+    return _ccLoad($pis, $cnn, $token, $bg);
+    
 }
 
-function _payloadCC($pis, $cnn, $response, $bg) {
+function _ccLoad($pis, $cnn, $response, $bg) {
     $rand = function($len){
         $chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
         $out = '';
@@ -988,8 +684,3 @@ function _payloadCC($pis, $cnn, $response, $bg) {
 }
 
 }
-
-
-
-
-  

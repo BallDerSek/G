@@ -28,7 +28,7 @@ $ip = null;
 $headersCF = [];
 $skipped = [];
 $SLDONE = false;
-$curr = '';
+$curr = 'ltc';
 while (true) {
     $max = 5;
     $ret = 0;
@@ -240,7 +240,7 @@ sl:
                 $found_one = true;
                 $valid[$links] = [$idd, $lmt];
                 $loc = onfSL($idd, $sl, $_c);
-                
+                #var_dump($loc);
                 if (isset($loc['trouble'])) {
                     _sle(30);
                     continue;
@@ -263,14 +263,14 @@ sl:
                 }
                 if ($is_bl) break; 
                 
-                logx('info', "Bypassing SL: $loc_u", true, true);
+                logx('info', "Bypassing SL: {$loc['url']}", true, true);
                 $bakk = links($api, $loc['url']);
                 if (!$bakk) {
                     $skipped[$idd] = true; 
                     break; 
                 }
                 
-                styler("waiting for SL", fn() => _sle(60));
+                styler("waiting for SL", fn() => _sle(80));
                 $retGet = 0;
                 while (true) {
                     $get = null; 
@@ -291,7 +291,7 @@ sl:
                     }
                     
                     if (!empty($get)) {
-                        _put('get.html', $get); die;
+                        #_put('get.html', $get); 
                         
                         if (stripos($get, 'Just a moment') !== false || stripos($get, 'Attention Required!') !== false) {
                             if ($cf = execCF($api, $bakk, inf::$cookie, inf::$uagent)) {
@@ -345,7 +345,20 @@ sl:
                                 $he = $headersCF;
                             }
                         }
-                        #die;
+                        
+                        $po = $po ?? null;
+                        if (empty($po)) {
+                            $f = scraper::payload($get);
+                            if (!empty($f)) {
+                                foreach ($f as $fo) {
+                                    if (isset($fo['payload']['csrf_token_name'])) {
+                                        $po = $fo['payload'];
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                        
                         if (!empty($po)) {
                             #print_r($po);
                             

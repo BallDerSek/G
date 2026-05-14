@@ -19,10 +19,17 @@
      * @method offsetUnset
              * @param mixed $key
              * @return void
+     * @method offsetExists
+             * @param mixed $key
+             * @return void
      * @method enforce
              * @param mixed $key
              * @param mixed $value
              * @return mixed
+     * @method shouldAsk
+             * @param mixed $key
+             * @param mixed $value
+             * @return void
      * @method save
              * @param mixed $key
              * @param mixed $value
@@ -38,6 +45,7 @@
      * @param mixed $api
      * @return mixed
  */
+
 class Config {
     private static array $cred_cache = [];
     private static ?string $ua_static = null;
@@ -48,6 +56,7 @@ class Config {
         $filePath = rtrim($baseDir, '/') . '/credentials';
         
         return new class($filePath, $defaults, $required, $ask) implements ArrayAccess {
+            
             private array $cache = [];
             private string $file;
             private array $defaults;
@@ -160,6 +169,7 @@ class Config {
                 }
                 _put($this->file, implode(PHP_EOL, $lines) . PHP_EOL);
             }
+            
         };
     }
 

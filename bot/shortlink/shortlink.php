@@ -2,16 +2,53 @@
 if (!defined('ROOT')) {die;}
 
 $api = null;
-$api = onKeys();
+#$api = onKeys();
     
 
 banner();
 #goto tes;
+$supportedSL = [
+    'mid' => [
+        $cuty = 'https://cuty.io/WrPYm6ec3EhF',
+        $exe = 'https://exe.io/HWljFgW',
+        $rsShort = "https://rsshort.com/ek2206",
+        $btcut = "https://btcut.io/tmT1BM",
+        $sky = "https://skyshorts.top/OWchcb1aekb",
+        $cRadio = "https://crypto-radio.eu/eGeO3",
+        $cc = "https://coinclix.co/go/hh1YhH",
+    ],
+    'low' => [
+        $lpay = "https://linkpay.top/O7jjc", #done
+        $horr = "https://horrorpay.online/1pkuD", #done
+        $ad = "https://link.adlink.click/HimD", #done
+        $xut = "https://xut.io/ZijDK", 
+        $shme = "https://shrinkme.click/9QPFs0B", #done
+        $ez4s = "https://ez4short.com/onTnapdn",
+        $iio = 'https://oii.io/CBjykr2h09d',
+    ],
+    'clk' => [
+        $oii = 'https://oii.la/CB3igk8ax19', #done
+        $lnbz = "https://lnbz.la/y2hXh", #done
+        $tpi = "https://tpi.li/jJlY7YxL", #done
+        $aii = "https://aii.sh/UX0B", #done
+    ],
+    'nono' => [
+        $tino = "https://shortino.link/HippDJn",
+        $tano = "https://shortano.link/6XXLZ",
+        $erno = "https://earnow.online/VJfJpx",
+        $erno = "https://earnow.online/pqmu",
+    ],
+    'cut' => [
+        $just = 'https://justcut.io/8OhsM',
+        ]
+];
+
 while(true) {
     $shortLink = getenv('login');
     if (!$shortLink || empty($shortLink)) {
         $shortLink = _rl('shortlink: ');
     }
+    
     try {
         $bypass = new _shortlinks("$shortLink");
         $finalUrl = $bypass->links($api);
@@ -28,38 +65,6 @@ while(true) {
 
     
 tes:
-$supportedSL = [
-    'mid' => [
-        $cuty = 'https://cuty.io/WrPYm6ec3EhF',
-        $exe = 'https://exe.io/HWljFgW',
-        $rsShort = "https://rsshort.com/ek2206",
-        $btcut = "https://btcut.io/tmT1BM",
-        $sky = "https://skyshorts.top/OWchcb1aekb",
-        $cRadio = "https://crypto-radio.eu/eGeO3",
-        $cc = "https://coinclix.co/go/hh1YhH",
-    ],
-    'low' => [
-        $lpay = "https://linkpay.top/O7jjc", #done
-        $horr = "https://horrorpay.online/1pkuD", #done
-        $ad = "https://blog.adlink.click/HimD", #done
-        $xut = "https://xut.io/ZijDK", 
-        $shme = "https://shrinkme.click/9QPFs0B", #done
-        $ez4s = "https://ez4short.com/onTnapdn",
-        $iio = 'https://oii.io/CBjykr2h09d',
-    ],
-    'clk' => [
-        $oii = 'https://oii.la/CB3igk8ax19',
-        $lnbz = "https://lnbz.la/y2hXh",
-        $tpi = "https://tpi.li/EKoKmmv",
-        $aii = "https://aii.sh/UX0B",
-    ],
-    'nono' => [
-        $tino = "https://shortino.link/HippDJn",
-        $tano = "https://shortano.link/6XXLZ",
-        $erno = "https://earnow.online/VJfJpx",
-        $erno = "https://earnow.online/pqmu",
-    ],
-];
 
 
 
