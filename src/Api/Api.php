@@ -322,9 +322,9 @@ final class Api { #contractor
         ],
 
         gmxch::class => [
-            'ocr' => ['t' => 'ocr', 'field' => 'image'],
-            'math' => ['t' => 'ocr', 'field' => 'image', 'extra' => ['method' => 'math']],
-            '4num' => ['t' => 'ocr', 'field' => 'image', 'extra' => ['method' => 'text', 'instruct' => '4digits']],
+            #'ocr' => ['t' => 'ocr', 'field' => 'image'],
+            #'math' => ['t' => 'ocr', 'field' => 'image', 'extra' => ['method' => 'math']],
+            #'4num' => ['t' => 'ocr', 'field' => 'image', 'extra' => ['method' => 'text', 'instruct' => '4digits']],
             'onf_odd' => ['t' => 'of_odd', 'field' => 'image'],
             'stf_rot' => ['t' => 'stf_rot', 'field' => 'image'],
         ],
