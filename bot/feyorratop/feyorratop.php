@@ -91,7 +91,7 @@ while (true) {
                 _sle(30);
                 continue;
             }
-            var_dump($ve) && var_dump($po); die;
+            var_dump($ve); var_dump($po); die;
             $alert_d = scraper::_xP($ve, "//div[contains(@class, 'alert-danger')]");
             if (!empty($alert_d)) {
                 $msg = $alert_d[0];
