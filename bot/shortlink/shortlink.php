@@ -6,7 +6,6 @@ $api = null;
     
 
 banner();
-#goto tes;
 $supportedSL = [
     'mid' => [
         $cuty = 'https://cuty.io/WrPYm6ec3EhF',
@@ -39,10 +38,11 @@ $supportedSL = [
         $erno = "https://earnow.online/pqmu",
     ],
     'cut' => [
-        $just = 'https://justcut.io/8OhsM',
+        $just = 'https://justcut.io/3Cjw8',
         ]
 ];
 
+#goto tes;
 while(true) {
     $shortLink = getenv('login');
     if (!$shortLink || empty($shortLink)) {
@@ -68,7 +68,7 @@ tes:
 
 
 
-$url = $exe;
+$url = $just;
 $_0 = Net::C($url, 'GET');
 _put('0.html', $_0);
 

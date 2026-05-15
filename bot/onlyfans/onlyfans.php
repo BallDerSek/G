@@ -29,7 +29,7 @@ $ip = null;
 $headersCF = [];
 $skipped = [];
 $SLDONE = false;
-$curr = '';
+$curr = 'ltc';
 while (true) {
     $max = 5;
     $ret = 0;
@@ -99,7 +99,7 @@ while (true) {
         }
     } while (empty($dash));
     #_put('dash.html', $dash); die;
-#goto sl;
+goto sl;
     $successCount = 0; 
     $_fa = Scraper::_xP($dash, "//ul[@id='faucet']//a/@href");
     foreach ($_fa as $fa) {
@@ -179,11 +179,13 @@ while (true) {
                         logx($status === 'success' ? 'ok' : 'err', "$status ", false);
                         logg(false, $msg);
                         if (stripos($msg, 'has been sent')) $successCount++;
+                        /*
                         if ($successCount >= 100) {
                             $successCount = 0; 
                             $curr = $_c; 
                             break 2; 
                         }
+                        */
                         if (preg_match('/sufficient|could not be processed/i', $msg)) break;
                         if (stripos($msg, 'flagged')) die;
                         if (stripos($msg, 'Shortlink')) {
@@ -229,7 +231,8 @@ sl:
             if (empty($sho)) { _sle(5); continue; }
             
             $short = sScraper::extract($sho);
-            #print_r($short);
+            if (empty($short)) continue;
+            #print_r($short); die;
             $success_in_page = false; 
             $found_one = false; 
             
@@ -297,7 +300,7 @@ sl:
                     }
                     
                     if (!empty($get)) {
-                        #_put('get.html', $get); 
+                        _put('get.html', $get); 
                         
                         if (stripos($get, 'Just a moment') !== false || stripos($get, 'Attention Required!') !== false) {
                             if ($cf = execCF($api, $bakk, inf::$cookie, inf::$uagent)) {
@@ -526,7 +529,6 @@ function onlyFans($json_cfg, $reff) {
 
     return ['trouble' => 'reload'];
 }
-
 
 function onfCap($fau, $host, $api, $payload, $he) {
     
