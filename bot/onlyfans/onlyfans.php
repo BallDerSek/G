@@ -29,7 +29,7 @@ $ip = null;
 $headersCF = [];
 $skipped = [];
 $SLDONE = false;
-$curr = 'ltc';
+$curr = '';
 while (true) {
     $max = 5;
     $ret = 0;
@@ -99,7 +99,7 @@ while (true) {
         }
     } while (empty($dash));
     #_put('dash.html', $dash); die;
-goto sl;
+#goto sl;
     $successCount = 0; 
     $_fa = Scraper::_xP($dash, "//ul[@id='faucet']//a/@href");
     foreach ($_fa as $fa) {
