@@ -3,7 +3,7 @@ if (!defined('ROOT')) { die; }
 
 $api = onKeys();
 
-$acc = config::credential([], true, ['login', 'PROXY']);
+$acc = config::credential([], false, ['login', 'PROXY']);
 $login = $acc['login'];
 putenv("PROXY=".$acc['PROXY']);
 
@@ -139,7 +139,7 @@ while (true) {
             if ($ban = isBan($fau)) {
                 logx('err', " kena ban: " . $ban['ti']);
                 #styler("waiting for unlocked", fn() => _sle($ban['sleep']));
-                continue;
+                #continue;
                 $curr = $_c; 
                 break 2;
             }

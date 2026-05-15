@@ -22,7 +22,7 @@ $supportedSL = [
         $ad = "https://link.adlink.click/HimD", #done
         $xut = "https://xut.io/ZijDK", 
         $shme = "https://shrinkme.click/9QPFs0B", #done
-        $ez4s = "https://ez4short.com/onTnapdn",
+        $ez4s = "https://ez4short.com/OEb4nl",
         $iio = 'https://oii.io/CBjykr2h09d',
     ],
     'clk' => [
