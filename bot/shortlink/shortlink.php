@@ -68,7 +68,7 @@ tes:
 
 
 
-$url = $just;
+$url = $ez4s;
 $_0 = Net::C($url, 'GET');
 _put('0.html', $_0);
 

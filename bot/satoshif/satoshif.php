@@ -13,7 +13,6 @@ $r = '/?r=124158';
 $ip = '173.249.41.150';
 
 (function ($login, $ip) {
-    Proxy::load();
     $cookieFile = config::cookie($login);
     $userAgent = config::uagent('mobile');
 
@@ -89,7 +88,7 @@ while (true) {
         while (true) {
             _sle(3);
             $fau = Net::C($fa, 'GET', null, inf::$cookie, [], '', inf::$uagent, ip: $ip);
-            _put('fau.html', $fau);
+            #_put('fau.html', $fau);
             if (empty($fau)) continue;
 
             if ($ban = isBan($fau)) {
@@ -101,18 +100,25 @@ while (true) {
             $f = scraper::payload($fau)[0] ?? [];
             if (!empty($f)) {
                 $pa = $f['payload'];
-                print_r($pa);
-                $cap = Solve::exec($fau, 'https://'.$domain, $api, $pa);
-                if (isset($cap['nocaptcha'])) {
-                    die;
+                if (($pa['captcha'] === 'math_captcha') && isset($pa['math_answer'])) {
+                    
+                    $img_u = Scraper::_xP($fau, "//div[@class='mc-img-wrap']/img/@src");
+                    if (!empty($img_u) && isset($img_u[0])) {
+                        $img = explode(',', $img_u[0])[1] ?? '';
+                        if (!empty($img)) {
+                            $cap = stfM($api, $host, $img);
+                        }
+                    }
+                } else {
+                    $cap = Solve::exec($fau, 'https://'.$domain, $api, $pa);
                 }
-                
                 if (isset($cap['trouble'])) {
                     $tro = $cap['trouble'];
                     ($tro === 'proxy') ? _sle(30) : _sle(10);
                     continue; 
                 }
-
+                
+                #var_dump($cap);
                 $cre = ['uf' => md5($login), 'ls' => LANGUAGE(), 'utt' => TIMEZONE()];
                 
                 $cleanCap = array_filter((array)$cap, fn($k) => $k !== 'nocaptcha', ARRAY_FILTER_USE_KEY);
@@ -123,8 +129,8 @@ while (true) {
                 continue;
             }
             
-            _put('fau.html', $fau);
             #die;
+            #print_r($po);
             _sle(2); 
             $ve = str_replace('https://', 'http://', $f['url']);
             Net::X($ve, 'POST', $po, inf::$cookie, [], $fa, inf::$uagent, ip: $ip, foll: false);
@@ -225,8 +231,6 @@ while (true) {
                     break;
                 }
                 
-                logx('info', "Redirect: ".parse_url($loc)['host'], true, true);
-
                 $loc_u = parse_url($loc)['host'];
                 $is_bl = false;
                 foreach ($up as $blacklisted) {
@@ -238,14 +242,18 @@ while (true) {
                     }
                 }
                 if ($is_bl) { _sle(2); break; }
+
+                logx('info', "Bypassing SL: {$loc}", true, true);
                 
+                $start = microtime(true);
                 $bak = links($api, $loc);
                 if (!$bak) {
                     $skipped[$idd] = true; 
                     break; 
                 }
                 
-                styler("waiting for SL", fn() => _sle(60));
+                $wait = 100 - (int)(microtime(true) - $start);
+                if ($wait > 0) styler("waiting for SL", fn() => _sle((int)ceil($wait)));
                 
                 $b1 = preg_replace('/^https:/i', 'http:', $bak);
                 #logx('', $b1, true, true);
@@ -311,6 +319,54 @@ tes:
 
 
 
+function stfM($api, $host, $img) {
+    
+    $ans = Solve::img($api, $host, 'math', $img);
+    
+    if (isset($ans['trouble'])) return $ans;
+    
+    if ($ans) {
+        #var_dump($ans);
+        $ans = strtolower($ans);
+        $clean = str_replace(['=', '?', ' '], '', $ans);
+        
+        $n = Scraper::_jP($ans, '/\d+/')[0] ?? [];
+        
+        $_final_ans = null;
+
+        if (count($n) >= 2) {
+            $q1 = (int)$n[0];
+            $q2 = (int)$n[1];
+            $op = null;
+
+            if (strpos($ans, '+') !== false) $op = '+';
+            elseif (strpos($ans, '-') !== false) $op = '-';
+            elseif (strpos($ans, '*') !== false || strpos($ans, 'x') !== false) $op = '*';
+
+            if ($op) {
+                $_final_ans = SolveUtils::math($q1, $q2, $op);
+            }
+        }
+
+        if ($_final_ans === null) {
+            $maa = filter_var($clean, FILTER_SANITIZE_NUMBER_INT);
+            if ($maa !== '') {
+                $_final_ans = $maa;
+            }
+        }
+
+        if ($_final_ans !== null) {
+            return [
+                'captcha' => 'math_captcha',
+                'math_answer' => (string)$_final_ans,
+                'math_mouse'  => '1'
+            ];
+        }
+        
+        return ['trouble' => 'reload'];
+    }
+    
+}
 
 function isBan($html) {
     if (stripos($html, 'account has been banned')) {

@@ -51,7 +51,6 @@ while (true) {
             exit; 
         }
 
-        @unlink(inf::$cookie);
         logx('err', "logging in", false); 
         _sle(3); _clr();
         $_0 = Net::C($host.$r, 'GET', null, inf::$cookie, $headersCF, '', inf::$uagent);
@@ -86,7 +85,7 @@ while (true) {
         
         if (!empty($po)) {
             $lo = Net::C($f['url'], 'POST', $po, inf::$cookie, $headersCF, $host.$r, inf::$uagent);
-            
+            #_put('lo.html', $lo);
             if ($lo === 99) {
                 logx('warn', 'Proxy issue, wait 30s');
                 _sle(30);
@@ -110,12 +109,12 @@ while (true) {
         $ret99 = 0;
 
         while (true) {
-            $fau = Net::C($fa, 'GET', null, inf::$cookie, $headersCF, '', inf::$uagent, ip: $ip);
+            $fau = Net::X($fa, 'GET', null, inf::$cookie, $headersCF, '', inf::$uagent, ip: $ip);
             #_put('fau.html', $fau); die;
             if ($fau === 99) {
                 $ret99++;
                 logx('warn', 'Proxy issue, wait 30s');
-                if ($ret99 >= 7) die("Proxy dead. Exit.");
+                if ($ret99 >= 7) if ($ret99 >= 7) goto login;
                 _sle(30);
                 continue;
             }
@@ -143,8 +142,19 @@ while (true) {
             if ($f) {
                 $pa = $f['payload'];
                 
-                $cap = Solve::exec($fau, 'https://'.$domain, $api, $pa);
-                
+                if (($pa['captcha'] === 'math_captcha') && isset($pa['math_answer'])) {
+                    
+                    $img_u = Scraper::_xP($fau, "//div[@class='mc-img-wrap']/img/@src");
+                    if (!empty($img_u) && isset($img_u[0])) {
+                        $img = explode(',', $img_u[0])[1] ?? '';
+                        if (!empty($img)) {
+                            #_put('img.png', base64_decode($img));
+                            $cap = stfM($api, $host, $img);
+                        }
+                    }
+                } else {
+                    $cap = Solve::exec($fau, 'https://'.$domain, $api, $pa);
+                }
                 if (isset($cap['trouble'])) {
                     $tro = $cap['trouble'];
                     ($tro === 'proxy') ? _sle(30) : _sle(10);
@@ -157,8 +167,7 @@ while (true) {
                 $po = array_merge($pa, $cleanCap, $cre);
             } else {
                 if (stripos($fau, 'claim limit') !== false) continue 2; 
-                logx('warn', "Payload not found");
-                _sle(10);
+                styler("waiting for CLAIM", fn() => _sle(10));
                 continue;
             }
             
@@ -216,7 +225,7 @@ while (true) {
             if ($sho === 99) {
                 $ret99++;
                 logx('warn', 'Proxy issue, wait 30s');
-                if ($ret99 >= 7) die(98);
+                if ($ret99 >= 7) goto login;
                 _sle(30);
                 continue;
             }
@@ -282,16 +291,18 @@ while (true) {
                     }
                 }
                 if ($is_bl) break; 
-
+                
                 logx('info', "Bypassing SL: $loc_u", true, true);
                 
+                $start = microtime(true);
                 $bakk = links($api, $loc);
                 if (!$bakk) {
                     $skipped[$idd] = true; 
                     break; 
                 }
                 
-                styler("waiting for SL", fn() => _sle(60));
+                $wait = 100 - (int)(microtime(true) - $start);
+                if ($wait > 0) styler("waiting for SL", fn() => _sle((int)ceil($wait)));
                 
                 $retVer = 0;
                 while (true) {
@@ -299,7 +310,7 @@ while (true) {
                     if ($ver === 99) {
                         $retVer++;
                         logx('warn', 'Proxy issue, wait 30s');
-                        if ($retVer >= 7) die(98);
+                        if ($ret99 >= 7) goto login;
                         _sle(30);
                         continue;
                     }
@@ -343,25 +354,52 @@ tes:
 
 
 
-function stfCF($api, $fa) {
-    $res = execCF($api, $fa, inf::$cookie, inf::$uagent, []);
+function stfM($api, $host, $img) {
+    
+    $ans = Solve::img($api, $host, 'math', $img);
+    
+    if (isset($ans['trouble'])) return $ans;
+    
+    if ($ans) {
+        $ans = strtolower($ans);
+        $clean = str_replace(['=', '?', ' '], '', $ans);
+        
+        $n = Scraper::_jP($ans, '/\d+/')[0] ?? [];
+        
+        $_final_ans = null;
 
-    if (is_array($res) && isset($res['token'])) {
-        logx('', 'Cloudflare Solved!', true, true);
-        
-        config::credential()['uagent'] = $res['ua']; 
-        
-        inf::setup($res['ua'], inf::$cookie, inf::$ip);
-        
-        $execPy = new execPython(inf::$cookie, $res['ua']);
-        $execPy->cfCookie("cf_clearance=".$res['token'], $fa);
-        
-        $h = inf::netHead(['cf_clearance' => $res['token']]);
+        if (count($n) >= 2) {
+            $q1 = (int)$n[0];
+            $q2 = (int)$n[1];
+            $op = null;
 
-        return [$h, $res['ua']];
+            if (strpos($ans, '+') !== false) $op = '+';
+            elseif (strpos($ans, '-') !== false) $op = '-';
+            elseif (strpos($ans, '*') !== false || strpos($ans, 'x') !== false) $op = '*';
+
+            if ($op) {
+                $_final_ans = SolveUtils::math($q1, $q2, $op);
+            }
+        }
+
+        if ($_final_ans === null) {
+            $maa = filter_var($clean, FILTER_SANITIZE_NUMBER_INT);
+            if ($maa !== '') {
+                $_final_ans = $maa;
+            }
+        }
+
+        if ($_final_ans !== null) {
+            return [
+                'captcha' => 'math_captcha',
+                'math_answer' => (string)$_final_ans,
+                'math_mouse'  => '1'
+            ];
+        }
+        
+        return ['trouble' => 'reload'];
     }
     
-    return false;
 }
 
 function isBan($html) {
