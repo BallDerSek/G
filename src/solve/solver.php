@@ -166,13 +166,14 @@ class Solve {
         return !empty($solution) ? $solution : null;
     }
 
-    public static function tkn($api, $host, $key, $type, array $Params = []) {
+    public static function tkn($api, $host, $key, $type, array $data = []) {
         
         $solver = config::getKeys($api, $type);
         print(DIMM.BOLD.ITAL.FGo['MAG']."solving  ".RSET);
         $set = microtime(true);
         $t = null;
         
+        $Params = array_merge($data, ['userAgent' => inf::$uagent]);
         for ($retry = 0; $retry < 2; $retry++) {
             $t = $solver->token($key, $host, $type, $Params);
             if ($t === 777) {

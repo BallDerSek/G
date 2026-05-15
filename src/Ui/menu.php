@@ -125,7 +125,6 @@ class Menu {
         }
         return @rmdir($dir);
     }
-
     
     /**
      * override auto-run "export BOT=bot"
