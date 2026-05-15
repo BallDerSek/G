@@ -138,8 +138,8 @@ while (true) {
             }
             if ($ban = isBan($fau)) {
                 logx('err', " kena ban: " . $ban['ti']);
-                #styler("waiting for unlocked", fn() => _sle($ban['sleep']));
-                #continue;
+                styler("waiting for unlocked", fn() => _sle($ban['sleep']));
+                continue;
                 $curr = $_c; 
                 break 2;
             }
