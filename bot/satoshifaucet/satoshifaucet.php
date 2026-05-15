@@ -207,7 +207,7 @@ while (true) {
         $_c = basename($sl);
         if (trim(strtoupper($_c)) !== trim(strtoupper($curr))) continue;
         
-        $up = ['earnow','shortano', 'shortino', 'fc-lc'];
+        $up = ['earnow','shortano', 'shortino', 'fc-lc', 'coinclix'];
         $ret99 = 0;
 
         do {

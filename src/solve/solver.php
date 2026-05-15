@@ -312,55 +312,86 @@ class SolveUtils {
         return $body;
     }
     
-    public static function oddCaptcha($base64) {
+    public static function oddCaptcha($base64, $m = 'angle', $s = 5) {
         if (!getDeps('gd@php')) {
             logx('err', "gd@php is missing");
             exit(9);
         }
         
-        $image = imagecreatefromstring(base64_decode($base64));
+        $data = (base64_decode($base64, true)) ?: $base64; 
+        $image = @imagecreatefromstring($data);
         if (!$image) return false;
-
-        $width  = imagesx($image);
+        
+        $width = imagesx($image);
         $height = imagesy($image);
-        $segW   = intdiv($width, 5);
-        $angles = [];
-
-        for ($idx = 0; $idx < 5; $idx++) {
-            $xCoords = []; $yCoords = [];
+        $segW = intdiv($width, $s); 
+        $scores = [];
+        
+        for ($idx = 0; $idx < $s; $idx++) {
             $start = $idx * $segW;
+            if ($m === 'color') {
+                $targetX = $start + intdiv($segW, 2);
+                $targetY = intdiv($height, 2);
+                
+                $totalGray = 0;
+                $count = 0;
 
-            for ($y = 0; $y < $height; $y++) {
-                for ($x = $start; $x < $start + $segW; $x++) {
-                    $rgb = imagecolorat($image, $x, $y);
-                    if ((($rgb >> 16) & 0xFF) < 220) { // Dark pixel detect
-                        $xCoords[] = $x - $start; $yCoords[] = $y;
+                for ($ox = -3; $ox <= 3; $ox++) {
+                    for ($oy = -3; $oy <= 3; $oy++) {
+                        $rgb = imagecolorat($image, $targetX + $ox, $targetY + $oy);
+                        $r = ($rgb >> 16) & 0xFF;
+                        $g = ($rgb >> 8) & 0xFF;
+                        $b = $rgb & 0xFF;
+
+                        if (($r + $g + $b) > 150) {
+                            $totalGray += self::getGray($rgb);
+                            $count++;
+                        }
                     }
                 }
+                $scores[$idx] = ($count > 0) ? ($totalGray / $count) : self::getGray(imagecolorat($image, $targetX, $targetY));
+            } else {
+                $xCoords = []; 
+                $yCoords = [];
+                for ($y = 0; $y < $height; $y++) {
+                    for ($x = $start; $x < $start + $segW; $x++) {
+                        $rgb = imagecolorat($image, $x, $y);
+                        if ((($rgb >> 16) & 0xFF) < 220) {
+                            $xCoords[] = $x - $start; 
+                            $yCoords[] = $y;
+                        }
+                    }
+                }
+                if (count($xCoords) < 10) {
+                    $scores[$idx] = 0.0;
+                    continue; 
+                }
+                
+                $mX = array_sum($xCoords) / count($xCoords);
+                $mY = array_sum($yCoords) / count($yCoords);
+                $vX = $vY = $cXY = 0.0;
+                for ($i = 0; $i < count($xCoords); $i++) {
+                    $dx = $xCoords[$i] - $mX; 
+                    $dy = $yCoords[$i] - $mY;
+                    $vX += $dx * $dx; $vY += $dy * $dy; $cXY += $dx * $dy;
+                }
+                $scores[$idx] = ($vY == $vX) ? 0.0 : 0.5 * rad2deg(atan2(2 * $cXY, $vY - $vX));
             }
-
-            if (count($xCoords) < 10) { $angles[$idx] = 0.0; continue; }
-
-            $mX = array_sum($xCoords) / count($xCoords);
-            $mY = array_sum($yCoords) / count($yCoords);
-            $vX = $vY = $cXY = 0.0;
-
-            for ($i = 0; $i < count($xCoords); $i++) {
-                $dx = $xCoords[$i] - $mX; $dy = $yCoords[$i] - $mY;
-                $vX += $dx * $dx; $vY += $dy * $dy; $cXY += $dx * $dy;
-            }
-            $angles[$idx] = ($vY == $vX) ? 0.0 : 0.5 * rad2deg(atan2(2 * $cXY, $vY - $vX));
         }
-
-        $sorted = $angles; sort($sorted);
-        $median = $sorted[2];
+        
+        $sorted = $scores; sort($sorted);
+        $median = $sorted[intdiv(count($sorted), 2)]; 
+        
         $maxDev = -1; $res = 0;
-
-        foreach ($angles as $idx => $angle) {
-            $dev = abs($angle - $median);
-            if ($dev > 90) $dev = 180 - $dev;
-            if ($dev > $maxDev) { $maxDev = $dev; $res = $idx; }
+        foreach ($scores as $idx => $val) {
+            $dev = abs($val - $median);
+            if ($m === 'angle' && $dev > 90) $dev = 180 - $dev;
+            if ($dev > $maxDev) {
+                $maxDev = $dev;
+                $res = $idx;
+            }
         }
+        @imagedestroy($image);
         return $res;
     }
 

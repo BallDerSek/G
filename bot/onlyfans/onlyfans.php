@@ -29,7 +29,7 @@ $ip = null;
 $headersCF = [];
 $skipped = [];
 $SLDONE = false;
-$curr = 'ltc';
+$curr = '';
 while (true) {
     $max = 5;
     $ret = 0;
@@ -54,7 +54,6 @@ while (true) {
         _sle(3); _clr();
         $_0 = Net::X($host.$r, 'GET', null, inf::$cookie, $headersCF, '', inf::$uagent);
         if ($_0 === 99) {
-            $ret99++;
             logx('warn', "masalah proxy, warm up dulu");
             _sle(60);
             continue;
@@ -101,6 +100,7 @@ while (true) {
     } while (empty($dash));
     #_put('dash.html', $dash); die;
 #goto sl;
+    $successCount = 0; 
     $_fa = Scraper::_xP($dash, "//ul[@id='faucet']//a/@href");
     foreach ($_fa as $fa) {
         $_c = basename(parse_url($fa)['path']);
@@ -136,6 +136,14 @@ while (true) {
                     continue;
                 }
             }
+            if ($ban = isBan($fau)) {
+                logx('err', " kena ban: " . $ban['ti']);
+                #styler("waiting for unlocked", fn() => _sle($ban['sleep']));
+                #continue;
+                $curr = $_c; 
+                break 2;
+            }
+
             $po = null;
             $f = scraper::payload($fau)[0] ?? null;
             if ($f) {
@@ -157,7 +165,7 @@ while (true) {
             #_put('fau.html', $fau); die;
             
             if (!empty($po)) {
-                #print_r($po);
+                #print_r($po); #die;
                 _sle(3);
                 $cla = Net::X($f['url'], 'POST', $po, inf::$cookie, $headersCF, $host, inf::$uagent);
                 if ($cla && $cla !== 99) { 
@@ -170,6 +178,12 @@ while (true) {
                         print(FGd['CYN'] . maskEmail($login) . RSET . " ");
                         logx($status === 'success' ? 'ok' : 'err', "$status ", false);
                         logg(false, $msg);
+                        if (stripos($msg, 'has been sent')) $successCount++;
+                        if ($successCount >= 100) {
+                            $successCount = 0; 
+                            $curr = $_c; 
+                            break 2; 
+                        }
                         if (preg_match('/sufficient|could not be processed/i', $msg)) break;
                         if (stripos($msg, 'flagged')) die;
                         if (stripos($msg, 'Shortlink')) {
@@ -183,6 +197,7 @@ while (true) {
                     }
                     
                 }
+    
                 styler("waiting for next claim", fn() => _sle(10));
             }
         }
@@ -191,12 +206,11 @@ sl:
     $valid = [];
     $success_in_page = false;
     $_sl = Scraper::_xP($dash, "//ul[@id='links']//a/@href");
-
     foreach ($_sl as $sl) {
         $_c = basename($sl);
         if (trim(strtoupper($_c)) !== trim(strtoupper($curr))) continue;
         
-        $up = ['earnow','shortano', 'shortino', 'fc-lc'];
+        $up = ['earnow','shortano', 'shortino', 'fc-lc', 'coinclix'];
         $ret99 = 0;
         
         do {
@@ -253,13 +267,16 @@ sl:
                 if ($is_bl) break; 
                 
                 logx('info', "Bypassing SL: {$loc['url']}", true, true);
+                $start = microtime(true);
                 $bakk = links($api, $loc['url']);
                 if (!$bakk) {
                     $skipped[$idd] = true; 
                     break; 
                 }
                 
-                styler("waiting for SL", fn() => _sle(80));
+                $wait = 100 - (int)(microtime(true) - $start);
+                if ($wait > 0) styler("waiting for SL", fn() => _sle((int)ceil($wait)));
+                
                 $retGet = 0;
                 while (true) {
                     $get = null; 
@@ -512,6 +529,7 @@ function onlyFans($json_cfg, $reff) {
 
 
 function onfCap($fau, $host, $api, $payload, $he) {
+    
     $need_c = Scraper::_jP($fau, '/(?:captchaNeeded|captchaRequired)\s*=\s*(true|false)/')[1][0] ?? '';
     #var_dump($need_c); die;
     if ($need_c === 'true') {
@@ -575,7 +593,104 @@ function onfCap($fau, $host, $api, $payload, $he) {
                 return ['trouble' => 'reload'];
             }
         }
+    } elseif (stripos($fau, 'mcaptcha')) {
+        $ins = Scraper::_xP($fau, "//div[@id='mcaptcha-challenge-box']//p[@class='text-muted small mb-0']")[0] ?? [];
+        #logx('info', "$ins", true, true);
+        $s = 5;
+        if (preg_match('/(\w+)\s+shapes\s+belong/i', $ins, $_s)) {
+            $map = ['two'=>3, 'three'=>4, 'four'=>5, 'five'=>6, 'six'=>7];
+            $s = $map[strtolower($_s[1])] ?? 5;
+        }
+        
+        $img_u = "https://onlyfaucet.com/faucet/captcha_image?_t=".round(microtime(true) * 1000);
+        $img = Net::X($img_u, 'GET', [], inf::$cookie, $he, $host, inf::$uagent);
+        
+        if (!empty($img) && $img !== 99) {
+            #_put('img.png', $img);
+            $ans = SolveUtils::oddCaptcha(base64_encode($img), 'color', $s);
+            if ($ans) return ['captcha_answer' => $ans];
+        }
+
+        return ['trouble' => 'reload'];
+
+
+
+    }
+    return [];
+}
+
+
+
+function isBan($html) {
+    if (stripos($html, 'account has been banned')) {
+        logx('err', 'Yahhh... Akun Banned Permanen!');
+        exit;
     }
     
-    return [];
+    if (!stripos($html, 'Temporarily Blocked') && !stripos($html, 'Temporary Ban') && !stripos($html, 'temporarily locked')) {
+        return false;
+    }
+
+    $countdownText = Scraper::_xP($html, "//*[@id='block-countdown']")[0] ?? '';
+    
+    $m = 0; 
+    $s = 0;
+    if (preg_match('/(\d+)\s*minute/', $countdownText, $matchM)) $m = (int)$matchM[1];
+    if (preg_match('/(\d+)\s*second/', $countdownText, $matchS)) $s = (int)$matchS[1];
+
+    $r = Scraper::_xP($html, "//div[contains(@class, 'alert-danger')]//p[1]")[0] ?? 'CAPTCHA failed';
+
+    return [
+        'ti' => trim($r),
+        'tmr' => sprintf('%02d:%02d', $m, $s),
+        'sleep' => ($m * 60) + $s + 5 
+    ];
+}
+
+function onfOdd($img) {
+    $image = imagecreatefromstring($img);
+    if (!$image) {
+        logx('err', "Gagal load gambar captcha", true);
+        return ['trouble' => 'reload'];
+    }
+    
+    $width = imagesx($image);
+    $height = imagesy($image);
+    $segW = intdiv($width, 5); 
+    $midY = intdiv($height, 2); 
+    $diffData = [];
+    for ($i = 0; $i < 5; $i++) {
+        $targetX = ($i * $segW) + intdiv($segW, 2);
+        $r = $g = $b = 0;
+        $foundColor = false;
+        
+        for ($offset = -5; $offset <= 5; $offset++) {
+            $rgb = imagecolorat($image, $targetX, $midY + $offset);
+            $tR = ($rgb >> 16) & 0xFF;
+            $tG = ($rgb >> 8) & 0xFF;
+            $tB = $rgb & 0xFF;
+            if ($tR > 50 || $tG > 50 || $tB > 50) {
+                $r = $tR;
+                $g = $tG; 
+                $b = $tB;
+                $foundColor = true;
+                break;
+            }
+        }
+        $diffData[$i] = ['r' => $r, 'g' => $g, 'b' => $b];
+    }
+    $avgR = array_sum(array_column($diffData, 'r')) / 5;
+    $avgG = array_sum(array_column($diffData, 'g')) / 5;
+    $avgB = array_sum(array_column($diffData, 'b')) / 5;
+    $maxDist = -1;
+    $ans = 0;
+    foreach ($diffData as $idx => $val) {
+        $dist = sqrt(pow($val['r'] - $avgR, 2) + pow($val['g'] - $avgG, 2) + pow($val['b'] - $avgB, 2));
+        if ($dist > $maxDist) {
+            $maxDist = $dist;
+            $ans = $idx;
+        }
+    }
+    return $ans;
+
 }

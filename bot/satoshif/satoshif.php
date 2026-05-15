@@ -49,7 +49,6 @@ while (true) {
             exit; 
         }
         
-        @unlink(inf::$cookie);
         logx('err', "logging in", false); 
         _sle(3); _clr();
         $_0 = Net::C($host.$r, 'GET', null, inf::$cookie, ['detail-hints:false'], '', inf::$uagent, ip: $ip);
@@ -63,15 +62,8 @@ while (true) {
                 $pa = $f['payload'];
                 $cap = Solve::exec($_0, 'https://'.$domain, $api, $pa);
                 if (isset($cap['trouble'])) {
-                    $tro = $cap['trouble'];
-                    if ($tro === 'reload') {
-                        _sle(10); 
-                        continue; 
-                    }
-                    if ($tro === 'proxy') {
-                        _sle(1);
-                        continue; 
-                    }
+                    _sle(10);
+                    continue;
                 }
                 $po = array_merge($pa, $cap, $cre);
             }
@@ -97,11 +89,11 @@ while (true) {
         while (true) {
             _sle(3);
             $fau = Net::C($fa, 'GET', null, inf::$cookie, [], '', inf::$uagent, ip: $ip);
-            
+            _put('fau.html', $fau);
             if (empty($fau)) continue;
 
             if ($ban = isBan($fau)) {
-                logx('err', " kena ban: " . $ban['ti'], false);
+                logx('err', " kena ban: " . $ban['ti']);
                 styler("waiting for unlocked", fn() => _sle($ban['sleep']));
                 continue; 
             }
@@ -109,8 +101,11 @@ while (true) {
             $f = scraper::payload($fau)[0] ?? [];
             if (!empty($f)) {
                 $pa = $f['payload'];
-                
+                print_r($pa);
                 $cap = Solve::exec($fau, 'https://'.$domain, $api, $pa);
+                if (isset($cap['nocaptcha'])) {
+                    die;
+                }
                 
                 if (isset($cap['trouble'])) {
                     $tro = $cap['trouble'];
@@ -178,7 +173,7 @@ while (true) {
         $_c = basename($sl);
         
         if (trim(strtoupper($_c)) !== trim(strtoupper($curr))) continue;
-        $up = ['earnow','shortano', 'shortino', 'fc-lc'];
+        $up = ['earnow','shortano', 'shortino', 'fc-lc', 'coinclix'];
 
         do {
             $sho = Net::C($sl, 'GET', null, inf::$cookie, [], '', inf::$uagent, ip: $ip);
