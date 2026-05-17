@@ -1,6 +1,6 @@
 <?php
 if (!defined('ROOT')) { die; }
-die('bloman jadi');
+#die('bloman jadi');
 $api = onKeys();
 
 $acc = config::credential([], false, ['mail', 'pass', 'PROXY']);
@@ -101,8 +101,8 @@ while (true) {
         }
         
     } while (empty($dash));
-    _put('dash.html', $dash);
-    
+    #_put('dash.html', $dash);
+    #goto sl;
     if (stripos($dash, 'Please check your inbox or spam folder to confirm your account')) {
         $can_withdraw = false;
     }
@@ -231,7 +231,7 @@ while (true) {
         }
     }
 */
-    
+
     if (!$limit && $claim) {
         $ret99 = 0; 
         while (true) {
@@ -275,11 +275,12 @@ while (true) {
                 $cla = Net::C($f['url'], 'POST', $po, inf::$cookie, [], "$host/faucet", inf::$uagent, ip: $ip);
                 if (empty($cla) || ($cla === 99)) continue;
                 
-                _put('cla.html', $cla);
+                #_put('cla.html', $cla);
                 $m = scraper::_jP($cla, "/Swal\.fire\s*\(\s*'([^']+)'\s*,\s*'([^']+)'\s*,\s*'([^']+)'\s*\)/");
                 if (isset($m[2][0])) {
                     print(FGd['CYN'].maskEmail($mail).RSET." ");
                     logg(true, $m[2][0]);
+                    if (stripos($m[2][0], 'has been added')) break;
                 }
                 
             }
@@ -287,10 +288,123 @@ while (true) {
             
         }
     }
+
+    sl:
+    do {
+        $sho = Net::C("$host/links", 'GET', null, inf::$cookie, [], "$host/dashboard", inf::$uagent, false, false, $ip);
+        #_put('sho.html', $sho);
+        
+        if ($sho === 99) {
+            $ret99++;
+            logx('warn', "masalah proxy, warm up dulu");
+            if ($ret99 >= 7) {
+                goto login;
+            }
+            _sle(30);
+            continue;
+        }
+        $ret99 = 0; 
+        if (empty($sho)) continue;
+        
+        $short = sScraper::extract($sho);
+        #print_r($short);
+        if (empty($short)) {
+            logx('info', "sl abis");
+            $SLDONE = true;
+            break;
+        }
+        
+        $up = ['earnow','shortano', 'shortino', 'fc-lc', 'coinclix'];
+        
+        $can_process = false; 
+        foreach ($short as $links => [$idd, $lmt]) {
+            
+            if (!limit($lmt) || isset($skipped[$idd])) continue;
+            
+            $can_process = true;
+            
+            $ud = $host.'/links/go/'.$idd;
+            $getVer = 0;
+            while (true) {
+                $get = Net::X($ud, 'GET', null, inf::$cookie, [], $host.'/links', inf::$uagent, ip: $ip, foll: false);
+                if ($get === 99) {
+                    $getVer++;
+                    if ($getVer >= 5) goto login;
+                    _sle(30);
+                    continue;
+                }
+                if (!empty($get)) break;
+            }
+            
+            preg_match('/location\.href\s*=\s*["\']([^"\']+)["\']/', $get, $match);
+            $loc = $match[1] ?? '';
+            
+            if (!$loc) {
+                $skipped[$idd] = true;
+                continue; 
+            }
+            
+            $loc_u = parse_url($loc)['host'];
+            $is_bl = false;
+            foreach ($up as $blacklisted) {
+                if (str_contains($loc_u, $blacklisted)) {
+                    logx('warn', "Domain $blacklisted Skipping..");
+                    $skipped[$idd] = true;
+                    $is_bl = true;
+                    break; 
+                }
+            }
+            if ($is_bl) {
+                _sle(5);
+                continue; 
+            }
+            
+            logx('info', "Bypass: $loc", true, true);
+            $bakk = links($api, $loc);
+            #var_dump($bakk);
+            
+            if (!$bakk) {
+                $skipped[$idd] = true; 
+                _sle(5);
+                continue; 
+            }
+            
+            styler("waiting for SL", fn() => _sle(50));
+            
+            $retVer = 0;
+            while (true) {
+                $ver = Net::C($bakk, 'GET', null, inf::$cookie, [], $loc, inf::$uagent);
+                if ($ver === 99) {
+                    $retVer++;
+                    if ($retVer >= 5) goto login;
+                    _sle(30);
+                    continue;
+                }
+                break;
+            }
+            
+            if (!empty($ver)) {
+                #_put('ver.html', $ver);
+                $m = scraper::_jP($ver, "/Swal\.fire\s*\(\s*'([^']+)'\s*,\s*'([^']+)'\s*,\s*'([^']+)'\s*\)/");
+                if (isset($m[2][0])) {
+                    print(FGd['CYN'].maskEmail($mail).RSET." ");
+                    logg(true, $m[2][0]);
+                    break 2;
+                }
+            }
+            
+            break 2;
+        }
+        
+        if (!$can_process) {
+            logx('info', "sl abis");
+            $SLDONE = true;
+        }
+        
+    } while (!$SLDONE);
     
     
     
-die;
 }
 
 
