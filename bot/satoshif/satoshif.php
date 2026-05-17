@@ -3,7 +3,7 @@ if (!defined('ROOT')) { die; }
 
 $api = onKeys();
 
-$acc = config::credential([], true, ['login', 'PROXY']);
+$acc = config::credential([], false, ['login', 'PROXY']);
 $login = $acc['login'];
 putenv("PROXY=".$acc['PROXY']);
 
@@ -90,7 +90,7 @@ while (true) {
         while (true) {
             _sle(3);
             $fau = Net::C($fa, 'GET', null, inf::$cookie, [], '', inf::$uagent, ip: $ip);
-            _put('fau.html', $fau);
+            #_put('fau.html', $fau);
             if (empty($fau)) continue;
 
             if ($ban = isBan($fau)) {
@@ -102,7 +102,6 @@ while (true) {
             $f = scraper::payload($fau)[0] ?? [];
             if (!empty($f)) {
                 $pa = $f['payload'];
-                print_r($pa);
                 
                 $cha = $pa['captcha'];
                 
@@ -110,13 +109,21 @@ while (true) {
                     $img_u = Scraper::_xP($fau, "//div[@class='mc-img-wrap']/img/@src");
                     if (!empty($img_u) && isset($img_u[0])) {
                         $img = explode(',', $img_u[0])[1] ?? '';
+                        $cap = stfM($api, $host, $img);
                     }
-                    $cap = stfM($api, $host, $img);
-                } elseif (($cha === 'click_captcha') && isset($pa['click_done'])) {
+                } elseif (($cha === 'click_captcha') && isset($pa['cc_tok'])) {
+                    $img_p = Scraper::_jP($fau, '/<div class="cc-prompt">(.*?)<\/div>/is')[1][0] ?? '';
+                    
+                    preg_match('/color:\s*(#[a-f0-9]{6})[^>]*>(.*?)<\/strong>/i', $img_p, $ins);
+                    $hex = $ins[1] ?? '';
+                    $tex = $ins[2] ?? '';
+                    
                     $img_u = Scraper::_xP($fau, "//div[@class='cc-img-wrap']/img/@src");
-                    _put('img.png', $img);
-                    die;
-                
+                    if (isset($img_u[0]) && !empty($hex)) {
+                        $img = explode(',', $img_u[0])[1] ?? '';
+                        $cap = stfC($img, $hex);
+                    }
+                    
                 } else {
                     $cap = Solve::exec($fau, 'https://'.$domain, $api, $pa);
                 }
@@ -126,7 +133,6 @@ while (true) {
                     continue; 
                 }
                 
-                var_dump($cap); die;
                 $cre = ['uf' => md5($login), 'ls' => LANGUAGE(), 'utt' => TIMEZONE()];
                 
                 $cleanCap = array_filter((array)$cap, fn($k) => $k !== 'nocaptcha', ARRAY_FILTER_USE_KEY);
@@ -137,8 +143,7 @@ while (true) {
                 continue;
             }
             
-            #die;
-            #print_r($po);
+            #print_r($po); #die;
             _sle(2); 
             $ve = str_replace('https://', 'http://', $f['url']);
             Net::X($ve, 'POST', $po, inf::$cookie, [], $fa, inf::$uagent, ip: $ip, foll: false);
@@ -328,7 +333,7 @@ tes:
 
 
 function stfM($api, $host, $img) {
-    _put('img.png', $img); _rl('lanjut: ');
+    #_put('img.png', $img); _rl('lanjut: ');
     $ans = Solve::img($api, $host, 'math', $img);
     
     if (isset($ans['trouble'])) return $ans;
@@ -375,6 +380,58 @@ function stfM($api, $host, $img) {
     }
     
 }
+
+function stfC($img, $hex) {
+    if (!getDeps('gd@php')) {
+        logx('err', "gd@php is missing");
+        exit(9);
+    }
+    
+    if (!$_bin = base64_decode($img)) return ['trouble' => 'reload'];
+    #_put('img.png', $_bin);
+
+    $img = imagecreatefromstring($_bin);
+    if (!$img) return ['trouble' => 'reload'];
+
+    $hex = ltrim($hex, '#');
+    $_tR = hexdec(substr($hex, 0, 2));
+    $_tG = hexdec(substr($hex, 2, 2));
+    $_tB = hexdec(substr($hex, 4, 2));
+
+    $_w = imagesx($img);
+    $_h = imagesy($img);
+
+    $tolerance = 30; 
+
+    for ($y = 0; $y < $_h; $y++) {
+        for ($x = 0; $x < $_w; $x++) {
+            $rgb = imagecolorat($img, $x, $y);
+            $col = imagecolorsforindex($img, $rgb);
+
+            $diffR = abs($col['red'] - $_tR);
+            $diffG = abs($col['green'] - $_tG);
+            $diffB = abs($col['blue'] - $_tB);
+/*
+            var_dump($diffR);
+            var_dump($diffG);
+            var_dump($diffB);
+*/
+            if ($diffR < $tolerance && $diffG < $tolerance && $diffB < $tolerance) {
+                @imagedestroy($img);
+                return [
+                    'click_done' => '1',
+                    'click_x' => (string)$x, 
+                    'click_y' => (string)$y
+                ];
+            }
+        }
+    }
+
+    @imagedestroy($img);
+    return ['trouble' => 'reload'];
+}
+
+
 
 function isBan($html) {
     if (stripos($html, 'account has been banned')) {
