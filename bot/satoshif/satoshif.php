@@ -3,8 +3,9 @@ if (!defined('ROOT')) { die; }
 
 $api = onKeys();
 
-$acc = config::credential([], true);
+$acc = config::credential([], true, ['login', 'PROXY']);
 $login = $acc['login'];
+putenv("PROXY=".$acc['PROXY']);
 
 login:
 $host = 'http://satoshifaucet.io';
@@ -13,6 +14,7 @@ $r = '/?r=124158';
 $ip = '173.249.41.150';
 
 (function ($login, $ip) {
+    Proxy::load();
     $cookieFile = config::cookie($login);
     $userAgent = config::uagent('mobile');
 
@@ -67,7 +69,7 @@ while (true) {
                 $po = array_merge($pa, $cap, $cre);
             }
             
-            if (!empty($po)) Net::C($host.'/auth/login', 'POST', $po, inf::$cookie, ['detail-hints:false'], $host.$r, inf::$uagent, ip: $ip, foll: false);
+            if (!empty($po)) Net::X($host.'/auth/login', 'POST', $po, inf::$cookie, ['detail-hints:false'], $host.$r, inf::$uagent, ip: $ip, foll: false);
         }
         _sle(15);
 
@@ -88,7 +90,7 @@ while (true) {
         while (true) {
             _sle(3);
             $fau = Net::C($fa, 'GET', null, inf::$cookie, [], '', inf::$uagent, ip: $ip);
-            #_put('fau.html', $fau);
+            _put('fau.html', $fau);
             if (empty($fau)) continue;
 
             if ($ban = isBan($fau)) {
@@ -100,15 +102,21 @@ while (true) {
             $f = scraper::payload($fau)[0] ?? [];
             if (!empty($f)) {
                 $pa = $f['payload'];
-                if (($pa['captcha'] === 'math_captcha') && isset($pa['math_answer'])) {
-                    
+                print_r($pa);
+                
+                $cha = $pa['captcha'];
+                
+                if (($cha === 'math_captcha') && isset($pa['math_answer'])) {
                     $img_u = Scraper::_xP($fau, "//div[@class='mc-img-wrap']/img/@src");
                     if (!empty($img_u) && isset($img_u[0])) {
                         $img = explode(',', $img_u[0])[1] ?? '';
-                        if (!empty($img)) {
-                            $cap = stfM($api, $host, $img);
-                        }
                     }
+                    $cap = stfM($api, $host, $img);
+                } elseif (($cha === 'click_captcha') && isset($pa['click_done'])) {
+                    $img_u = Scraper::_xP($fau, "//div[@class='cc-img-wrap']/img/@src");
+                    _put('img.png', $img);
+                    die;
+                
                 } else {
                     $cap = Solve::exec($fau, 'https://'.$domain, $api, $pa);
                 }
@@ -118,7 +126,7 @@ while (true) {
                     continue; 
                 }
                 
-                #var_dump($cap);
+                var_dump($cap); die;
                 $cre = ['uf' => md5($login), 'ls' => LANGUAGE(), 'utt' => TIMEZONE()];
                 
                 $cleanCap = array_filter((array)$cap, fn($k) => $k !== 'nocaptcha', ARRAY_FILTER_USE_KEY);
@@ -320,7 +328,7 @@ tes:
 
 
 function stfM($api, $host, $img) {
-    
+    _put('img.png', $img); _rl('lanjut: ');
     $ans = Solve::img($api, $host, 'math', $img);
     
     if (isset($ans['trouble'])) return $ans;

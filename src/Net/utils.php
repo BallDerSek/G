@@ -41,11 +41,13 @@ class inf {
     public static $uagent;
     public static $cookie;
     public static $ip;
+    public static $ins;
 
-    public static function setup($ua, $cookie, $ip = null) {
+    public static function setup($ua, $cookie, $ip = null, $ins = false) {
         self::$uagent = $ua;
         self::$cookie = $cookie;
         self::$ip = $ip;
+        self::$ins = $ins;
     }
 
     public static function netHead(array $cookie = []) {
@@ -111,10 +113,12 @@ class inf {
         return null;
     }
     
-    public static function check($host, array $h = [], $pattern = '', $ins = false) {
-        $ip = self::$ip; 
+    public static function check($host, array $h = [], $pattern = '', $foll = false) {
         
-        $html = Net::X($host, 'GET', null, self::$cookie, $h, $host, self::$uagent, false, false, $ip, $ins);
+        $html = Net::X($host, 'GET', null, self::$cookie, $h, $host, self::$uagent, ip: self::$ip, foll: $foll, ins: self::$ins);
+        
+        #_put('l.html', $html); _rl('lanjut: ');
+        
         if (!is_string($html)) {
             return ['ok' => false, 'html' => null, 'err' => 'Network error'];
         }

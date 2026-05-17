@@ -237,7 +237,7 @@ while (true) {
                 if ($_cu) {
                     $img = Net::C($_cu, 'GET', null, inf::$cookie, [], "$host/faucet", inf::$uagent);
                     #_put('img.png', $img);
-                    if (!empty($img) || ($img !== 99)) {
+                    if (!empty($img) && ($img !== 99)) {
                         $resText = $api->base64($img, 'ocr');
                         #var_dump($resText); die;
                         if (ctype_digit($resText) && strlen($resText) === 4) {

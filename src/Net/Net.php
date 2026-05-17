@@ -555,16 +555,26 @@ class Net {
     }
 
     public static function C($url, $type, $data = null, $cookie = null, array $head = [], $reff = '', $ua = 'Mozilla/5.0', $d = false, $v = false, $ip = null, $foll = true, $ins = false, $f= false) {
-        $dns = []; $connect = [];
+        $dns = []; 
+        $connect = [];
         if (!empty($ip)) {
-            $dom = parse_url($url)['host'];
-            $scheme = parse_url($url)['scheme'];
-            if ($scheme === 'http') {
-                $dns = ["$dom:80:$ip"];
-            } else {
-                $dns = ["$dom:80:$ip", "$dom:443:$ip"];
+            $dom = parse_url($url)['host'] ?? '';
+            $scheme = parse_url($url)['scheme'] ?? 'http';
+            $port = parse_url($url)['port'] ?? ($scheme === 'https' ? 443 : 80);
+            if ($dom !== '') {
+                if (!empty($GLOBALS['_CTX']['proxy'])) {
+                    $connect = ["$dom:$port:$ip:$port"];
+                    if ($port === 443) $connect[] = "$dom:80:$ip:80";
+                    if ($port === 80)  $connect[] = "$dom:443:$ip:443";
+                } else {
+                    $dns = ["$dom:80:$ip", "$dom:443:$ip"];
+                    if ($port !== 80 && $port !== 443) {
+                        $dns[] = "$dom:$port:$ip";
+                    }
+                }
             }
         }
+        
         if (!self::hasHeader($head, 'Accept')) {
             $head[] = "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8";
         }
@@ -591,14 +601,23 @@ class Net {
     }
 
     public static function X($url, $type, $data = null, $cookie = null, array $head = [], $reff = '', $ua = 'Mozilla/5.0', $json = false, $foll = true, $ip = null, $ins = false, $d = false) {
-        $dns = []; $connect = [];
+        $dns = []; 
+        $connect = [];
         if (!empty($ip)) {
-            $dom = parse_url($url)['host'];
-            $scheme = parse_url($url)['scheme'];
-            if ($scheme === 'http') {
-                $dns = ["$dom:80:$ip"];
-            } else {
-                $dns = ["$dom:80:$ip", "$dom:443:$ip"];
+            $dom = parse_url($url)['host'] ?? '';
+            $scheme = parse_url($url)['scheme'] ?? 'http';
+            $port = parse_url($url)['port'] ?? ($scheme === 'https' ? 443 : 80);
+            if ($dom !== '') {
+                if (!empty($GLOBALS['_CTX']['proxy'])) {
+                    $connect = ["$dom:$port:$ip:$port"];
+                    if ($port === 443) $connect[] = "$dom:80:$ip:80";
+                    if ($port === 80)  $connect[] = "$dom:443:$ip:443";
+                } else {
+                    $dns = ["$dom:80:$ip", "$dom:443:$ip"];
+                    if ($port !== 80 && $port !== 443) {
+                        $dns[] = "$dom:$port:$ip";
+                    }
+                }
             }
         }
         
@@ -636,12 +655,6 @@ class Net {
             $head[] = "Content-Type: application/json";
         }
         
-        $oldProxy = getenv('PROXY');
-        $oldCtx = $GLOBALS['_CTX']['proxy'] ?? null;
-        
-        putenv("PROXY=");
-        unset($GLOBALS['_CTX']['proxy']);
-        
         $res = self::Http([
             'url' => $url,
             'type' => $type,
@@ -652,11 +665,8 @@ class Net {
             'verbose' => false,
             'timeout' => 120,
             'speed' => 100,
-            'no_proxy' => true 
+            'no_proxy' => true
         ], false, true);
-        
-        if ($oldProxy !== false) putenv("PROXY=$oldProxy");
-        if ($oldCtx !== null) $GLOBALS['_CTX']['proxy'] = $oldCtx;
         
         return $res;
     }

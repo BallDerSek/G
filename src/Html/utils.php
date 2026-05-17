@@ -16,7 +16,7 @@ class Capt {
         $scriptsStr = implode(' ', $scripts); 
         
         $has_turnstile = str_contains($scriptsStr, 'challenges.cloudflare.com/turnstile');
-        $has_hcaptcha  = str_contains($scriptsStr, 'hcaptcha.com/1/api.js');
+        $has_hcaptcha  = str_contains($scriptsStr, 'hcaptcha.com/1/api.js'); 
         $has_recaptcha = str_contains($scriptsStr, 'google.com/recaptcha/api.js');
 
         if ($has_hcaptcha) {
@@ -30,6 +30,14 @@ class Capt {
                     'keys' => $hc[0],
                     'extra' => ['invisible' => str_contains($html, 'data-size="invisible"')]
                 ];
+            } else {
+                if (preg_match('/["\']sitekey["\']\s*:\s*["\']([a-zA-Z0-9_-]+)["\']/i', $html, $matches)) {
+                    $found['hc'] = [
+                        'type' => 'hc',
+                        'keys' => $matches[1],
+                        'extra' => ['invisible' => str_contains($html, 'data-size="invisible"')]
+                    ];
+                }
             }
         }
         
@@ -49,7 +57,9 @@ class Capt {
                     'extra' => ['cdata' => $mCda[1][0] ?? null]
                 ];
             } else {
-                if (preg_match('/data-sitekey=["\'](0x[a-zA-Z0-9_-]+)["\']/', $html, $matches)) {
+                if (preg_match('/data-sitekey=["\'](0x[a-zA-Z0-9_-]+)["\']/', $html, $matches) || 
+                    preg_match('/sitekey\s*:\s*["\'](0x[a-zA-Z0-9_-]+)["\']/', $html, $matches)) {
+                    
                     $found['cft'] = [
                         'type' => 'cft',
                         'keys' => $matches[1],
@@ -146,6 +156,7 @@ class Capt {
     }
 
 }
+
 
 
 

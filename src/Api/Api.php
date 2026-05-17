@@ -373,18 +373,6 @@ final class Api { #contractor
             'fingerprint' => [
                 'api'  => 'fingerprint','url' => 'domain','need' => ['userAgent'],
             ],
-            'datadome' => [
-                'api'  => 'datadome','url' => 'domain', 'defaults' => ['method' => 'slider'],'need' => ['proxy', 'captchaUrl'], 
-            ],
-            'datadome_c' => [
-                'api'  => 'datadome','url' => 'domain', 'defaults' => ['method' => 'tls'],'need' => ['proxy'], 
-            ],
-            'imperva' => [
-                'api'  => 'incapsula','url' => 'domain', 'defaults' => ['method' => 'basic'],'need' => ['proxy', 'cookie', 'userAgent', 'captchaUrl', ], 
-            ],
-            'castle' => [
-                'api'  => 'castle','url' => 'domain', 'defaults' => ['method' => 'basic'],'need' => ['proxy', 'cookie', 'userAgent'], 
-            ],
         ],
         
         tertuyul::class => [
@@ -413,22 +401,16 @@ final class Api { #contractor
         xevil::class => [
             '_proxy_format' => 'split',
             'interstitial' => [
-                'api' => 'turnstile', 
-                'url' => 'pageurl',
-                'defaults' => [
-                    'sitekey' => 'jschallenge'
-                ]
+                'api' => 'turnstile','url' => 'pageurl',
+                'defaults' => ['sitekey' => 'jschallenge']
             ],
         ],
         
         multibot::class => [
             '_proxy_format' => 'split',
             'interstitial' => [
-                'api' => 'turnstile', 
-                'url' => 'pageurl',
-                'defaults' => [
-                    'cf_clearance' => 1
-                ],
+                'api' => 'turnstile','url' => 'pageurl',
+                'defaults' => ['cf_clearance' => 1],
                # 'need' => ['body'] 
             ],
         ],
@@ -705,11 +687,7 @@ abstract class Provider {
                 $code = $e->getMessage();
                 $type = Api::errType($code);
                 logx('err', $code);
-/*
-                if (stripos($code, 'nodes unavailable') && (static::class === 'gmxch')) {
-                    return 777;
-                }
-*/
+
                 if (in_array($type, ['ret','con','fail'], true)) {
                     _sle(3); 
                     continue; 

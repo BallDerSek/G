@@ -238,7 +238,7 @@ while (true) {
                 
                 if ($_cu) {
                     $img = Net::C($_cu, 'GET', null, inf::$cookie, [], "$host/faucet", inf::$uagent);
-                    if (!empty($img) || ($img !== 99)) {
+                    if (!empty($img) && ($img !== 99)) {
                         $t_text = _text($img, $host, $mail);
                     }
                 }

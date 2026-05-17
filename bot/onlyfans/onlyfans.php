@@ -46,7 +46,7 @@ while (true) {
             break;
         }
         if ($ret >= $max) {
-            logx('err', 'gak tau');
+            logx('warn', 'RETRY LIMIT REACHED, CHECK BROWSER');
             exit; 
         }
         
@@ -138,10 +138,12 @@ while (true) {
             }
             if ($ban = isBan($fau)) {
                 logx('err', " kena ban: " . $ban['ti']);
-                #styler("waiting for unlocked", fn() => _sle($ban['sleep']));
-                #continue;
-                $curr = $_c; 
-                break 2;
+                if (!$SLDONE) {
+                    $curr = $_c; 
+                    break 2;
+                }
+                styler("waiting for unlocked", fn() => _sle($ban['sleep']));
+                continue;
             }
 
             $po = null;
@@ -300,7 +302,7 @@ sl:
                     }
                     
                     if (!empty($get)) {
-                        _put('get.html', $get); 
+                        #_put('get.html', $get); 
                         
                         if (stripos($get, 'Just a moment') !== false || stripos($get, 'Attention Required!') !== false) {
                             if ($cf = execCF($api, $bakk, inf::$cookie, inf::$uagent)) {
@@ -608,6 +610,7 @@ function onfCap($fau, $host, $api, $payload, $he) {
         $img = Net::X($img_u, 'GET', [], inf::$cookie, $he, $host, inf::$uagent);
         
         if (!empty($img) && $img !== 99) {
+            #return ['captcha_answer' => "5"];
             #_put('img.png', $img);
             $ans = SolveUtils::oddCaptcha(base64_encode($img), 'color', $s);
             if ($ans) return ['captcha_answer' => $ans];

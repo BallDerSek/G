@@ -32,42 +32,67 @@ class Solve {
         
         $solution = [];
         $_cap = Capt::cha($html);
-#var_dump($_cap);
-#return _put('cap.js', $_cap['rss']['extra']['js']);
+        
+        #var_dump($_cap);
+        #return _put('cap.js', $_cap['rss']['extra']['js']);
 
         $_fields = null; 
         $_select = '';
+        $captchaFields = [];
 
         if (is_array($pa)) {
+            $_option = null;
+            $_foundField = null;
             foreach ($pa as $key => $val) {
                 if (str_contains(strtolower($key), 'captcha')) {
-                    $_fields = $key;
-                    $_option = is_array($val) ? $val : [$val];
                     
-                    $pref = ['shield', 'rot', 'smart', 'turnstile', 'hcaptcha', 'recaptcha'];
-                    
-                    foreach ($pref as $p) {
-                        foreach ($_option as $opt) {
-                            if (str_contains(str_replace(['-', '_'], '', strtolower($opt)), $p)) {
-                                $_select = $opt;
-                                break 2;
-                            }
-                        }
+                    $captchaFields[] = $key;
+                    if (is_array($val)) {
+                        $_option = $val;
+                    } else {
+                        $_foundField = $key;
                     }
-                    if (!$_select) $_select = $_option[0];
-                    break; 
                 }
             }
+            $_fields = $_foundField ?? $_fields;
+            if ($_option === null && $_foundField !== null) {
+                $_option = [$pa[$_foundField]];
+            }
+            if (!empty($_option)) {
+                $pref = ['shield', 'rot', 'smart', 'turnstile', 'hcaptcha', 'recaptcha'];
+                foreach ($pref as $p) {
+                    foreach ($_option as $opt) {
+                        if (str_contains(str_replace(['-', '_'], '', strtolower($opt)), $p)) {
+                            $_select = $opt;
+                            break 2;
+                        }
+                    }
+                }
+                if (!$_select) $_select = $_option[0];
+            }
+
         } else {
             $_select = (string)$pa;
+            $_fields = 'captcha';
+            $captchaFields[] = $_fields;
         }
 
         if ($_fields && $_select) {
             $solution[$_fields] = $_select;
-            #logx('info', "Using field [$_fields] with value: $_select");
+            
+            if (is_array($pa)) {
+                foreach ($pa as $key => $val) {
+                    if (str_contains(strtolower($key), 'captcha')) {
+                        if ($key === $_fields) {
+                            $solution[$key] = $_select;
+                        } else {
+                            $solution[$key] = $_select;
+                        }
+                    }
+                }
+            }
         }
 
-        // --- 2. ANTIBOT LINKS ---
         if (!empty($_cap['antibot'])) {
             $resAtb = locally::ATB($_cap['antibot']['type'], $api, $html);
             if ($resAtb === 77) return ['trouble' => 'reload'];
@@ -103,7 +128,6 @@ class Solve {
             }
         }
 
-        // --- 4. ICONCAPTCHA ---
         if (isset($_cap['ic_fw'])) {
             $ic = null; $attempt = 0;
             while (!$ic && $attempt < 5) {
@@ -114,7 +138,8 @@ class Solve {
             if ($ic) $solution = array_merge($solution, $ic);
         }
 
-        $mainSolved = count(array_diff(array_keys($solution), ['antibotlinks', $_fields])) > 0;
+        $ignoreFields = array_merge(['antibotlinks'], $captchaFields);
+        $mainSolved = count(array_diff(array_keys($solution), $ignoreFields)) > 0;
 
         if ($api && !$mainSolved) {
             $priority = [];
@@ -166,7 +191,9 @@ class Solve {
         return !empty($solution) ? $solution : null;
     }
 
+
     public static function tkn($api, $host, $key, $type, array $data = []) {
+        #return 'token';
         
         $solver = config::getKeys($api, $type);
         print(DIMM.BOLD.ITAL.FGo['MAG']."solving  ".RSET);

@@ -12,7 +12,9 @@ credentials
 **/credentials/*
 
 **/mail.txt
+**/mail.json
 **/email.txt
+**/email.json
 **/proxy.txt
 
 *.tmp
