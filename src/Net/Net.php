@@ -156,8 +156,7 @@ class Mux {
     }
 
     /**
-     * Parallel Request
-     * Params: [url, type, data, cookie, head, ref, ua, ip, json, proxy]
+     * Parallel Request yang sudah diperbaiki
      */
     public static function C(array ...$calls) {
         $queue = [];
@@ -171,19 +170,30 @@ class Mux {
             $head = $head ?? [];
             
             if ($json) {
-                $head[] = "Accept: application/json, text/javascript, */*";
+                if (!Net::hasHeader($head, 'Accept')) $head[] = "Accept: application/json, text/javascript, */*";
             } else {
-                $head[] = "Accept: */*";
+                if (!Net::hasHeader($head, 'Accept')) $head[] = "Accept: */*";
             }
 
-            $dns = []; $connect = [];
+            $actualProxy = $proxy ?? ($GLOBALS['_CTX']['proxy'] ?? null);
+
+            $dns = []; 
+            $connect = [];
             if (!empty($ip)) {
                 $dom = parse_url($url)['host'] ?: '';
-                if ($dom) {
-                    if (!empty($GLOBALS['_CTX']['proxy'])) {
-                        $connect = ["$dom:443:$ip:443"];
+                $scheme = parse_url($url)['scheme'] ?? 'http';
+                $port = parse_url($url)['port'] ?? ($scheme === 'https' ? 443 : 80);
+                
+                if ($dom !== '') {
+                    if (!empty($actualProxy)) {
+                        $connect = ["$dom:$port:$ip:$port"];
+                        if ($port === 443) $connect[] = "$dom:80:$ip:80";
+                        if ($port === 80)  $connect[] = "$dom:443:$ip:443";
                     } else {
                         $dns = ["$dom:80:$ip", "$dom:443:$ip"];
+                        if ($port !== 80 && $port !== 443) {
+                            $dns[] = "$dom:$port:$ip";
+                        }
                     }
                 }
             }
@@ -202,14 +212,15 @@ class Mux {
                     'follow'  => true,
                     'resolve' => $dns,
                     'connect' => $connect,
-                    'proxy'   => $proxy,
-                    'http2'   => true // Mux default to HTTP/2 logic
+                    'proxy'   => $proxy, 
+                    'http2'   => true 
                 ])
             ];
         }
 
         return self::Exec($queue, 15); 
     }
+
 }
 
 /** @class Net
@@ -370,7 +381,7 @@ class Net {
         return $head;
     }
     
-    private static function hasHeader(array $he, $name) {
+    public static function hasHeader(array $he, $name) {
         $name = strtolower($name) . ':';
         foreach ($he as $header) {
             if (stripos(strtolower($header), $name) === 0) {

@@ -26,6 +26,7 @@ while (true) {
     }
 
     foreach ($sites as $host => $key) {
+        $token = 'token';
         $token = solve::tkn($api, $host, $key, 'rc2');
         
         $domain = parse_url($host)['host'];
@@ -67,7 +68,7 @@ while (true) {
         foreach ($prep_queue as $_url => $args) {
             $page = $pages[$idx++] ?? null;
             $u_nam = basename(parse_url($_url)['path']);
-
+            
             if (empty($page)) {
                 logx('warn', "  Skip $u_nam: Empty page response");
                 continue;
