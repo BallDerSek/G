@@ -27,7 +27,6 @@ $dash = null;
 $saldo = 0;
 $withdraw = false;
 while (true) {
-    $max = 7;
     $ret = 0;
     $ret99 = 0;
     
@@ -42,7 +41,7 @@ while (true) {
             #var_dump($dash); die;
             break;
         }
-        if ($ret >= $max) {
+        if ($ret >= 10) {
             logx('warn', 'RETRY LIMIT REACHED, CHECK BROWSER');
             exit; 
         }

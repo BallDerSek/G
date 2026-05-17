@@ -51,8 +51,14 @@ while(true) {
     
     try {
         $bypass = new _shortlinks("$shortLink");
+        
+        $set = microtime(true);
         $finalUrl = $bypass->links($api);
-        logg(true, $shortLink);
+        $end = number_format(microtime(true) - $set, 0);
+        
+        logg(true, $shortLink, false);
+        logx('info', " passed in {$end}s");
+        
         logx('ok', "[  done  ] ".$finalUrl, true, true);
 
     } catch (RuntimeException $e) {
@@ -62,15 +68,30 @@ while(true) {
 #die;
 }
 
-
     
 tes:
 
 
-
+$cookieFile = config::cookie();
+$userAgent = config::uagent();
 $url = $ez4s;
-$_0 = Net::C($url, 'GET');
+$_0 = Net::C($url, 'GET', null, $cookieFile, [], '', $userAgent);
 _put('0.html', $_0);
+
+$res = Scraper::_pP($_0, 'window.location.href');
+$url = $res[0] ?? '';
+if (!empty($url)) {
+    $_1 = Net::X($url, 'GET', null, $cookieFile, [], $url, $userAgent);
+    _put('1.html', $_1);
+}
+
+
+preg_match('/url=([^"\'>\s]+)/i', $_1, $url);
+if ($url[1]) {
+    $url = trim($url[1]);
+    $_2 = Net::X($url, 'GET', null, $cookieFile, [], $url, $userAgent);
+    _put('2.html', $_2);
+}
 
 
 

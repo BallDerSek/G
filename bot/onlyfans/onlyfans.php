@@ -16,9 +16,7 @@ $ip = null;
 (function ($login, $ip) {
     Proxy::load();
     $cookieFile = config::cookie($login);
-    $creds = config::credential(['uagent' => fn() => config::uagent('desktop')], true);
-    
-    $userAgent = $creds['uagent'];
+    $userAgent = config::uagent('mobile');
 
     inf::setup($userAgent, $cookieFile, $ip);
     _cle();
@@ -31,7 +29,6 @@ $skipped = [];
 $SLDONE = false;
 $curr = '';
 while (true) {
-    $max = 5;
     $ret = 0;
 
     do {
@@ -45,7 +42,7 @@ while (true) {
             #var_dump($dash); die;
             break;
         }
-        if ($ret >= $max) {
+        if ($ret >= 10) {
             logx('warn', 'RETRY LIMIT REACHED, CHECK BROWSER');
             exit; 
         }
@@ -62,8 +59,7 @@ while (true) {
         if (stripos($_0, 'Just a moment') !== false || stripos($_0, 'Attention Required!') !== false) {
                 logx('warn', 'Cloudflare Detected, solving CF...');
                 if ($cf = execCF($api, $host."/faucet/ltc", inf::$cookie, inf::$uagent)) {
-                    [$headersCF, $ua] = $cf;
-                    config::credential()['uagent'] = $ua; 
+                    [$headersCF, $ua] = $cf; 
                     inf::setup($ua, inf::$cookie);
                     _sle(3);
                     continue;
@@ -115,7 +111,7 @@ while (true) {
             $fau = null;
             $fau = Net::X($fa, 'GET', null, inf::$cookie, $headersCF, $host, inf::$uagent);
             
-            #_put('fau.html', $fau); #die;
+            #_put('fau.html', $fau); die;
             
             if ($fau === 99) {
                 $ret99++;
@@ -130,7 +126,6 @@ while (true) {
             if (stripos($fau, 'Just a moment') !== false || stripos($fau, 'Attention Required!') !== false) {
                 if ($cf = execCF($api, $fa, inf::$cookie, inf::$uagent)) {
                     [$headersCF, $ua] = $cf;
-                    config::credential()['uagent'] = $ua; 
                     inf::setup($ua, inf::$cookie);
                     _sle(3);
                     continue;
@@ -307,7 +302,6 @@ sl:
                         if (stripos($get, 'Just a moment') !== false || stripos($get, 'Attention Required!') !== false) {
                             if ($cf = execCF($api, $bakk, inf::$cookie, inf::$uagent)) {
                                 [$he, $ua] = $cf;
-                                config::credential()['uagent'] = $ua; 
                                 inf::setup($ua, inf::$cookie);
                                 $headersCF = $he;
                                 _sle(3);

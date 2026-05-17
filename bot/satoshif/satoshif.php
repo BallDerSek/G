@@ -31,7 +31,6 @@ $skipped = [];
 $SLDONE = false;
 $curr = '';
 while (true) {
-    $max = 7;
     $ret = 0; 
     
     do {
@@ -45,7 +44,7 @@ while (true) {
             break;
         }
         
-        if ($ret >= $max) {
+        if ($ret >= 10) {
             logx('warn', 'RETRY LIMIT REACHED, CHECK BROWSER');
             exit; 
         }

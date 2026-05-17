@@ -32,7 +32,6 @@ $skipped = [];
 $claim = false;
 $can_withdraw = true;
 while (true) {
-    $max = 7;
     $ret = 0; 
     
     do {
@@ -47,7 +46,7 @@ while (true) {
             break;
         }
         
-        if ($ret >= $max) {
+        if ($ret >= 10) {
             logx('warn', 'RETRY LIMIT REACHED, CHECK BROWSER');
             exit; 
         }
