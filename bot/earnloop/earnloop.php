@@ -57,10 +57,10 @@ while (true) {
         logx('err', "logging in ", false); 
         _sle(3); _clr();
         
-        $_0 = Net::C($host, 'GET', null, inf::$cookie, [], '', inf::$uagent);
+        $_0 = Net::C($host.$r, 'GET', null, inf::$cookie, [], '', inf::$uagent);
         
         if (!empty($_0) && $_0 !== 99) {
-            Net::C($host, 'POST', ['email' => $login, 'login' => ''], inf::$cookie, [], $host, inf::$uagent);
+            Net::C($host, 'POST', ['email' => $login, 'login' => ''], inf::$cookie, [], $host.$r, inf::$uagent);
         }
         
     } while (empty($dash));
@@ -142,9 +142,11 @@ while (true) {
                     $msg = trim($_err[0]);
                     logx("err", trim($msg), false);
                     if (stripos($msg, 'sponsor') !== false) { _sle(2); continue; }
-                    if (stripos($msg, 'insufficient') !== false) goto tes_ilmu;
-                    if (stripos($msg, 'Faucet access expired') !== false) {
+                    if (stripos($msg, 'insufficient')) goto tes_ilmu;
+                    if (stripos($msg, 'access expired')) {
+                        Net::C($host.'/logout', 'GET', null, inf::$cookie, [], $fa, inf::$uagent);
                         @unlink(inf::$cookie);
+                        _sle(30);
                         goto login;
                     }
                     if (stripos($msg, 'shortlink visits today')) {
