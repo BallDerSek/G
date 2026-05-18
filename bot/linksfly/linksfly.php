@@ -121,7 +121,7 @@ while (true) {
             $po = null;
             $cap = [];
             $f = scraper::payload($fau)[0] ?? null;
-            if ($f) {
+            if (!empty($f)) {
                 
                 $pa = $f['payload'];
                 $cap = Solve::exec($fau, $host, $api, $pa);
@@ -134,6 +134,10 @@ while (true) {
                 
                 $po = array_merge($pa, $cap, ['wallet' => $login]);
                 
+            } else {
+                if (stripos($fau, 'claim limit') !== false) continue 2;
+                styler("waiting for CLAIM", fn() => _sle(10));
+                continue;
             }
             
             if (!empty($po)) {

@@ -37,6 +37,7 @@ while (true) {
     do {
         $ret++;
         $l = inf::check("$host/dashboard", [], '/register');
+        #var_dump($l); _rl('lanjut:  ');
         
         if ($l['ok']) {
             $dash = $l['html'];
@@ -51,7 +52,6 @@ while (true) {
             exit; 
         }
         
-        @unlink(inf::$cookie);
         logx('err', "logging in", false); 
         _sle(3); _clr();
         $_0 = Net::C("$host/login", 'GET', null, inf::$cookie, [], '', inf::$uagent, false, false, $ip);
