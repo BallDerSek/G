@@ -44,8 +44,13 @@ while (true) {
         }
         if ($ret >= 10) {
             logx('warn', 'RETRY LIMIT REACHED, CHECK BROWSER');
+            
+            if (!empty($_0)) _put(__DIR__.'/lo.html', $_0);
+            if (isset($ve) && !empty($ve)) _put(__DIR__.'/ve.html', $ve);
+            
             exit; 
         }
+        
         
         logx('err', "logging in ", false); 
         _sle(3); _clr();
