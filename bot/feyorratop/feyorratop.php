@@ -329,7 +329,7 @@ while (true) {
             break;
         }
         #print_r($short);
-        $up = ['earnow','shortano', 'shortino', 'fc-lc', 'coinclix'];
+        $up = ['earnow','shortano', 'shortino', 'fc-lc'];
         
         if (!empty($f)) {
             $po = $f['payload'];

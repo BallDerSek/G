@@ -69,6 +69,11 @@ while (true) {
             $page = $pages[$idx++] ?? null;
             $u_nam = basename(parse_url($_url)['path']);
             
+            /* debug 
+            $tmpDir = _lib($host); 
+            _put($tmpDir."/$u_nam.html", $page);
+            */
+            
             if (empty($page)) {
                 logx('warn', "  Skip $u_nam: Empty page response");
                 continue;

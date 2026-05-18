@@ -28,7 +28,7 @@ $headersCF = [];
 $skipped = [];
 $SLDONE = false;
 $curr = '';
-while (true) {
+while (true) { @unlink(inf::$cookie);
     $ret = 0;
 
     do {
@@ -86,12 +86,16 @@ while (true) {
         
         if (!empty($po)) {
             $ve = Net::X($f['url'], 'POST', $po, inf::$cookie, $headersCF, $host.$r, inf::$uagent);
-            #_put('ve.html', $ve);
+            _put('ve.html', $ve);
+
             if ($ve === 99) {
                 logx('warn', 'Proxy issue, wait 30s');
                 _sle(30);
                 continue;
             }
+            $_sucS = scraper::_jP($ve, "/Swal\.fire\(\s*\{.*?icon:\s*'([^']+)'.*?title:\s*'([^']+)'.*?html:\s*'([^']+)'/s") ?? [];
+            if (isset($_sucS[3][0])) (logx('err', $_sucS[3][0]) ?: die);
+            
         }
     } while (empty($dash));
     #_put('dash.html', $dash); die;

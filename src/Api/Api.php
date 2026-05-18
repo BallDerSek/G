@@ -687,7 +687,9 @@ abstract class Provider {
                 $code = $e->getMessage();
                 $type = Api::errType($code);
                 logx('err', $code);
-
+                
+                if ($method === 'antibot') return false;
+                
                 if (in_array($type, ['ret','con','fail'], true)) {
                     _sle(3); 
                     continue; 

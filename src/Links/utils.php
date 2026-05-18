@@ -173,10 +173,6 @@ function limit($id) {
 }
 
 function links($api, $url) {
-    if (!$api) {
-        logx('err', 'undefined provider');
-        return false;
-    }
     
     try {
         $bypass = new _shortlinks($url);
@@ -188,6 +184,11 @@ function links($api, $url) {
         }
     } catch (Throwable $e) {
         logx('err', " SL Direct failed: ".$e->getMessage());
+    }
+    
+    if (!$api) {
+        logx('err', 'undefined provider');
+        return false;
     }
     
     logx('info', " Switching to solver API...");
