@@ -188,7 +188,7 @@ class Solve {
             return ['nocaptcha' => true];
         }
 
-        return !empty($solution) ? $solution : null;
+        return !empty($solution) ? $solution : [];
     }
 
 

@@ -1,17 +1,27 @@
 <?php
 if (!defined('ROOT')) { die; }
+
 #$api = onKeys();
 
-$acc = config::credential([], true);
+$acc = config::credential([], false, ['login', 'PROXY']);
 $login = $acc['login'];
-
-$cookieFile = config::cookie($login);
-$userAgent = config::uagent('mobile');
+putenv("PROXY=".$acc['PROXY']);
 
 $host = 'https://earnloop.online';
-$ip = null; 
+$domain = parse_url($host, PHP_URL_HOST);
+$r = '/?ref=168cd377d0';
+$ip = null;
 
-inf::setup($userAgent, $cookieFile, $ip);
+(function ($login, $ip) {
+    Proxy::load();
+    inf::$cookie = config::cookie($login);
+    inf::$uagent = config::uagent('mobile');
+
+    inf::setup(inf::$uagent, inf::$cookie, $ip);
+    _cle();
+    banner();
+    taskPrintCenter($login, 'info');
+} ) ($login, $ip);
 
 #$shortlink = true; goto shortlink;
 logx('', "Pilih Mode:", true, true);
@@ -20,27 +30,39 @@ logx('info', "2. Dobrak ( limit+100 ) klo stop saat dobrak, limitnya reset saat 
 $pilih = trim(_rl("mode [dobrak]: "));
 
 $mode_dobrak = in_array($pilih, ["", "2"]);
+_cle();
 banner();
 login:
 
+$SLDONE = false;
 while (true) {
+    $ret = 0;
+    
     do {
+        $ret++;
         $l = inf::check($host.'/dashboard', [], 'login-panel');
         
         if ($l['ok']) {
-            taskPrintCenter('logged in', 'ok');
             $dash = $l['html'];
-            break; 
+            logx('info', "logged in", false); 
+            _sle(3); _clr();
+            #var_dump($dash); die;
+            break;
+        }
+        if ($ret >= 10) {
+            logx('warn', 'RETRY LIMIT REACHED, CHECK BROWSER');
+            exit; 
         }
         
-        @unlink(inf::$cookie);
-        taskPrintCenter('logging in', 'err');
+        logx('err', "logging in ", false); 
+        _sle(3); _clr();
         
         $_0 = Net::C($host, 'GET', null, inf::$cookie, [], '', inf::$uagent);
         
-        if (!empty($_0)) {
+        if (!empty($_0) && $_0 !== 99) {
             Net::C($host, 'POST', ['email' => $login, 'login' => ''], inf::$cookie, [], $host, inf::$uagent);
         }
+        
     } while (empty($dash));
     
     $list = _coin($dash);
@@ -53,9 +75,9 @@ while (true) {
         $fa = $host . $_fa['link']; 
         $set = 0;
         $claimCount = 0;
-        $maxClaims = ($mode_dobrak) ? ((!AUTH_API) ? 100 : PHP_INT_MAX) : 0; 
+        $maxClaims = ($mode_dobrak) ? ((!AUTH_API()) ? 100 : PHP_INT_MAX) : 0; 
         
-        $txtMode = $mode_dobrak ? (AUTH_API ? "DOBRAK UNLIMITED" : "DOBRAK 100") : "NORMAL";
+        $txtMode = $mode_dobrak ? (AUTH_API() ? "DOBRAK UNLIMITED" : "DOBRAK 100") : "NORMAL";
         logx('info', "$coinName [Mode: $txtMode]");
 
        # goto tes_ilmu; 
@@ -66,7 +88,7 @@ while (true) {
                 goto tes_ilmu;
             }
 
-            $fau = Net::C($fa, 'GET', null, $cookieFile, [], $host, $userAgent);
+            $fau = Net::C($fa, 'GET', null, inf::$cookie, [], $host, inf::$uagent);
             if (empty($fau)) continue;
             
             $limit = _info($fau);
@@ -82,7 +104,7 @@ while (true) {
                     logx('warn', "$coinName limit daily");
                     goto tes_ilmu; 
                 } else {
-                    $displayLimit = (AUTH_API) ? "∞" : $maxClaims;
+                    $displayLimit = (AUTH_API()) ? "∞" : $maxClaims;
                     logx('warn', "$coinName: [$claimCount/$displayLimit]");
                 }
             }
@@ -93,7 +115,7 @@ while (true) {
                 if ($_t && $_p) {
                     styler('Waiting for ads', fn() => _sle(rand(16, 25)));
                     $po = ['token' => $_t, 'slot'  => $_p];
-                    Net::X($host . "/promo_gateway.php", "POST", $po, $cookieFile, [], $fa, $userAgent, true);
+                    Net::X($host . "/promo_gateway.php", "POST", $po, inf::$cookie, [], $fa, inf::$uagent, true);
                     continue;
                 }
             }
@@ -106,11 +128,12 @@ while (true) {
             $wait = 17 - (int)ceil(microtime(true) - $set);
             if ($wait > 0) styler("waiting $wait", fn() => _sle($wait));
             
-            $cla = Net::C($fa, 'POST', array_merge($pa, ['claim' => '']), $cookieFile, [], $fa, $userAgent);
+            $cla = Net::C($fa, 'POST', array_merge($pa, ['claim' => '']), inf::$cookie, [], $fa, inf::$uagent);
             if (!empty($cla)) {
                 $_suc = scraper::_xP($cla, "//div[contains(@class, 'alert-success')]");
                 $_err = scraper::_xP($cla, "//div[contains(@class, 'alert-danger')]");
                 
+                print(FGd['CYN'] . maskEmail($login) . RSET . " ");
                 if (!empty($_suc)) {
                     if ($mode_dobrak) $claimCount++; 
                     $msg = trim($_suc[0]);
@@ -121,6 +144,8 @@ while (true) {
                     if (stripos($msg, 'sponsor') !== false) { _sle(2); continue; }
                     if (stripos($msg, 'insufficient') !== false) goto tes_ilmu;
                     if (stripos($msg, 'shortlink visits today')) {
+                        if ($SLDONE) (logx('err', 'gada jatah SL lagi') ?: die);
+                        
                         $shortlink = true;
                         logx();
                         if (preg_match('/Progress:\s*(\d+)\/(\d+)/', $msg, $s)) {
@@ -145,12 +170,12 @@ while (true) {
         } 
 
         tes_ilmu:
-        $fau = Net::C($fa, 'GET', null, $cookieFile, [], $host, $userAgent);
+        $fau = Net::C($fa, 'GET', null, inf::$cookie, [], $host, inf::$uagent);
         if (_canWD($fau)) {
             $f = scraper::payload($fau)[0]['payload'] ?? null;
             if ($f) {
                 logx('ok', " WD $coinName...");
-                $wd = Net::C($fa, 'POST', array_merge($f, ['withdraw' => '']), $cookieFile, [], $fa, $userAgent);
+                $wd = Net::C($fa, 'POST', array_merge($f, ['withdraw' => '']), inf::$cookie, [], $fa, inf::$uagent);
                 if (!empty($wd)) {
                     $_suc = scraper::_xP($wd, "//div[contains(@class, 'alert-success')]");
                     $msg = trim($_suc[0] ?? 'Withdraw process done');
@@ -168,11 +193,11 @@ while (true) {
 
 shortlink:
 if ($shortlink) {
-    logx('err', '  need ' . $ne);
+    logx('err', 'need ' . $ne);
     $solved = 0; 
 
     while ($solved < $ne) {
-        $short = Net::C($host . '/shortlinks', 'GET', null, $cookieFile, [], $host, $userAgent);
+        $short = Net::C($host . '/shortlinks', 'GET', null, inf::$cookie, [], $host, inf::$uagent);
         $sl_c = Scraper::_jP($short, '/ShortlinkConfig\s*=\s*(.*?);/');
         
         if (isset($sl_c[1][0])) {
@@ -184,7 +209,7 @@ if ($shortlink) {
             continue;
         }
 
-        $sho = json_decode(Net::C($host . $apii, 'GET', ['action' => 'list'], $cookieFile, [], $host . '/shortlinks', $userAgent), true);
+        $sho = json_decode(Net::C($host . $apii, 'GET', ['action' => 'list'], inf::$cookie, [], $host . '/shortlinks', inf::$uagent), true);
         
         if (empty($sho['links'])) {
             logx('err', "shortlink abis");
@@ -200,6 +225,7 @@ if ($shortlink) {
         }
 
         if (!$targetLink) {
+            $SLDONE = true;
             logx('err', "dah abis slnya.");
             break;
         }
@@ -213,7 +239,7 @@ if ($shortlink) {
             'shortlink_id' => $id
         ];
         
-        $res = json_decode(Net::X($host . $apii . '?action=start', 'POST', $pos, $cookieFile, [], $host . '/shortlinks', $userAgent, true) ?: '', true);
+        $res = json_decode(Net::X($host . $apii . '?action=start', 'POST', $pos, inf::$cookie, [], $host . '/shortlinks', inf::$uagent, true) ?: '', true);
 
         if (isset($res['success']) && $res['success']) {
             $durl = $res['destination_url'];
@@ -222,15 +248,13 @@ if ($shortlink) {
             $total_wait = $ti + rand(3, 8);
             styler("waiting $total_wait", fn() => _sle($total_wait));
             
-            logx('info', "Sending callback $nm...");
-            $claim = Net::C($host . $apii . '?action=callback&session=' . $skey, 'GET', null, $cookieFile, [], $durl, $userAgent);
-            _put('cla.html', $claim);
+            $claim = Net::C($host . $apii . '?action=callback&session=' . $skey, 'GET', null, inf::$cookie, [], $durl, inf::$uagent);
             
             $statusPos = [
                 'csrf_token' => $csrf,
                 'session_key' => $skey
             ];
-            $check = json_decode(Net::X($host . $apii . '?action=status', 'POST', $statusPos, $cookieFile, [], $host . '/shortlinks', $userAgent, true) ?: '', true);
+            $check = json_decode(Net::X($host . $apii . '?action=status', 'POST', $statusPos, inf::$cookie, [], $host . '/shortlinks', inf::$uagent, true) ?: '', true);
             
             if (isset($check['status']) && $check['status'] === 'completed') {
                 $solved++;

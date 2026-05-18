@@ -28,7 +28,7 @@ $headersCF = [];
 $skipped = [];
 $SLDONE = false;
 $curr = '';
-while (true) { @unlink(inf::$cookie);
+while (true) { 
     $ret = 0;
 
     do {
