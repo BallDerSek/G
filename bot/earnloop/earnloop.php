@@ -143,6 +143,10 @@ while (true) {
                     logx("err", trim($msg), false);
                     if (stripos($msg, 'sponsor') !== false) { _sle(2); continue; }
                     if (stripos($msg, 'insufficient') !== false) goto tes_ilmu;
+                    if (stripos($msg, 'Faucet access expired') !== false) {
+                        @unlink(inf::$cookie);
+                        goto login;
+                    }
                     if (stripos($msg, 'shortlink visits today')) {
                         if ($SLDONE) (logx('err', 'gada jatah SL lagi') ?: die);
                         
