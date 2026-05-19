@@ -50,7 +50,7 @@ while (true) {
         
         logx('err', "logging in ", false); 
         _sle(3); _clr();
-        $_0 = Net::X($host.$r, 'GET', null, inf::$cookie, [], '', inf::$uagent);
+        $_0 = Net::X($host, 'GET', null, inf::$cookie, [], '', inf::$uagent);
         if ($_0 === 99) {
             logx('warn', "masalah proxy, warm up dulu");
             _sle(60);
@@ -79,7 +79,7 @@ while (true) {
         
         if (!empty($po)) {
             #print_r($po); _rl('lanjut: ');
-            $ve = Net::X($f['url'], 'POST', $po, inf::$cookie, [], $host.$r, inf::$uagent);
+            $ve = Net::X($f['url'], 'POST', $po, inf::$cookie, [], $host, inf::$uagent);
             #_put('ve.html', $ve);
             if ($ve === 99) {
                 logx('warn', 'Proxy issue, wait 30s');
