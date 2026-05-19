@@ -170,9 +170,11 @@ final class Api { #contractor
             'cft' => [
                 'k' => 'sitekey', 'url' => 'domain', 'api' => 'turnstile'
                 ],
+            /*
             'hc' => [
                 'k' => 'sitekey', 'url' => 'domain', 'api' => 'hcaptcha'
                 ],
+            */
             'rc2' => [
                 'k' => 'sitekey', 'url' => 'domain', 'api' => 'recapv2'
                 ],

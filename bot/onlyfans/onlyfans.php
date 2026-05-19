@@ -28,6 +28,7 @@ $headersCF = [];
 $skipped = [];
 $SLDONE = false;
 $curr = '';
+$dash = null;
 while (true) { 
     $ret = 0;
 
@@ -543,8 +544,64 @@ function onlyFans($json_cfg, $reff) {
 
 function onfCap($fau, $host, $api, $payload, $he) {
     
+    if (stripos($fau, 'mcaptcha') !== false) {
+        $ins = Scraper::_xP($fau, "//p[@id='mcaptcha-instruction']")[0] ?? 
+               Scraper::_xP($fau, "//div[@id='mcaptcha-challenge-box']//p[@class='text-muted small mb-0']")[0] ?? '';
+        
+        $img_u = "https://onlyfaucet.com/faucet/captcha_image?_t=".round(microtime(true) * 1000);
+        
+        $res = Net::X($img_u, 'GET', [], inf::$cookie, $he, $host, inf::$uagent, d: true);
+        
+        $r_hee = $res['headers'] ?? [];
+        $r_pSa = $r_hee['x-pow-salt'][0] ?? $r_hee['X-PoW-Salt'][0] ?? null;
+        $r_pDi = (int)($r_hee['x-pow-difficulty'][0] ?? $r_hee['X-PoW-Difficulty'][0] ?? 4);
+
+        $img = $res['body'] ?? '';
+
+        if (!empty($img) && $img !== 99) {
+            $captcha_answer = null;
+
+            if (stripos($ins, 'odd coloured') !== false) {
+                $ans_idx = onfOdd($img); 
+                
+                if ($ans_idx === false) {
+                    return ['trouble' => 'reload'];
+                }
+                
+                if ($ans_idx >= 0 && $ans_idx <= 4) {
+                    $captcha_answer = (string)$ans_idx;
+                }
+            } else {
+                $s = 5;
+                if (preg_match('/(\w+)\s+shapes\s+belong/i', $ins, $_s)) {
+                    $map = ['two'=>3, 'three'=>4, 'four'=>5, 'five'=>6, 'six'=>7];
+                    $s = $map[strtolower($_s[1])] ?? 5;
+                }
+                
+                $ans = SolveUtils::oddCaptcha(base64_encode($img), 'color', $s);
+                if ($ans !== false) {
+                    $captcha_answer = (string)$ans;
+                }
+            }
+
+            // Jika jawaban captcha berhasil diekstrak, selesaikan Proof of Work (PoW)
+            if ($captcha_answer !== null) {
+                $return_data = [
+                    'captcha_answer' => $captcha_answer
+                ];
+
+                if ($r_pSa) {
+                    $nonce = SolveUtils::Pow($r_pSa, $r_pDi);
+                    $return_data['pow_nonce'] = (string)$nonce;
+                }
+
+                return $return_data; 
+            }
+        }
+        return ['trouble' => 'reload'];
+    }
+
     $need_c = Scraper::_jP($fau, '/(?:captchaNeeded|captchaRequired)\s*=\s*(true|false)/')[1][0] ?? '';
-    #var_dump($need_c); die;
     if ($need_c === 'true') {
         if (stripos($fau, 'rag the piece to the slot')) {
             $cfg_c = Scraper::_jP($fau, '/var CFG\s*=\s*(\{.*?\});/s')[1][0] ?? null;
@@ -554,14 +611,12 @@ function onfCap($fau, $host, $api, $payload, $he) {
         if (stripos($fau, 'lect the correct answer')) {
             $ans = '';
             $img_u = Scraper::_xP($fau, "//img[@id='captcha-img']/@src")[0] ?? '';
-            #var_dump($img_u);
             $img_o = Scraper::_xP($fau, "//button[contains(@class, 'captcha-opt-btn')]/@data-value");
-            #var_dump($img_o);
+            
             if ($img_o && $img_u) {
-                $img = Net::X($img_u, 'GET', [], inf::$cookie, $he, $host, inf::$uagent);
-                if (empty($img) || $img === 99) return ['trouble' => 'proxy'];
-                $ans = Solve::img($api, $host, 'math', $img);
-                #var_dump($ans); #die;
+                $img_math = Net::X($img_u, 'GET', [], inf::$cookie, $he, $host, inf::$uagent);
+                if (empty($img_math) || $img_math === 99) return ['trouble' => 'proxy'];
+                $ans = Solve::img($api, $host, 'math', $img_math);
                 if (isset($ans['trouble'])) return $ans;
             }
             if ($ans) {
@@ -578,15 +633,15 @@ function onfCap($fau, $host, $api, $payload, $he) {
                     elseif (stripos($ans, '*') !== false || stripos($ans, 'x') !== false) $op = '*';
                     
                     if ($op) {
-                        $res = SolveUtils::math($q1, $q2, $op);
-                        if (in_array((string)$res, $img_o)) $_final_ans = $res;
+                        $res_math = SolveUtils::math($q1, $q2, $op);
+                        if (in_array((string)$res_math, $img_o)) $_final_ans = $res_math;
                     }
                     
                     if ($_final_ans === null) {
                         foreach (['+', '-', '*'] as $type) {
-                            $res = SolveUtils::math($q1, $q2, $type);
-                            if (in_array((string)$res, $img_o)) {
-                                $_final_ans = $res;
+                            $res_math = SolveUtils::math($q1, $q2, $type);
+                            if (in_array((string)$res_math, $img_o)) {
+                                $_final_ans = $res_math;
                                 break;
                             }
                         }
@@ -606,39 +661,17 @@ function onfCap($fau, $host, $api, $payload, $he) {
                 return ['trouble' => 'reload'];
             }
         }
-    } elseif (stripos($fau, 'mcaptcha')) {
-        $ins = Scraper::_xP($fau, "//div[@id='mcaptcha-challenge-box']//p[@class='text-muted small mb-0']")[0] ?? [];
-        #logx('info', "$ins", true, true);
-        $s = 5;
-        if (preg_match('/(\w+)\s+shapes\s+belong/i', $ins, $_s)) {
-            $map = ['two'=>3, 'three'=>4, 'four'=>5, 'five'=>6, 'six'=>7];
-            $s = $map[strtolower($_s[1])] ?? 5;
-        }
-        
-        $img_u = "https://onlyfaucet.com/faucet/captcha_image?_t=".round(microtime(true) * 1000);
-        $img = Net::X($img_u, 'GET', [], inf::$cookie, $he, $host, inf::$uagent);
-        
-        if (!empty($img) && $img !== 99) {
-            #return ['captcha_answer' => "5"];
-            #_put('img.png', $img);
-            $ans = SolveUtils::oddCaptcha(base64_encode($img), 'color', $s);
-            if ($ans) return ['captcha_answer' => $ans];
-        }
-
-        return ['trouble' => 'reload'];
-
-
-
     }
+    
     return [];
 }
 
+
+
+
 function onfOdd($img) {
     $image = imagecreatefromstring($img);
-    if (!$image) {
-        logx('err', "Gagal load gambar captcha", true);
-        return ['trouble' => 'reload'];
-    }
+    if (!$image) return ['trouble' => 'reload'];
     
     $width = imagesx($image);
     $height = imagesy($image);

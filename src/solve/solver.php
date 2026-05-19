@@ -26,6 +26,8 @@ class Solve {
     
     public static function exec($html, $host, ?Provider $api, $pa = null, $ins = false) {
         
+        #return [];
+        
         $ua = inf::$uagent;
         $cookie = inf::$cookie;
         $ip = inf::$ip;
@@ -568,7 +570,17 @@ class SolveUtils {
         return $res;
     }
 
-    
+    public static function Pow($salt, $difficulty) {
+        $prefix = str_repeat('0', $difficulty);
+        $nonce = 0;
+        
+        while (true) {
+            $hash = hash('sha256', $salt . $nonce);
+            if (strpos($hash, $prefix) === 0) return $nonce;
+            $nonce++;
+        }
+    }
+
 }
 
 /** @class locally
