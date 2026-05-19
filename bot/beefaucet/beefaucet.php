@@ -124,6 +124,8 @@ while (true) {
                     } else {
                         logx('warn', " ".$msg, true, true);
                         
+                        if (stripos($msg, 'has been blacklisted')) die;
+                        
                         if (stripos($lowMsg, 'claim limit') || stripos($lowMsg, 'sufficient') || stripos($lowMsg, 'safety')) {
                             $limitReached++;
                         }

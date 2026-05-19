@@ -173,17 +173,21 @@ while (true) {
                         logg(false, $msg);
                         
                         if (stripos($msg, 'sufficient') !== false) break;
-                        if (stripos($msg, 'verify your account') !== false) die;
+                        if (stripos($msg, 'verify your account') !== false) {
+                            $_tg = Scraper::_xP($cla, "//a[contains(@href, 't.me/')]/@href");
+                            if (!empty($_tg[0])) {
+                                logx("info", 'url: '.$_tg[0]);
+                            }
+                            die;
+                        }
                         if (stripos($msg, 'Your claim is locked') !== false) {
                             $claim = false;
                             $curr = $_c; 
                             break 2;
                         }
                         if (stripos($msg, 'Shortlink')) {
-                            if ($SLDONE) {
-                                logx('err', 'Gada SL lagi');
-                                die;
-                            }
+                            
+                            if ($SLDONE) (logx('err', 'Gada SL lagi') ?: die);
                             $curr = $_c; 
                             break 2;
                         }
@@ -293,7 +297,7 @@ while (true) {
                     break; 
                 }
                 
-                $wait = 10 - (int)(microtime(true) - $start);
+                $wait = 100 - (int)(microtime(true) - $start);
                 if ($wait > 0) styler("waiting {$wait}.s for SL", fn() => _sle((int)ceil($wait)));
                 
                 $retVer = 0;
@@ -322,7 +326,16 @@ while (true) {
                         print(FGd['CYN'].maskEmail($login).RSET." ");
                         $is_ok = (stripos($stt, 'success') !== false);
                         logg(false, $msg);
-                        if (stripos($msg, 'sufficient') !== false) break 2;
+                        if (stripos($msg, 'sufficient') !== false) {
+                            $currentIndex = array_search($sl, $_sl);
+                            if ($currentIndex !== false && isset($_sl[$currentIndex + 1])) {
+                                $curr = basename($_sl[$currentIndex + 1]);
+                            } else {
+                                $curr = '';
+                            }
+                            
+                            break 2; 
+                        }
                         
                         if ($is_ok) $success_in_page = true;
                     }
@@ -341,7 +354,9 @@ while (true) {
         if ($success_in_page || $curr === "") break; 
     }
     
-    if (!$claim && $SLDONE) die;
-    
-    
+    if (!$claim && $SLDONE) {
+        print(FGd['CYN'].maskEmail($login).RSET." ");
+        (logx('err', 'gak bisa claim') ?: die);
+    }
+
 }
