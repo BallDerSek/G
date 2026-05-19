@@ -91,7 +91,7 @@ while (true) {
         
         if (!empty($po)) {
             $ve = Net::X($f['url'], 'POST', $po, inf::$cookie, $headersCF, $host.$r, inf::$uagent);
-            _put('ve.html', $ve);
+            #_put('ve.html', $ve);
 
             if ($ve === 99) {
                 logx('warn', 'Proxy issue, wait 30s');
@@ -104,7 +104,7 @@ while (true) {
         }
     } while (empty($dash));
     #_put('dash.html', $dash); die;
-#goto sl;
+goto sl;
     $successCount = 0; 
     $_fa = Scraper::_xP($dash, "//ul[@id='faucet']//a/@href");
     foreach ($_fa as $fa) {
@@ -161,17 +161,23 @@ while (true) {
                     $cap = Solve::exec($fau, $host, $api, $pa);
                 }
                 
+                if (isset($cap['nocaptcha']) && isset($pa['_aid'])) {
+                    $cfg = Scraper::_xP($fau, "//div[@id='_bk']/@data-config")[0] ?? null;
+                    $cap = onfAid($cfg);
+                }
+                
                 if (isset($cap['trouble'])) {
                     $tro = $cap['trouble'];
                     ($tro === 'proxy') ? _sle(30) : _sle(10);
                     continue;
                 }
+                
                 $po = array_merge($pa, $cap);
             }
             #_put('fau.html', $fau); die;
             
             if (!empty($po)) {
-                #print_r($po); #die;
+                #print_r($po); die;
                 _sle(3);
                 $cla = Net::X($f['url'], 'POST', $po, inf::$cookie, $headersCF, $host, inf::$uagent);
                 if ($cla && $cla !== 99) { 
@@ -627,34 +633,6 @@ function onfCap($fau, $host, $api, $payload, $he) {
     return [];
 }
 
-
-
-function isBan($html) {
-    if (stripos($html, 'account has been banned')) {
-        logx('err', 'Yahhh... Akun Banned Permanen!');
-        exit;
-    }
-    
-    if (!stripos($html, 'Temporarily Blocked') && !stripos($html, 'Temporary Ban') && !stripos($html, 'temporarily locked')) {
-        return false;
-    }
-
-    $countdownText = Scraper::_xP($html, "//*[@id='block-countdown']")[0] ?? '';
-    
-    $m = 0; 
-    $s = 0;
-    if (preg_match('/(\d+)\s*minute/', $countdownText, $matchM)) $m = (int)$matchM[1];
-    if (preg_match('/(\d+)\s*second/', $countdownText, $matchS)) $s = (int)$matchS[1];
-
-    $r = Scraper::_xP($html, "//div[contains(@class, 'alert-danger')]//p[1]")[0] ?? 'CAPTCHA failed';
-
-    return [
-        'ti' => trim($r),
-        'tmr' => sprintf('%02d:%02d', $m, $s),
-        'sleep' => ($m * 60) + $s + 5 
-    ];
-}
-
 function onfOdd($img) {
     $image = imagecreatefromstring($img);
     if (!$image) {
@@ -701,4 +679,59 @@ function onfOdd($img) {
     }
     return $ans;
 
+}
+
+function onfAid($cfg_hex) {
+    if (!$cfg_hex || strlen($cfg_hex) !== 64) return ['trouble' => 'reload'];
+
+    $motor = [
+        'ev' => 1,
+        'sc' => rand(35, 55),
+        'yv' => rand(10, 35) / 100,
+        'vm' => rand(150, 280) / 100,
+        'vs' => rand(100, 190) / 100,
+        'as' => rand(70, 95),
+        'jk' => rand(15, 45) / 100,
+        'dr' => rand(450, 750)
+    ];
+
+    $json = json_encode($motor);
+    
+    $_ke = hex2bin($cfg_hex);
+    $_iv = random_bytes(12);
+    
+    $_ci = openssl_encrypt($json, 'aes-256-gcm', $_ke, OPENSSL_RAW_DATA, $_iv, $_ta);
+    
+    if ($_ci !== false) return ['_aid' => base64_encode($_iv . $_ci . $_ta)];
+    
+    return ['trouble' => 'reload'];
+}
+
+
+
+
+function isBan($html) {
+    if (stripos($html, 'account has been banned')) {
+        logx('err', 'Yahhh... Akun Banned Permanen!');
+        exit;
+    }
+    
+    if (!stripos($html, 'Temporarily Blocked') && !stripos($html, 'Temporary Ban') && !stripos($html, 'temporarily locked')) {
+        return false;
+    }
+
+    $countdownText = Scraper::_xP($html, "//*[@id='block-countdown']")[0] ?? '';
+    
+    $m = 0; 
+    $s = 0;
+    if (preg_match('/(\d+)\s*minute/', $countdownText, $matchM)) $m = (int)$matchM[1];
+    if (preg_match('/(\d+)\s*second/', $countdownText, $matchS)) $s = (int)$matchS[1];
+
+    $r = Scraper::_xP($html, "//div[contains(@class, 'alert-danger')]//p[1]")[0] ?? 'CAPTCHA failed';
+
+    return [
+        'ti' => trim($r),
+        'tmr' => sprintf('%02d:%02d', $m, $s),
+        'sleep' => ($m * 60) + $s + 5 
+    ];
 }

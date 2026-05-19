@@ -2,7 +2,7 @@
 if (!defined('ROOT')) {die;}
 
 $api = null;
-#$api = onKeys();
+$api = onKeys();
     
 
 banner();
@@ -43,6 +43,7 @@ $supportedSL = [
 ];
 
 #goto tes;
+/*
 while(true) {
     $shortLink = getenv('login');
     if (!$shortLink || empty($shortLink)) {
@@ -67,11 +68,22 @@ while(true) {
     }
 #die;
 }
+*/
 
+while (true) {
+    $shortLink = getenv('login');
+    if (!$shortLink || empty($shortLink)) {
+        $shortLink = _rl('shortlink: ');
+    }
+    logg(true, $shortLink, false);
+    $bakk = links($api, $shortLink);
+    if ($bakk) logx('ok', "[  done  ] ".$bakk, true, true);
     
+    
+}
+
+
 tes:
-
-
 $cookieFile = config::cookie();
 $userAgent = config::uagent();
 $url = $ez4s;
