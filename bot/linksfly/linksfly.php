@@ -132,7 +132,11 @@ while (true) {
                     if (stripos($fo['url'], 'login')) goto login;
                 }
                 
-                if ($pa === null) (logx('err', 'web update!!') ?: die);
+                if ($pa === null) {
+                    $ret99++;
+                    continue;
+                    (logx('err', 'web update!!') ?: die);
+                }
                 
                 if (isset($pa['puzzle_answer']) && stripos($fau, 'olve to claim')) {
                     $ins = Scraper::_xP($fau, "//label[contains(., 'Solve to claim')]//span/text()");
