@@ -29,6 +29,7 @@ $dash = null;
 $limit = false;
 $shortlink = false;
 $SLDONE = false;
+$claim = false;
 $skipped = [];
 $can_withdraw = true;
 while (true) {

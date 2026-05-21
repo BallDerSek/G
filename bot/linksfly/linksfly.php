@@ -26,7 +26,7 @@ $ip = null;
 } ) ($login, $ip);
 
 $skipped = [];
-$SLDONE = false;
+$SLDONE = true;
 $claim = true;
 $curr = '';
 while (true) {
@@ -168,7 +168,7 @@ while (true) {
             
             if (!empty($po)) {
                 $cla = Net::X($fo['url'], 'POST', $po, inf::$cookie, [], $host, inf::$uagent);
-                
+                #_put('cla.html', $cla);
                 if (!empty($cla) && ($cla !== 99)) {
                     
                     $alert_d = scraper::_xP($cla, "//div[contains(@class, 'alert-danger')]");
@@ -212,7 +212,7 @@ while (true) {
         }
         
     }
-    
+    /*
     sl:
     $_sl = Scraper::_xP($dash, "//li[contains(@class, 'pc-hasmenu')][.//span[text()='ShortLinks']]//ul[contains(@class, 'pc-submenu')]//a/@href");
     #print_r($_sl);
@@ -365,7 +365,7 @@ while (true) {
         
         if ($success_in_page || $curr === "") break; 
     }
-    
+    */
     if (!$claim && $SLDONE) {
         print(FGd['CYN'].maskEmail($login).RSET." ");
         (logx('err', 'gak bisa claim') ?: die);
