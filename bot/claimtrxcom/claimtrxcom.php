@@ -237,6 +237,7 @@ while (true) {
                 if ($_cu) {
                     $img = Net::C($_cu, 'GET', null, inf::$cookie, [], "$host/faucet", inf::$uagent);
                     #_put('img.png', $img);
+                    
                     if (!empty($img) && ($img !== 99)) {
                         $resText = $api->base64($img, 'ocr');
                         #var_dump($resText); die;
@@ -244,6 +245,7 @@ while (true) {
                             $t_text = $resText; 
                         }
                     }
+                    
                 }
                 
                 if (!$t_text) {
@@ -503,6 +505,14 @@ while (true) {
 
 
 
+
+
+
+
+
+
+
+
 function _wd($html) {
     $res = Scraper::payload($html)[0] ?? null;
     if (!$res) return false;
@@ -528,4 +538,3 @@ function _wd($html) {
     }
     return false;
 }
-

@@ -35,7 +35,7 @@ $skipped = [];
 $can_withdraw = true;
 while (true) {
     $ret = 0; 
-    
+    #goto tes;
     do {
         $ret++;
         $l = inf::check("$host/dashboard", [], '/register');
@@ -274,6 +274,7 @@ while (true) {
             
             $cla = Net::C($f['url'], 'POST', $po, inf::$cookie, [], "$host/faucet", inf::$uagent, false, false, $ip);
             if (empty($cla) || ($cla === 99)) continue;
+            #_put('cla.html', $cla); die;
             $m = scraper::_jP($cla, "/Swal\.fire\(\{.*?title\s*:\s*(['\"])(.*?)\\1.*?\}\)/s") ?? [];
                 
             if (isset($m[2][0])) {
@@ -486,6 +487,7 @@ while (true) {
     
 }
 
+tes:
 
 
 
@@ -516,19 +518,14 @@ function pre($in_put, $threshold = 128) {
     imagecopyresampled($clean, $img, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height);
 
     imagefilter($clean, IMG_FILTER_GRAYSCALE);
-    imagefilter($clean, IMG_FILTER_CONTRAST, -100); 
-    imagefilter($clean, IMG_FILTER_BRIGHTNESS, -10);
+    
+    imagefilter($clean, IMG_FILTER_CONTRAST, 40); 
 
     for ($y = 0; $y < $newHeight; $y++) {
         for ($x = 0; $x < $newWidth; $x++) {
             $rgb = imagecolorat($clean, $x, $y);
             $r = ($rgb >> 16) & 0xFF;
-            $g = ($rgb >> 8) & 0xFF;
-            $b = $rgb & 0xFF;
-            
-            $gray = ($r + $g + $b) / 3;
-
-            if ($gray < $threshold) {
+            if ($r < $threshold) {
                 $color = imagecolorallocate($clean, 0, 0, 0);
             } else {
                 $color = imagecolorallocate($clean, 255, 255, 255);
@@ -538,13 +535,10 @@ function pre($in_put, $threshold = 128) {
     }
 
     $topLeft = imagecolorat($clean, 0, 0);
-    if (($topLeft & 0xFF) < 128) {
-        imagefilter($clean, IMG_FILTER_NEGATE);
-    }
+    if (($topLeft & 0xFF) < 128) imagefilter($clean, IMG_FILTER_NEGATE);
 
     imagepng($clean, $put_in);
-    #imagedestroy($img);
-    #imagedestroy($clean);
+    @imagedestroy($img);
 
     return $put_in;
 }
@@ -595,6 +589,7 @@ function _text($imgData, $host, $mail) {
 
     return null;
 }
+
 
 function _wd($html) {
     $res = Scraper::payload($html)[0] ?? null;

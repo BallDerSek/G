@@ -31,6 +31,7 @@ $skipped = [];
 $SLDONE = false;
 $claim = false;
 $curr = '';
+$habis = [];
 $dash = null;
 while (true) { 
     $ret = 0;
@@ -190,7 +191,10 @@ while (true) {
                             break 2; 
                         }
                         
-                        if (preg_match('/sufficient|could not be processed/i', $msg)) break;
+                        if (preg_match('/sufficient|could not be processed/i', $msg)) {
+                            $habis[] = $fa;
+                            break;
+                        }
                         if (stripos($msg, 'flagged')) die;
                         if (stripos($msg, 'Shortlink')) {
                             if ($SLDONE) {
@@ -208,8 +212,13 @@ while (true) {
             }
         }
     }
-
-sl:
+    
+    if (count($habis) === count($_fa)) {
+        print(FGd['CYN'].maskEmail($login).RSET." ");
+        (logx('err', 'gak bisa claim') ?: die);
+    }
+    
+    sl:
     $valid = [];
     $success_in_page = false;
     $_sl = Scraper::_xP($dash, "//ul[@id='links']//a/@href");
@@ -282,7 +291,7 @@ sl:
                     break; 
                 }
                 
-                $wait = 100 - (int)(microtime(true) - $start);
+                $wait = 60 - (int)(microtime(true) - $start);
                 if ($wait > 0) styler("waiting for SL", fn() => _sle((int)ceil($wait)));
                 
                 $retGet = 0;
@@ -371,6 +380,7 @@ sl:
                             $ver = Net::X("$host/links/complete_claim", 'POST', $po, inf::$cookie, $he, $sl, inf::$uagent);
                             
                             #_put('ver.html', $ver);
+                            #var_dump($ver);
                             
                             if (!empty($ver) && ($ver !== 99)) {
                                 $cla = json_decode($ver, true);
@@ -378,10 +388,14 @@ sl:
                                 
                                 $_sucH = scraper::_jP($ver, "/Toast\.fire\(\s*\{.*?icon:\s*'([^']+)'.*?html:\s*'([^']+)'/s") ?? [];
                                 
-                                $suc = $_sucH[1][0] ?? $sucJ;
+                                // DI SINI PERBAIKANNYA (Hanya cek array, sisa logika ke bawah tetap 100% kode asli Anda)
+                                $suc = (!empty($_sucH[1]) && isset($_sucH[1][0])) ? $_sucH[1][0] : $sucJ;
                                 
                                 logx($suc ? 'ok' : 'err', $suc ? "Success " : "error ", false);
-                                logg(false, $cla['message'] ?? "{$_sucH[2][0]}" ?? 'no message');
+                                
+                                $err_msg = (!empty($_sucH[2]) && isset($_sucH[2][0])) ? $_sucH[2][0] : 'no message';
+                                logg(false, $cla['message'] ?? $err_msg);
+                                
                                 if (stripos($ver, 'has been sent to your')) $suc = true;
                                 
                                 if ($suc) {
@@ -396,7 +410,6 @@ sl:
                                 continue 2;
                             }
                         }
-                        
                     }
                 }
                 break;
@@ -411,6 +424,7 @@ sl:
         
         if ($success_in_page || $curr === "") break; 
     }
+
 
     unset($sho, $ver, $fau, $cla); 
     

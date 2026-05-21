@@ -29,6 +29,7 @@ $skipped = [];
 $SLDONE = true;
 $claim = true;
 $curr = '';
+$habis = [];
 while (true) {
     $ret = 0;
 
@@ -92,7 +93,7 @@ while (true) {
     #_put('dash.html', $dash); die;
     #goto sl;
     $_fa = Scraper::_xP($dash, "//li[contains(@class, 'pc-hasmenu')][.//span[text()='Faucet']]//ul[contains(@class, 'pc-submenu')]//a/@href");
-    #print_r($_fa);
+    
     foreach ($_fa as $fa) {
         if (!$claim) break;
         $_c = basename(parse_url($fa)['path']);
@@ -196,7 +197,10 @@ while (true) {
                         logx($status === 'success' ? 'ok' : 'err', "$status ", false);
                         logg(false, $msg);
                         
-                        if (preg_match('/sufficient|could not be processed/i', $msg)) break;
+                        if (preg_match('/sufficient|could not be processed/i', $msg)) {
+                            $habis[] = $fa;
+                            break;
+                        }
                         
                         if (stripos($msg, 'Shortlink')) {
                             if ($SLDONE) {
@@ -216,8 +220,12 @@ while (true) {
         }
         
     }
-    die;
-    /*
+    
+    if (count($habis) === count($_fa)) {
+        print(FGd['CYN'].maskEmail($login).RSET." ");
+        (logx('err', 'gak bisa claim') ?: die);
+    }
+
     sl:
     $_sl = Scraper::_xP($dash, "//li[contains(@class, 'pc-hasmenu')][.//span[text()='ShortLinks']]//ul[contains(@class, 'pc-submenu')]//a/@href");
     #print_r($_sl);
@@ -370,7 +378,6 @@ while (true) {
         
         if ($success_in_page || $curr === "") break; 
     }
-    */
     
     if (!$claim && $SLDONE) {
         print(FGd['CYN'].maskEmail($login).RSET." ");

@@ -675,7 +675,7 @@ class Net {
             'follow' => true,
             'verbose' => false,
             'timeout' => 120,
-            'speed' => 100,
+            'speed' => 10,
             'no_proxy' => true
         ], false, true);
         

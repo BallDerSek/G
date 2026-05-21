@@ -16,10 +16,11 @@ $ip = null;
 (function ($login, $ip) {
     Proxy::load();
     Check::Geo();
-    inf::$cookie = config::cookie($login);
-    inf::$uagent = config::uagent('mobile');
-
-    inf::setup(inf::$uagent, inf::$cookie, $ip);
+    $cookieFile = config::cookie($login);
+    $c = config::credential(['ua' => fn() => config::uagent('mobile')]);
+    $userAgent = $c['ua'];
+    
+    inf::setup($userAgent, $cookieFile, $ip);
     _cle();
     banner();
     taskPrintCenter($login, 'info');
