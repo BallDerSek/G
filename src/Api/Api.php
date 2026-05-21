@@ -674,7 +674,7 @@ abstract class Provider {
         $this->apiKey = $apiKey;
     }
 
-    final protected function run($method, array $params) {
+    final public function run($method, array $params) {
         return $this->call($method, $params);
     }
 

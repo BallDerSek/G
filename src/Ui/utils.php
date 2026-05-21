@@ -137,6 +137,12 @@ function _lib($host, $mail = null) {
     return rtrim($workDir, '/');
 }
 
+function _die() {
+    logx('err', 'bloman bener');
+    logx('info', 'tunggu update', true, true);
+    die;
+}
+
 function maskEmail($email) {
     $name = explode('@', $email)[0];
     $len = strlen($name);

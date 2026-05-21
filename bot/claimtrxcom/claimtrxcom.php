@@ -15,6 +15,7 @@ $ip = '148.251.78.240';
 
 (function ($mail, $ip) {
     Proxy::load();
+    Check::Geo();
     $cookieFile = config::cookie($mail);
     $userAgent = config::uagent('mobile');
 
@@ -29,7 +30,6 @@ $limit = false;
 $shortlink = false;
 $SLDONE = false;
 $skipped = [];
-$claim = false;
 $can_withdraw = true;
 while (true) {
     $ret = 0; 
@@ -253,6 +253,10 @@ while (true) {
             
             $cap = [];
             if (isset($pa['captcha'])) {
+                if ($pa['captcha'] === 'hcaptcha') {
+                    /* comment ini kalo mau lanjut solve*/
+                    $claim = false; break;
+                }
                 $cap = solve::exec($fau, $host, $api);
                 if (isset($cap['trouble'])) {
                     _sle(60);
@@ -454,7 +458,7 @@ while (true) {
             logx('err', 'gak bisa wd kayaknya');
             exit;
         }
-        if ($jajan['payload']['amount'] > 0.04) {
+        if ($jajan['payload']['amount'] > 0.1) {
             $po = $jajan['payload'];
             $walletKey = isset($po['address']) ? 'address' : (isset($po['wallet']) ? 'wallet' : 'email');
             if (empty($po[$walletKey])) $po[$walletKey] = $mail;
@@ -482,6 +486,11 @@ while (true) {
             logx('err', 'gak cukup minimum wd');
             exit;
         }
+    }
+    
+    if (!$claim && $SLDONE) {
+        print(FGd['CYN'].maskEmail($mail).RSET." ");
+        (logx('err', 'beres') ?: die);
     }
     
 }

@@ -191,10 +191,10 @@ function links($api, $url) {
         return false;
     }
     
-    logx('info', " Switching to solver API...");
+    logx('info', " Switching to solver API", false); _clr();
     $solver = config::getKeys($api, 'shortlink', 'tkn');
     
-    if (!$solver || $solver === $api || !method_exists($solver, 'shortLink')) {
+    if (!$solver || !method_exists($solver, 'shortLink')) {
         logx('err', " (" . get_class($api) . ") doesn't support shortLink!");
         return false;
     }
@@ -202,9 +202,10 @@ function links($api, $url) {
     $set = microtime(true);
     $res = $solver->shortLink($url);
     $winner = $solver; 
-    if ($res === 777 || $res === false) {
+    
+    if (($res === 777 || $res === false) && $solver !== $api) {
         if (method_exists($api, 'shortLink')) {
-            logx('warn', " Switching back to primary API...");
+            logx('warn', " Switching to primary API...");_clr();
             $res = $api->shortLink($url); 
             $winner = $api; 
         } else {

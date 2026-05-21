@@ -1,6 +1,6 @@
 <?php
 if (!defined('ROOT')) { die; }
-#die('bloman jadi');
+_die();
 $api = onKeys();
 
 $acc = config::credential([], false, ['mail', 'pass', 'PROXY']);

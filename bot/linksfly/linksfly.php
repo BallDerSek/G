@@ -10,11 +10,12 @@ putenv("PROXY=".$acc['PROXY']);
 login:
 $host = 'https://linksfly.link';
 $domain = parse_url($host, PHP_URL_HOST);
-$r = '/?r=128';
+$r = '/?r=84';
 $ip = null;
 
 (function ($login, $ip) {
     Proxy::load();
+    Check::Geo();
     $cookieFile = config::cookie($login);
     $userAgent = config::uagent('mobile');
 
@@ -33,9 +34,7 @@ while (true) {
 
     do {
         $ret++;
-        $l = inf::check("$host/", [], '/auth/login', true);
-        #_put('l.html', $l['html']); _rl('lanjut: ');
-        
+        $l = inf::check("$host/app/dashboard", [], '/auth/login', true);
         if ($l['ok']) {
             $dash = $l['html'];
             logx('info', "logged in", false); 
@@ -54,21 +53,20 @@ while (true) {
         
         logx('err', "logging in ", false); 
         _sle(3); _clr();
-        $_0 = Net::X($host, 'GET', null, inf::$cookie, [], '', inf::$uagent);
+        $_0 = Net::X($host.$r, 'GET', null, inf::$cookie, [], '', inf::$uagent);
         if ($_0 === 99) {
             logx('warn', "masalah proxy, warm up dulu");
             _sle(60);
             continue;
         }
         if (empty($_0)) continue;
-        #_put('0.html', $_0); _rl('lanjut: ');
-        $f = scraper::payload($_0)[0] ?? null;
-        #print_r($f); #die;
+        $f = scraper::payload($_0)[1] ?? [0] ?? null;
         $po = null;
         
         if (!empty($f)) {
+            #print_r($f); die;
             $pa = $f['payload'];
-            $cre = ['wallet' => $login];
+            $cre = ['wallet' => $login, 'uid' => md5($login), 'private_ip' => IP()];
             
             $cap = Solve::exec($_0, $host, $api, $pa);
             if (isset($cap['trouble'])) {
@@ -82,8 +80,7 @@ while (true) {
         }
         
         if (!empty($po)) {
-            #print_r($po); _rl('lanjut: ');
-            $ve = Net::X($f['url'], 'POST', $po, inf::$cookie, [], $host, inf::$uagent);
+            $ve = Net::X($f['url'], 'POST', $po, inf::$cookie, [], $host.$r, inf::$uagent);
             #_put('ve.html', $ve);
             if ($ve === 99) {
                 logx('warn', 'Proxy issue, wait 30s');
@@ -92,9 +89,9 @@ while (true) {
             }
         }
     } while (empty($dash));
-    #_put('dash.html', $dash);
+    #_put('dash.html', $dash); die;
     #goto sl;
-    $_fa = Scraper::_xP($dash, "//div[@id='faucetMenu']//a/@href");
+    $_fa = Scraper::_xP($dash, "//li[contains(@class, 'pc-hasmenu')][.//span[text()='Faucet']]//ul[contains(@class, 'pc-submenu')]//a/@href");
     #print_r($_fa);
     foreach ($_fa as $fa) {
         if (!$claim) break;
@@ -110,7 +107,7 @@ while (true) {
             $fau = null;
             $fau = Net::X($fa, 'GET', null, inf::$cookie, [], $host, inf::$uagent);
             
-            #_put('fau.html', $fau); die;
+            #_put('fau.html', $fau); #die;
             
             if ($fau === 99) {
                 $ret99++;
@@ -124,10 +121,35 @@ while (true) {
             
             $po = null;
             $cap = [];
-            $f = scraper::payload($fau)[0] ?? null;
+            $f = scraper::payload($fau) ?? null;
             if (!empty($f)) {
+                $pa = null;
+                foreach ($f as $fo) {
+                    if (stripos($fo['url'], 'verify')) {
+                        $pa = $fo['payload'];
+                        break;
+                    }
+                    if (stripos($fo['url'], 'login')) goto login;
+                }
                 
-                $pa = $f['payload'];
+                if ($pa === null) (logx('err', 'web update!!') ?: die);
+                
+                if (isset($pa['puzzle_answer']) && stripos($fau, 'olve to claim')) {
+                    $ins = Scraper::_xP($fau, "//label[contains(., 'Solve to claim')]//span/text()");
+                    if (!empty($ins)) {
+                        $soal = trim($ins[0]);
+                        $inss = str_replace('×', '*', $soal);
+                        if (preg_match('/(\d+)\s*([\+\-\*\/])\s*(\d+)/', $inss, $_m)) {
+                            $q1 = (int)$_m[1];
+                            $op = $_m[2];
+                            $q2 = (int)$_m[3];
+                            $pa['puzzle_answer'] = SolveUtils::math($q1, $q2, $op);
+                        } else {
+                            continue;
+                        }
+                    }
+                }
+                
                 $cap = Solve::exec($fau, $host, $api, $pa);
                 
                 if (isset($cap['trouble'])) {
@@ -145,9 +167,7 @@ while (true) {
             }
             
             if (!empty($po)) {
-                
-                $cla = Net::X($f['url'], 'POST', $po, inf::$cookie, [], $host, inf::$uagent);
-                #_put('cla.html', $cla);
+                $cla = Net::X($fo['url'], 'POST', $po, inf::$cookie, [], $host, inf::$uagent);
                 
                 if (!empty($cla) && ($cla !== 99)) {
                     
@@ -162,39 +182,27 @@ while (true) {
                         break 2;
                     }
                     
-                    $_i = Scraper::_jP($cla, "/icon\s*:\s*['\"]([^'\"]+)['\"]/");
-                    $_t = Scraper::_jP($cla, "/title\s*:\s*['\"]([^'\"]+)['\"]/");
-                    $_h = Scraper::_jP($cla, "/html\s*:\s*['\"]([^'\"]+)['\"]/");
-                    
-                    $stt = !empty($_i[1]) ? end($_i[1]) : null;
-                    $ttl = !empty($_t[1]) ? end($_t[1]) : null;
-                    $msg = !empty($_h[1]) ? end($_h[1]) : null;
-                    
-                    if ($stt) {
-                        print(FGd['CYN'].maskEmail($login).RSET." ");
-                        $is_ok = (stripos($stt, 'success') !== false);
-                        logx($is_ok ? 'ok' : 'err', "{$ttl} ", false);
+                    $_suc = null;
+                    $_suc = scraper::_jP($cla, "/Toast\.fire\(\s*\{.*?icon:\s*'([^']+)'.*?text:\s*'([^']+)'/s") ?? [];
+                    if (!empty($_suc[2][0])) {
+                        $status = $_suc[1][0]; 
+                        $msg = $_suc[2][0];
+                        
+                        print(FGd['CYN'] . maskEmail($login) . RSET . " ");
+                        logx($status === 'success' ? 'ok' : 'err', "$status ", false);
                         logg(false, $msg);
                         
-                        if (stripos($msg, 'sufficient') !== false) break;
-                        if (stripos($msg, 'verify your account') !== false) {
-                            $_tg = Scraper::_xP($cla, "//a[contains(@href, 't.me/')]/@href");
-                            if (!empty($_tg[0])) {
-                                logx("info", 'url: '.$_tg[0]);
-                            }
-                            die;
-                        }
-                        if (stripos($msg, 'Your claim is locked') !== false) {
-                            $claim = false;
-                            $curr = $_c; 
-                            break 2;
-                        }
+                        if (preg_match('/sufficient|could not be processed/i', $msg)) break;
+                        
                         if (stripos($msg, 'Shortlink')) {
-                            
-                            if ($SLDONE) (logx('err', 'Gada SL lagi') ?: die);
+                            if ($SLDONE) {
+                                logx('err', 'Gada jatah SL lagi');
+                                die;
+                            }
                             $curr = $_c; 
                             break 2;
                         }
+                        
                     }
                 }
                 
@@ -206,7 +214,7 @@ while (true) {
     }
     
     sl:
-    $_sl = Scraper::_xP($dash, "//div[@id='linksMenu']//a/@href");
+    $_sl = Scraper::_xP($dash, "//li[contains(@class, 'pc-hasmenu')][.//span[text()='ShortLinks']]//ul[contains(@class, 'pc-submenu')]//a/@href");
     #print_r($_sl);
     $valid = [];
     $success_in_page = false;
@@ -364,3 +372,8 @@ while (true) {
     }
 
 }
+
+
+
+
+tes:

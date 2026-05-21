@@ -46,23 +46,27 @@ class xevil extends Provider {
 
         throw new Exception("ERROR_TIMEOUT");
     }
-
-    public function getInfo(): bool {
-        info:
-        $r = json_decode(
-            Net::S($this->baseUrl."/res.php", "GET", ["action" => "getbalance", "key" => $this->apiKey, "json" => 1]) ?: ''
+    
+    public function getInfo(): bool{
+        $max = 3;
+        $r = null;
+        for ($i = 0; $i < $max; $i++) {
+            $r = json_decode(
+                Net::S($this->baseUrl."/res.php","GET",["action" => "getbalance","key" => $this->apiKey,"json" => 1,]) ?: ''
             , true);
-#var_dump($r);
-        if ($r === null) goto info; 
-
+            
+            if ($r !== null) break;
+        }
+        
+        if ($r === null) return false;
+        
         if (isset($r['request']) && strncmp($r['request'], '-0.00', 5) === 0) {
-            logx('err', 'xevil: '.$r['request']);
+            logx('err', 'xevil: ' . $r['request']);
             return false;
         }
-        logx('info', "xevil: ".$r['request']);
+        logx('info', 'xevil: ' . ($r['request'] ?? 'unknown'));
         return true;
     }
-    
 } 
 
 class skibidixxx extends Provider {
@@ -113,48 +117,25 @@ skibidixxxget:
         return $short;
     }
     
-    public function rss($html, $co) {
-        if (empty($html)) return false;
-        
-        if ($co) {
-            preg_match_all('/\d+/', $co, $_co);
-            if (count($_co[0]) >= 2) {
-                $x = $_co[0][0];
-                $y = $_co[0][1];
-            }
-        }
-        
-        $data = [
-            "htmlContent" => $html,
-            "clickX" => (int)$x,
-            "clickY" => (int)$y
-        ];
-        $response = Net::S($this->baseUrl.'/rspayload.php', 'POST', $data, json: true);
-        $resJson = json_decode($response, true);
-        #print(base64_decode($resJson['Payload']));
-        if (isset($resJson['Payload'])) {
-            return [
-                "rscaptcha_response" => $resJson['Payload']
-            ];
-        }
-        return false;
-    }
-
-    /** info saldo */
-    public function getInfo(): bool {
-        info:
-        $r = json_decode(
-            Net::S($this->baseUrl."/balance.php", "GET", ["apikey" => $this->apiKey], json: true) ?: ''
+    public function getInfo(): bool{
+        $maxRetry = 3;
+        $r = null;
+        for ($i = 0; $i < $maxRetry; $i++) {
+            $r = json_decode(
+                Net::S($this->baseUrl . "/balance.php","GET",["apikey" => $this->apiKey],json: true)?: ''
             , true);
-
-        if ($r === null) goto info; 
-
+            
+            if ($r !== null) break;
+        }
+        
+        if ($r === null) return false;
+        
         if (isset($r['error'])) {
             logx('err', $r['error']);
             return false;
         }
-
-        logx('info', "waryono: ".$r['balance']);
+        
+        logx('info', 'waryono: ' . ($r['balance'] ?? 'unknown'));
         return true;
     }
     
@@ -245,21 +226,27 @@ class tertuyul extends Provider {
     }
     
     /** info saldo */
-    public function getInfo(): bool {
-        info:
+    
+    public function getInfo(): bool{
+    $maxRetry = 3;
+    $i = null;
+    for ($attempt = 1; $attempt <= $maxRetry; $attempt++) {
         $i = json_decode(
-            Net::S($this->baseUrl."/res.php", "GET", ["action" => "userinfo", "key" => $this->apiKey, "json" => 1]) ?: ''
-            , true);
+            Net::S($this->baseUrl . "/res.php","GET",["action" => "userinfo","key" => $this->apiKey,"json" => 1,])?: ''
+        , true);
 
-        if ($i === null) goto info; 
-
-        if (!isset($i['balance'])) {
-            logx("err", $i["request"]);
-            return false;
+        if ($i !== null) break;
         }
 
-        logx('info', "Tertuyul: ".$i['balance']);
-        return true;
+    if ($i === null) return false;
+
+    if (!isset($i['balance'])) {
+        logx('err', $i['request'] ?? 'unknown');
+        return false;
+    }
+
+    logx('info', 'Tertuyul: ' . $i['balance']);
+    return true;
     }
     
 }
@@ -303,22 +290,26 @@ class multibot extends Provider {
     }
 
     /** info saldo */
-    
-    public function getInfo(): bool {
-        info:
-        $r = json_decode(
-            Net::S($this->baseUrl."/res.php", "GET", [ "action" => "userinfo", "key" => $this->apiKey, "json"   => 1]) ?: ''
+    public function getInfo(): bool{
+        $maxRetry = 3;
+        $r = null;
+        for ($attempt = 1; $attempt <= $maxRetry; $attempt++) {
+            $r = json_decode(
+                Net::S($this->baseUrl . "/res.php","GET",["action" => "userinfo","key" => $this->apiKey,"json" => 1,])?: ''
             , true);
-
-        if ($r === null) { goto info; }
-#var_dump($r);
-        if (($b = $r['balance'] ?? null) !== null && strncmp($b, '-0.00', 5) !== 0) {
             
-            logx('info', "multibot: ".$b);
+            if ($r !== null) break;
+        }
+        
+        if ($r === null) return false;
+        
+        $balance = $r['balance'] ?? null;
+        if ($balance !== null && strncmp((string) $balance, '-0.00', 5) !== 0) {
+            logx('info', 'multibot: ' . $balance);
             return true;
         }
-
-        logx('err', 'multibot: '.$r['request'] ?? '');
+        
+        logx('err', 'multibot: ' . ($r['request'] ?? 'unknown'));
         return false;
     }
     
@@ -368,36 +359,31 @@ class gmxch extends Provider {
     
     /** shortlink resolver */
     public function shortLink($link) {
-        #return $this->run("shortLink", ["url" => $link]);
-        
-        try {
-            return styler("getting.." . (parse_url($link, PHP_URL_HOST)), function() use($link) {
-                    $id = $this->get_api("shortlink", ["url" => $link]);
-                    return $this->res_api($id);
-                });
-        } catch (Exception $e) {
-            logx('err', $e->getMessage());
-            return false;
-        }
+        $params = ["url" => $link];
+        $short = $this->run('shortlink', $params);
+        if (!$short) return false;
+        return $short;
     }
-
     /** info saldo */
-    public function getInfo(): bool {
-        
-        info:
-        $i = json_decode(
-            Net::S($this->baseUrl."/key", "POST", null, ["key:".$this->apiKey], json: true) ?: ''
+    public function getInfo(): bool{
+        $maxRetry = 3;
+        $i = null;
+        for ($attempt = 1; $attempt <= $maxRetry; $attempt++) {
+            $i = json_decode(
+                Net::S($this->baseUrl . "/key","POST",null,["key:" . $this->apiKey],json: true)?: ''
             , true);
-
-        if ($i === null) { goto info; }
-        
-        if (!empty($i['status']) && isset($i['authorized'])) {
-            return $i['authorized'];
+            
+            if ($i !== null) break;
         }
-
-        logx('info', "gmxch: ".$i['message']);
+        
+        if ($i === null) return false;
+        
+        if (!empty($i['status']) && isset($i['authorized'])) return (bool) $i['authorized'];
+        
+        logx('info', 'gmxch: ' . ($i['message'] ?? 'unknown'));
         return true;
     }
+    
 }
 
 class glitch extends Provider {
@@ -429,7 +415,7 @@ class glitch extends Provider {
             , true);
 #var_dump($r);
             if (($r['status'] ?? 0) == 1) {
-                $solution = ['token', 'index', 'indices', 'text', 'order'];
+                $solution = ['token', 'index', 'indices', 'text', 'order', 'original_url'];
                 foreach ($solution as $key) {
                     if (isset($r[$key])) {
                         return $r[$key];
@@ -452,27 +438,28 @@ class glitch extends Provider {
         $params = ["url" => $link];
         $short = $this->run('shortlink', $params);
         if (!$short) return false;
-        return $short['original_url'];
+        return $short;
     }
     
     /** info saldo */
-    public function getInfo(): bool {
-        info:
-        $r = json_decode(
-            Net::S($this->baseUrl, "POST", ["apikey" => $this->apiKey, 'action' => 'getbalance'], json: true) ?: ''
-            , true);
-#var_dump($r);
-        if ($r === null) goto info; 
-
+    public function getInfo(): bool{
+        $maxRetry = 3;
+        $r = null;
+        for ($attempt = 1; $attempt <= $maxRetry; $attempt++) {
+            $r = json_decode(Net::S($this->baseUrl,"POST",["apikey" => $this->apiKey,"action" => "getbalance",],json: true)?: '', true);
+            
+            if ($r !== null) break;
+        }
+        
+        if ($r === null) return false;
+        
         if (isset($r['error'])) {
             logx('err', $r['error']);
             return false;
         }
-
-        logx('info', "glitch: ".$r['balance']);
+        logx('info', 'glitch: ' . ($r['balance'] ?? 'unknown'));
         return true;
     }
-    
 }
 
 

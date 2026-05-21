@@ -16,6 +16,7 @@ $ip = '';
 
 (function ($mail, $ip) {
     Proxy::load();
+    Check::Geo();
     $cookieFile = config::cookie($mail);
     $userAgent = config::uagent('mobile');
 
@@ -30,7 +31,6 @@ $limit = false;
 $shortlink = false;
 $SLDONE = false;
 $skipped = [];
-$claim = false;
 $can_withdraw = true;
 while (true) {
     $ret = 0; 
@@ -253,7 +253,7 @@ while (true) {
             if (isset($pa['captcha'])) {
                 if ($pa['captcha'] === 'hcaptcha') {
                     /* comment ini kalo mau lanjut solve*/
-                    #$limit = true; break;
+                    $claim = false; break;
                 }
                 $cap = solve::exec($fau, $host, $api);
                 if (isset($cap['trouble'])) {
@@ -454,13 +454,15 @@ while (true) {
             logx('err', 'gak bisa wd kayaknya');
             exit;
         }
-        if ($jajan['payload']['amount'] > 2000) {
+        if ($jajan['payload']['amount'] > 10000) {
+            $cap = solve::exec($wd, $host, $api);
+            if (isset($cap['trouble'])) continue;
             $po = $jajan['payload'];
             $walletKey = isset($po['address']) ? 'address' : (isset($po['wallet']) ? 'wallet' : 'email');
             if (empty($po[$walletKey])) $po[$walletKey] = $mail;
             logg(true, '  tes ilmu: '. $jajan['info']['coin'], false);
             logx('info', ' [ '.$po['wallet'].' ]');
-            $wd = Net::C($jajan['url'], 'POST', $po, inf::$cookie, [], "$host/faucet", inf::$uagent, false, false, $ip);
+            $wd = Net::C($jajan['url'], 'POST', array_merge($po, $cap), inf::$cookie, [], "$host/faucet", inf::$uagent, false, false, $ip);
             #_put('wd.html', $wd);
             if (!empty($wd)) {
                 $m = scraper::_jP($wd, "/Swal\.fire\(\{.*?title\s*:\s*(['\"])(.*?)\\1.*?\}\)/s") ?? [];
@@ -474,6 +476,11 @@ while (true) {
             logx('err', 'gak cukup minimum wd');
             exit;
         }
+    }
+    
+    if (!$claim && $SLDONE) {
+        print(FGd['CYN'].maskEmail($mail).RSET." ");
+        (logx('err', 'beres') ?: die);
     }
     
 }

@@ -35,9 +35,6 @@ class Solve {
         $solution = [];
         $_cap = Capt::cha($html);
         
-        #var_dump($_cap);
-        #return _put('cap.js', $_cap['rss']['extra']['js']);
-
         $_fields = null; 
         $_select = '';
         $captchaFields = [];
@@ -139,7 +136,19 @@ class Solve {
             }
             if ($ic) $solution = array_merge($solution, $ic);
         }
-
+        
+        if (isset($_cap['rss'])) {
+            $rss_res = self::rss($_cap['rss'], $api, $host, $html);
+            if (is_array($rss_res)) {
+                $solution = array_merge($solution, $rss_res);
+                if (!empty($_fields)) {
+                    $solution[$_fields] = 'rscaptcha';
+                }
+            } else {
+                $solution['trouble'] = 'reload';
+            }
+        }
+    
         $ignoreFields = array_merge(['antibotlinks'], $captchaFields);
         $mainSolved = count(array_diff(array_keys($solution), $ignoreFields)) > 0;
 
@@ -193,11 +202,9 @@ class Solve {
         return !empty($solution) ? $solution : [];
     }
 
-
     public static function tkn($api, $host, $key, $type, array $data = []) {
-        #return 'token';
+        $solver = config::getKeys($api, $type); 
         
-        $solver = config::getKeys($api, $type);
         print(DIMM.BOLD.ITAL.FGo['MAG']."solving  ".RSET);
         $set = microtime(true);
         $t = null;
@@ -205,14 +212,15 @@ class Solve {
         $Params = array_merge($data, ['userAgent' => inf::$uagent]);
         for ($retry = 0; $retry < 2; $retry++) {
             $t = $solver->token($key, $host, $type, $Params);
+            
             if ($t === 777) {
+                if (!isset(Api::TKN[get_class($api)][$type])) return 471; 
                 
-                if (!isset(Api::TKN[get_class($api)][$type]))                    return 471; 
                 logx('ok', "Switching to ".get_class($api));
                 $t = $api->token($key, $host, $type, $Params);
+                
                 if ($t === 71) return 471;
-                if ($t === null) return 404;
-                if ($t === false) return 404;
+                if ($t === null || $t === false) return 404;
                 if ($t) break;
             }
             
@@ -230,39 +238,151 @@ class Solve {
     }
 
     public static function img($api, $host, $type, $img) {
-        if (!$api) (logx('err', 'undefined provider') ?: die);
-        
         $solver = config::getKeys($api, $type, 'b64');
+        print(DIMM.BOLD.ITAL.FGo['MAG']."solving image... ".RSET);
+        $set = microtime(true);
         $res = null;
         
-        if (isset(Api::B64[get_class($solver)][$type])) {
-            $set = microtime(true);
-            $res = $solver->base64($img, $type);
-        } else {
-            $res = 777;
+        for ($retry = 0; $retry < 2; $retry++) {
+            if (isset(Api::B64[get_class($solver)][$type])) {
+                $res = $solver->base64($img, $type);
+            } else {
+                $res = 777; 
+            }
+            
+            if ($res === 777) {
+                if (!isset(Api::B64[get_class($api)][$type])) {
+                    return ['trouble' => 'reload']; 
+                }
+                
+                logx('ok', "Switching to " . get_class($api));
+                $res = $api->base64($img, $type);
+                
+                if ($res === 71) {
+                    return ['trouble' => 'reload'];
+                }
+                
+                if ($res && $res !== 777) {
+                    $api->getInfo();
+                    break;
+                }
+            }
+            
+            if ($res === 77) return ['trouble' => 'reload'];
+            
+            if ($res === 71) {
+                logx('err', 'unsupported image provider');
+                return ['trouble' => 'reload'];
+            }
+            
+            if ($res && $res !== 777) break;
+            _sle(1);
         }
-        #var_dump($res);
-        if ($res === 777) {
-            logx('ok', "Switching to " . get_class($api));
-            $set = microtime(true);
-            
-            $res = $api->base64($img, $type);
-            
-            if ($res && $res !== 777) {
-                $api->getInfo();
+        
+        if ($res && $res !== 777) {
+            logg(false, 'elapsed: ' . number_format(microtime(true) - $set, 3).'s');
+            return $res; 
+        }
+        
+        return ['trouble' => 'reload'];
+    }
+
+    private static function rss($rss, $api, $host, $html) {
+        $solution = [];
+        $token = null;
+        
+        $_M = $rss['type'] ?? null;
+        $_K = $rss['keys'] ?? null;
+        $_T = $rss['extra']['token'] ?? null;
+        $_J = $rss['extra']['js'] ?? null;
+        
+        if (in_array(null, [$_M, $_K, $_T, $_J], true)) return false;
+        
+        if (!filter_var($_K, FILTER_VALIDATE_URL)) {
+            $_host = rtrim($host, '/');
+            $_path = ltrim($_K, '/');
+            if (strpos($_host, 'http') !== 0) {
+                $_K = "https://$_host/$_path";
+            } else {
+                $_K = $_host . "/" . $_path;
             }
         }
         
-        if ($res === 77) return ['trouble' => 'reload'];
-        if ($res === 71) (logx('err', 'unsupported provider') ?: die);
-        
-        if ($res && $res !== 777) {
-            logg(false, 'elapsed: ' . number_format(microtime(true) - ($set ?? microtime(true)), 3).'s');
-            return $res;
+        $img = Net::C($_K, 'GET', null, inf::$cookie, [], $host, inf::$uagent);
+        #_put('img.png', $img);
+        if (!empty($img) && $img !== 99) {
+            $co = self::img($api, $host, $_M, $img);
+            if (!isset($co['trouble'])) {
+                $_coMatches = scraper::_jP($co, '/\d+/');
+                $_co = $_coMatches[0] ?? $_coMatches; 
+                
+                if (is_array($_co) && count($_co) >= 2) {
+                    $x = $_co[0];
+                    $y = $_co[1];
+                    $utils = ['html' => $html, 'js' => $_J];
+                    $token = self::rs($api, $utils, $x, $y, $host);
+                    if ($token) {
+                        #logx('info', 'token:' . $token);
+                        $solution = [
+                            'rscaptcha_token' => $_T,
+                            'rscaptcha_response' => $token
+                        ];
+                        # print_r($solution);
+                    }
+                }
+            }
         }
-        return null;
+    
+    return !empty($solution) ? $solution : false;
+}
+
+    private static function rs($api, $utils, $x, $y, $host) {
+        $provider = strtolower(get_class($api));
+        $token = null;
+        
+        # if some provider got many invalid
+        # u can change to use locally fallback
+        
+        # uncomment to use by provider, it'll consume few credit
+        /*
+        if ($provider === 'tertuyul') {
+            $data = [
+                'clickX' => $x,
+                'clickY' => $y,
+                'script' => base64_encode($utils['js'])
+            ];
+            $token = $api->run('rstoken', $data);
+        } 
+        
+        if ($provider === 'skibidixxx') {
+            $data = [
+                "htmlContent" => $utils['html'],
+                "clickX" => $x,
+                "clickY" => $y
+            ];
+            for ($retry = 0; $retry < 3; $retry++) {
+                usleep(500000);
+                $res = json_decode(Net::S('https://api.waryono.my.id/rspayload.php', 'POST', $data, json: true) ?: '', true);
+                #var_dump($res);
+                if (isset($res['Payload'])) {
+                    $token = $res['Payload'];
+                    break;
+                }
+            }
+        }
+       */
+       
+        if (!$token) {
+            # this is got 2 method and auto pass
+            $rss = new rsResponse(inf::$uagent, $host);
+            $token = $rss->exec($utils, $x, $y);
+            
+        }
+        return $token;
+
     }
 
+    
 }
 
 /** @class SolveUtils
@@ -1033,3 +1153,4 @@ class locally {
     }
     
 }
+

@@ -14,6 +14,7 @@ $ip = null;
 
 (function ($login, $ip) {
     Proxy::load();
+    Check::Geo();
     inf::$cookie = config::cookie($login);
     inf::$uagent = config::uagent('mobile');
 
