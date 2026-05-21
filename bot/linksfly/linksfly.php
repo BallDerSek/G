@@ -216,6 +216,7 @@ while (true) {
         }
         
     }
+    die;
     /*
     sl:
     $_sl = Scraper::_xP($dash, "//li[contains(@class, 'pc-hasmenu')][.//span[text()='ShortLinks']]//ul[contains(@class, 'pc-submenu')]//a/@href");
@@ -370,6 +371,7 @@ while (true) {
         if ($success_in_page || $curr === "") break; 
     }
     */
+    
     if (!$claim && $SLDONE) {
         print(FGd['CYN'].maskEmail($login).RSET." ");
         (logx('err', 'gak bisa claim') ?: die);
