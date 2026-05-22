@@ -29,10 +29,11 @@ $ip = null;
 $headersCF = [];
 $skipped = [];
 $SLDONE = false;
-$claim = false;
+$claim = true;
 $curr = '';
 $habis = [];
 $dash = null;
+$needSL = false;
 while (true) { 
     $ret = 0;
 
@@ -66,7 +67,7 @@ while (true) {
         }
         if (empty($_0)) continue;
         $_0 = checkCF($host, $api, $_0);
-        #_put('0.html', $_0);
+
         $f = scraper::payload($_0)[0] ?? null;
         $po = null;
         
@@ -87,17 +88,31 @@ while (true) {
         
         if (!empty($po)) {
             $ve = Net::X($f['url'], 'POST', $po, inf::$cookie, $headersCF, $host.$r, inf::$uagent);
-            #_put('ve.html', $ve);
+            #_put('ve.html', $ve); 
 
             if ($ve === 99) {
                 logx('warn', 'Proxy issue, wait 30s');
                 _sle(30);
                 continue;
             }
+            
             $_sucS = scraper::_jP($ve, "/Swal\.fire\(\s*\{.*?icon:\s*'([^']+)'.*?title:\s*'([^']+)'.*?html:\s*'([^']+)'/s") ?? [];
-            if (isset($_sucS[3][0])) (logx('err', $_sucS[3][0]) ?: die);
+            $_sucT = scraper::_jP($ve, "/Toast\.fire\(\s*\{.*?icon:\s*'([^']+)'.*?html:\s*'([^']+)/s") ?? [];
+            $msg = $_sucS[3][0] ?? $_sucT[2][0] ?? '';
+            
+            if (!empty($msg)) {
+                print(FGd['CYN'] . maskEmail($login) . RSET . " ");
+                logx('info', $msg);
+                if (stripos($msg, 'denied')) die;
+                if (stripos($msg, 'emporarily blocked')) {
+                    _sle(100);
+                    goto login;
+                }
+                
+            }
             
         }
+        _rl('lanjut: ');
     } while (empty($dash));
     #_put('dash.html', $dash); die;
     
@@ -117,6 +132,7 @@ while (true) {
         while (true) {
             $fau = null;
             $fau = Net::X($fa, 'GET', null, inf::$cookie, $headersCF, $host, inf::$uagent, d: true);
+            
             
             if ($fau === 99) {
                 $ret99++;
@@ -169,9 +185,11 @@ while (true) {
                 $po = array_merge($pa, $cap);
             }
             
+            if (stripos($fau, 'After every') && stripos($fau, '1 Shortlink') && stripos($fau, 'must be completed')) $needSL = true;
+            
             if (!empty($po)) {
-                print_r($po); die;
-                _sle(3);
+                #print_r($po); #die;
+                _sle(1);
                 $cla = Net::X($f['url'], 'POST', $po, inf::$cookie, $headersCF, $host, inf::$uagent);
                 if ($cla && $cla !== 99) { 
                     #_put('cla.html', $cla);
@@ -185,7 +203,7 @@ while (true) {
                         logg(false, $msg);
                         if (stripos($msg, 'has been sent')) $successCount++;
                         
-                        if ($successCount >= 100) {
+                        if ($successCount >= 100 && !$needSL) {
                             $successCount = 0; 
                             $curr = $_c; 
                             break 2; 
@@ -425,7 +443,6 @@ while (true) {
         if ($success_in_page || $curr === "") break; 
     }
 
-
     unset($sho, $ver, $fau, $cla); 
     
     if (!$claim && $SLDONE) {
@@ -547,80 +564,6 @@ function onfDrg($json_cfg, $reff) {
     return ['trouble' => 'reload'];
 }
 
-function onfOdd($img) {
-    if (!getDeps('gd@php')) {
-        logx('err', "gd@php is missing");
-        exit(9);
-    }
-    $image = imagecreatefromstring($img);
-    if (!$image) return ['trouble' => 'reload'];
-    
-    $width = imagesx($image);
-    $height = imagesy($image);
-    $segW = intdiv($width, 5);    
-    
-    $S_R = [0, 0, 0, 0, 0];
-    $S_E = [0, 0, 0, 0, 0];
-
-    for ($i = 0; $i < 5; $i++) {
-        $startX = $i * $segW;
-        $endX = $startX + $segW;
-        
-        for ($y = 0; $y < $height; $y++) {
-            for ($x = $startX; $x < $endX; $x++) {
-                $rgb = imagecolorat($image, $x, $y);
-                $r = ($rgb >> 16) & 0xFF;
-                $g = ($rgb >> 8) & 0xFF;
-                $b = $rgb & 0xFF;
-                
-                // Abaikan background putih dan abu-abu bayangan
-                if ($r > 220 && $g > 220 && $b > 220) continue;
-                if (abs($r - $g) < 20 && abs($g - $b) < 20) continue;
-
-                // ---- FILTER SPESIFIK WARNA TARGET M-CAPTCHA ----
-                
-                // 1. Target BIRU (Komponen B wajib dominan mutlak mengalahkan R dan G)
-                $is_biru = ($b > $g && ($b - $r) > 30);
-                
-                // 2. Target HIJAU / KUNING / JINGGA (Komponen G atau R dominan, tapi B lemah)
-                $is_hijau_kuning = ($g > $b && ($g - $r) > -40);
-                
-                // 3. Target UNGU TUA (R and B tinggi tapi gelap, bukan Pink cerah)
-                $is_ungu = ($r > $g && $b > $g && abs($r - $b) < 40 && $r < 180);
-
-                if ($is_biru || $is_hijau_kuning || $is_ungu) {
-                    // Masuk kategori warna langka yang dicari
-                    $S_R[$i]++;
-                } else {
-                    // Masuk kategori warna mayoritas pengganggu (Pink cerah, Merah menyala, dll)
-                    $S_E[$i]++;
-                }
-            }
-        }
-    }
-
-    $ans = 0;
-    $maxPixels = -1;
-    
-    for ($i = 0; $i < 5; $i++) {
-        if ($S_R[$i] > $maxPixels) {
-            $maxPixels = $S_R[$i];
-            $ans = $i;
-        }
-    }
-
-    if ($maxPixels < 15) {
-        $ans = array_search(max($S_E), $S_E);
-    }
-    
-    @imagedestroy($image);
-    return $ans; 
-}
-
-
-
-
-
 function onfAid($cfg_hex) {
     if (!$cfg_hex || strlen($cfg_hex) !== 64) return ['trouble' => 'reload'];
 
@@ -647,11 +590,160 @@ function onfAid($cfg_hex) {
     return ['trouble' => 'reload'];
 }
 
+function onfOdd($img) {
+    
+    if (!getDeps('gd@php')) {
+        logx('err', "gd@php is missing");
+        exit(9);
+    }
+    
+    $image = imagecreatefromstring($img);
+    if (!$image) return false;
+    
+    $width = imagesx($image);
+    $height = imagesy($image);
+    
+    $binary = [];
+    for ($y = 0; $y < $height; $y++) {
+        for ($x = 0; $x < $width; $x++) {
+            $rgb = imagecolorat($image, $x, $y);
+            $r = ($rgb >> 16) & 0xFF;
+            $g = ($rgb >> 8) & 0xFF;
+            $b = $rgb & 0xFF;
+            
+            if ($r > 225 && $g > 225 && $b > 225) {
+                $binary[$y][$x] = 0;
+            } else {
+                $binary[$y][$x] = 1;
+            }
+        }
+    }
+
+    $visited = array_fill(0, $height, array_fill(0, $width, false));
+    $blobs = [];
+
+    for ($y = 0; $y < $height; $y++) {
+        for ($x = 0; $x < $width; $x++) {
+            if ($binary[$y][$x] == 1 && !$visited[$y][$x]) {
+                $queue = [[$x, $y]];
+                $visited[$y][$x] = true;
+                $blob_pixels = [];
+                
+                $head = 0;
+                while ($head < count($queue)) {
+                    $curr = $queue[$head++];
+                    $cx = $curr[0];
+                    $cy = $curr[1];
+                    $blob_pixels[] = [$cx, $cy];
+                    
+                    $neighbors = [[$cx+1, $cy], [$cx-1, $cy], [$cx, $cy+1], [$cx, $cy-1]];
+                    foreach ($neighbors as $n) {
+                        $nx = $n[0]; $ny = $n[1];
+                        if ($nx >= 0 && $nx < $width && $ny >= 0 && $ny < $height) {
+                            if ($binary[$ny][$nx] == 1 && !$visited[$ny][$nx]) {
+                                $visited[$ny][$nx] = true;
+                                $queue[] = [$nx, $ny];
+                            }
+                        }
+                    }
+                }
+                
+                $area = count($blob_pixels);
+                if ($area > 150) {
+                    $blobs[] = $blob_pixels;
+                }
+            }
+        }
+    }
+
+    if (count($blobs) < 2) {
+        @imagedestroy($image);
+        return false;
+    }
+
+    $shapes_data = [];
+    foreach ($blobs as $blob) {
+        $totalX = 0; $totalY = 0;
+        $totalR = 0; $totalG = 0; $totalB = 0;
+        $count = count($blob);
+        
+        foreach ($blob as $pixel) {
+            $px = $pixel[0]; $py = $pixel[1];
+            $totalX += $px;  $totalY += $py;
+            
+            $rgb = imagecolorat($image, $px, $py);
+            $totalR += ($rgb >> 16) & 0xFF;
+            $totalG += ($rgb >> 8) & 0xFF;
+            $totalB += $rgb & 0xFF;
+        }
+        
+        $shapes_data[] = [
+            'cx' => $totalX / $count,
+            'cy' => $totalY / $count,
+            'r'  => $totalR / $count,
+            'g'  => $totalG / $count,
+            'b'  => $totalB / $count
+        ];
+    }
+
+    $avg_global_r = array_sum(array_column($shapes_data, 'r')) / count($shapes_data);
+    $avg_global_g = array_sum(array_column($shapes_data, 'g')) / count($shapes_data);
+    $avg_global_b = array_sum(array_column($shapes_data, 'b')) / count($shapes_data);
+
+    $odd_shape = $shapes_data[0];
+    $max_distance = -1;
+
+    foreach ($shapes_data as $shape) {
+        $diffR = $shape['r'] - $avg_global_r;
+        $diffG = $shape['g'] - $avg_global_g;
+        $diffB = $shape['b'] - $avg_global_b;
+        
+        $distance = sqrt(($diffR * $diffR) + ($diffG * $diffG) + ($diffB * $diffB));
+        
+        if ($distance > $max_distance) {
+            $max_distance = $distance;
+            $odd_shape = $shape;
+        }
+    }
+
+    if ($max_distance < 15) {
+        @imagedestroy($image);
+        return false;
+    }
+/*
+    try {
+        if (!is_dir('.pre')) {
+            @mkdir('.pre', 0777, true);
+        }
+
+        $debug_img = imagecreatetruecolor(250, 250);
+        
+        imagecopyresampled($debug_img, $image, 0, 0, 0, 0, 250, 250, $width, $height);
+        
+        $red_color = imagecolorallocate($debug_img, 255, 0, 0);
+        
+        $tar_X = (int)round(($odd_shape['cx'] / $width) * 250);
+        $tar_Y = (int)round(($odd_shape['cy'] / $height) * 250);
+
+        imagefilledellipse($debug_img, $tar_X, $tar_Y, 10, 10, $red_color);
+        
+        imagepng($debug_img, '.pre/pre.png');
+        
+        @imagedestroy($debug_img);
+    } catch (\Exception $e) {
+    }
+*/
+    @imagedestroy($image);
+
+    return [
+        'cx' => (int)round(($odd_shape['cx'] / $width) * 250),
+        'cy' => (int)round(($odd_shape['cy'] / $height) * 250)
+    ];
+}
+
 function onfCap($fau, $host, $api, $payload, $he) {
     
     if (stripos($fau, 'mcaptcha') !== false) {
-        $ins = Scraper::_xP($fau, "//p[@id='mcaptcha-instruction']")[0] ?? 
-               Scraper::_xP($fau, "//div[@id='mcaptcha-challenge-box']//p[@class='text-muted small mb-0']")[0] ?? '';
         $img_u = "https://onlyfaucet.com/faucet/captcha_image?_t=".round(microtime(true) * 1000);
         
         $res = Net::X($img_u, 'GET', [], inf::$cookie, $he, $host, inf::$uagent, d: true);
@@ -661,93 +753,74 @@ function onfCap($fau, $host, $api, $payload, $he) {
         $r_bFi = $r_hee['x-pow-bfield'][0] ?? $r_hee['X-PoW-BField'][0] ?? null;
         
         $img = $res['body'] ?? '';
-        if (!empty($img) && $img !== 99) {
-            
-#debug
-            $img_d = imagecreatefromstring($img);
-            if ($img_d) {
-                $w = imagesx($img_d);
-                $h = imagesy($img_d);
-                $colW = intdiv($w, 5);
-                $black = imagecolorallocate($img_d, 0, 0, 0);
-                for ($g = 1; $g < 5; $g++) {
-                    $lineX = $g * $colW;
-                    imageline($img_d, $lineX, 0, $lineX, $h, $black);
-                }
-                imagepng($img_d, 'imgg.png');
-                @imagedestroy($img_d);
-            }
-#debug
-
-            $m_ans = null;
-            $m_idx = 0;
-            $ans_idx = onfOdd($img); 
-            if ($ans_idx === false) return ['trouble' => 'reload'];
-            if ($ans_idx >= 0 && $ans_idx <= 4) {
-                $m_ans = (string)$ans_idx;
-                $m_idx = $ans_idx;
-            }
-            if ($m_ans !== null) {
-                $m_dta = ['captcha_answer' => $m_ans];
-                $dx = rand(180, 450);
-                $t1 = rand(700, 1400);
-                $mc = rand(12, 28);
-                $td = rand(400, 950);
-                
-                $cv_E = 300;
-                $sectorWidth = $cv_E / 5; 
-                $cx = rand(($m_idx * $sectorWidth) + 8, (($m_idx + 1) * $sectorWidth) - 8);
-                $cy = rand(40, 180);
-                if ($r_bFi) $m_dta[$r_bFi] = (string)$dx;
-                
-                if ($r_pSa) {
-                    $m_slt = $r_pSa . $dx; 
-                    $m_nnc = SolveUtils::Pow($m_slt, $r_pDi);
-                    $m_dta['pow_nonce'] = (string)$m_nnc;
-                }
-                
-                $cur_ua = inf::$uagent;
-                $hc_val = 8;
-                $dm_val = 8;
-                if (stripos($cur_ua, 'Android') !== false) {
-                    $low_ua = ["Redmi 9A", "SM-A015F", "CPH1909", "Vivo 1906"];
-                    foreach ($low_ua as $ld) {
-                        if (stripos($cur_ua, $ld) !== false) {
-                            $hc_val = 4;
-                            $dm_val = 4;
-                            break;
-                        }
-                    }
-                }
-                
-                $telemetry = [
-                    '_t1' => $t1,
-                    '_mc' => $mc,
-                    '_cx' => (int)$cx,
-                    '_cy' => (int)$cy,
-                    '_wd' => 0,
-                    '_hc' => $hc_val,
-                    '_dm' => $dm_val, 
-                    '_sg' => 1,
-                    '_td' => $td
-                ];
-                $json_str = json_encode($telemetry);
-                
-                $key = $r_pSa; 
-                $encrypted_str = '';
-                $key_len = strlen($key);
-                $str_len = strlen($json_str);
-                
-                for ($k = 0; $k < $str_len; $k++) {
-                    $encrypted_str .= chr(ord($json_str[$k]) ^ ord($key[$k % $key_len]));
-                }
-                
-                $m_dta['x_tz'] = base64_encode($encrypted_str);
-                return $m_dta; 
-            }
+        if (empty($img) || $img === 99 || strpos($img, '<!DOCTYPE') !== false || strpos($img, '<html') !== false) {
+            return ['trouble' => 'reload'];
         }
-        return ['trouble' => 'reload'];
+        
+        $coords = onfOdd($img); 
+        if ($coords === false) return ['trouble' => 'reload'];
+        
+        // KEMBALI KE INT (Bulat Murni): Menghindari bug koma/titik lokal regional PHP
+        $cx = (int)round($coords['cx'] + rand(-2, 2));
+        $cy = (int)round(($coords['cy'] + rand(-2, 2)));
+        
+        $cx = max(5, min(245, $cx));
+        $cy = max(5, min(245, $cy));
+
+        $m_dta = ['captcha_answer' => '1']; 
+        
+        // Ambil range tengah yang stabil berdasarkan log sukses lu sebelumnya
+        $dx = rand(190, 290);     
+        $t1 = rand(800, 1300);   
+        $mc = rand(12, 22);      
+        $td = rand(450, 850);    
+        
+        if ($r_bFi) $m_dta[$r_bFi] = (string)$dx;
+        
+        if ($r_pSa) {
+            $m_slt = $r_pSa . $dx; 
+            $m_nnc = SolveUtils::Pow($m_slt, $r_pDi);
+            $m_dta['pow_nonce'] = (string)$m_nnc;
+        }
+        
+        $cur_ua = inf::$uagent;
+        $hc_val = 8; $dm_val = 8;
+        if (stripos($cur_ua, 'Android') !== false) {
+            $hc_val = 4; $dm_val = 4;
+        }
+        
+        $telemetry = [
+            '_t1' => $t1,
+            '_mc' => $mc,
+            '_cx' => $cx, // Integer murni
+            '_cy' => $cy, // Integer murni
+            '_wd' => 0,
+            '_hc' => $hc_val,
+            '_dm' => $dm_val, 
+            '_sg' => 1,
+            '_td' => $td
+        ];
+        
+        $json_str = json_encode($telemetry);
+        $key = !empty($r_pSa) ? $r_pSa : "safekey_mcaptcha"; 
+        
+        $encrypted_str = '';
+        $key_len = strlen($key);
+        $str_len = strlen($json_str);
+        
+        for ($k = 0; $k < $str_len; $k++) {
+            $encrypted_str .= chr(ord($json_str[$k]) ^ ord($key[$k % $key_len]));
+        }
+        
+        $m_dta['x_tz'] = base64_encode($encrypted_str);
+        
+        // Tahan waktu tunggu wajar seolah proses hitung asli
+        usleep(rand(1200000, 2200000)); 
+        
+        return $m_dta; 
     }
+
+
 
     $need_c = Scraper::_jP($fau, '/(?:captchaNeeded|captchaRequired)\s*=\s*(true|false)/')[1][0] ?? '';
     if ($need_c === 'true') {
@@ -820,7 +893,13 @@ function onfCap($fau, $host, $api, $payload, $he) {
 
 
 
+
+
+
+
+
 function isBan($html) {
+    if (!$html) return false;
     if (stripos($html, 'account has been banned')) {
         logx('err', 'Yahhh... Akun Banned Permanen!');
         exit;
@@ -887,65 +966,3 @@ function checkCF($url, $api, $body = null) {
 }
 
 
-/*
-POST /faucet/verify/ltc HTTP/2
-host: onlyfaucet.com
-content-length: 286
-cache-control: max-age=0
-sec-ch-ua: "Chromium";v="127", "Not)A;Brand";v="99", "Microsoft Edge Simulate";v="127", "Lemur";v="127"
-sec-ch-ua-mobile: ?1
-sec-ch-ua-full-version: "127.0.6533.144"
-sec-ch-ua-arch: ""
-sec-ch-ua-platform: "Android"
-sec-ch-ua-platform-version: "15.0.0"
-sec-ch-ua-model: "RMX3933"
-sec-ch-ua-bitness: ""
-sec-ch-ua-full-version-list: "Chromium";v="127.0.6533.144", "Not)A;Brand";v="99.0.0.0", "Microsoft Edge Simulate";v="127.0.6533.144", "Lemur";v="127.0.6533.144"
-accept-language: id-ID
-upgrade-insecure-requests: 1
-origin: https://onlyfaucet.com
-content-type: application/x-www-form-urlencoded
-user-agent: Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Mobile Safari/537.36
-accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,;q=0.8,application/signed-exchange;v=b3;q=0.7
-sec-fetch-site: same-origin
-sec-fetch-mode: navigate
-sec-fetch-dest: document
-referer: https://onlyfaucet.com/faucet/currency/ltc
-accept-encoding: gzip, deflate, br, zstd
-cookie: _ga=GA1.1.1890233853.1777586807
-cookie: bitmedia_fid=eyJmaWQiOiIxMzBlY2JiMDAxMGIwMGMwNzI4MDgxZWNkYjA5ZmMyZCIsImZpZG5vdWEiOiJkZTg5NDM4ODFmYWNlNTI3ZGQxMDVhYTI2YTYwZGEzOCJ9
-cookie: csrf_cookie_name=6760d8f5807d8dd4bfd6867d4be2174a
-cookie: ci_session=2no75vv8hfan5ufgdjf0v6co6g61a3v5
-cookie: cf_clearance=gCYPAOvsnlAyG9Wn8wRWLIhdLYy1GDRkekzFELtXNRo-1779371114-1.2.1.1-KFPhxR71nW6C1FLzQo2.lodN1Dy38BMB_MUnwaRGH3WGS18Zas_k.8jhw_nBLl8izNrUuKh_BwLphBMGT7jsSn_717V3jW9Cms9s7g9lcX2ILlJf1ylEN.joQ9vEnkX7AEOV3MI2UnldrKcYcFK3YTSOHKkg_qwVkF4CL7UE6ha03khKv3UWLkEnEd13J9k6lOGvga_tF9rGlG8t7lXHPAmG9f4qBtUmR1F8Wn7wf.yYiDEbgT0jfcILjn3gIoiZYSPPVooAYP.fcKoFqk6o8FkR_OvAoP11d8UXtt0YPcoF4i2ecOZhs80.JKrPZCHGEGSRUvrPJ_Ei.iirqhbnMiMM3CLPIUphQdv9DPS3zdKpRLIPLhUXQo.nKgY9Iyq1RgpRtrfIFw31Et2Dfwu1FfZ9ieCBEkRa7wExTxouQGs
-cookie: _ga_8MW4PHBZKX=GS2.1.s1779370213$o36$g1$t1779371345$j37$l0$h0
-priority: u=0, i
-
-csrf_token_name=6760d8f5807d8dd4bfd6867d4be2174a&claim_token=668bba9ca114f79b428d5eb9dad62c5c&captcha_answer=1&pow_nonce=27844&b_tick=0&human_stamp=0&bx_3c7ad1cef2b8=90&x_tz=SBBnRgBGDAwFARgbbAxWQVsHHBo6UkEWXgQDTkE8ARsRCA0FHUZpT1MTDgkfQ2oLAhMKAEkTZlAJEQlWT0E9EVQQAgIdRmlMUxMOAQdWSA%3D%bx_3c7ad1cef2b8
-
-
-HTTP/2 200
-date: Thu, 21 May 2026 13:48:52 GMT
-content-type: image/webp
-content-length: 6338
-set-cookie: csrf_cookie_name=6760d8f5807d8dd4bfd6867d4be2174a; expires=Thu, 21-May-2026 15:48:52 GMT; Max-Age=7200; path=/; domain=.onlyfaucet.com; secure; HttpOnly
-expires: Thu, 19 Nov 1981 08:52:00 GMT
-pragma: no-cache
-x-pow-salt: 32821d6871493a5ca108e194d33bccbb
-x-pow-difficulty: 4
-x-pow-bfield: bx_3c7ad1cef2b8
-access-control-expose-headers: X-PoW-Salt, X-PoW-Difficulty, X-PoW-BField
-cache-control: no-store, no-cache, must-revalidate, max-age=0
-server: cloudflare
-x-turbo-charged-by: LiteSpeed
-cf-cache-status: DYNAMIC
-nel: {"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}
-strict-transport-security: max-age=2592000
-x-content-type-options: nosniff
-speculation-rules: "/cdn-cgi/speculation"
-report-to: {"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=%2B6n1OdN86MNujO%2BaBoJH0FF9eQD5PV1cPvZTdh%2FPha0fPvb90gkGj7m6Yj01ahnawFugZZN31LpmGbljr72g%2FSe2GLFMqgpVWancaWBYe5Up2gPMzGPd9m%2FyEI0btHN%2FKw%3D%3D"}]}
-cf-ray: 9ff40a8c6854eb9e-SIN
-alt-svc: h3=":443"; ma=86400
-
-<binary body>
-
-*/

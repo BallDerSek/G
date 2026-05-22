@@ -1,6 +1,6 @@
 <?php
 if (!defined('ROOT')) { die; }
-_die();
+#_die();
 $api = onKeys();
 
 $acc = config::credential([], false, ['mail', 'pass', 'PROXY']);
@@ -15,6 +15,7 @@ $ip = '159.198.47.130';
 
 (function ($mail, $ip) {
     Proxy::load();
+    Check::Geo();
     $cookieFile = config::cookie($mail);
     $userAgent = config::uagent('mobile');
 
@@ -94,8 +95,8 @@ while (true) {
             $alert_d = scraper::_xP($ve, "//div[contains(@class, 'alert-danger')]");
             if (!empty($alert_d)) {
                 $msg = $alert_d[0];
-                if (stripos($msg, 'nvalid Captcha')) continue;
                 logx('', $msg);
+                if (stripos($msg, 'nvalid Captcha')) continue;
                 die;
             }
         }
@@ -248,12 +249,15 @@ while (true) {
             $ret99 = 0; 
             if (empty($fau)) continue;
             
-            #_put('fau.html', $fau);
+            #_put('fauu.html', $fau);
             
             $po = null;
             $cap = [];
             $f = scraper::payload($fau)[0] ?? [];
             if (empty($f)) {
+                if (stripos($fau, '/register')) goto login;
+                if (!$SLDONE) break;
+                
                 styler('Waiting for faucet', fn() => _sle(30));
                 continue;
             }
