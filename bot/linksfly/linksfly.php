@@ -61,7 +61,7 @@ while (true) {
             continue;
         }
         if (empty($_0)) continue;
-        $f = scraper::payload($_0)[1] ?? [0] ?? null;
+        $f = scraper::payload($_0)[1] ?? [0] ?? [];
         $po = null;
         
         if (!empty($f)) {
