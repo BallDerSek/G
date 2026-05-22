@@ -112,7 +112,7 @@ while (true) {
             }
             
         }
-        _rl('lanjut: ');
+        #_rl('lanjut: ');
     } while (empty($dash));
     #_put('dash.html', $dash); die;
     
@@ -332,7 +332,7 @@ while (true) {
                     }
                     
                     if (!empty($get['body'])) {
-                        #_put('get.html', $get['body']); 
+                        _put('get.html', $get['body']); 
                         
                         $get = checkCF($bakk, $api, $get);
                         
@@ -397,7 +397,7 @@ while (true) {
                             
                             $ver = Net::X("$host/links/complete_claim", 'POST', $po, inf::$cookie, $he, $sl, inf::$uagent);
                             
-                            #_put('ver.html', $ver);
+                            _put('ver.html', $ver);
                             #var_dump($ver);
                             
                             if (!empty($ver) && ($ver !== 99)) {

@@ -1,0 +1,190 @@
+<?php
+if (!defined('ROOT')) { die; }
+_die();
+$api = onKeys();
+
+$acc = config::credential([], false, ['login', 'PROXY']);
+$login = $acc['login'];
+putenv("PROXY=".$acc['PROXY']);
+
+login:
+$host = 'https://offersclub.eu';
+$domain = parse_url($host, PHP_URL_HOST);
+$r = '/?ref=609';
+$ip = null;
+
+(function ($login, $ip) {
+    Proxy::load();
+    Check::Geo();
+    $cookieFile = config::cookie($login);
+    $userAgent = config::uagent('mobile');
+
+    inf::setup($userAgent, $cookieFile, $ip);
+    _cle();
+    banner();
+    taskPrintCenter($login, 'info');
+} ) ($login, $ip);
+
+$headersCF = [];
+$skipped = [];
+$SLDONE = false;
+$curr = '';
+$dash = null;
+$wallOwme = false;
+$ptc = true;
+while (true) {
+    $ret = 0;
+    
+    do {
+        $ret++;
+        $l = inf::check($host.'/dashboard', [], 'loginBox');
+        
+        if ($l['ok']) {
+            $dash = $l['html'];
+            logx('info', "logged in", false); 
+            _sle(3); _clr();
+            #var_dump($dash); die;
+            break;
+        }
+        
+        if ($ret >= 10) {
+            logx('warn', 'RETRY LIMIT REACHED, CHECK BROWSER');
+            exit; 
+        }
+        
+        logx('err', "logging in", false); 
+        _sle(3); _clr();
+        $_0 = Net::C($host.$r, 'GET', null, inf::$cookie, [], '', inf::$uagent);
+        #_put('0.html', $_0); die;
+        if ($_0 === 99) {
+            logx('warn', 'Proxy issue, wait 30s');
+            _sle(60);
+            continue;
+        }
+        if (empty($_0)) continue;
+        #var_dump($_0); die;
+        $f = scraper::payload($_0)[0] ?? null;
+        
+        $po = null;
+        if (!empty($f)) {
+            
+            $pa = $f['payload'];
+            $cre = ['email' => $login];
+            
+            $cap = Solve::exec($_0, $host, $api, $pa);
+            
+            if (isset($cap['trouble'])) {
+                $tro = $cap['trouble'];
+                logx('warn', "Solver trouble: $tro");
+                ($tro === 'proxy') ? _sle(30) : _sle(10);
+                continue;
+            }
+            $cleanCap = array_filter((array)$cap, fn($v, $k) => $k !== 'nocaptcha', ARRAY_FILTER_USE_BOTH);
+            
+            $po = array_merge($pa, $cleanCap, $cre);
+            
+        }
+        
+        Net::C($host, 'POST', $po, inf::$cookie, [], $host.$r, inf::$uagent, false, false, $ip);
+        
+    } while (empty($dash));
+    _put('dash.html', $dash);
+    
+/*
+    do {
+        $ow = new Owme($host, $login);
+        $retryList = 0;
+        $off = [];
+        while ($retryList < 3) {
+            $owme = Net::C($host.'/offerwalls/offerwallme-ptc', 'GET', null, inf::$cookie, [], '', inf::$uagent);
+            _put('owme.html', $owme);
+            
+            if (!empty($owme) && $owme !== 99) {
+                
+            }
+            
+            
+            
+            
+        die;
+        }
+        
+        if (empty($off)) {
+            logx('err', "habis total kaya kayaknya.");
+            _put('owme.html', $owme);
+            $done = true;
+        } else {
+            foreach ($off as $ad) {
+                $status = $ow->claim($ad['url'], $ad['timer']);
+                if ($status) {
+                    styler('Waiting', fn() => _sle(5));
+                } else {
+                    logx('err', "Gagal claim iklan");
+                }
+            }
+        }
+        
+    } while (!$wallOwme);
+*/
+    
+    $ptc99 = 0;
+    while ($ptc) {
+        $ptc99++;
+        $ads = Net::C($host.'/offerwalls/offerwallme', 'GET', null, inf::$cookie, [], '', inf::$uagent);
+        
+        if ($ptc99 >= 5) goto login;
+        
+        if (empty($ads)) continue;
+        
+        $owme_if = Scraper::_xP($ads, "//div[contains(@class, 'offerwall-wrapper')]//iframe/@src");
+        
+        $owme_ur = !empty($owme_if) ? trim($owme_if[0]) : null;
+        $owme_bo = Net::C($owme_ur, 'GET', null, inf::$cookie, [], '', inf::$uagent);
+        if (!empty($owme_bo)) {
+            $po = null;
+            $owme_tkn = Scraper::_pP($owme_bo, 'token')[0] ?? null;
+            
+            if ($owme_tkn) {
+                $po = ['type' => 'ptc','token' => $owme_tkn,'action' => 'switch_cat'];
+            }
+            
+            if (!empty($po)) {
+                $owme = json_decode(Net::X($owme_ur, 'POST', $po, inf::$cookie, [], '', inf::$uagent)?: '', 1);
+                
+                if (isset($owme['status']) && $owme['status'] === 200 && !empty($owme['content'])) {
+                    #print_r($owme);
+                    _put('owme.html', $owme['content']);
+                    
+                    $owme_co = $owme['content'];
+                    
+                    $has = Scraper::_xP($owme_co, "//div[contains(@class, 'campaign-block')]/@data-hash");
+                    var_dump($has);
+                    $key = Scraper::_xP($owme_co, "//div[contains(@class, 'campaign-block')]/@data-key");
+                    var_dump($key);
+                    $sid = Scraper::_xP($owme_co, "//div[contains(@class, 'campaign-block')]/@data-sid");
+                    var_dump($sid);
+                    $tmr = Scraper::_xP($owme_co, "//div[contains(@class, 'campaign-block')]//span[contains(text(), 'Visit for')]/text()");
+                    var_dump($tmr);
+                    
+                    
+                }
+                
+            }
+            
+        }
+        
+        
+        
+        
+    die;
+    }
+    
+    
+    
+    
+    
+    
+    
+die;
+}
+
