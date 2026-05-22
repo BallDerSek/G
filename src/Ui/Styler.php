@@ -104,11 +104,22 @@ function logg($clock = true, $msg = '', $n = true, $check = false) {
 function logx($i = "", $msg = "\n", $n = true, $b = false) {
     $b = $b ? BOLD : '';
 
-    switch (strtoupper($i)) {
-        case 'ERR': $p = BOLD.FGb['RED'];  break;
+    switch (strtoupper(trim($i))) {
+        case 'ERR':
+        case 'ERROR':
+            $p = BOLD.FGb['RED'];  break;
+            
         case 'INFO': $p = $b.FGb['CYN']; break;
-        case 'WARN': $p = $b.FGb['YLW']; break;
-        case 'OK': $p = $b.FGb['GRN']; break;
+        
+        case 'WARN':
+        case 'WARNING':
+            $p = $b.FGb['YLW']; break;
+            
+        case 'OK':
+        case 'SUC':
+        case 'SUCCESS':
+            $p = $b.FGb['GRN']; break;
+            
         default: $p = $b.FGo['WHT']; break;
     }
 

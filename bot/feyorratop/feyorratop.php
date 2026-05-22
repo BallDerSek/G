@@ -64,11 +64,12 @@ while (true) {
             continue;
         }
         if (empty($_0)) continue;
-        #var_dump($_0); die;
+
         $f = scraper::payload($_0)[0] ?? null;
         
         $po = null;
         if (!empty($f)) {
+            #print_r($f);
             $pa = $f['payload'];
             $cre = ['email' => $mail, 'password' => $pass];
             
@@ -86,8 +87,10 @@ while (true) {
         }
         
         if (!empty($po)) {
-            $ve = Net::C($f['url'], 'POST', $po, inf::$cookie, [], "$host/login", inf::$uagent, false, false, $ip);
-            #var_dump($ve); die;
+            #print_r($po);
+            $ve = Net::X($f['url'], 'POST', $po, inf::$cookie, [], "$host/login", inf::$uagent, ip: $ip);
+            
+            #_put('ve.html', $ve); #die;
             if ($ve === 99) {
                 logx('warn', 'Proxy issue, wait 30s');
                 _sle(30);
@@ -97,8 +100,8 @@ while (true) {
             $alert_d = scraper::_xP($ve, "//div[contains(@class, 'alert-danger')]");
             if (!empty($alert_d)) {
                 $msg = $alert_d[0];
-                if (stripos($msg, 'nvalid Captcha')) continue;
                 logx('', $msg);
+                if (stripos($msg, 'nvalid Captcha')) continue;
                 die;
             }
         }

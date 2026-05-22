@@ -740,11 +740,10 @@ class locally {
         $cookie = inf::$cookie;
         $ua = inf::$uagent;
         $ip = inf::$ip;
-
         return styler("SOLVING icaptcha", function() use ($html, $host, $ip, $cookie, $ua) {
-            iconcaptcha:
             $endpoint = null;
             $scripts = Scraper::_xP($html, "//script/text()");
+            
             foreach ($scripts as $js) {
                 if (preg_match("~IconCaptcha\.init.*?endpoint\s*:\s*['\"]([^'\"]+)['\"]~is", $js, $m)) {
                     $path = $m[1];
@@ -752,43 +751,58 @@ class locally {
                     break;
                 }
             }
-
             $token = Scraper::find($html, '_iconcaptcha-token')[0] ?? null;
+            
             if (!$endpoint || !$token) return false;
-            #logx('info', $endpoint);
-            #logx('info', $token);
-
+            
             $widgetID = SolveUtils::widgetID();
             $ts = round(microtime(true) * 1000);
             $json = ["payload" => base64_encode(json_encode([
-                "widgetId" => $widgetID, "action" => "LOAD", "theme" => "light",
-                "token" => $token, "timestamp" => $ts, "initTimestamp" => $ts - 2000
+                "widgetId" => $widgetID, 
+                "action" => "LOAD", 
+                "theme" => "light",
+                "token" => $token, 
+                "timestamp" => $ts, 
+                "initTimestamp" => $ts - 2000
             ]))];
-
-            $res = Net::X($endpoint, 'POST', $json, $cookie, ["x-iconcaptcha-token: $token"], $host, $ua, false, false, $ip);
-            if ($res === 99 || (empty($res))) return 99;
-            $r = json_decode(base64_decode($res), true);
-            #print_r($r);
-            $challengeId = $r['identifier'] ?? null;
+            
+            $challengeId = null; 
+            for ($retry = 0; $retry < 3; $retry++) {
+                $res = Net::X($endpoint, 'POST', $json, $cookie, ["x-iconcaptcha-token: $token"], $host, $ua, false, false, $ip);
+                #var_dump($res);
+                if (!empty($res) && $res !== 99) {
+                    $r = json_decode(base64_decode($res), true);
+                    $challengeId = $r['identifier'] ?? null;
+                    if ($challengeId) break;
+                    _sle(1);
+                }
+            }
+            
             if (!$challengeId) return false;
-            _sle(1);
-
+            
             for ($i = 0; $i < 5; $i++) {
-                $x = (int)(($i * 64) + 32); 
+                $x = (int)(($i * 64) + rand(20, 40));
                 $ts = round(microtime(true) * 1000);
                 $payload = base64_encode(json_encode([
-                    "x" => $x, "y" => rand(22,30), "width" => 320, "token" => $token,
-                    "action" => "SELECTION", "widgetId" => $widgetID,
-                    "timestamp" => $ts, "challengeId" => $challengeId, "initTimestamp" => $ts - 2000
+                    "x" => $x,
+                    "y" => rand(22,30),
+                    "width" => 320,
+                    "token" => $token,
+                    "action" => "SELECTION",
+                    "widgetId" => $widgetID,
+                    "timestamp" => $ts,
+                    "challengeId" => $challengeId,
+                    "initTimestamp" => $ts - 2000
                 ]));
-
+                
                 $boundary = '';
                 $body = SolveUtils::webkitID(["payload" => $payload], $boundary);
                 $s = Net::X($endpoint, 'POST', $body, $cookie, ["x-iconcaptcha-token: $token", "Content-Type: multipart/form-data; boundary=$boundary"], $host, $ua, false, false, $ip);
-                if ($s === 99 || empty($s)) return 99;
+                #var_dump($s);
+                if ($s === 99) return 99;
                 $r = json_decode(base64_decode($s), true);
-                #print_r($r);
-                if (!empty($r['completed'])) {
+                
+                if (!empty($r['completed']) || (isset($r['success']) && $r['success'] == true)) {
                     return [
                         'captcha' => 'icaptcha',
                         '_iconcaptcha-token' => $token,
@@ -797,7 +811,7 @@ class locally {
                         'ic-cid' => $challengeId,
                         'ic-hp' => ''
                     ];
-                } 
+                }
                 _sle(1);
             }
             return false;
@@ -811,6 +825,7 @@ class locally {
 
         return styler("SOLVING ecaptcha", function() use ($host, $cookie, $ua, $ip) {
             $res = Net::X($host.'/ecaptcha/get_token', 'GET', null, $cookie, [], $host, $ua, false, false, $ip);
+            #var_dump($res);
             if ($res === 99) return 99;
             $json = json_decode($res ?: '', true);
             $token = $json['token'] ?? null;

@@ -66,7 +66,7 @@ while (true) {
         
         if (!empty($f)) {
             #print_r($f); die;
-            $pa = $f['payload'];
+            $pa = $f['payload'] ?? [];
             $cre = ['wallet' => $login, 'uid' => md5($login), 'private_ip' => IP()];
             
             $cap = Solve::exec($_0, $host, $api, $pa);
@@ -82,11 +82,15 @@ while (true) {
         
         if (!empty($po)) {
             $ve = Net::X($f['url'], 'POST', $po, inf::$cookie, [], $host.$r, inf::$uagent);
-            #_put('ve.html', $ve);
-            if ($ve === 99) {
-                logx('warn', 'Proxy issue, wait 30s');
-                _sle(30);
-                continue;
+            if (!empty($ve)) {
+                $al = scraper::_jP($ve, "/Toast\.fire\(\s*\{.*?icon:\s*'([^']+)'.*?text:\s*'([^']+)'/s") ?? [];
+                #print_r($al);
+                if (!empty($al[2][0])) {
+                    $msg = $al[2][0];
+                    print(FGd['CYN'] . maskEmail($login) . RSET . " ");
+                    logx('err', $msg);
+                    if (stripos($msg, 'permanently banned')) die;
+                }
             }
         }
     } while (empty($dash));
@@ -102,8 +106,10 @@ while (true) {
         logx('err', strtoupper($_c));
         
         if (!empty($curr) && stripos($_c, $curr) === false) continue; 
+        if (isset($habis[$fa])) continue; 
         
         $ret99 = 0;
+        $inv_c = 0;
         while ($claim) {
             $fau = null;
             $fau = Net::X($fa, 'GET', null, inf::$cookie, [], $host, inf::$uagent);
@@ -124,6 +130,7 @@ while (true) {
             $cap = [];
             $f = scraper::payload($fau) ?? null;
             if (!empty($f)) {
+                #print_r($f);
                 $pa = null;
                 foreach ($f as $fo) {
                     if (stripos($fo['url'], 'verify')) {
@@ -194,8 +201,11 @@ while (true) {
                         $msg = $_suc[2][0];
                         
                         print(FGd['CYN'] . maskEmail($login) . RSET . " ");
-                        logx($status === 'success' ? 'ok' : 'err', "$status ", false);
+                        logx($status, $status." ", false, true);
                         logg(false, $msg);
+                        
+                        if (stripos($msg, 'nvalid Claim')) $inv_c++;
+                        if ($inv_c >= 3) break;
                         
                         if (preg_match('/sufficient|could not be processed/i', $msg)) {
                             $habis[] = $fa;
@@ -214,7 +224,7 @@ while (true) {
                     }
                 }
                 
-                styler("waiting for next claim", fn() => _sle(5));
+                styler("waiting for next claim", fn() => _sle(10));
             }
             
         }
