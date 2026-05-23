@@ -865,28 +865,22 @@ class locally {
     }
     
     public static function ATB($type, $apii, $html) {
-        
-        if (!$apii) { 
-            logx('err', 'undefined provider');
-            die;
-        }
-        
-        $api = config::getKeys($apii, $type);
-        
-        if ($type === 'emoji') return self::atb_E($html);
+        if (!$apii) return null;
+        $api = config::getKeys($apii, $type, 'b64');
+
+        $supportAtb = Api::B64[get_class($api)]['antibot'] ?? false;
         
         if ($type === 'image') {
-            $refl = new ReflectionClass($api);
-            
-            if (!$refl->hasConstant('ATB_MODE')) {
-                logx('err', get_class($api) . " gak support Antibot");
-                die;
-            }
-            
-            if (method_exists($api, 'atb')) {
+            #return ' 1 2 3 4';
+            if ($supportAtb) {
                 return self::atb_I($api, $html); 
             }
+            
+            logx('err', get_class($api) . " tidak support Antibot");
+            return null;
         }
+        if ($type === 'emoji') return self::atb_E($html);
+        return null;
     }
     
     public static function atb_E($html) {

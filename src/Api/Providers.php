@@ -10,7 +10,7 @@ if (!class_exists('Api', false)) exit(1);
 
 class xevil extends Provider {
     
-    protected const ATB_MODE = 'num';
+    
 
     protected $baseUrl = "http://sctg.xyz";
 
@@ -71,7 +71,7 @@ class xevil extends Provider {
 
 class skibidixxx extends Provider {
     
-    protected const ATB_MODE = 'rel';
+    
     
     protected $baseUrl = "https://waryono.my.id/api";
 
@@ -98,7 +98,7 @@ skibidixxxget:
                 Net::S($this->baseUrl."/res.php", "GET", ["apikey" => $this->apiKey, "id"  => $jobId]) ?: ''
             , 1);
 #var_dump($r);
-            if (($r['status'] ?? 0) == 1) return $r['result'];
+            if (($r['status'] ?? 0) == 1) return $r['request'];
 
             if (!is_array($r) || Api::errType($q = ($r['message'] ?? 'unknown')) === 'ret') continue;
             
@@ -143,7 +143,7 @@ skibidixxxget:
 
 class tertuyul extends Provider {
     
-    protected const ATB_MODE = 'num';
+    
     
     protected $baseUrl = "http://api.tertuyul.my.id";
 
@@ -253,7 +253,7 @@ class tertuyul extends Provider {
 
 class multibot extends Provider {
     
-    protected const ATB_MODE = 'rel';
+    
     
     protected $baseUrl = "https://api.multibot.in";
 
@@ -316,6 +316,9 @@ class multibot extends Provider {
 }
 
 class gmxch extends Provider {
+    
+    
+    
     protected $baseUrl = "https://route.up.railway.app";
 
     /** submit job ke API */
@@ -384,11 +387,15 @@ class gmxch extends Provider {
         return true;
     }
     
+    
+    
+    
+    
 }
 
 class glitch extends Provider {
     
-    protected const ATB_MODE = 'rel';
+    
     
     protected $baseUrl = "https://buxads.com/api-token/api.php";
 
@@ -441,6 +448,21 @@ class glitch extends Provider {
         return $short;
     }
     
+    /** atb override */
+    public function atb(array $data) {
+        
+        $params = [
+            "mode" => "freeantibot",
+            "main" => $data['main'],
+            "sub" => []
+        ];
+        
+        foreach ($data['rels'] as $i => $b64) {
+            $params['sub'][$i + 1] = $b64;
+        }
+        return $this->run('antibot', $params);
+    }
+    
     /** info saldo */
     public function getInfo(): bool{
         $maxRetry = 3;
@@ -460,6 +482,7 @@ class glitch extends Provider {
         logx('info', 'glitch: ' . ($r['balance'] ?? 'unknown'));
         return true;
     }
+    
 }
 
 

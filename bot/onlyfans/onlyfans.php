@@ -104,6 +104,9 @@ while (true) {
                 print(FGd['CYN'] . maskEmail($login) . RSET . " ");
                 logx('info', $msg);
                 if (stripos($msg, 'denied')) die;
+                if (stripos($msg, 'address is not allowed.')) {
+                    @unlink(inf::$cookie);
+                }
                 if (stripos($msg, 'emporarily blocked')) {
                     _sle(100);
                     goto login;
@@ -208,6 +211,10 @@ while (true) {
                             $curr = $_c; 
                             break 2; 
                         }
+                        if (stripos($msg, 'address is not allowed.')) {
+                            @unlink(inf::$cookie);
+                            goto login;
+                        }
                         
                         if (preg_match('/sufficient|could not be processed/i', $msg)) {
                             $habis[] = $fa;
@@ -309,7 +316,7 @@ while (true) {
                     break; 
                 }
                 
-                $wait = 60 - (int)(microtime(true) - $start);
+                $wait = 100 - (int)(microtime(true) - $start);
                 if ($wait > 0) styler("waiting for SL", fn() => _sle((int)ceil($wait)));
                 
                 $retGet = 0;
@@ -332,7 +339,7 @@ while (true) {
                     }
                     
                     if (!empty($get['body'])) {
-                        _put('get.html', $get['body']); 
+                        #_put('get.html', $get['body']); 
                         $he = [];
                         $get = checkCF($bakk, $api, $get);
                         
@@ -397,7 +404,7 @@ while (true) {
                             
                             $ver = Net::X("$host/links/complete_claim", 'POST', $po, inf::$cookie, $he, $sl, inf::$uagent);
                             
-                            _put('ver.html', $ver);
+                            #_put('ver.html', $ver);
                             #var_dump($ver);
                             
                             if (!empty($ver) && ($ver !== 99)) {
@@ -406,7 +413,6 @@ while (true) {
                                 
                                 $_sucH = scraper::_jP($ver, "/Toast\.fire\(\s*\{.*?icon:\s*'([^']+)'.*?html:\s*'([^']+)'/s") ?? [];
                                 
-                                // DI SINI PERBAIKANNYA (Hanya cek array, sisa logika ke bawah tetap 100% kode asli Anda)
                                 $suc = (!empty($_sucH[1]) && isset($_sucH[1][0])) ? $_sucH[1][0] : $sucJ;
                                 
                                 logx($suc ? 'ok' : 'err', $suc ? "Success " : "error ", false);
@@ -591,155 +597,124 @@ function onfAid($cfg_hex) {
 }
 
 function onfOdd($img) {
-    
     if (!getDeps('gd@php')) {
         logx('err', "gd@php is missing");
         exit(9);
     }
-    
+
     $image = imagecreatefromstring($img);
     if (!$image) return false;
-    
+
     $width = imagesx($image);
     $height = imagesy($image);
-    
-    $binary = [];
-    for ($y = 0; $y < $height; $y++) {
-        for ($x = 0; $x < $width; $x++) {
-            $rgb = imagecolorat($image, $x, $y);
-            $r = ($rgb >> 16) & 0xFF;
-            $g = ($rgb >> 8) & 0xFF;
-            $b = $rgb & 0xFF;
-            
-            if ($r > 225 && $g > 225 && $b > 225) {
-                $binary[$y][$x] = 0;
-            } else {
-                $binary[$y][$x] = 1;
-            }
+
+    $rgbH = function(int $r, int $g, int $b): int {
+        $rf = $r / 255.0;
+        $gf = $g / 255.0;
+        $bf = $b / 255.0;
+        $max = max($rf, $gf, $bf);
+        $min = min($rf, $gf, $bf);
+        $delta = $max - $min;
+
+        if ($delta < 1e-6) return -1;
+        $hue = ($max == $rf) ? fmod(($gf - $bf) / $delta, 6.0) : (($max == $gf) ? (($bf - $rf) / $delta) + 2.0 : (($rf - $gf) / $delta) + 4.0);
+        $hue = fmod($hue / 6.0, 1.0);
+        return (int)round(($hue < 0 ? $hue + 1.0 : $hue) * 24) % 24;
+    };
+
+    $SCALE = 3; $sw = (int)($width / $SCALE);
+    $sh = (int)($height / $SCALE);
+    $bucketMap = [];
+
+    for ($y = 0; $y < $sh; $y++) {
+        for ($x = 0; $x < $sw; $x++) {
+            $rgb = imagecolorat($image, min($x * $SCALE + 1, $width - 1), min($y * $SCALE + 1, $height - 1));
+            $r = ($rgb >> 16) & 0xFF; $g = ($rgb >> 8) & 0xFF; $b = $rgb & 0xFF;
+
+            if ($r > 210 && $g > 210 && $b > 210) continue;
+            $sat = ($r + $g + $b > 0) ? (max($r,$g,$b) - min($r,$g,$b)) / max($r,$g,$b) : 0;
+            if ($sat < 0.20 || max($r,$g,$b) / 255.0 < 0.15) continue;
+
+            $bucket = $rgbH($r, $g, $b);
+            if ($bucket >= 0) $bucketMap["$x,$y"] = $bucket;
         }
     }
 
-    $visited = array_fill(0, $height, array_fill(0, $width, false));
-    $blobs = [];
+    if (empty($bucketMap)) {
+        @imagedestroy($image);
+        return false;
+    }
 
-    for ($y = 0; $y < $height; $y++) {
-        for ($x = 0; $x < $width; $x++) {
-            if ($binary[$y][$x] == 1 && !$visited[$y][$x]) {
-                $queue = [[$x, $y]];
-                $visited[$y][$x] = true;
-                $blob_pixels = [];
-                
-                $head = 0;
-                while ($head < count($queue)) {
-                    $curr = $queue[$head++];
-                    $cx = $curr[0];
-                    $cy = $curr[1];
-                    $blob_pixels[] = [$cx, $cy];
-                    
-                    $neighbors = [[$cx+1, $cy], [$cx-1, $cy], [$cx, $cy+1], [$cx, $cy-1]];
-                    foreach ($neighbors as $n) {
-                        $nx = $n[0]; $ny = $n[1];
-                        if ($nx >= 0 && $nx < $width && $ny >= 0 && $ny < $height) {
-                            if ($binary[$ny][$nx] == 1 && !$visited[$ny][$nx]) {
-                                $visited[$ny][$nx] = true;
-                                $queue[] = [$nx, $ny];
-                            }
-                        }
+    $counts = [];
+    foreach ($bucketMap as $bucket) $counts[$bucket] = ($counts[$bucket] ?? 0) + 1;
+    arsort($counts);
+
+    $used = []; $groups = [];
+    foreach ($counts as $b => $cnt) {
+        if (isset($used[$b])) continue;
+        $grp = [$b => true]; 
+        $used[$b] = true;
+        foreach ([(($b-1+24)%24), (($b+1)%24), (($b-2+24)%24), (($b+2)%24)] as $nb) {
+            if (isset($counts[$nb]) && !isset($used[$nb])) {
+                $grp[$nb] = true;
+                $used[$nb] = true; 
+            }
+        }
+        $groups[] = $grp;
+    }
+
+    $pixA = []; $pixB = [];
+    foreach ($bucketMap as $key => $b) {
+        if (isset($groups[0][$b])) $pixA[$key] = true;
+        elseif (isset($groups[1][$b])) $pixB[$key] = true;
+    }
+
+    $findBlobs = function(array $pixSet) use ($sw, $sh) {
+        $visited = [];
+        $blobs = [];
+        foreach (array_keys($pixSet) as $startKey) {
+            if (isset($visited[$startKey])) continue;
+            $blob = [];
+            $stack = [$startKey];
+            while (!empty($stack)) {
+                $key = array_pop($stack);
+                if (isset($visited[$key]) || !isset($pixSet[$key])) continue;
+                $visited[$key] = true; $blob[] = $key;
+                [$cx0, $cy0] = explode(',', $key);
+                for ($dx = -1; $dx <= 1; $dx++) {
+                    for ($dy = -1; $dy <= 1; $dy++) {
+                        if ($dx === 0 && $dy === 0) continue;
+                        $nx = (int)$cx0 + $dx;
+                        $ny = (int)$cy0 + $dy;
+                        if ($nx >= 0 && $nx < $sw && $ny >= 0 && $ny < $sh && isset($pixSet["$nx,$ny"]) && !isset($visited["$nx,$ny"])) $stack[] = "$nx,$ny";
                     }
                 }
-                
-                $area = count($blob_pixels);
-                if ($area > 150) {
-                    $blobs[] = $blob_pixels;
-                }
             }
+            if (count($blob) >= 12) $blobs[] = $blob;
         }
-    }
+        return $blobs;
+    };
 
-    if (count($blobs) < 2) {
+    $blobsA = $findBlobs($pixA);
+    $blobsB = $findBlobs($pixB);
+    if (empty($blobsA) && empty($blobsB)) {
         @imagedestroy($image);
         return false;
     }
+    
+    $oddBlobs = (empty($blobsA)) ? $blobsB : ((empty($blobsB)) ? $blobsA : ((count($blobsA) <= count($blobsB)) ? $blobsA : $blobsB));
+    usort($oddBlobs, fn($a, $b) => count($b) - count($a));
+    
+    $sumX = 0; $sumY = 0; $n = count($oddBlobs[0]);
+    foreach ($oddBlobs[0] as $key) { [$px, $py] = explode(',', $key); $sumX += (int)$px; $sumY += (int)$py; }
 
-    $shapes_data = [];
-    foreach ($blobs as $blob) {
-        $totalX = 0; $totalY = 0;
-        $totalR = 0; $totalG = 0; $totalB = 0;
-        $count = count($blob);
-        
-        foreach ($blob as $pixel) {
-            $px = $pixel[0]; $py = $pixel[1];
-            $totalX += $px;  $totalY += $py;
-            
-            $rgb = imagecolorat($image, $px, $py);
-            $totalR += ($rgb >> 16) & 0xFF;
-            $totalG += ($rgb >> 8) & 0xFF;
-            $totalB += $rgb & 0xFF;
-        }
-        
-        $shapes_data[] = [
-            'cx' => $totalX / $count,
-            'cy' => $totalY / $count,
-            'r'  => $totalR / $count,
-            'g'  => $totalG / $count,
-            'b'  => $totalB / $count
-        ];
-    }
+    $cx = max(5, min(245, (int)round((((int)round($sumX / $n)) * $SCALE + $SCALE / 2) / $width * 250)));
+    $cy = max(5, min(245, (int)round((((int)round($sumY / $n)) * $SCALE + $SCALE / 2) / $height * 250)));
 
-    $avg_global_r = array_sum(array_column($shapes_data, 'r')) / count($shapes_data);
-    $avg_global_g = array_sum(array_column($shapes_data, 'g')) / count($shapes_data);
-    $avg_global_b = array_sum(array_column($shapes_data, 'b')) / count($shapes_data);
-
-    $odd_shape = $shapes_data[0];
-    $max_distance = -1;
-
-    foreach ($shapes_data as $shape) {
-        $diffR = $shape['r'] - $avg_global_r;
-        $diffG = $shape['g'] - $avg_global_g;
-        $diffB = $shape['b'] - $avg_global_b;
-        
-        $distance = sqrt(($diffR * $diffR) + ($diffG * $diffG) + ($diffB * $diffB));
-        
-        if ($distance > $max_distance) {
-            $max_distance = $distance;
-            $odd_shape = $shape;
-        }
-    }
-
-    if ($max_distance < 15) {
-        @imagedestroy($image);
-        return false;
-    }
-/*
-    try {
-        if (!is_dir('.pre')) {
-            @mkdir('.pre', 0777, true);
-        }
-
-        $debug_img = imagecreatetruecolor(250, 250);
-        
-        imagecopyresampled($debug_img, $image, 0, 0, 0, 0, 250, 250, $width, $height);
-        
-        $red_color = imagecolorallocate($debug_img, 255, 0, 0);
-        
-        $tar_X = (int)round(($odd_shape['cx'] / $width) * 250);
-        $tar_Y = (int)round(($odd_shape['cy'] / $height) * 250);
-
-        imagefilledellipse($debug_img, $tar_X, $tar_Y, 10, 10, $red_color);
-        
-        imagepng($debug_img, '.pre/pre.png');
-        
-        @imagedestroy($debug_img);
-    } catch (\Exception $e) {
-    }
-*/
     @imagedestroy($image);
-
-    return [
-        'cx' => (int)round(($odd_shape['cx'] / $width) * 250),
-        'cy' => (int)round(($odd_shape['cy'] / $height) * 250)
-    ];
+    return ['cx' => $cx, 'cy' => $cy];
 }
+
 
 function onfCap($fau, $host, $api, $payload, $he) {
     
@@ -769,7 +744,6 @@ function onfCap($fau, $host, $api, $payload, $he) {
 
         $m_dta = ['captcha_answer' => '1']; 
         
-        // Ambil range tengah yang stabil berdasarkan log sukses lu sebelumnya
         $dx = rand(190, 290);     
         $t1 = rand(800, 1300);   
         $mc = rand(12, 22);      
@@ -792,8 +766,8 @@ function onfCap($fau, $host, $api, $payload, $he) {
         $telemetry = [
             '_t1' => $t1,
             '_mc' => $mc,
-            '_cx' => $cx, // Integer murni
-            '_cy' => $cy, // Integer murni
+            '_cx' => $cx,
+            '_cy' => $cy,
             '_wd' => 0,
             '_hc' => $hc_val,
             '_dm' => $dm_val, 
@@ -814,8 +788,6 @@ function onfCap($fau, $host, $api, $payload, $he) {
         
         $m_dta['x_tz'] = base64_encode($encrypted_str);
         
-        // Tahan waktu tunggu wajar seolah proses hitung asli
-        usleep(rand(1200000, 2200000)); 
         
         return $m_dta; 
     }

@@ -51,7 +51,7 @@ final class Api { #contractor
         'skibidixxx' => ['ep' => 'https://waryono.my.id', 'cls' => skibidixxx::class],
         'capsolver' => ['ep' => 'https://capsolver.com', 'cls' => capsolver::class],
         'multibot' => ['ep' => 'http://multibot.in', 'cls' => multibot::class],
-        'gmxch' => ['ep' => 'https://gmxch-to.hf.space', 'cls' => gmxch::class],
+        'gmxch' => ['ep' => 'gamamoch', 'cls' => gmxch::class],
         'glitch' => ['ep' => 'https://buxads.com/api-token', 'cls' => glitch::class],
     ];
 
@@ -267,6 +267,7 @@ final class Api { #contractor
     public const B64 = [
 
         tertuyul::class => [
+            'antibot' => true,
             'ocr' => ['t' => 'universal', 'field' => 'body'],
             'least' => ['t' => 'iconfinder', 'field' => 'body'],
             'rs_upside' => ['t' => 'upside', 'field' => 'body'],
@@ -280,6 +281,7 @@ final class Api { #contractor
         ],
 
         glitch::class => [
+            'antibot' => true,
             'ocr' => ['t' => 'textcaptcha', 'field' => 'image_base64'],
             'rs_upside' => ['t' => 'rsv2', 'field' => 'image_base64'],
             'rs_icon' => ['t' => 'rsv2', 'field' => 'image_base64'],
@@ -288,6 +290,7 @@ final class Api { #contractor
         ],
 
         xevil::class => [
+            'antibot' => true,
             'ocr' => ['t' => 'base64', 'field' => 'body'],
             'upside' => ['t' => 'viefaucet', 'field' => 'body'],
             'rs_upside' => ['t' => 'viefaucet', 'field' => 'body'],
@@ -297,6 +300,7 @@ final class Api { #contractor
         ],
 
         multibot::class => [
+            'antibot' => true,
             'ocr' => ['t' => 'universal', 'field' => 'body'],
             'least' => ['t' => 'iconfinder', 'field' => 'body'],
             'rs_upside' => ['t' => 'upside', 'field' => 'body'],
@@ -308,6 +312,7 @@ final class Api { #contractor
         ],
 
         skibidixxx::class => [
+            'antibot' => true,
             'fa_icon' => ['t' => 'bitcocaptcha', 'field' => 'base64_str'],
             'fa3_icon' => ['t' => 'bitcocaptcha_v2', 'field' => 'base64_str'],
             'earnow' => ['t' => 'shortearnow', 'field' => 'base64_str'],
@@ -323,15 +328,7 @@ final class Api { #contractor
             'ocr' => ['t' => 'ImageToTextTask', 'field' => 'body'],
         ],
 
-        gmxch::class => [
-            /*
-            'ocr' => ['t' => 'ocr', 'field' => 'image'],
-            'math' => ['t' => 'ocr', 'field' => 'image', 'extra' => ['method' => 'math']],
-            '4num' => ['t' => 'ocr', 'field' => 'image', 'extra' => ['method' => 'text', 'instruct' => '4digits']],
-            */
-            'onf_odd' => ['t' => 'of_odd', 'field' => 'image'],
-            'stf_rot' => ['t' => 'stf_rot', 'field' => 'image'],
-        ],
+        gmxch::class => [],
 
         solverify::class => [
             'ocr' => ['t' => 'ocr', 'field' => 'body'],
@@ -787,4 +784,3 @@ abstract class Provider {
     
     abstract protected function res_api($jobId);
 }
-

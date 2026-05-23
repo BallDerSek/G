@@ -1,6 +1,6 @@
 <?php
 if (!defined('ROOT')) { die; }
-_die();
+#_die();
 $api = onKeys();
 
 $acc = config::credential([], false, ['mail', 'pass', 'PROXY']);
@@ -190,59 +190,62 @@ while (true) {
     } while (!$claim);
 
     $zer = Net::C("$host/zeradsptc/earn", 'GET', null, inf::$cookie, [], "$host/dashboard", inf::$uagent, false, false, $ip);
-    if (!empty($zer) && $zer !== 99) {
+    if (empty($zer) && $zer !== 99) {
         $zer_u = Scraper::_xP($zer, "//a[@id='generateBtn']/preceding-sibling::a[1]/@href")[0] ?? '';
         if (!empty($zer_u)) {
-            $zer99 = 0;
-            while (true) {
-                $zer = null;
-                $zer = Net::X($zer_u, 'GET', null, inf::$cookie, [], "", inf::$uagent);
-                #_put('zer.html', $zer);
-                
-                if ($zer === 99) {
-                    $zer99++;
-                    logx('warn', "masalah proxy, warm up dulu");
-                    if ($zer99 >= 5) {
-                        goto login;
-                    }
-                    _sle(30);
-                    continue;
-                }
-                
-                if (!empty($zer)) {
-                    if (stripos($zer, 'solve captcha')) {
-                        
-                        $zerC_m = Scraper::_xP($zer, "//td[contains(text(), 'Click')]/following-sibling::td/img/@src | //font[contains(text(), 'Click')]/../following-sibling::td/img/@src")[0] ?? '';
-                        
-                        $zerC_o = Scraper::_xP($zer, "//a[contains(@href, 'scid=')]/@href");
-                        
-                        $zerC_i = Scraper::_xP($zer, "//a[contains(@href, 'scid=')]/img/@src");
-                        
-                        if ($zerC_m && $zerC_o && $zerC_i) {
-                            $he = ['image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8'];
-                            print_r($zerC_m);
-                            print_r($zerC_o);
-                            print_r($zerC_i);
+            $zer = Net::X($zer_u, 'GET', null, inf::$cookie, [], "", inf::$uagent);
+            if (!empty($zer) && $zer !== 99) {
+                if (stripos($zer, 'solve captcha')) {
+                    
+                    $zerC_m = Scraper::_xP($zer, "//td[contains(text(), 'Click')]/following-sibling::td/img/@src | //font[contains(text(), 'Click')]/../following-sibling::td/img/@src") ?? '';
+                    $zerC_o = Scraper::_xP($zer, "//a[contains(@href, 'scid=')]/@href");
+                    $zerC_i = Scraper::_xP($zer, "//a[contains(@href, 'scid=')]/img/@src");
+                    $zerC_p = [];
+                    if ($zerC_m && $zerC_o && $zerC_i) {
+                        print_r($zerC_m);
+                        print_r($zerC_o);
+                        print_r($zerC_i);
+                        #$tempDir = _lib('zer');
+                        $zer_h = 'https://zerads.com/';
+                        #$he = ['image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8'];
+                        for ($_r = 0; $_r < 2; $_r++) {
+                            $M_z = Net::C($zer_h.$zerC_m[0], 'GET', null, inf::$cookie, [], $zer_u, inf::$uagent);
                             
-                            
-                            $zer_h = 'https://zerads.com/';
-                            $img_M = Net::C($zer_h.$zerC_m, 'GET', null, null, $he, $zer_u, inf::$uagent);
-                            _put('main.png', $img_M);
-                            
-                            
-                            
-                            
+                            if (!empty($M_z) && $M_z !== 99) {
+                                $zerC_p['main'] = base64_encode($M_z);
+                            }
                             
                         }
+                        
+                        #_put($tempDir.'/main.jpg', $M_z);
+                        foreach ($zerC_i as $i => $u) {
+                            $I_z = Net::C($zer_h.$u, 'GET', null, null, [], $zer_u, inf::$uagent);
+                            if (!empty($I_z) && $I_z !== 99) {
+                                $zerC_p["opt_{$i}"] = base64_encode($I_z);
+                                #_put($tempDir."/$i.png", $I_z);
+                            }
+                        }
+                            
+                        
                     }
+                    
+                    if (!empty($zerC_p) && isset($zerC_p['main'])) {
+                        
+                        if (count($zerC_i) === count($zerC_p) - 1) 
+                        logx('', "sesuai");
+
+                        
+                    }
+                    
+                    
                 }
-            die;
             }
+                
+            die;
         }
     }
 
-die;
-
+#die;
     if (!$limit && $claim) {
         $ret99 = 0; 
         while (true) {
@@ -285,7 +288,7 @@ die;
             }
             
             if (!empty($po)) {
-                
+                print_r($po);
                 $cla = Net::C($f['url'], 'POST', $po, inf::$cookie, [], "$host/faucet", inf::$uagent, ip: $ip);
                 if (empty($cla) || ($cla === 99)) continue;
                 

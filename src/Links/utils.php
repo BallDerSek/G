@@ -194,6 +194,8 @@ function links($api, $url) {
     logx('info', " Switching to solver API", false); _clr();
     $solver = config::getKeys($api, 'shortlink', 'tkn');
     
+    if (stripos($url, 'coinclix')) return false;
+    
     if (!$solver || !method_exists($solver, 'shortLink')) {
         logx('err', " (" . get_class($api) . ") doesn't support shortLink!");
         return false;

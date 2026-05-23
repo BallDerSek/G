@@ -176,6 +176,7 @@ class _shortlinks {
         $host = $this->host;
         
         if (!AUTH_KEY) throw new RuntimeException("unauthorized");
+        logx();
 
         coinclix_init:
         $_code = null;
