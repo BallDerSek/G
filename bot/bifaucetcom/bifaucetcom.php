@@ -1,6 +1,6 @@
 <?php
 if (!defined('ROOT')) { die; }
-#_die();
+_die();
 $api = onKeys();
 
 $acc = config::credential([], false, ['mail', 'pass', 'PROXY']);
@@ -288,11 +288,11 @@ while (true) {
             }
             
             if (!empty($po)) {
-                print_r($po);
+                
                 $cla = Net::C($f['url'], 'POST', $po, inf::$cookie, [], "$host/faucet", inf::$uagent, ip: $ip);
                 if (empty($cla) || ($cla === 99)) continue;
                 
-                #_put('cla.html', $cla);
+                _put('cla.html', $cla);
                 $m = scraper::_jP($cla, "/Swal\.fire\s*\(\s*'([^']+)'\s*,\s*'([^']+)'\s*,\s*'([^']+)'\s*\)/");
                 if (isset($m[2][0])) {
                     print(FGd['CYN'].maskEmail($mail).RSET." ");
@@ -300,6 +300,9 @@ while (true) {
                     if (stripos($m[2][0], 'has been added')) break;
                 }
                 
+                $alert_d = scraper::_xP($ve, "//div[contains(@class, 'alert-danger')]");
+                if (!empty($alert_d)) logx('err', $alert_d[0]);
+                    
             }
             
             

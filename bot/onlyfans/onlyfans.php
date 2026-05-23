@@ -66,8 +66,14 @@ while (true) {
             continue;
         }
         if (empty($_0)) continue;
-        $_0 = checkCF($host, $api, $_0);
-
+        $cf = checkCF($host, $api, $_0, $headersCF);
+        
+        if (!empty($cf)) {
+            $headersCF = $cf['head'];
+            $_0 = $cf['html'];
+        }
+        
+        
         $f = scraper::payload($_0)[0] ?? null;
         $po = null;
         
@@ -147,7 +153,12 @@ while (true) {
             $ret99 = 0; 
             if (empty($fau)) continue;
             
-            $fau = checkCF($fa, $api, $fau);
+            $cfa = checkCF($fa, $api, $fau, $headersCF);
+            
+            if (empty($cfa)) continue;
+            
+            $fau = $cfa['html'];
+            $headersCF = $cfa['head'];
             
             if ($ban = isBan($fau)) {
                 logx('err', " kena ban: " . $ban['ti']);
@@ -167,16 +178,14 @@ while (true) {
             if ($f) {
                 $cap = [];
                 $pa = $f['payload'];
+                #print_r($f);
                 $cap = onfCap($fau, $fa, $api, $pa, $headersCF);
 
                 if (empty($cap)) {
                     $cap = Solve::exec($fau, $host, $api, $pa);
                 }
                 
-                if (isset($cap['nocaptcha']) && isset($pa['_aid'])) {
-                    $cfg = Scraper::_xP($fau, "//div[@id='_bk']/@data-config")[0] ?? null;
-                    $cap = onfAid($cfg);
-                }
+                if (isset($cap['nocaptcha']) && isset($pa['auth_token'])) $cap = onfAid();
                 
                 if (isset($cap['trouble'])) {
                     $tro = $cap['trouble'];
@@ -192,7 +201,7 @@ while (true) {
             
             if (!empty($po)) {
                 #print_r($po); #die;
-                _sle(1);
+                #_sle(1);
                 $cla = Net::X($f['url'], 'POST', $po, inf::$cookie, $headersCF, $host, inf::$uagent);
                 if ($cla && $cla !== 99) { 
                     #_put('cla.html', $cla);
@@ -242,7 +251,7 @@ while (true) {
         print(FGd['CYN'].maskEmail($login).RSET." ");
         (logx('err', 'gak bisa claim') ?: die);
     }
-    
+
     sl:
     $valid = [];
     $success_in_page = false;
@@ -341,7 +350,10 @@ while (true) {
                     if (!empty($get['body'])) {
                         #_put('get.html', $get['body']); 
                         $he = [];
-                        $get = checkCF($bakk, $api, $get);
+                        $getf = checkCF($bakk, $api, $get, $headersCF);
+                        
+                        $headersCF = $getf['head'];
+                        $get = $getf['html'];
                         
                         
                         $_s = scraper::_jP($get, "/var\s+HAS_PENDING\s*=\s*(true|false);/i");
@@ -570,31 +582,60 @@ function onfDrg($json_cfg, $reff) {
     return ['trouble' => 'reload'];
 }
 
-function onfAid($cfg_hex) {
-    if (!$cfg_hex || strlen($cfg_hex) !== 64) return ['trouble' => 'reload'];
+function onfAid() {
+    $_micr = rand(500000, 3000000); 
+    $_mili = round($_micr / 1000);
+    
+    usleep($_micr);
 
-    $motor = [
-        'ev' => 1,
-        'sc' => rand(35, 55),
-        'yv' => rand(10, 35) / 100,
-        'vm' => rand(150, 280) / 100,
-        'vs' => rand(100, 190) / 100,
-        'as' => rand(70, 95),
-        'jk' => rand(15, 45) / 100,
-        'dr' => rand(450, 750)
+    $_ua = inf::$uagent; 
+    $is_M = (stripos($_ua, 'Android') !== false || stripos($_ua, 'iPhone') !== false || stripos($_ua, 'Mobile') !== false);
+    $res = $is_M ? ['w' => 360, 'h' => 740] : ['w' => 1920, 'h' => 1080];
+    $is_P = $is_M ? 'touch' : 'mouse';
+    
+    $_step = rand(15, 25);
+    $_time = rand(600, 1500);
+    $m = [];
+    $y_vals = [];
+    
+    $_lasts = 0;
+    for ($i = 1; $i <= $_step; $i++) {
+        $_pppp = $i / $_step;
+        
+        $x = ($i === $_step) ? 250 : round(250 * (1 - pow(1 - $_pppp, 2)));
+        $y = rand(-5, 5);
+        $t = round(($_time / $_step) * $i) + rand(-10, 10);
+        
+        $m[] = ['x' => (int)$x, 'y' => $y, 't' => (int)max($_lasts + 1, $t)];
+        $_lasts = (int)$m[$i-1]['t'] ?? 0;
+        $y_vals[] = $y;
+    }
+
+    $y_vars = (float)abs(max($y_vals) - min($y_vals));
+
+    $payload = [
+        'c'  => $_mili + rand(500, 1500), 
+        'x'  => (float)rand(10, 40) / 10,
+        'y'  => (float)rand(10, 40) / 10,
+        'p'  => $is_P,
+        't'  => true,
+        'sw' => $res['w'],
+        'sh' => $res['h'],
+        'tz' => -420,
+        'h'  => rand(200, 600),
+        'd'  => $_time,
+        'v'  => $y_vars,
+        'b'  => rand(0, 1),
+        'wc' => $_step,
+        'm'  => $m
     ];
 
-    $json = json_encode($motor);
-    
-    $_ke = hex2bin($cfg_hex);
-    $_iv = random_bytes(12);
-    
-    $_ci = openssl_encrypt($json, 'aes-256-gcm', $_ke, OPENSSL_RAW_DATA, $_iv, $_ta);
-    
-    if ($_ci !== false) return ['_aid' => base64_encode($_iv . $_ci . $_ta)];
-    
-    return ['trouble' => 'reload'];
+    return ['auth_token' => json_encode($payload)];
 }
+
+
+
+
 
 function onfOdd($img) {
     if (!getDeps('gd@php')) {
@@ -735,7 +776,6 @@ function onfCap($fau, $host, $api, $payload, $he) {
         $coords = onfOdd($img); 
         if ($coords === false) return ['trouble' => 'reload'];
         
-        // KEMBALI KE INT (Bulat Murni): Menghindari bug koma/titik lokal regional PHP
         $cx = (int)round($coords['cx'] + rand(-2, 2));
         $cy = (int)round(($coords['cy'] + rand(-2, 2)));
         
@@ -897,12 +937,12 @@ function isBan($html) {
     ];
 }
 
-function checkCF($url, $api, $body = null) {
+function checkCF($url, $api, $body = null, $headersCF = []) {
     
     $html = $body['body'] ?? null;
     $code = $body['http_code'] ?? null;
     
-    if (!$html || !$code) return null;
+    if (!$html || !$code) return [];
     
     if ($code !== 200 && (stripos($html, 'Just a moment') !== false || stripos($html, 'Attention Required!') !== false)) {
         
@@ -922,7 +962,8 @@ function checkCF($url, $api, $body = null) {
                     if (!empty($fix) && isset($fix['http_code'])) {
                         if ($fix['http_code'] === 200) {
                             config::credential()['ua'] = $ua;
-                            return $fix['body'];
+                            
+                            return ['html' => $fix['body'], 'head' => $headersCF];
                         }
                     }
                     logx('info', "try-{$try} fail, reloading");
@@ -930,10 +971,10 @@ function checkCF($url, $api, $body = null) {
             }
         }
     } else {
-        return $html;
+        return ['html' => $html, 'head' => $headersCF];
     }
     
-    return null;
+    return [];
     
 }
 

@@ -460,7 +460,13 @@ class glitch extends Provider {
         foreach ($data['rels'] as $i => $b64) {
             $params['sub'][$i + 1] = $b64;
         }
-        return $this->run('antibot', $params);
+        $antibot = $this->run('antibot', $params);
+        #var_dump($antibot);
+        if (!str_starts_with($antibot, ' ')) {
+            return " $antibot";
+        }
+        
+        return $antibot;
     }
     
     /** info saldo */
