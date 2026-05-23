@@ -333,7 +333,7 @@ while (true) {
                     
                     if (!empty($get['body'])) {
                         _put('get.html', $get['body']); 
-                        
+                        $he = [];
                         $get = checkCF($bakk, $api, $get);
                         
                         

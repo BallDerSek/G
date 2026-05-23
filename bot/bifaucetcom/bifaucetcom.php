@@ -1,6 +1,6 @@
 <?php
 if (!defined('ROOT')) { die; }
-#_die();
+_die();
 $api = onKeys();
 
 $acc = config::credential([], false, ['mail', 'pass', 'PROXY']);
@@ -189,7 +189,6 @@ while (true) {
         }
     } while (!$claim);
 
-/* zerads 
     $zer = Net::C("$host/zeradsptc/earn", 'GET', null, inf::$cookie, [], "$host/dashboard", inf::$uagent, false, false, $ip);
     if (!empty($zer) && $zer !== 99) {
         $zer_u = Scraper::_xP($zer, "//a[@id='generateBtn']/preceding-sibling::a[1]/@href")[0] ?? '';
@@ -198,7 +197,7 @@ while (true) {
             while (true) {
                 $zer = null;
                 $zer = Net::X($zer_u, 'GET', null, inf::$cookie, [], "", inf::$uagent);
-                _put('zer.html', $zer);
+                #_put('zer.html', $zer);
                 
                 if ($zer === 99) {
                     $zer99++;
@@ -214,24 +213,35 @@ while (true) {
                     if (stripos($zer, 'solve captcha')) {
                         
                         $zerC_m = Scraper::_xP($zer, "//td[contains(text(), 'Click')]/following-sibling::td/img/@src | //font[contains(text(), 'Click')]/../following-sibling::td/img/@src")[0] ?? '';
-                        print_r($zerC_m);
                         
                         $zerC_o = Scraper::_xP($zer, "//a[contains(@href, 'scid=')]/@href");
-                        print_r($zerC_o);
                         
                         $zerC_i = Scraper::_xP($zer, "//a[contains(@href, 'scid=')]/img/@src");
-                        print_r($zerC_i);
-
+                        
+                        if ($zerC_m && $zerC_o && $zerC_i) {
+                            $he = ['image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8'];
+                            print_r($zerC_m);
+                            print_r($zerC_o);
+                            print_r($zerC_i);
+                            
+                            
+                            $zer_h = 'https://zerads.com/';
+                            $img_M = Net::C($zer_h.$zerC_m, 'GET', null, null, $he, $zer_u, inf::$uagent);
+                            _put('main.png', $img_M);
+                            
+                            
+                            
+                            
+                            
+                        }
                     }
-                    
-                    
                 }
-                
             die;
             }
         }
     }
-*/
+
+die;
 
     if (!$limit && $claim) {
         $ret99 = 0; 
