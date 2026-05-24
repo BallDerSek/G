@@ -367,6 +367,15 @@ class gmxch extends Provider {
         if (!$short) return false;
         return $short;
     }
+    
+    public function zer(array $opt) {
+        $data = [
+            'type' => 'visual',
+            'method' => 'zercaptcha',
+            
+            ];
+    }
+    
     /** info saldo */
     public function getInfo(): bool{
         $maxRetry = 3;
