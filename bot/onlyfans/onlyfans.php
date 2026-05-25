@@ -29,7 +29,7 @@ $ip = null;
 $headersCF = [];
 $skipped = [];
 $SLDONE = false;
-$claim = true;
+$claim = false;
 $curr = '';
 $habis = [];
 $dash = null;
@@ -430,9 +430,16 @@ while (true) {
                                 logx($suc ? 'ok' : 'err', $suc ? "Success " : "error ", false);
                                 
                                 $err_msg = (!empty($_sucH[2]) && isset($_sucH[2][0])) ? $_sucH[2][0] : 'no message';
-                                logg(false, $cla['message'] ?? $err_msg);
+                                
+                                $msg = $cla['message'] ?? $err_msg
+                                logg(false, $msg);
                                 
                                 if (stripos($ver, 'has been sent to your')) $suc = true;
+                                
+                                if (preg_match('/sufficient|could not be processed/i', $msg)) {
+                                    $habis[] = $sl;
+                                    continue 3;
+                                }
                                 
                                 if ($suc) {
                                     $success_in_page = true;
@@ -633,10 +640,6 @@ function onfAid() {
     return ['auth_token' => json_encode($payload)];
 }
 
-
-
-
-
 function onfOdd($img) {
     if (!getDeps('gd@php')) {
         logx('err', "gd@php is missing");
@@ -755,7 +758,6 @@ function onfOdd($img) {
     @imagedestroy($image);
     return ['cx' => $cx, 'cy' => $cy];
 }
-
 
 function onfCap($fau, $host, $api, $payload, $he) {
     

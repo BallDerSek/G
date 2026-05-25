@@ -685,6 +685,7 @@ abstract class Provider {
             } catch (Throwable $e) {
                 $code = $e->getMessage();
                 $type = Api::errType($code);
+                logx('info', 'Api [ '.static::class.' ] ', false, true);
                 logx('err', $code);
                 
                 if ($method === 'antibot') return false;
@@ -755,6 +756,7 @@ abstract class Provider {
         $i = 0;
         
         foreach ($data['rels'] as $rel => $b64) {
+            #_put($rel.'.png', base64_decode($b64));
             $pa[(string)$rel] = $b64;
             $map[(string)$rel] = $rel;
             $map[(string)$i] = $rel; 

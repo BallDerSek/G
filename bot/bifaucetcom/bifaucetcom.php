@@ -1,6 +1,6 @@
 <?php
 if (!defined('ROOT')) { die; }
-_die();
+#_die();
 $api = onKeys();
 
 $acc = config::credential([], false, ['mail', 'pass', 'PROXY']);
@@ -32,6 +32,7 @@ $SLDONE = false;
 $skipped = [];
 $claim = false;
 $can_withdraw = true;
+$pending = null;
 while (true) {
     $ret = 0; 
     
@@ -103,9 +104,24 @@ while (true) {
         
     } while (empty($dash));
     #_put('dash.html', $dash);
-    #goto sl;
+    
     if (stripos($dash, 'Please check your inbox or spam folder to confirm your account')) {
         $can_withdraw = false;
+    }
+    
+    if (!empty($pending)) {
+        for ($retry = 0; $retry < 2; $retry++) {
+            $verr = Net::C($pending, 'GET', null, inf::$cookie, [], $host, inf::$uagent, ip: $ip);
+            if (!empty($verr) && $verr !== 99) {
+                $pending = null;
+                $m = scraper::_jP($ver, "/Swal\.fire\s*\(\s*'([^']+)'\s*,\s*'([^']+)'\s*,\s*'([^']+)'\s*\)/");
+                if (isset($m[2][0])) {
+                    print(FGd['CYN'].maskEmail($mail).RSET." ");
+                    logg(true, $m[2][0]);
+                }
+                break;
+            }
+        }
     }
     
     do {
@@ -188,7 +204,7 @@ while (true) {
             break;
         }
     } while (!$claim);
-
+/*
     $zer = Net::C("$host/zeradsptc/earn", 'GET', null, inf::$cookie, [], "$host/dashboard", inf::$uagent, false, false, $ip);
     if (!empty($zer) && $zer !== 99) {
         $zer_u = Scraper::_xP($zer, "//a[@id='generateBtn']/preceding-sibling::a[1]/@href")[0] ?? '';
@@ -252,8 +268,8 @@ while (true) {
             die;
         }
     }
-
 die;
+*/
     if (!$limit && $claim) {
         $ret99 = 0; 
         while (true) {
@@ -276,8 +292,7 @@ die;
             $cap = [];
             $f = scraper::payload($fau)[0] ?? [];
             if (empty($f)) {
-                if (stripos($fau, '/register')) goto login;
-                if (!$SLDONE) break;
+                if (stripos($fau, '/register') || !$SLDONE) break;
                 
                 styler('Waiting for faucet', fn() => _sle(30));
                 continue;
@@ -300,7 +315,7 @@ die;
                 $cla = Net::C($f['url'], 'POST', $po, inf::$cookie, [], "$host/faucet", inf::$uagent, ip: $ip);
                 if (empty($cla) || ($cla === 99)) continue;
                 
-                _put('cla.html', $cla);
+                #_put('cla.html', $cla);
                 $m = scraper::_jP($cla, "/Swal\.fire\s*\(\s*'([^']+)'\s*,\s*'([^']+)'\s*,\s*'([^']+)'\s*\)/");
                 if (isset($m[2][0])) {
                     print(FGd['CYN'].maskEmail($mail).RSET." ");
@@ -308,7 +323,7 @@ die;
                     if (stripos($m[2][0], 'has been added')) break;
                 }
                 
-                $alert_d = scraper::_xP($ve, "//div[contains(@class, 'alert-danger')]");
+                $alert_d = scraper::_xP($cla, "//div[contains(@class, 'alert-danger')]");
                 if (!empty($alert_d)) logx('err', $alert_d[0]);
                     
             }
@@ -318,6 +333,7 @@ die;
     }
 
     sl:
+    $ret99 = 0; 
     do {
         $sho = Net::C("$host/links", 'GET', null, inf::$cookie, [], "$host/dashboard", inf::$uagent, false, false, $ip);
         #_put('sho.html', $sho);
@@ -336,13 +352,9 @@ die;
         
         $short = sScraper::extract($sho);
         #print_r($short);
-        if (empty($short)) {
-            logx('info', "sl abis");
-            $SLDONE = true;
-            break;
-        }
+        if (empty($short) || stripos($sho, '/register')) break;
         
-        $up = ['earnow','shortano', 'shortino', 'fc-lc', 'coinclix'];
+        $up = ['earnow','shortano', 'shortino', 'fc-lc', 'coinclix', 'oii.io'];
         
         $can_process = false; 
         foreach ($short as $links => [$idd, $lmt]) {
@@ -401,7 +413,7 @@ die;
             
             $retVer = 0;
             while (true) {
-                $ver = Net::C($bakk, 'GET', null, inf::$cookie, [], $loc, inf::$uagent);
+                $ver = Net::C($bakk, 'GET', null, inf::$cookie, [], $loc, inf::$uagent, ip: $ip);
                 if ($ver === 99) {
                     $retVer++;
                     if ($retVer >= 5) goto login;
@@ -413,6 +425,11 @@ die;
             
             if (!empty($ver)) {
                 #_put('ver.html', $ver);
+                if (stripos($ver, '/register')) {
+                    $pending = $bakk;
+                    break 2;
+                }
+                
                 $m = scraper::_jP($ver, "/Swal\.fire\s*\(\s*'([^']+)'\s*,\s*'([^']+)'\s*,\s*'([^']+)'\s*\)/");
                 if (isset($m[2][0])) {
                     print(FGd['CYN'].maskEmail($mail).RSET." ");

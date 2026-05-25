@@ -104,7 +104,7 @@ skibidixxxget:
             
             throw new Exception($q);
 
-        } while (time() - $start < 600);
+        } while (time() - $start < 500);
 
         throw new Exception("ERROR_TIMEOUT");
     }
