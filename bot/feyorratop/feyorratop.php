@@ -35,7 +35,7 @@ $skipped = [];
 $can_withdraw = true;
 while (true) {
     $ret = 0; 
-    #goto tes;
+    
     do {
         $ret++;
         $l = inf::check("$host/dashboard", [], '/register');
@@ -108,6 +108,7 @@ while (true) {
         
     } while (empty($dash));
     #_put('dash.html', $dash); 
+    #goto sl;
     
     if ($dash && str_contains($dash, 'confirm your email')) {
         $can_withdraw = false;
@@ -331,12 +332,12 @@ while (true) {
         
         $f = scraper::payload($sho)[0] ?? [];
         $short = sScraper::extract($sho);
+        #print_r($short);
         if (empty($short)) {
             logx('info', "sl abis");
             $SLDONE = true;
             break;
         }
-        #print_r($short);
         $up = ['earnow','shortano', 'shortino', 'fc-lc'];
         
         if (!empty($f)) {
@@ -410,7 +411,7 @@ while (true) {
             
             logx('info', "Bypass: $loc", true, true);
             $bakk = links($api, $loc);
-            #var_dump($bakk);
+            #var_dump($bakk); #die;
             
             if (!$bakk) {
                 $skipped[$idd] = true; 
@@ -418,7 +419,7 @@ while (true) {
                 break 2;
             }
             
-            styler("waiting for SL", fn() => _sle(50));
+            styler("waiting for SL", fn() => _sle(70));
             
             $retVer = 0;
             while (true) {
