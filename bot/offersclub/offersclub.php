@@ -31,8 +31,9 @@ $SLDONE = false;
 $curr = '';
 $dash = null;
 $wallOwme = false;
-$ptc = true;
+$owmeOFF = true;
 while (true) {
+    
     $ret = 0;
     
     do {
@@ -98,7 +99,7 @@ while (true) {
         
         while ($retryList < 5) {
             $owme = Net::C($host.'/offerwalls/offerwallme-ptc', 'GET', null, inf::$cookie, [], '', inf::$uagent);
-            #_put('owme.html', $owme);
+            #_put('owme.html', $owme); die;
             
             if (!empty($owme) && $owme !== 99) {
                 $clicks = Scraper::_xP($owme, "//div[contains(@class, 'ptc-grid')]//a[contains(@class, 'btn-ptc-go')]/@href");
@@ -141,64 +142,88 @@ while (true) {
         
     } while (!$wallOwme);
     
-    $ptc99 = 0;
-    while ($ptc) {
-        $ptc99++;
-        $ads = Net::C($host.'/offerwalls/offerwallme', 'GET', null, inf::$cookie, [], '', inf::$uagent);
-        
-        if ($ptc99 >= 5) goto login;
-        
-        if (empty($ads)) continue;
-        
-        $owme_if = Scraper::_xP($ads, "//div[contains(@class, 'offerwall-wrapper')]//iframe/@src");
-        
+/*
+    $owmeof = Net::C($host.'/offerwalls/offerwallme', 'GET', null, inf::$cookie, [], '', inf::$uagent);
+    _put('0.html', $owmeof);
+    if (!empty($owmeof) && $owmeof !== 99) {
+        $owme_if = Scraper::_xP($owmeof, "//div[contains(@class, 'offerwall-wrapper')]//iframe/@src");
         $owme_ur = !empty($owme_if) ? trim($owme_if[0]) : null;
-        $owme_bo = Net::C($owme_ur, 'GET', null, inf::$cookie, [], '', inf::$uagent);
-        if (!empty($owme_bo)) {
-            $po = null;
-            $owme_tkn = Scraper::_pP($owme_bo, 'token')[0] ?? null;
-            
-            if ($owme_tkn) {
-                $po = ['type' => 'ptc','token' => $owme_tkn,'action' => 'switch_cat'];
-            }
-            
-            if (!empty($po)) {
-                $owme = json_decode(Net::X($owme_ur, 'POST', $po, inf::$cookie, [], '', inf::$uagent)?: '', 1);
+        
+        while ($owmeOFF) {
+            $owme_bo = Net::C($owme_ur, 'GET', null, inf::$cookie, [], '', inf::$uagent);
+            _put('1.html', $owme_bo);
+            if (!empty($owme_bo) && $owme_bo !== 99) {
+                $po = null;
+                $owme_tkn = Scraper::_pP($owme_bo, 'token')[0] ?? null;
+                if ($owme_tkn) $po = ['type' => 'ptc','token' => $owme_tkn,'action' => 'switch_cat'];
                 
-                if (isset($owme['status']) && $owme['status'] === 200 && !empty($owme['content'])) {
-                    #print_r($owme);
-                    _put('owme.html', $owme['content']);
+                if (!empty($po)) {
+                    $owme = json_decode(Net::X($owme_ur, 'POST', $po, inf::$cookie, [], '', inf::$uagent)?: '', 1);
                     
-                    $owme_co = $owme['content'];
+                    if (isset($owme['status']) && $owme['status'] === 200 && !empty($owme['content'])) {
+                        #print_r($owme);
+                        _put('owme.html', $owme['content']);
+                        
+                        $owme_co = $owme['content'];
+                        
+                        $has = Scraper::_xP($owme_co, "//div[contains(@class, 'campaign-block')]/@data-hash");
+                        $key = Scraper::_xP($owme_co, "//div[contains(@class, 'campaign-block')]/@data-key");
+                        $sid = Scraper::_xP($owme_co, "//div[contains(@class, 'campaign-block')]/@data-sid");
+                        $tmr = Scraper::_xP($owme_co, "//div[contains(@class, 'campaign-block')]//span[contains(text(), 'Visit for')]/text()");
+                        var_dump($has);
+                        var_dump($key);
+                        var_dump($sid);
+                        var_dump($tmr);
+                        
+                    }
                     
-                    $has = Scraper::_xP($owme_co, "//div[contains(@class, 'campaign-block')]/@data-hash");
-                    var_dump($has);
-                    $key = Scraper::_xP($owme_co, "//div[contains(@class, 'campaign-block')]/@data-key");
-                    var_dump($key);
-                    $sid = Scraper::_xP($owme_co, "//div[contains(@class, 'campaign-block')]/@data-sid");
-                    var_dump($sid);
-                    $tmr = Scraper::_xP($owme_co, "//div[contains(@class, 'campaign-block')]//span[contains(text(), 'Visit for')]/text()");
-                    var_dump($tmr);
+                    
                     
                     
                 }
-                
             }
-            
+            die;
+        }
+    }
+*/
+    
+
+    $wd = Net::C($host.'/withdraw', 'GET', null, inf::$cookie, [], '', inf::$uagent);
+    
+    if (!empty($wd) && $wd !== 99) {
+        
+        $jjn = Scraper::_xP($wd, "//span[contains(@class, 'balance-val')]")[0] ?? '0';
+        
+        $bal = (float) filter_var($jjn, FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
+        
+        $po = null;
+        $f = scraper::payload($wd)[0] ?? [];
+        
+        if ($bal >= 0.01 && !empty($f['payload'])) {
+            $cre = ['wallet' => $login, 'usd_amount' => $bal, 'method' => '1'];
+            $po = array_merge($f['payload'], $cre);
         }
         
-        
-        
-        
-    die;
+        if ($po) {
+            $ver = Net::C($host.'/withdraw', 'POST', $po, inf::$cookie, [], $host.'/withdraw', inf::$uagent);
+            $_suc = Scraper::_xP($ver, "//div[contains(@class, 'alert-success')]")[0] ?? null;
+            if ($_suc) {
+                $parts = explode('!', $_suc);
+                $hasil = isset($parts[1]) ? trim($parts[1]) : $_suc;
+                print(FGd['CYN'].maskEmail($login).RSET." ");
+                logx('info', $hasil, true, true);
+            }
+        }
     }
     
+    if ($wallOwme) {
+        $ow->cleanup(); 
+        styler('Waiting cooldown offerwall.me', fn() => _sle(50));
+        $wallOwme = false;
+    }
     
-    
-    
-    
-    
-    
-die;
 }
 
+
+
+tes:

@@ -110,9 +110,8 @@ class Owme {
         ];
 
         $res = json_decode(Net::X($url, 'POST', $payload, $this->cookieFile, [], $ref, $this->userAgent) ?: '', true);
-        if (empty($res)) {
-            return false;
-        }
+        
+        if (empty($res)) return false;
 
         if (!empty($res) && is_array($res)) {
             $msg = isset($res['message']) ? trim(strip_tags($res['message'])) : 'ora tau apa isinya';
@@ -132,10 +131,7 @@ class Owme {
         $capRaw = Net::X($capUrl, 'POST', ['cID' => '0', 'rT' => '1', 'tM' => 'light'], $this->cookieFile, [], $ref, $this->userAgent) ?: '';
         $capReq = json_decode($capRaw, true);
 
-        if (!$capReq || !is_array($capReq)) {
-            logx('err', "Gagal ambil icon");
-            return null;
-        }
+        if (!$capReq || !is_array($capReq)) return null;
 
         return $capReq;
     }
@@ -146,60 +142,10 @@ class Owme {
         return (!empty($check) && isset($check['http_code']) && $check['http_code'] === 200);
     }
 
+    public function cleanup() {
+        return @unlink($this->cookieFile);
+    }
+
 }
 
-
-
-# cara pakai tapi bukan iframe, kalau iframe belum dibuat 
-/*
-    $done = false;
-    do { # offerwall.me
-        
-        $ow = new Owme($host, $login);
-        $retryList = 0;
-        $off = [];
-        while ($retryList < 3) {
-            $owme = Net::C($host.'/offerwallme', 'GET', null, $cookieFile, [], '', $userAgent);
-            #_put('owme.html', $owme);
-            if (!empty($owme)) {
-                $clicks = Scraper::_xP($owme, "//div[@id='pane_ptc']//button[contains(@onclick, 'owVisit')]/@onclick");
-                $times = Scraper::_xP($owme, "//span[contains(@class, 'ow-badge')][i[contains(@class, 'fa-clock')]]");
-                foreach ($clicks as $i => $onclick) {
-                    if (preg_match("/owVisit\(this\s*,\s*['\"]([^'\"]+)['\"]/i", $onclick, $match)) {
-                        $o_u = str_replace('&amp;', '&', $match[1]);
-                        $rawTime = $times[$i] ?? '10';
-                        $o_t = (int)filter_var($rawTime, FILTER_SANITIZE_NUMBER_INT);
-                        $off[] = [
-                            'url' => $o_u,
-                            'timer' => $o_t ?: 10
-                        ];
-                    }
-                }
-            }
-            if (!empty($off)) break;
-            
-            $retryList++;
-            if ($retryList < 3) {
-                _sle(3);
-            }
-        }
-        
-        if (empty($off)) {
-            logx('err', "habis total kaya kayaknya.");
-            _put('owme.html', $owme);
-            $done = true;
-        } else {
-            foreach ($off as $ad) {
-                $status = $ow->claim($ad['url'], $ad['timer']);
-                if ($status) {
-                    styler('Waiting', fn() => _sle(5));
-                } else {
-                    logx('err', "Gagal claim iklan");
-                }
-            }
-        }
-        
-        
-    } while (!$done); 
-*/
 
