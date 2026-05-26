@@ -33,7 +33,6 @@ $dash = null;
 $wallOwme = false;
 $owmeOFF = true;
 while (true) {
-    
     $ret = 0;
     
     do {
@@ -125,7 +124,7 @@ while (true) {
         
         if (empty($off)) {
             logx('err', "habis total kaya kayaknya.");
-            _put('owme.html', $owme);
+            #_put('owme.html', $owme);
             $wallOwme = true;
         } else {
             foreach ($off as $ad) {
@@ -218,7 +217,7 @@ while (true) {
     
     if ($wallOwme) {
         $ow->cleanup(); 
-        styler('Waiting cooldown offerwall.me', fn() => _sle(50));
+        styler('Waiting cooldown offerwall.me', fn() => _sle(60));
         $wallOwme = false;
     }
     

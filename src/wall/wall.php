@@ -36,7 +36,6 @@ class Owme {
                 continue;
             }
             
-            print(FGd['CYN'].maskEmail($this->email).RSET." ");
             logx('info', "[ offerwall.me {$timer}s ] ", false, true);
             
             _sle((int)$adData['params']['dur']);
@@ -109,7 +108,7 @@ class Owme {
             'action' => $par['act']
         ];
 
-        $res = json_decode(Net::X($url, 'POST', $payload, $this->cookieFile, [], $ref, $this->userAgent) ?: '', true);
+        $res = json_decode(Net::X($url, 'POST', $payload, $this->cookieFile, [], $ref, $this->userAgent) ?: '', 1);
         
         if (empty($res)) return false;
 
@@ -117,7 +116,10 @@ class Owme {
             $msg = isset($res['message']) ? trim(strip_tags($res['message'])) : 'ora tau apa isinya';
             
             if (isset($res['status']) && $res['status'] == 200) {
+                _clr(); 
+                print(FGd['CYN'].maskEmail($this->email).RSET." ");
                 logx('ok', $msg, true, true);
+                
                 return true;
             } else {
                 logx('err', $msg);
@@ -128,8 +130,7 @@ class Owme {
     }
 
     private function _getCap($capUrl, $ref) {
-        $capRaw = Net::X($capUrl, 'POST', ['cID' => '0', 'rT' => '1', 'tM' => 'light'], $this->cookieFile, [], $ref, $this->userAgent) ?: '';
-        $capReq = json_decode($capRaw, true);
+        $capReq = json_decode(Net::X($capUrl, 'POST', ['cID' => '0', 'rT' => '1', 'tM' => 'light'], $this->cookieFile, [], $ref, $this->userAgent) ?: '', 1);
 
         if (!$capReq || !is_array($capReq)) return null;
 
