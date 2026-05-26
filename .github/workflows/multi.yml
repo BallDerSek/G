@@ -137,7 +137,7 @@ jobs:
 
               subprocess.run(["php","run.php"], env=env)
 
-          with ThreadPoolExecutor(max_workers=3) as ex:
+          with ThreadPoolExecutor(max_workers=10) as ex:
               for i,a in enumerate(accounts):
                   ex.submit(run_worker,a,i)
           EOF
