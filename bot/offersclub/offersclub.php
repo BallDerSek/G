@@ -1,6 +1,6 @@
 <?php
 if (!defined('ROOT')) { die; }
-_die();
+#_die();
 $api = onKeys();
 
 $acc = config::credential([], false, ['login', 'PROXY']);
@@ -88,44 +88,58 @@ while (true) {
         Net::C($host, 'POST', $po, inf::$cookie, [], $host.$r, inf::$uagent, false, false, $ip);
         
     } while (empty($dash));
-    _put('dash.html', $dash);
-    
-/*
+    #_put('dash.html', $dash);
+
     do {
         $ow = new Owme($host, $login);
         $retryList = 0;
         $off = [];
-        while ($retryList < 3) {
+        $anySuccess = false; 
+        
+        while ($retryList < 5) {
             $owme = Net::C($host.'/offerwalls/offerwallme-ptc', 'GET', null, inf::$cookie, [], '', inf::$uagent);
-            _put('owme.html', $owme);
+            #_put('owme.html', $owme);
             
             if (!empty($owme) && $owme !== 99) {
+                $clicks = Scraper::_xP($owme, "//div[contains(@class, 'ptc-grid')]//a[contains(@class, 'btn-ptc-go')]/@href");
+                $timers = Scraper::_xP($owme, "//div[contains(@class, 'ptc-meta')]/span[2]");
                 
+                if (!empty($clicks) && is_array($clicks)) {
+                    foreach ($clicks as $i => $rawUrl) {
+                        $o_u = str_replace('&amp;', '&', $rawUrl);
+                        $rawTime = $timers[$i] ?? '10';
+                        $o_t = (int)filter_var($rawTime, FILTER_SANITIZE_NUMBER_INT);
+                        $off[] = [
+                            'url' => $o_u,
+                            'timer' => $o_t ?: 10
+                        ];
+                    }
+                }
             }
+            if (!empty($off)) break;
             
-            
-            
-            
-        die;
+            $retryList++;
+            if ($retryList < 5) _sle(3);
         }
         
         if (empty($off)) {
             logx('err', "habis total kaya kayaknya.");
             _put('owme.html', $owme);
-            $done = true;
+            $wallOwme = true;
         } else {
             foreach ($off as $ad) {
-                $status = $ow->claim($ad['url'], $ad['timer']);
+                $status = $ow->exec($ad['url'], $ad['timer']);
                 if ($status) {
+                    $anySuccess = true; 
                     styler('Waiting', fn() => _sle(5));
                 } else {
                     logx('err', "Gagal claim iklan");
                 }
             }
+            if (!$anySuccess) $wallOwme = true;
         }
         
     } while (!$wallOwme);
-*/
     
     $ptc99 = 0;
     while ($ptc) {

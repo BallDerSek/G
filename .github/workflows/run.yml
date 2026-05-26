@@ -7,12 +7,8 @@ on:
         description: 'bot'
         default: 'shortlink'
         required: true
-      login:
-        description: '["user1","user2"]'
-        default: '["0"]'
-        required: true
-      mail:
-        description: '["a@x.com","b@y.com"]'
+      accounts:
+        description: 'Akun ["a","b"]'
         default: '["0"]'
         required: true
       pass:
@@ -26,48 +22,47 @@ on:
         description: 'key'
         required: false
       proxy:
-        description: '["http://u:p@ip:port"]'
+        description: 'Proxy ["p1","p2"]'
         default: '[""]'
         required: false
-      matrix_source:
-        type: choice
-        options: [login, mail]
-        required: true
 
 jobs:
   prepare:
     runs-on: ubuntu-latest
     outputs:
-      pairs: ${{ steps.zip.outputs.pairs }}
+      batches: ${{ steps.split.outputs.batches }}
     steps:
-      - id: zip
-        shell: python {0}
+      - id: split
+        shell: python
         env:
-          SOURCE: ${{ github.event.inputs.matrix_source }}
-          LOGIN:  ${{ github.event.inputs.login }}
-          MAIL:   ${{ github.event.inputs.mail }}
+          ACCOUNTS: '${{ github.event.inputs.accounts }}'
         run: |
           import json, os
-          src = os.getenv("SOURCE")
-          logins = json.loads(os.getenv("LOGIN", "[]"))
-          mails  = json.loads(os.getenv("MAIL", "[]"))
-          targets = logins if src == "login" else mails
+          try:
+              targets = json.loads(os.getenv("ACCOUNTS", "[]"))
+          except:
+              targets = []
+          
           valid_targets = [t for t in targets if str(t) != "0"]
-          arr = []
-          for i, item in enumerate(valid_targets):
-              arr.append({src: item, "p_idx": i})
+          
+          size = 6
+          batches = []
+          for i in range(0, len(valid_targets), size):
+              chunk = valid_targets[i:i + size]
+              batches.append({"chunk_str": json.dumps(chunk), "offset": i})
+          
           with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
-              f.write(f"pairs={json.dumps(arr)}\n")
+              f.write(f"batches={json.dumps(batches)}\n")
 
   run:
     needs: prepare
-    if: needs.prepare.outputs.pairs != '[]'
+    if: needs.prepare.outputs.batches != '[]'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       max-parallel: 20
       matrix:
-        include: ${{ fromJson(needs.prepare.outputs.pairs) }}
+        include: ${{ fromJson(needs.prepare.outputs.batches) }}
 
     steps:
       - name: Checkout
@@ -77,74 +72,81 @@ jobs:
         uses: ./.github/actions/deps
         continue-on-error: false
 
-      - name: Start php
-        shell: python {0}
+      - name: Start PHP Parallel
+        shell: python
         env:
-          # list
-          SEC_MAIL_LIST: ${{ secrets.MAIL_LIST }}
-          SEC_PROXY_LIST: ${{ secrets.PROXY_LIST }}
+          CHUNK_RAW: '${{ matrix.chunk_str }}'
+          OFFSET: '${{ matrix.offset }}'
           
-          MAIL_VAL: ${{ matrix.mail || matrix.login }}
-          P_INDEX: ${{ matrix.p_idx }}
-          RAW_PROXIES: ${{ github.event.inputs.proxy }}
-          API_CHOICE: ${{ github.event.inputs.api }}
-          KEY_INPUT: ${{ github.event.inputs.key }}
-          PASS_INPUT: ${{ github.event.inputs.pass }}
-          BOT_INPUT: ${{ github.event.inputs.bot }}
+          # Inputs
+          RAW_PROXIES: '${{ github.event.inputs.proxy }}'
+          API_CHOICE: '${{ github.event.inputs.api }}'
+          KEY_INPUT: '${{ github.event.inputs.key }}'
+          PASS_INPUT: '${{ github.event.inputs.pass }}'
+          BOT_INPUT: '${{ github.event.inputs.bot }}'
           
-          # utils
-          SEC_PASS: ${{ secrets.PASS }}
-          SEC_AUTH: ${{ secrets.AUTH }}
-          SEC_DG: ${{ secrets.DG }}
-          
-          # keys
-          S_SOLVERIFY: ${{ secrets.SOLVERIFY }}
-          S_TERTUYUL: ${{ secrets.TERTUYUL }}
-          S_XEVIL: ${{ secrets.XEVIL }}
-          S_SKIBIDI: ${{ secrets.SKIBIDI }}
-          S_CAPSOLVER: ${{ secrets.CAPSOLVER }}
-          S_MULTIBOT: ${{ secrets.MULTIBOT }}
-          S_GMXCH: ${{ secrets.GMXCH }}
+          # Secrets
+          SEC_PASS: '${{ secrets.PASS }}'
+          SEC_AUTH: '${{ secrets.AUTH }}'
+          SEC_DG: '${{ secrets.DG }}'
+          S_SOLVERIFY: '${{ secrets.SOLVERIFY }}'
+          S_TERTUYUL: '${{ secrets.TERTUYUL }}'
+          S_XEVIL: '${{ secrets.XEVIL }}'
+          S_SKIBIDI: '${{ secrets.SKIBIDI }}'
+          S_CAPSOLVER: '${{ secrets.CAPSOLVER }}'
+          S_MULTIBOT: '${{ secrets.MULTIBOT }}'
+          S_GMXCH: '${{ secrets.GMXCH }}'
           
         run: |
           import os, json, subprocess
+          from concurrent.futures import ThreadPoolExecutor
 
+          accounts = json.loads(os.getenv("CHUNK_RAW", "[]"))
           proxies = json.loads(os.getenv("RAW_PROXIES", "[]"))
-          idx = int(os.getenv("P_INDEX", "0"))
-          real_proxy = proxies[idx] if idx < len(proxies) else ""
-
+          offset = int(os.getenv("OFFSET", "0"))
+          
           api_type = os.getenv("API_CHOICE", "").lower()
           manual_key = os.getenv("KEY_INPUT", "").strip()
           
-          secrets_map = {
-              "solverify": os.getenv("S_SOLVERIFY"),
-              "tertuyul": os.getenv("S_TERTUYUL"),
-              "xevil": os.getenv("S_XEVIL"),
-              "skibidixxx": os.getenv("S_SKIBIDI"),
-              "capsolver": os.getenv("S_CAPSOLVER"),
-              "multibot": os.getenv("S_MULTIBOT"),
-              "gmxch": os.getenv("S_GMXCH")
-          }
-          
-          final_key = manual_key if manual_key else secrets_map.get(api_type, "")
+          def run_worker(target, local_idx):
+              global_idx = offset + local_idx
+              real_proxy = proxies[global_idx] if global_idx < len(proxies) else ""
+              
+              # Bersihkan target (email) dari spasi dan tanda petik
+              clean_target = str(target).strip().replace('"', '').replace("'", "")
+              
+              secrets_map = {
+                  "solverify": os.getenv("S_SOLVERIFY"),
+                  "tertuyul": os.getenv("S_TERTUYUL"),
+                  "xevil": os.getenv("S_XEVIL"),
+                  "skibidixxx": os.getenv("S_SKIBIDI"),
+                  "capsolver": os.getenv("S_CAPSOLVER"),
+                  "multibot": os.getenv("S_MULTIBOT"),
+                  "gmxch": os.getenv("S_GMXCH")
+              }
+              
+              final_key = manual_key if manual_key else secrets_map.get(api_type, "")
 
-          php_env = os.environ.copy()
-          php_env.update({
-              "CI": "1",
-              "DG": os.getenv("SEC_DG", "1"),
-              "PROXY": real_proxy,
-              "mail": os.getenv("MAIL_VAL"),
-              "login": os.getenv("MAIL_VAL"),
-              "KEY": final_key,
-              "API": api_type,
-              "pass": os.getenv("PASS_INPUT") or os.getenv("SEC_PASS", ""),
-              "_authApi_": os.getenv("SEC_AUTH", ""),
-              "BOT": os.getenv("BOT_INPUT", ""),
-              "MAIL_LIST": os.getenv("SEC_MAIL_LIST", ""),
-              "PROXY_LIST": os.getenv("SEC_PROXY_LIST", "")
-          })
+              php_env = os.environ.copy()
+              
+              php_env.update({
+                 "CI": "1",
+                 "DG": os.getenv("SEC_DG", "1"),
+                 "PROXY": real_proxy,
+                 "mail": clean_target,
+                 "login": clean_target,
+                 "KEY": final_key,
+                 "API": api_type,
+                 "pass": (os.getenv("PASS_INPUT") or os.getenv("SEC_PASS", "")).strip(),
+                 "_authApi_": os.getenv("SEC_AUTH", ""),
+                 "BOT": os.getenv("BOT_INPUT", ""),
+              })
+              
+              # Log untuk memastikan tidak ada spasi liar (diapit tanda |)
+              print(f"[*] [Acc-{global_idx}] Executing: |{clean_target}|")
 
-          print(f"[*] Executing: {php_env['BOT']} via {api_type}")
-          
-          # 4. Run
-          subprocess.run(["php", "run.php"], env=php_env)
+              subprocess.run(["php", "run.php"], env=php_env)
+              
+          with ThreadPoolExecutor(max_workers=len(accounts)) as executor:
+              for i, acc in enumerate(accounts):
+                  executor.submit(run_worker, acc, i)

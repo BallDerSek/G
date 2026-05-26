@@ -270,6 +270,7 @@ while (true) {
     }
 die;
 */
+die;
     if (!$limit && $claim) {
         $ret99 = 0; 
         while (true) {
@@ -327,8 +328,6 @@ die;
                 if (!empty($alert_d)) logx('err', $alert_d[0]);
                     
             }
-            
-            
         }
     }
 

@@ -3,61 +3,57 @@ name: Multi Runner
 on:
   workflow_dispatch:
     inputs:
-      bot:
-        description: 'bot'
-        default: 'shortlink'
-        required: true
-      accounts:
-        description: 'Akun ["a","b"]'
-        default: '["0"]'
-        required: true
-      pass:
-        description: 'pass'
-        required: false
+      bot: { default: shortlink, required: true }
+      accounts: { default: '["0"]', required: true }
+      pass: { required: false }
       api:
         type: choice
         options: [tertuyul, xevil, skibidixxx, capsolver, multibot, solverify, gmxch]
         required: true
-      key:
-        description: 'key'
-        required: false
-      proxy:
-        description: 'Proxy ["p1","p2"]'
-        default: '[""]'
-        required: false
+      key: { required: false }
+      proxy: { default: '[""]', required: false }
 
 jobs:
   prepare:
     runs-on: ubuntu-latest
     outputs:
       batches: ${{ steps.split.outputs.batches }}
+
     steps:
       - id: split
         shell: python
         env:
-          ACCOUNTS: '${{ github.event.inputs.accounts }}'
+          ACCOUNTS: ${{ github.event.inputs.accounts }}
         run: |
           import json, os
+
           try:
-              targets = json.loads(os.getenv("ACCOUNTS", "[]"))
+              data = json.loads(os.getenv("ACCOUNTS","[]"))
           except:
-              targets = []
-          
-          valid_targets = [t for t in targets if str(t) != "0"]
-          
-          size = 6
+              data = []
+
+          data = [x for x in data if str(x) != "0"]
+
+          size = 10
           batches = []
-          for i in range(0, len(valid_targets), size):
-              chunk = valid_targets[i:i + size]
-              batches.append({"chunk_str": json.dumps(chunk), "offset": i})
-          
-          with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+
+          for i in range(0, len(data), size):
+              batches.append({
+                  "chunk_str": json.dumps(data[i:i+size]),
+                  "offset": i
+              })
+
+          with open(os.environ["GITHUB_OUTPUT"], "a") as f:
               f.write(f"batches={json.dumps(batches)}\n")
 
   run:
     needs: prepare
     if: needs.prepare.outputs.batches != '[]'
     runs-on: ubuntu-latest
+
+    container:
+      image: ghcr.io/gmxch/71:latest
+
     strategy:
       fail-fast: false
       max-parallel: 20
@@ -65,57 +61,52 @@ jobs:
         include: ${{ fromJson(needs.prepare.outputs.batches) }}
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - name: Clone repo
+        run: git clone https://github.com/gmxch/71.git source
 
-      - name: Setup deps
-        uses: ./.github/actions/deps
-        continue-on-error: false
-
-      - name: Start PHP Parallel
-        shell: python
+      - name: Run worker
+        working-directory: source
         env:
-          CHUNK_RAW: '${{ matrix.chunk_str }}'
-          OFFSET: '${{ matrix.offset }}'
-          
-          # Inputs
-          RAW_PROXIES: '${{ github.event.inputs.proxy }}'
-          API_CHOICE: '${{ github.event.inputs.api }}'
-          KEY_INPUT: '${{ github.event.inputs.key }}'
-          PASS_INPUT: '${{ github.event.inputs.pass }}'
-          BOT_INPUT: '${{ github.event.inputs.bot }}'
-          
-          # Secrets
-          SEC_PASS: '${{ secrets.PASS }}'
-          SEC_AUTH: '${{ secrets.AUTH }}'
-          SEC_DG: '${{ secrets.DG }}'
-          S_SOLVERIFY: '${{ secrets.SOLVERIFY }}'
-          S_TERTUYUL: '${{ secrets.TERTUYUL }}'
-          S_XEVIL: '${{ secrets.XEVIL }}'
-          S_SKIBIDI: '${{ secrets.SKIBIDI }}'
-          S_CAPSOLVER: '${{ secrets.CAPSOLVER }}'
-          S_MULTIBOT: '${{ secrets.MULTIBOT }}'
-          S_GMXCH: '${{ secrets.GMXCH }}'
-          
+          CHUNK_RAW: ${{ matrix.chunk_str }}
+          OFFSET: ${{ matrix.offset }}
+
+          RAW_PROXIES: ${{ github.event.inputs.proxy }}
+          API_CHOICE: ${{ github.event.inputs.api }}
+          KEY_INPUT: ${{ github.event.inputs.key }}
+          PASS_INPUT: ${{ github.event.inputs.pass }}
+          BOT_INPUT: ${{ github.event.inputs.bot }}
+
+          SEC_PASS: ${{ secrets.PASS }}
+          SEC_AUTH: ${{ secrets.AUTH }}
+          SEC_DG: ${{ secrets.DG }}
+
+          S_SOLVERIFY: ${{ secrets.SOLVERIFY }}
+          S_TERTUYUL: ${{ secrets.TERTUYUL }}
+          S_XEVIL: ${{ secrets.XEVIL }}
+          S_SKIBIDI: ${{ secrets.SKIBIDI }}
+          S_CAPSOLVER: ${{ secrets.CAPSOLVER }}
+          S_MULTIBOT: ${{ secrets.MULTIBOT }}
+          S_GMXCH: ${{ secrets.GMXCH }}
+
         run: |
+          python3 - << 'EOF'
           import os, json, subprocess
           from concurrent.futures import ThreadPoolExecutor
 
-          accounts = json.loads(os.getenv("CHUNK_RAW", "[]"))
-          proxies = json.loads(os.getenv("RAW_PROXIES", "[]"))
-          offset = int(os.getenv("OFFSET", "0"))
-          
-          api_type = os.getenv("API_CHOICE", "").lower()
-          manual_key = os.getenv("KEY_INPUT", "").strip()
-          
-          def run_worker(target, local_idx):
-              global_idx = offset + local_idx
-              real_proxy = proxies[global_idx] if global_idx < len(proxies) else ""
-              
-              # Bersihkan target (email) dari spasi dan tanda petik
-              clean_target = str(target).strip().replace('"', '').replace("'", "")
-              
-              secrets_map = {
+          accounts = json.loads(os.getenv("CHUNK_RAW","[]"))
+          proxies = json.loads(os.getenv("RAW_PROXIES","[]"))
+          offset = int(os.getenv("OFFSET","0"))
+
+          api_type = os.getenv("API_CHOICE","").lower()
+          manual_key = os.getenv("KEY_INPUT","").strip()
+
+          def run_worker(target, i):
+              idx = offset + i
+              proxy = proxies[idx] if idx < len(proxies) else ""
+
+              clean = str(target).strip().replace('"','').replace("'",'')
+
+              keys = {
                   "solverify": os.getenv("S_SOLVERIFY"),
                   "tertuyul": os.getenv("S_TERTUYUL"),
                   "xevil": os.getenv("S_XEVIL"),
@@ -124,29 +115,29 @@ jobs:
                   "multibot": os.getenv("S_MULTIBOT"),
                   "gmxch": os.getenv("S_GMXCH")
               }
-              
-              final_key = manual_key if manual_key else secrets_map.get(api_type, "")
 
-              php_env = os.environ.copy()
-              
-              php_env.update({
-                 "CI": "1",
-                 "DG": os.getenv("SEC_DG", "1"),
-                 "PROXY": real_proxy,
-                 "mail": clean_target,
-                 "login": clean_target,
-                 "KEY": final_key,
-                 "API": api_type,
-                 "pass": (os.getenv("PASS_INPUT") or os.getenv("SEC_PASS", "")).strip(),
-                 "_authApi_": os.getenv("SEC_AUTH", ""),
-                 "BOT": os.getenv("BOT_INPUT", ""),
+              key = manual_key or keys.get(api_type,"")
+
+              env = os.environ.copy()
+              env.update({
+                  "CI": "1",
+                  "AN": "0",
+                  "BOT": os.getenv("BOT_INPUT",""),
+                  
+                  "mail": clean,
+                  "login": clean,
+                  "pass": os.getenv("PASS_INPUT",""),
+                  
+                  "KEY": key,
+                  "API": api_type,
+                  "_authApi_": os.getenv("SEC_AUTH", ""),
+                  
+                  "PROXY": proxy,
               })
-              
-              # Log untuk memastikan tidak ada spasi liar (diapit tanda |)
-              print(f"[*] [Acc-{global_idx}] Executing: |{clean_target}|")
 
-              subprocess.run(["php", "run.php"], env=php_env)
-              
-          with ThreadPoolExecutor(max_workers=len(accounts)) as executor:
-              for i, acc in enumerate(accounts):
-                  executor.submit(run_worker, acc, i)
+              subprocess.run(["php","run.php"], env=env)
+
+          with ThreadPoolExecutor(max_workers=3) as ex:
+              for i,a in enumerate(accounts):
+                  ex.submit(run_worker,a,i)
+          EOF

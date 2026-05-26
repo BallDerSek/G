@@ -509,7 +509,7 @@ function pre($in_put, $threshold = 128) {
     $img = @imagecreatefromstring(_get($in_put));
     if (!$img) {
         logx('err', "Unknown image format");
-        exit;
+        return false;
     }
 
     $width  = imagesx($img);
