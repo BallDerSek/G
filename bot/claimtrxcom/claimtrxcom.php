@@ -185,10 +185,11 @@ while (true) {
         $ret99 = 0; 
         while (true) {
             $fau = Net::C("$host/faucet", 'GET', null, inf::$cookie, [], "$host/dashboard", inf::$uagent, false, false, $ip);
+            #_put('fau.html', $fau);
             if ($fau === 99) {
                 $ret99++;
                 logx('warn', "masalah proxy, warm up dulu");
-                if ($ret99 >= 7) {
+                if ($ret99 >= 5) {
                     goto login;
                 }
                 _sle(30);
@@ -217,6 +218,8 @@ while (true) {
                     break;
                 }
                 
+                if (!$SLDONE) break;
+                
                 styler('Waiting for faucet', fn() => _sle(30));
                 continue;
             }
@@ -236,16 +239,9 @@ while (true) {
                 
                 if ($_cu) {
                     $img = Net::C($_cu, 'GET', null, inf::$cookie, [], "$host/faucet", inf::$uagent);
-                    #_put('img.png', $img);
-                    
                     if (!empty($img) && ($img !== 99)) {
-                        $resText = $api->base64($img, 'ocr');
-                        #var_dump($resText); die;
-                        if (ctype_digit($resText) && strlen($resText) === 4) {
-                            $t_text = $resText; 
-                        }
+                        $t_text = _text($img, $host, $mail);
                     }
-                    
                 }
                 
                 if (!$t_text) {
@@ -278,11 +274,15 @@ while (true) {
             
             $cla = Net::C($f['url'], 'POST', $po, inf::$cookie, [], "$host/faucet", inf::$uagent, false, false, $ip);
             if (empty($cla) || ($cla === 99)) continue;
+            #_put('cla.html', $cla); die;
             $m = scraper::_jP($cla, "/Swal\.fire\(\{.*?title\s*:\s*(['\"])(.*?)\\1.*?\}\)/s") ?? [];
-            
+                
             if (isset($m[2][0])) {
                 print(FGd['CYN'].maskEmail($mail).RSET." ");
-                logg(true, $m[2][0]);
+                logg(true, $m[2][0], false);
+                $pttr = '/<h3>([^<]+)<\/h3>\s*<p>Balance<\/p>/';
+                $_bal = scraper::_jP($cla, $pttr)[1];
+                logx('ok', '[ '.$_bal[0].' ]', true, true);
                 if (stripos($m[2][0], 'has been added')) break;
             }
             
@@ -308,8 +308,8 @@ while (true) {
             }
         }
     }
-    
-    $ret99 = 0; 
+    sl:
+    $ret99 = 0;
     do {
         $sho = Net::C("$host/links", 'GET', null, inf::$cookie, [], "$host/dashboard", inf::$uagent, false, false, $ip);
         if ($sho === 99) {
@@ -332,7 +332,7 @@ while (true) {
             break;
         }
         #print_r($short);
-        $up = ['earnow','shortano', 'shortino', 'fc-lc', 'coinclix'];
+        $up = ['earnow','shortano', 'shortino', 'fc-lc'];
         
         if (!empty($f)) {
             $po = $f['payload'];
@@ -346,19 +346,10 @@ while (true) {
                         break;
                     }
                 }
-                
                 if ($_cu) {
                     $img = Net::C($_cu, 'GET', null, inf::$cookie, [], "$host/links", inf::$uagent);
-                    #_put('img.png', $img);
-                    if (!empty($img) || ($img !== 99)) {
-                        $resText = $api->base64($img, 'ocr');
-                        #var_dump($resText); die;
-                        if (ctype_digit($resText) && strlen($resText) === 4) {
-                            $t_text = $resText; 
-                        }
-                    }
+                    $t_text = _text($img, $host, $mail);
                 }
-                
                 if ($t_text) {
                     foreach ($po as $key => $val) {
                         if ($val === '' || $val === null) {
@@ -407,17 +398,22 @@ while (true) {
                     break; 
                 }
             }
-            if ($is_bl) continue; 
-            
-            logx('info', "Bypass: $loc", true, true);
-            $bakk = links($api, $loc);
-            
-            if (!$bakk) {
-                $skipped[$idd] = true; 
+            if ($is_bl) {
+                _sle(5);
                 continue; 
             }
             
-            styler("waiting for SL", fn() => _sle(15));
+            logx('info', "Bypass: $loc", true, true);
+            $bakk = links($api, $loc);
+            #var_dump($bakk);
+            
+            if (!$bakk) {
+                $skipped[$idd] = true; 
+                _sle(5);
+                break 2;
+            }
+            
+            styler("waiting for SL", fn() => _sle(50));
             
             $retVer = 0;
             while (true) {
@@ -440,7 +436,8 @@ while (true) {
                 }
             }
             
-            break; 
+            #break; 
+            break 2; 
         }
 
         if (!$can_process) {

@@ -119,8 +119,9 @@ function _lib($host, $mail = null) {
     if ($mail && strpos($mail, '@') !== false) {
         $user = strstr($mail, '@', true);
     } else {
-        $user = $mail ?: '';
+        $user = $mail ?? '';
     }
+
 
     $user = preg_replace('/[^a-zA-Z0-9]/', '_', $user);
 

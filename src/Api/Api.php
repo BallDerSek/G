@@ -328,7 +328,9 @@ final class Api { #contractor
             'ocr' => ['t' => 'ImageToTextTask', 'field' => 'body'],
         ],
 
-        gmxch::class => [],
+        gmxch::class => [
+            'antibot' => true,
+        ],
 
         solverify::class => [
             'ocr' => ['t' => 'ocr', 'field' => 'body'],
@@ -688,13 +690,15 @@ abstract class Provider {
                 logx('info', 'Api [ '.static::class.' ] ', false, true);
                 logx('err', $code);
                 
-                if ($method === 'antibot') return false;
+                
+                #if (preg_match('/antibot|atb|shortlink/i', $method)) return false;
                 
                 if (in_array($type, ['ret','con','fail'], true)) {
+                    if ($method === 'antibot') return false;
                     _sle(3); 
                     continue; 
                 }
-                return null; 
+                return 77; 
             }
         }
 
@@ -767,7 +771,9 @@ abstract class Provider {
         #print_r($pa); 
         $res = $this->run('antibot', $pa);
         #logx('', $res);
-        if (!$res) return 77;
+        if ($res === 77) return 77;
+        if ($res === 777) return 777;
+        if ($res === null) return null;
         
         $in = explode(',', $res);
         $links = [];

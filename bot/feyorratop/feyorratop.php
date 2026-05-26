@@ -223,6 +223,8 @@ while (true) {
                     break;
                 }
                 
+                if (!$SLDONE) break;
+                
                 styler('Waiting for faucet', fn() => _sle(30));
                 continue;
             }
@@ -413,7 +415,7 @@ while (true) {
             if (!$bakk) {
                 $skipped[$idd] = true; 
                 _sle(5);
-                continue; 
+                break 2;
             }
             
             styler("waiting for SL", fn() => _sle(50));

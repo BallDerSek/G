@@ -1,6 +1,6 @@
 <?php
 if (!defined('ROOT')) { die; }
-
+#_die();
 $api = onKeys();
 
 $acc = config::credential([], false, ['login', 'PROXY']);
@@ -8,7 +8,7 @@ $login = $acc['login'];
 putenv("PROXY=".$acc['PROXY']);
 
 login:
-$host = 'https://gamerlee.com';
+$host = 'https://earncryptowrs.in';
 $domain = parse_url($host, PHP_URL_HOST);
 $r = '/?r=10180';
 $ip = null;
@@ -17,24 +17,27 @@ $ip = null;
     Proxy::load();
     Check::Geo();
     $cookieFile = config::cookie($login);
-    $userAgent = config::uagent('mobile');
-
+    $c = config::credential(['ua' => fn() => config::uagent('mobile')]);
+    $userAgent = $c['ua'];
+    
     inf::setup($userAgent, $cookieFile, $ip);
     _cle();
     banner();
     taskPrintCenter($login, 'info');
 } ) ($login, $ip);
 
+$headersCF = [];
 $skipped = [];
 $SLDONE = false;
 $claim = true;
+$habis = [];
 $curr = '';
 while (true) {
     $ret = 0;
 
     do {
         $ret++;
-        $l = inf::check("$host/", [], '/auth/login', true);
+        $l = inf::check("$host/", $headersCF, '/auth/login', true);
         #_put('l.html', $l['html']); _rl('lanjut: ');
         
         if ($l['ok']) {
@@ -51,7 +54,7 @@ while (true) {
         
         logx('err', "logging in ", false); 
         _sle(3); _clr();
-        $_0 = Net::X($host, 'GET', null, inf::$cookie, [], '', inf::$uagent);
+        $_0 = Net::X($host.$r, 'GET', null, inf::$cookie, $headersCF, '', inf::$uagent);
         if ($_0 === 99) {
             logx('warn', "masalah proxy, warm up dulu");
             _sle(60);
@@ -80,7 +83,7 @@ while (true) {
         
         if (!empty($po)) {
             #print_r($po); _rl('lanjut: ');
-            $ve = Net::X($f['url'], 'POST', $po, inf::$cookie, [], $host, inf::$uagent);
+            $ve = Net::X($f['url'], 'POST', $po, inf::$cookie, $headersCF, $host.$r, inf::$uagent);
             #_put('ve.html', $ve);
             if ($ve === 99) {
                 logx('warn', 'Proxy issue, wait 30s');
@@ -92,7 +95,7 @@ while (true) {
     #_put('dash.html', $dash);
     #goto sl;
     $_fa = Scraper::_xP($dash, "//div[@id='faucetMenu']//a/@href");
-    #print_r($_fa);
+    #print_r($_fa); die;
     foreach ($_fa as $fa) {
         if (!$claim) break;
         $_c = basename(parse_url($fa)['path']);
@@ -105,9 +108,9 @@ while (true) {
         $ret99 = 0;
         while ($claim) {
             $fau = null;
-            $fau = Net::X($fa, 'GET', null, inf::$cookie, [], $host, inf::$uagent);
+            $fau = Net::X($fa, 'GET', null, inf::$cookie, $headersCF, $host, inf::$uagent);
             
-            #_put('fau.html', $fau); die;
+            #_put('fau.html', $fau); #die;
             
             if ($fau === 99) {
                 $ret99++;
@@ -123,6 +126,19 @@ while (true) {
             $cap = [];
             $f = scraper::payload($fau)[0] ?? null;
             if (!empty($f)) {
+                #print_r($f);
+                
+                
+                check:
+                $cf = Net::C($f['url'], 'GET', null, inf::$cookie, $headersCF, "$host/dashboard", inf::$uagent, d: true);
+                $cff = checkCF($f['url'], $api, $cf, $headersCF);
+                if (empty($cff['html'])) {
+                    continue;
+                } else {
+                    $headersCF = $cff['head'];
+                    $html = $cff['html'];
+                }
+                
                 
                 $pa = $f['payload'];
                 $cap = Solve::exec($fau, $host, $api, $pa);
@@ -137,14 +153,15 @@ while (true) {
                 
             } else {
                 if (stripos($fau, 'claim limit') !== false) continue 2;
+                if (stripos($fau, '/auth/login')) continue 3;
                 styler("waiting for CLAIM", fn() => _sle(10));
                 continue;
             }
             
             if (!empty($po)) {
                 
-                $cla = Net::X($f['url'], 'POST', $po, inf::$cookie, [], $host, inf::$uagent);
-                #_put('cla.html', $cla);
+                $cla = Net::X($f['url'], 'POST', $po, inf::$cookie, $headersCF, $host, inf::$uagent);
+                #_put('cla.html', $cla); #die;
                 
                 if (!empty($cla) && ($cla !== 99)) {
                     
@@ -152,7 +169,7 @@ while (true) {
                     if (!empty($alert_d)) {
                         logx('', maskEmail($login).' ', false, true);
                         logx('err', $alert_d[0]);
-                        if (stripos($alert_d[0], 'is locked')) {
+                        if (stripos($alert_d[0], 'is locked') || stripos($alert_d[0], 'is banned')) {
                             $claim = false;
                         }
                         $curr = $_c; 
@@ -173,7 +190,12 @@ while (true) {
                         logx($is_ok ? 'ok' : 'err', "{$ttl} ", false);
                         logg(false, $msg);
                         
-                        if (stripos($msg, 'sufficient') !== false) break;
+                        if (preg_match('/sufficient|could not be processed/i', $msg)) {
+                            $habis[] = $fa;
+                            break;
+                        }
+                        if (stripos($msg, 'ssion expired') !== false) continue 3;
+                        
                         if (stripos($msg, 'verify your account') !== false) {
                             _put('cla.html', $cla);
                             die;
@@ -199,6 +221,11 @@ while (true) {
         
     }
     
+    if (count($habis) === count($_fa)) {
+        print(FGd['CYN'].maskEmail($login).RSET." ");
+        (logx('err', 'gak bisa claim') ?: die);
+    }
+    
     sl:
     $_sl = Scraper::_xP($dash, "//div[@id='linksMenu']//a/@href");
     #print_r($_sl);
@@ -206,14 +233,14 @@ while (true) {
     $success_in_page = false;
     foreach ($_sl as $sl) {
         $_c = basename($sl);
-        if (trim(strtoupper($_c)) !== trim(strtoupper($curr))) continue;
+        if (!empty($curr) && strcasecmp(trim($_c), trim($curr)) !== 0) continue;
         
-        $up = ['earnow','shortano', 'shortino', 'fc-lc'];
+        $up = ['earnow','shortano', 'shortino', 'fc-lc', 'coinclix', 'oii.io'];
         $ret99 = 0;
         
         do {
             $sho = null;
-            $sho = Net::X($sl, 'GET', null, inf::$cookie, [], '', inf::$uagent);
+            $sho = Net::X($sl, 'GET', null, inf::$cookie, $headersCF, '', inf::$uagent);
             #_put('sho.html' ,$sho);
             
             if ($sho === 99) {
@@ -262,7 +289,7 @@ while (true) {
                 if (!empty($po)) {
                     #print_r($po);
                     
-                    $get = Net::X($ud, 'POST', $po, inf::$cookie, [], $sl, inf::$uagent, foll: false);
+                    $get = Net::X($ud, 'POST', $po, inf::$cookie, $headersCF, $sl, inf::$uagent, foll: false);
                     #var_dump($get);
                     
                 }
@@ -300,7 +327,7 @@ while (true) {
                 
                 $retVer = 0;
                 while (true) {
-                    $ver = Net::C($bakk, 'GET', null, inf::$cookie, [], $loc, inf::$uagent);
+                    $ver = Net::C($bakk, 'GET', null, inf::$cookie, $headersCF, $loc, inf::$uagent);
                     if ($ver === 99) {
                         $retVer++;
                         if ($retVer >= 5) goto login;
@@ -357,4 +384,51 @@ while (true) {
         (logx('err', 'gak bisa claim') ?: die);
     }
 
+}
+
+
+
+function checkCF($url, $api, $body = null, $headersCF = []) {
+    
+    $html = $body['body'] ?? null;
+    $code = $body['http_code'] ?? null;
+    
+    if (!$html || !$code) return [];
+    
+    if ($code !== 200 && (stripos($html, 'Just a moment') !== false || stripos($html, 'Attention Required!') !== false)) {
+        
+        $cf = execCF($api, $url, inf::$cookie, inf::$uagent);
+        
+        if ($cf) {
+            #var_dump($cf);
+            [$headersCF, $ua] = $cf;
+            inf::setup($ua, inf::$cookie);
+            
+            if (!empty($headersCF)) {
+                for ($try = 1; $try <= 3; $try++) {
+                    _sle(3);
+                    $fix = Net::X($url, 'GET', null, inf::$cookie, $headersCF, $url, inf::$uagent, d: true);
+                    
+                    #var_dump($fix);
+                    if (!empty($fix) && isset($fix['http_code'])) {
+                        $_c = $fix['http_code'];
+                        $_b = $fix['body'];
+                        
+                        if ($_c === 200 || (!stripos($_b, 'Just a moment') !== false || !stripos($_b, 'Attention Required!') !== false)) {
+                            
+                            config::credential()['ua'] = $ua;
+                            
+                            return ['html' => $_b, 'head' => $headersCF];
+                        }
+                    }
+                    logx('info', "try-{$try} fail, reloading");
+                }
+            }
+        }
+    } else {
+        return ['html' => $html, 'head' => $headersCF];
+    }
+    
+    return [];
+    
 }

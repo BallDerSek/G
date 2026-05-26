@@ -100,11 +100,11 @@ skibidixxxget:
 #var_dump($r);
             if (($r['status'] ?? 0) == 1) return $r['request'];
 
-            if (!is_array($r) || Api::errType($q = ($r['message'] ?? 'unknown')) === 'ret') continue;
+            if (!is_array($r) || Api::errType($q = ($r['request'] ?? 'unknown')) === 'ret') continue;
             
             throw new Exception($q);
 
-        } while (time() - $start < 500);
+        } while (time() - $start < 300);
 
         throw new Exception("ERROR_TIMEOUT");
     }
@@ -376,6 +376,50 @@ class gmxch extends Provider {
             ];
     }
     
+    public function atb(array $opt) {
+        return 777;
+        
+        $params = [
+            "type" => "visual",
+            "method" => "antibotlinks",
+            "main" => $opt['main'],
+            "options" => []
+        ];
+        
+        foreach ($opt['rels'] as $b64) {
+            $params['options'][] = $b64;
+        }
+        print_r($params);
+        
+        $atb = $this->run('antibot', $params);
+        var_dump($atb);
+        
+        
+        
+    die;
+    }
+    
+    public function atbb(array $data) {
+        $params = [
+            "mode" => "freeantibot",
+            "main" => $data['main'],
+            "sub" => []
+        ];
+        
+        foreach ($data['rels'] as $i => $b64) {
+            $params['sub'][$i + 1] = $b64;
+        }
+        $antibot = $this->run('antibot', $params);
+        #var_dump($antibot);
+        if (!str_starts_with($antibot, ' ')) {
+            return " $antibot";
+        }
+        
+        return $antibot;
+    }
+    
+    
+    
     /** info saldo */
     public function getInfo(): bool{
         $maxRetry = 3;
@@ -395,10 +439,6 @@ class gmxch extends Provider {
         logx('info', 'gmxch: ' . ($i['message'] ?? 'unknown'));
         return true;
     }
-    
-    
-    
-    
     
 }
 

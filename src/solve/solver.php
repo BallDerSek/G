@@ -865,20 +865,10 @@ class locally {
     }
     
     public static function ATB($type, $apii, $html) {
-        if (!$apii) return null;
-        $api = config::getKeys($apii, $type, 'b64');
-
-        $supportAtb = Api::B64[get_class($api)]['antibot'] ?? false;
         
-        if ($type === 'image') {
-            #return ' 1 2 3 4';
-            if ($supportAtb) {
-                return self::atb_I($api, $html); 
-            }
-            
-            logx('err', get_class($api) . " tidak support Antibot");
-            return null;
-        }
+        if (!$apii) return null;
+        
+        if ($type === 'image') return self::atb_I($apii, $html);
         if ($type === 'emoji') return self::atb_E($html);
         return null;
     }
@@ -936,7 +926,20 @@ class locally {
         $data = ATBtest::get($html);
         #print_r($data);
         if (empty($data['main'])) return 77; 
-        return $api->atb($data);
+        
+        $solver = config::getKeys($api, 'antibot', 'b64');
+        if (!isset(Api::B64[get_class($api)]['antibot'])) (logx('err', 'provider not support atb') ?: die);
+        
+        $atb = $solver->atb($data);
+        
+        if ($atb === 777) $atb = $api->atb($data);
+        
+        if ($atb === null) die;
+        if ($atb === 77 || $atb === false) return 77;
+        
+        return $atb;
+        
+        #return $api->atb($data);
     }
     
     public static function rotCaptcha($html) {

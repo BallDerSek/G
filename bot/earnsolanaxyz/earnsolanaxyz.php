@@ -36,7 +36,7 @@ while (true) {
 
     do {
         $ret++;
-        $l = inf::check("$host/", $headersCF, '/auth/login', true);
+        $l = inf::check("$host/", $headersCF, '/auth/login');
         #_put('l.html', $l['html']); _rl('lanjut: ');
         
         if ($l['ok']) {
