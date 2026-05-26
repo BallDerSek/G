@@ -126,7 +126,7 @@ jobs:
                   
                   "mail": clean,
                   "login": clean,
-                  "pass": os.getenv("PASS_INPUT",""),
+                  "pass": (os.getenv("PASS_INPUT") or os.getenv("SEC_PASS", "")).strip(),
                   
                   "KEY": key,
                   "API": api_type,
