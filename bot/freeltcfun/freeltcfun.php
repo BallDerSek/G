@@ -8,9 +8,9 @@ $login = $acc['login'];
 putenv("PROXY=".$acc['PROXY']);
 
 login:
-$host = 'https://earnsolana.xyz';
+$host = 'https://freeltc.fun';
 $domain = parse_url($host, PHP_URL_HOST);
-$r = '/?r=7974';
+$r = '/?r=8124';
 $ip = null;
 
 (function ($login, $ip) {
@@ -93,9 +93,8 @@ while (true) {
     } while (empty($dash));
     #_put('dash.html', $dash);
     
-    $ret99 = 0;
     while ($claim) {
-        $fau = Net::C("$host/faucet/currency/sol", 'GET', null, inf::$cookie, $headersCF, "$host/dashboard", inf::$uagent);
+        $fau = Net::C("$host/faucet/currency/ltc", 'GET', null, inf::$cookie, $headersCF, "$host/dashboard", inf::$uagent);
         #_put('fau.html', $fau);
         
         if ($fau === 99) {
@@ -110,19 +109,23 @@ while (true) {
         $ret99 = 0; 
         if (empty($fau)) continue;
         
+        /*
         check:
-            $cf = Net::C("$host/faucet/verify/sol", 'GET', null, inf::$cookie, [], "$host/dashboard", inf::$uagent, d: true);
-                $cff = checkCF("$host/faucet/verify/sol", $api, $cf, $headersCF);
+            $cf = Net::C("$host/faucet/verify/ltc", 'GET', null, inf::$cookie, [], "$host/dashboard", inf::$uagent, d: true);
+            $cff = checkCF("$host/faucet/verify/ltc", $api, $cf, $headersCF);
+            #var_dump($cff);
             if (empty($cff['html'])) {
                 continue;
             } else {
                 $headersCF = $cff['head'];
                 $fau = $cff['html'];
             }
+        */
         
         $po = null;
         $cap = [];
         $f = scraper::payload($fau)[0] ?? [];
+        #print_r($f); die;
         if (empty($f)) {
             if (stripos($fau, '/auth/login')) goto login;
             if (!$SLDONE) break;
@@ -130,8 +133,6 @@ while (true) {
             styler('Waiting for faucet', fn() => _sle(5));
             continue;
         }
-            
-            
             
         if (!empty($f['payload'])) {
             $pa = $f['payload'];
@@ -147,7 +148,7 @@ while (true) {
         
         if (!empty($po)) {
             $cla = Net::X($f['url'], 'POST', $po, inf::$cookie, $headersCF, '', inf::$uagent);
-            
+            #_put('cla.html' ,$cla);
             if (empty($cla) || ($cla === 99)) continue;
                 
             $_suc = scraper::_jP($cla, "/Swal\.fire\(\s*\{.*?icon:\s*'([^']+)'.*?title:\s*'([^']+)'.*?html:\s*'([^']+)'/s") ?? [];
@@ -160,19 +161,34 @@ while (true) {
                 
                 if (preg_match('/sufficient|banned/i', $msg)) die;
                 
+                if (stripos($msg, 'verify your account') !== false) {
+                    _put('cla.html', $cla);
+                    die;
+                }
+                
+            } else {
+                $al = scraper::_xP($cla, "//div[contains(@class, 'alert-danger')]")[0] ?? '';
+                if ($al) {
+                    print(FGd['CYN'].maskEmail($login).RSET." ");
+                    logx('err', $al);
+                    
+                    if (stripos($al, 'banned for 24')) {
+                        $claim = false;
+                        break;
+                    }
+                    
+                }
             }
+            
         }
     }
-    
-    
-    
     
     if (!$claim && $SLDONE) {
         print(FGd['CYN'].maskEmail($login).RSET." ");
         (logx('err', 'gak bisa claim') ?: die);
     }
-
 }
+
 
 
 

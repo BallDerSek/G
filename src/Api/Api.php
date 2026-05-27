@@ -492,22 +492,18 @@ final class Api { #contractor
             'TIMEOUT after',
             'ERROR_TASK_TIMEOUT',
             'WRONG_RESULT',
-            'IP Address Blocked',
-            'totally failed',
-            'Timeout Error',
-            'Invalid challenge',
+            'TOTALLY_FAILED',
             'ERROR_NO_NODES_AVAILABLE',
             'ERROR_NO_SLOT_CONNECTION',
             'ERROR_NO_SLOT_AVAILABLE',
             'ERROR_INVALID_RESPONSE1',
             'ERROR_SOLVER_RESPONSE',
-            'Internal solver error',
-            'Task not found',
+            'TASK_NOT_FOUND',
             'Job not found',
             'ERR_EMPTY_RESPONSE',
-            'node unreachable',
             'failed to respond',
-            'nodes unavailable',
+            'INVALID_PARAMETERS',
+            'SERVICE_BUSY',
             ],
 
         'ret' => [ 
@@ -520,8 +516,6 @@ final class Api { #contractor
             'ERROR_INTERNAL_SERVER',
             'processing',
             'pending',
-            'APP_11',
-            'APP_14',
         ],
 
         'con' => [
@@ -535,11 +529,10 @@ final class Api { #contractor
             'ERROR_SERVICE_UNAVALIABLE',
             'ERROR_SERVICE_UNAVAILABLE',
             'ERROR_PROXY_BANNED',
-            'connection close',
-            'Internal server error',
+            'INTERNAL_SERVER_ERROR',
+            'INTERNAL_SOLVER_ERROR',
             'External solver request failed',
             'returned HTTP 502',
-            'APP_9',
         ],
 
         'err' => [
@@ -577,9 +570,11 @@ final class Api { #contractor
             'Missing siteKey',
             'invalid mode',
             'Missing mode or action',
-            'APP_10',
-            'APP_17',
-            'APP_18',
+            'MISSING_FIELDS',
+            'INVALID_TYPE',
+            'INVALID_METHOD',
+            'INVALID_PROXY',
+            'INVALID_URL',
         ],
 
         'key' => [
@@ -596,11 +591,9 @@ final class Api { #contractor
             'ERROR_KEY_DENIED_ACCESS',
             'Insufficient token balance',
             'Invalid API key',
-            'Invalid Key',
             'missing Key',
-            'APP_15',
-            'APP_16',
-            'APP_12',
+            'UNAUTHORIZED',
+            'INVALID_KEY',
         ],
 
     ];

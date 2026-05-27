@@ -498,7 +498,6 @@ tes:
 
 
 
-
 function pre($in_put, $threshold = 128) {
     if (!getDeps('gd@php')) {
         logx('err', 'gd@php missing');
@@ -510,7 +509,7 @@ function pre($in_put, $threshold = 128) {
     $img = @imagecreatefromstring(_get($in_put));
     if (!$img) {
         logx('err', "Unknown image format");
-        return false;
+        return 300;
     }
 
     $width  = imagesx($img);
@@ -564,6 +563,8 @@ function _text($imgData, $host, $mail) {
     try {
         foreach ($_th as $th) {
             $preFile = pre($originalImg, $th, 3); 
+            
+            if ($preFile === 300) return null;
             
             if (!$preFile || !file_exists($preFile)) continue;
 

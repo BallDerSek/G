@@ -7,19 +7,21 @@
  */
 function cfSet($class, $res) {
     if (!$res) return null;
+    
+    #print_r($res); die;
 
     switch (strtolower($class)) {
         case str_contains(strtolower($class), 'xevil'):
             $decoded = json_decode(base64_decode($res), true);
             return [
                 'token' => $decoded['cf_clearance'] ?? null,
-                'ua'    => $decoded['user_agent'] ?? null,
+                'ua' => $decoded['user_agent'] ?? null,
             ];
 
         case str_contains(strtolower($class), 'gmxch'):
         case str_contains(strtolower($class), 'glitch'):
             return [
-                'token' => $res['cf_clearance'] ?? null,
+                'token' => $res['cf_clearance'] ?? $res['clearance'] ?? null,
                 'ua'    => $res['user_agent'] ?? null,
             ];
 
@@ -28,7 +30,7 @@ function cfSet($class, $res) {
             $part = explode(':', $res, 2);
             return [
                 'token' => $part[0] ?? null,
-                'ua'    => $part[1] ?? null,
+                'ua' => $part[1] ?? null,
             ];
 
         default:

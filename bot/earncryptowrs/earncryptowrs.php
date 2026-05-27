@@ -338,6 +338,7 @@ while (true) {
                 }
                 
                 if (!empty($ver)) {
+                    #_put('ver.html', $ver);
                     
                     $_i = Scraper::_jP($ver, "/icon\s*:\s*['\"]([^'\"]+)['\"]/");
                     $_t = Scraper::_jP($ver, "/title\s*:\s*['\"]([^'\"]+)['\"]/");

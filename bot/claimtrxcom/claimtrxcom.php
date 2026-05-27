@@ -12,6 +12,7 @@ login:
 $host = 'https://claimtrx.com';
 $domain = parse_url($host, PHP_URL_HOST);
 $ip = '148.251.78.240';
+$ip = '';
 
 (function ($mail, $ip) {
     Proxy::load();
@@ -256,7 +257,7 @@ while (true) {
                     /* comment ini kalo mau lanjut solve*/
                     $claim = false; break;
                 }
-                $cap = solve::exec($fau, $host, $api);
+                $cap = solve::exec($fau, $host, $api, $pa);
                 if (isset($cap['trouble'])) {
                     _sle(60);
                     continue;
@@ -281,8 +282,6 @@ while (true) {
                 print(FGd['CYN'].maskEmail($mail).RSET." ");
                 logg(true, $m[2][0], false);
                 $pttr = '/<h3>([^<]+)<\/h3>\s*<p>Balance<\/p>/';
-                $_bal = scraper::_jP($cla, $pttr)[1];
-                logx('ok', '[ '.$_bal[0].' ]', true, true);
                 if (stripos($m[2][0], 'has been added')) break;
             }
             
@@ -509,6 +508,104 @@ while (true) {
 
 
 
+function pre($in_put, $threshold = 128) {
+    if (!getDeps('gd@php')) {
+        logx('err', 'gd@php missing');
+        exit;
+    }
+
+    $put_in = dirname($in_put) . DIRECTORY_SEPARATOR . 'pre_' . basename($in_put);
+
+    $img = @imagecreatefromstring(_get($in_put));
+    if (!$img) {
+        logx('err', "Unknown image format");
+        return 300;
+    }
+
+    $width  = imagesx($img);
+    $height = imagesy($img);
+
+    $scale = 3;
+    $newWidth  = $width * $scale;
+    $newHeight = $height * $scale;
+    $clean = imagecreatetruecolor($newWidth, $newHeight);
+    
+    imagecopyresampled($clean, $img, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height);
+
+    imagefilter($clean, IMG_FILTER_GRAYSCALE);
+    
+    imagefilter($clean, IMG_FILTER_CONTRAST, 40); 
+
+    for ($y = 0; $y < $newHeight; $y++) {
+        for ($x = 0; $x < $newWidth; $x++) {
+            $rgb = imagecolorat($clean, $x, $y);
+            $r = ($rgb >> 16) & 0xFF;
+            if ($r < $threshold) {
+                $color = imagecolorallocate($clean, 0, 0, 0);
+            } else {
+                $color = imagecolorallocate($clean, 255, 255, 255);
+            }
+            imagesetpixel($clean, $x, $y, $color);
+        }
+    }
+
+    $topLeft = imagecolorat($clean, 0, 0);
+    if (($topLeft & 0xFF) < 128) imagefilter($clean, IMG_FILTER_NEGATE);
+
+    imagepng($clean, $put_in);
+    @imagedestroy($img);
+
+    return $put_in;
+}
+
+function _text($imgData, $host, $mail) {
+    if (empty($imgData)) return null;
+
+    $tmpDir = _lib($host, $mail); 
+    $originalImg = $tmpDir . '/raw.png';
+
+    _put($originalImg, $imgData);
+    
+    $t_vote = [];
+    $_th = [80, 90, 100, 110, 120, 140, 160];
+    $_psms = [6, 8, 11];
+
+    try {
+        foreach ($_th as $th) {
+            $preFile = pre($originalImg, $th, 3); 
+            
+            if ($preFile === 300) return null;
+            
+            if (!$preFile || !file_exists($preFile)) continue;
+
+            foreach ($_psms as $psm) {
+                $output = [];
+                $cmd = "tesseract " . escapeshellarg($preFile) . " stdout --psm $psm -c tessedit_char_whitelist=0123456789 2>/dev/null";
+                @exec($cmd, $output);
+                
+                $resText = trim(implode('', $output));
+                
+                if (ctype_digit($resText) && strlen($resText) === 4) {
+                    $t_vote[] = $resText;
+                }
+            }
+            if (file_exists($preFile)) @unlink($preFile);
+        }
+    } finally {
+        if (file_exists($originalImg)) @unlink($originalImg);
+        if (is_dir($tmpDir)) @rmdir($tmpDir);
+    }
+
+    if (!empty($t_vote)) {
+        $counts = array_count_values($t_vote);
+        arsort($counts); 
+        $t_text = (string)key($counts); 
+        logx('ok', "OCR: $t_text (" . reset($counts) . "/" . count($t_vote) . ")");
+        return $t_text;
+    }
+
+    return null;
+}
 
 function _wd($html) {
     $res = Scraper::payload($html)[0] ?? null;

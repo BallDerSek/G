@@ -325,7 +325,7 @@ class gmxch extends Provider {
     protected function get_api($method, array $params) {
 
         $s = json_decode(
-            Net::S($this->baseUrl."/solve", "POST", array_merge(["type"=>$method], $params), ["key:".$this->apiKey], json: true) ?: ''
+            Net::S($this->baseUrl."/v3/initTask", "POST", array_merge(["type"=>$method], $params), ["key:".$this->apiKey], json: true) ?: ''
             , 1);
 #var_dump($s);
         if (!is_array($s) || isset($s['error']) || ($s["status"] ?? '') === 'error') {
@@ -341,12 +341,15 @@ class gmxch extends Provider {
         do {
             _sle(5); 
             $r = json_decode(
-                Net::S($this->baseUrl."/task", "POST",["taskId" => $jobId], ["key:".$this->apiKey], json: true) ?: ''
+                Net::S($this->baseUrl."/v3/pollTask", "POST",["taskId" => $jobId], ["key:".$this->apiKey], json: true) ?: ''
                 , 1);
 #var_dump($r);
             
             if (($r['status'] ?? '') === 'done') {
-                return $r['token'] ?? $r['url'] ?? $r['solution'] ?? $r;
+                if (!empty($r['debug'])) {
+                    _put(ROOT.'/atb.png', base64_decode($r['debug']));
+                }
+                return $r['token'] ?? $r['solution'] ?? $r;
             }
 
             
@@ -376,49 +379,37 @@ class gmxch extends Provider {
             ];
     }
     
-    public function atb(array $opt) {
-        return 777;
+    public function atb(array $data) {
         
         $params = [
             "type" => "visual",
             "method" => "antibotlinks",
-            "main" => $opt['main'],
+            "main" => $data['main'],
+            #"debug" => true,
             "options" => []
         ];
         
-        foreach ($opt['rels'] as $b64) {
+        $map = [];
+        $i = 0;
+        
+        foreach ($data['rels'] as $rel => $b64) {
             $params['options'][] = $b64;
+            $map[$i] = $rel;
+            $i++;
         }
-        print_r($params);
         
-        $atb = $this->run('antibot', $params);
-        var_dump($atb);
+        $res = json_decode($this->run('antibot', $params), true);
+        if (!is_array($res)) return 777;
+        $links = [];
+        foreach ($res as $val) {
+            $val = trim($val);
+            if (isset($map[$val])) {
+                $links[] = $map[$val];
+            }
+        }
         
-        
-        
-    die;
+        return !empty($links) ? " " . implode(' ', $links) : false;
     }
-    
-    public function atbb(array $data) {
-        $params = [
-            "mode" => "freeantibot",
-            "main" => $data['main'],
-            "sub" => []
-        ];
-        
-        foreach ($data['rels'] as $i => $b64) {
-            $params['sub'][$i + 1] = $b64;
-        }
-        $antibot = $this->run('antibot', $params);
-        #var_dump($antibot);
-        if (!str_starts_with($antibot, ' ')) {
-            return " $antibot";
-        }
-        
-        return $antibot;
-    }
-    
-    
     
     /** info saldo */
     public function getInfo(): bool{

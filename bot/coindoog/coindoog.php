@@ -1,6 +1,6 @@
 <?php
 if (!defined('ROOT')) { die; }
-_die();
+#_die();
 $api = onKeys();
 
 $acc = config::credential([], false, ['login', 'PROXY']);
@@ -29,8 +29,9 @@ $ip = null;
 $headersCF = [];
 $skipped = [];
 $SLDONE = false;
+$claim = true;
+$habis = [];
 $curr = '';
-$dash = null;
 while (true) {
     $ret = 0;
 
@@ -64,7 +65,7 @@ while (true) {
             continue;
         }
         if (empty($_0)) continue;
-        $_0 = checkCF($host, $api, $_0);
+        $_0 = checkCF($host, $api, $_0)['html'];
         #_put('0.html', $_0);
         $f = scraper::payload($_0)[0] ?? null;
         $po = null;
@@ -118,11 +119,11 @@ while (true) {
         
         $ret99 = 0;
         while (true) {
-            $fau = null;
-            $fau = Net::C($fa, 'GET', null, inf::$cookie, $headersCF, $host, inf::$uagent, d: true);
+            $fauu = null;
+            $fauu = Net::C($fa, 'GET', null, inf::$cookie, $headersCF, $host, inf::$uagent, d: true);
             
             #_put('fau.html', $fau); #die;
-            if ($fau === 99) {
+            if ($fauu === 99) {
                 $ret99++;
                 logx('warn', 'Proxy issue, wait 30s');
                 if ($ret99 >= 7) goto login;
@@ -130,7 +131,15 @@ while (true) {
                 continue;
             }
             $ret99 = 0; 
-            $fau = checkCF($fa, $api,$fau);
+            
+            $cff = checkCF($fa, $api, $fauu, $headersCF);
+            if (!empty($cff['html'])) {
+                $headersCF = $cff['head'];
+                $fau = $cff['html'];
+            } else {
+                $fau = $fauu['body'] ?? null;
+            }
+            
             if (!empty($fau)) {
                 #_put('fau.html', $fau); #die;
                 
@@ -143,7 +152,6 @@ while (true) {
                     $pa = $f['payload'];
                     $cre = ['uf' => md5($login), 'ls' => LANGUAGE(), 'utt' => TIMEZONE(), 'email' => $login];
                     $cap = Solve::exec($fau, $host, $api, $pa);
-                    print_r($cap);
                     
                     if (isset($cap['trouble'])) {
                         _sle(5);
@@ -168,7 +176,10 @@ while (true) {
                             logx($status === 'success' ? 'ok' : 'err', "$status ", false);
                             logg(false, "$msg");
                             
-                            if (preg_match('/sufficient|could not be processed/i', $msg)) break;
+                            if (preg_match('/sufficient|could not be processed/i', $msg)) {
+                                $habis[] = $fa;
+                                break;
+                            }
                             if (stripos($msg, 'flagged')) die;
                             
                             if (stripos($msg, 'Shortlink')) {
@@ -193,6 +204,10 @@ while (true) {
         
     }
     
+    if (count($habis) === count($_fa)) {
+        print(FGd['CYN'].maskEmail($login).RSET." ");
+        (logx('err', 'gak bisa claim') ?: die);
+    }
 
     $_sl = Scraper::_xP($dash, "//div[contains(normalize-space(), 'Shortlinks')]/following-sibling::div[@class='sub-menu-two']/a/@href");
     #print_r($_sl);
@@ -371,7 +386,6 @@ $cap = [
     }
     
     
-die;
 }
 
 tes:
@@ -382,12 +396,12 @@ tes:
 
 
 
-function checkCF($url, $api, $body = null) {
+function checkCF($url, $api, $body = null, $headersCF = []) {
     
     $html = $body['body'] ?? null;
     $code = $body['http_code'] ?? null;
     
-    if (!$html || !$code) return null;
+    if (!$html || !$code) return [];
     
     if ($code !== 200 && (stripos($html, 'Just a moment') !== false || stripos($html, 'Attention Required!') !== false)) {
         
@@ -405,8 +419,14 @@ function checkCF($url, $api, $body = null) {
                     
                     #var_dump($fix);
                     if (!empty($fix) && isset($fix['http_code'])) {
-                        if ($fix['http_code'] === 200) {
-                            return $fix['body'];
+                        $_c = $fix['http_code'];
+                        $_b = $fix['body'];
+                        
+                        if ($_c === 200 || (!stripos($_b, 'Just a moment') !== false || !stripos($_b, 'Attention Required!') !== false)) {
+                            
+                            config::credential()['ua'] = $ua;
+                            
+                            return ['html' => $_b, 'head' => $headersCF];
                         }
                     }
                     logx('info', "try-{$try} fail, reloading");
@@ -414,9 +434,9 @@ function checkCF($url, $api, $body = null) {
             }
         }
     } else {
-        return $html;
+        return ['html' => $html, 'head' => $headersCF];
     }
     
-    return null;
+    return [];
     
 }

@@ -198,7 +198,7 @@ while (true) {
         $po = null;
         $f = scraper::payload($wd)[0] ?? [];
         
-        if ($bal >= 0.01 && !empty($f['payload'])) {
+        if ($bal >= 0.1 && !empty($f['payload'])) {
             $cre = ['wallet' => $login, 'usd_amount' => $bal, 'method' => '1'];
             $po = array_merge($f['payload'], $cre);
         }

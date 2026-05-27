@@ -107,6 +107,7 @@ while (true) {
     
     if (stripos($dash, 'Please check your inbox or spam folder to confirm your account')) {
         $can_withdraw = false;
+        #var_dump($can_withdraw);
     }
     
     if (!empty($pending)) {
@@ -204,6 +205,13 @@ while (true) {
             break;
         }
     } while (!$claim);
+    
+    
+    
+    
+    
+    
+    
 /*
     $zer = Net::C("$host/zeradsptc/earn", 'GET', null, inf::$cookie, [], "$host/dashboard", inf::$uagent, false, false, $ip);
     if (!empty($zer) && $zer !== 99) {
@@ -270,7 +278,7 @@ while (true) {
     }
 die;
 */
-die;
+
     if (!$limit && $claim) {
         $ret99 = 0; 
         while (true) {
