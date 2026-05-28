@@ -122,7 +122,8 @@ class inf {
         if (!is_string($html)) {
             return ['ok' => false, 'html' => null, 'err' => 'Network error'];
         }
-        $ok = (str_contains($html, 'Logout') || str_contains($html, 'Dashboard')) && ($pattern === '' || !str_contains($html, $pattern));
+        $ok = (stripos($html, 'logout') !== false || stripos($html, 'dashboard') !== false) && ($pattern === '' || stripos($html, $pattern) === false);
+
         return ['ok' => $ok, 'html' => $html];
 
     }

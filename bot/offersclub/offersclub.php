@@ -10,7 +10,7 @@ putenv("PROXY=".$acc['PROXY']);
 login:
 $host = 'https://offersclub.eu';
 $domain = parse_url($host, PHP_URL_HOST);
-$r = '/?ref=609';
+$r = '';
 $ip = null;
 
 (function ($login, $ip) {

@@ -691,12 +691,12 @@ abstract class Provider {
                     _sle(3); 
                     continue; 
                 }
+                if (static::class === 'gmxch') return 777;
                 return 77; 
             }
         }
 
         if (static::class === 'gmxch') return 777;
-
         return false; 
     }
 

@@ -1,6 +1,6 @@
 <?php
 if (!defined('ROOT')) { die; }
-_die();
+#_die();
 $api = onKeys();
 
 $acc = config::credential([], false, ['login', 'PROXY']);
@@ -10,6 +10,7 @@ putenv("PROXY=".$acc['PROXY']);
 $host = 'https://faucetsamyy.xyz';
 $domain = parse_url($host, PHP_URL_HOST);
 $r = '/?r=nFCZvKqZRD7o';
+$r = '';
 $ip = null;
 
 (function ($login, $ip) {
@@ -25,19 +26,13 @@ $ip = null;
 } ) ($login, $ip);
 
 $headersCF = [];
-$skipped = [];
-$SLDONE = false;
-$claim = true;
-$habis = [];
-$curr = '';
+$claim = false;
 while (true) {
     $ret = 0;
     
     do {
         $ret++;
-        $l = inf::check("$host/index.php", $headersCF, 'loginBtn', true);
-        _put('l.html', $l['html']);
-        
+        $l = inf::check("$host/faucet.php", $headersCF, '', true);
         
         if ($l['ok']) {
             $dash = $l['html'];
@@ -66,7 +61,7 @@ while (true) {
         }
         if (empty($_0)) continue;
         $_0 = checkCF($host, $api, $_0)['html'];
-        _put('0.html', $_0);
+        #_put('0.html', $_0);
         $f = scraper::payload($_0)[0] ?? null;
         $po = null;
         
@@ -85,18 +80,103 @@ while (true) {
             $cleanCap = array_filter((array)$cap, fn($v, $k) => $k !== 'nocaptcha', ARRAY_FILTER_USE_BOTH);
             $po = array_merge($pa, $cleanCap, $cre);
         }
-        $ve = Net::X($host.'/login.php', 'POST', $po, inf::$cookie, $headersCF, $host.$r, inf::$uagent);
-        _put('ve.html', $ve);
+        Net::X($host.'/login.php', 'POST', $po, inf::$cookie, $headersCF, $host.$r, inf::$uagent);
 
     } while (empty($dash));
-    _put('dash.html', $dash);
+    #_put('dash.html', $dash);
     
-die;
+    if (stripos($dash, 'One quick check')) {
+        $cap = solve::exec($dash, $host, $api);
+        if (isset($cap['trouble'])) continue;
+        $ts = json_decode(Net::C($host.'/ts-verify.php', 'POST', $cap, inf::$cookie, [], $host.'/faucet.php', inf::$uagent)?: '', 1);
+        if (!empty($ts['ok'])) {
+            $claim = filter_var($ts['ok'], FILTER_VALIDATE_BOOLEAN);
+        }
+    } else {
+        $claim = true;
+    }
+
+    while ($claim) {
+        $fau = null;
+        $po = null;
+        $cap = [];
+        
+        $fau = Net::X($host.'/faucet.php', 'GET', null, inf::$cookie, $headersCF, '', inf::$uagent);
+        #_put('fau.html', $fau); #die;
+        
+        if (!empty($fau) && $fau !== 99) {
+            $f = scraper::payload($fau)[0];
+            
+            if ($f && ($f['url'] !== 'login.php')) {
+                $pa = $f['payload'] ?? [];
+                
+                $cap = solve::exec($fau, $host, $api, $pa);
+                if (isset($cap['trouble'])) continue;
+                
+                $po = array_merge($pa, $cap);
+            } else {
+                if (stripos($fau, 'visit the link below')) {
+                    $visit = true;
+                    break;
+                }
+                
+                styler('Waiting for faucet', fn() => _sle(30));
+                continue;
+            }
+            
+            if (!empty($po)) {
+                #print_r($po);
+                
+                $cla = Net::X($host.'/faucet.php', 'POST', $po, inf::$cookie, $headersCF, $host, inf::$uagent);
+                #_put('cla.html', $cla);
+                
+                $_suc = scraper::_xP($cla, "//div[contains(@class, 'alert-success')]")[0] ?? null;
+                if (!empty($_suc)) {
+                    print(FGd['CYN'].maskEmail($login).RSET." ");
+                    logg(true, $_suc);
+                }
+                
+            }
+            
+        }
+    }
+    
+    if ($visit) {
+        styler('Waiting for ads', fn() => _sle(10));
+        
+        $vis = Net::X($host.'/faucet.php', 'GET', ['visit_link' => 1], inf::$cookie, $headersCF, '', inf::$uagent);
+        _put('vis.html', $vis);
+        $_siv = null;
+        $_siv = scraper::_xP($vis, "//div[contains(@class, 'alert-success')]")[0] ?? null;
+        if ($_siv) $visit = false;
+    }
+    
+    wd:
+    $wd = Net::X($host.'/withdraw.php', 'GET', null, inf::$cookie, $headersCF, '', inf::$uagent);
+    if (!empty($wd) && $wd !== 99) {
+        $f = scraper::payload($wd, 'wdForm')[0] ?? null;
+        
+        $_bal = Scraper::_xP($wd, "//div[@class='wd-hero-sat']/text()");
+        (int)$saldo = isset($_bal[0]) ? trim($_bal[0]) : null;
+        
+        if (!empty($f) && $saldo >= 2000) {
+            
+            $jjn = Net::X($host.'/withdraw.php', 'POST', $f['payload'], inf::$cookie, $headersCF, '', inf::$uagent);
+            #_put('jjn.html', $jjn);
+            $_al = scraper::_xP($jjn, "//div[contains(@class, 'alert-error')]")[0] ?? null;
+            if ($_al) {
+                logx('err', $_al);
+                if (stripos($_al, 'banned') || stripos($_al, 'lacklisted')) die;
+            }
+        }
+    }
 }
 
 
 
 
+tes:
+    
 
 
 
