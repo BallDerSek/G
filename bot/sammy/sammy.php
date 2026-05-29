@@ -105,7 +105,7 @@ while (true) {
         #_put('fau.html', $fau); #die;
         
         if (!empty($fau) && $fau !== 99) {
-            $f = scraper::payload($fau)[0];
+            $f = scraper::payload($fau)[0] ?? [];
             
             if ($f && ($f['url'] !== 'login.php')) {
                 $pa = $f['payload'] ?? [];
@@ -145,7 +145,7 @@ while (true) {
         styler('Waiting for ads', fn() => _sle(10));
         
         $vis = Net::X($host.'/faucet.php', 'GET', ['visit_link' => 1], inf::$cookie, $headersCF, '', inf::$uagent);
-        _put('vis.html', $vis);
+        #_put('vis.html', $vis);
         $_siv = null;
         $_siv = scraper::_xP($vis, "//div[contains(@class, 'alert-success')]")[0] ?? null;
         if ($_siv) $visit = false;
@@ -166,7 +166,7 @@ while (true) {
             $_al = scraper::_xP($jjn, "//div[contains(@class, 'alert-error')]")[0] ?? null;
             if ($_al) {
                 logx('err', $_al);
-                if (stripos($_al, 'banned') || stripos($_al, 'lacklisted')) die;
+                if (stripos($_al, 'banned') || stripos($_al, 'lacklisted') || stripos($_al, 'anti-fraud')) die;
             }
         }
     }

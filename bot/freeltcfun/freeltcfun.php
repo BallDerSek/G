@@ -31,6 +31,8 @@ $skipped = [];
 $SLDONE = true;
 $claim = true;
 $curr = '';
+$atbforce = false;
+$atbfail = 0;
 while (true) {
     $ret = 0;
 
@@ -137,6 +139,7 @@ while (true) {
         if (!empty($f['payload'])) {
             $pa = $f['payload'];
             
+            if ($atbfail >= 3) $atbforce = true;
             $cap = solve::exec($fau, $host, $api);
             if (isset($cap['trouble'])) {
                 _sle(60);
@@ -160,6 +163,13 @@ while (true) {
                 logg(false, $msg);
                 
                 if (preg_match('/sufficient|banned/i', $msg)) die;
+                if (stripos($msg, 'has been sent')) {
+                    $atbforce = false;
+                    $atbfail = 0;
+                }
+                if (stripos($msg, 'nvalid Anti-Bot')) {
+                    $atbfail++;
+                }
                 
                 if (stripos($msg, 'verify your account') !== false) {
                     _put('cla.html', $cla);

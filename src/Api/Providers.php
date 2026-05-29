@@ -328,6 +328,7 @@ class gmxch extends Provider {
             Net::S($this->baseUrl."/v3/initTask", "POST", array_merge(["type"=>$method], $params), ["key:".$this->apiKey], json: true) ?: ''
             , 1);
 #var_dump($s);
+#var_dump($this->apiKey);
         if (!is_array($s) || isset($s['error']) || ($s["status"] ?? '') === 'error') {
             throw new Exception(is_array($s) ? ($s["message"] ?? $s['error']) : 'unknown');
         }
@@ -371,14 +372,38 @@ class gmxch extends Provider {
         return $short;
     }
     
-    public function zer(array $opt) {
-        $data = [
-            'type' => 'visual',
-            'method' => 'zercaptcha',
+    public function zer(array $data) {
+        #print_r($data);
+        $params = [
+            "type" => "visual",
+            "method" => "zercaptcha",
+            "main" => $data['main'],
+            #"debug" => true,
+            "options" => []
+        ];
+        
+        $map = [];
+        $i = 0;
+        
+        foreach ($data['rels'] as $rel => $b64) {
+            $params['options'][] = $b64;
+            $map[$i] = $rel;
+            $i++;
+        }
+        
+        $res = $this->run('zercaptcha', $params);
+        
+        if (is_numeric($res)) {
+            $index_jawaban = (int)$res;
             
-            ];
+            if (isset($map[$index_jawaban])) {
+                return $map[$index_jawaban]; 
+            }
+        }
+        
+        return 777;
     }
-    
+
     public function atb(array $data) {
         
         $params = [
@@ -423,12 +448,13 @@ class gmxch extends Provider {
             if ($i !== null) break;
         }
         
+        #var_dump($i); die;
         if ($i === null) return false;
         
         if (!empty($i['status']) && isset($i['authorized'])) return (bool) $i['authorized'];
         
         logx('info', 'gmxch: ' . ($i['message'] ?? 'unknown'));
-        return true;
+        return false;
     }
     
 }

@@ -26,14 +26,15 @@ $ip = '';
     taskPrintCenter($mail, 'info');
 })($mail, $ip);
 
-$dash = null;
+
 $limit = false;
-$shortlink = false;
 $SLDONE = false;
-$claim = false;
+$ADDONE = false;
+$claim = true;
 $skipped = [];
 $can_withdraw = true;
 while (true) {
+    $dash = null;
     $ret = 0; 
     
     do {
@@ -110,79 +111,8 @@ while (true) {
         $can_withdraw = false;
     }
     
-    do {
-        $ads = Net::C("$host/ptc", 'GET', null, inf::$cookie, [], "$host/dashboard", inf::$uagent, false, false, $ip);
-        if ($ads === 99) { _sle(60); continue 2; }
-        $_onclick = scraper::_xP($ads, "//div[@class='card-body']//button[not(contains(@onclick, 'bitcotask'))]/@onclick");
-        $_tim = scraper::_xP($ads, "//div[contains(@class, 'card-badge')]//span[contains(@class, 'badge-primary')][ancestor::div[contains(@class, 'card')]//button[not(contains(@onclick, 'bitcotask'))]]");
-        $url_list = array_map(fn($u) => explode("'", $u)[1] ?? null, $_onclick);
-        $vurl = $url_list[0] ?? null;
-
-        if ($vurl) {
-            $cla = null;
-            $tim = isset($_tim[0]) ? (int)preg_replace('/[^0-9]/', '', $_tim[0]) : 0;
-            logx('info', "[ $vurl ]: ", false);
-            logx('', $tim);
-            #die;
-            $ret99 = 0;
-            while (true) {
-                $view = Net::C($vurl, 'GET', null, inf::$cookie, [], '', inf::$uagent, false, false, $ip);
-                if ($view === 99) {
-                    $ret99++;
-                    logx('warn', "masalah proxy, warm up dulu");
-                    if ($ret99 >= 5) {
-                        goto login;
-                    }
-                    _sle(30);
-                    continue;
-                }
-                $ret99 = 0; 
-                if (!empty($view)) {
-                    $set = microtime(true);
-                    $f = scraper::payload($view) ?? [];
-                    if (!empty($f)) {
-                        $pa = $f[0]['payload'] ?? [];
-
-                        $cap = [];
-                        $cap = solve::exec($view, $host, $api);
-                        if (isset($cap['trouble'])) {
-                            _sle(60);
-                            continue;
-                        }
-                        $po = array_merge($pa, $cap);
-                        #print_r($po);
-                        
-                        if (!empty($po)) {
-                            $end = microtime(true) - $set;
-                            $wait = (int)($tim - $end);
-                            if ($wait > 0) {
-                                styler("waiting for ads: $wait", fn() => _sle($wait));
-                            }
-                            claim:
-                            $cla = Net::C($f[0]['url'], 'POST', $po, inf::$cookie, [], $vurl, inf::$uagent, false, false, $ip);
-                            if (empty($cla)) goto claim;
-                            if ($cla === 99) goto login;
-                            break;
-                        }
-                    }
-                }
-            }
-            if (!empty($cla)) {
-                $m = scraper::_jP($cla, "/Swal\.fire\(\{.*?title\s*:\s*(['\"])(.*?)\\1.*?\}\)/s");
-                if (isset($m[2][0])) {
-                    print(FGd['CYN'].maskEmail($mail).RSET." ");
-                    logg(true, $m[2][0]);
-                }
-            }
-        } else {
-            logx('err', 'ptc habis');
-            $claim = true;
-            break;
-        }
-    } while (!$claim);
-
     $box = false;
-    if ($claim && !$limit) {
+    if (!$limit) {
         $ret99 = 0; 
         while (true) {
             $fau = Net::C("$host/faucet", 'GET', null, inf::$cookie, [], "$host/dashboard", inf::$uagent, false, false, $ip);
@@ -287,6 +217,77 @@ while (true) {
             
         }
     }
+
+    do {
+        $ads = Net::C("$host/ptc", 'GET', null, inf::$cookie, [], "$host/dashboard", inf::$uagent, false, false, $ip);
+        if ($ads === 99) { _sle(60); continue 2; }
+        $_onclick = scraper::_xP($ads, "//div[@class='card-body']//button[not(contains(@onclick, 'bitcotask'))]/@onclick");
+        $_tim = scraper::_xP($ads, "//div[contains(@class, 'card-badge')]//span[contains(@class, 'badge-primary')][ancestor::div[contains(@class, 'card')]//button[not(contains(@onclick, 'bitcotask'))]]");
+        $url_list = array_map(fn($u) => explode("'", $u)[1] ?? null, $_onclick);
+        $vurl = $url_list[0] ?? null;
+
+        if ($vurl) {
+            $cla = null;
+            $tim = isset($_tim[0]) ? (int)preg_replace('/[^0-9]/', '', $_tim[0]) : 0;
+            logx('info', "[ $vurl ]: ", false);
+            logx('', $tim);
+            #die;
+            $ret99 = 0;
+            while (true) {
+                $view = Net::C($vurl, 'GET', null, inf::$cookie, [], '', inf::$uagent, false, false, $ip);
+                if ($view === 99) {
+                    $ret99++;
+                    logx('warn', "masalah proxy, warm up dulu");
+                    if ($ret99 >= 5) {
+                        goto login;
+                    }
+                    _sle(30);
+                    continue;
+                }
+                $ret99 = 0; 
+                if (!empty($view)) {
+                    $set = microtime(true);
+                    $f = scraper::payload($view) ?? [];
+                    if (!empty($f)) {
+                        $pa = $f[0]['payload'] ?? [];
+
+                        $cap = [];
+                        $cap = solve::exec($view, $host, $api);
+                        if (isset($cap['trouble'])) {
+                            _sle(60);
+                            continue;
+                        }
+                        $po = array_merge($pa, $cap);
+                        #print_r($po);
+                        
+                        if (!empty($po)) {
+                            $end = microtime(true) - $set;
+                            $wait = (int)($tim - $end);
+                            if ($wait > 0) {
+                                styler("waiting for ads: $wait", fn() => _sle($wait));
+                            }
+                            claim:
+                            $cla = Net::C($f[0]['url'], 'POST', $po, inf::$cookie, [], $vurl, inf::$uagent, false, false, $ip);
+                            if (empty($cla)) goto claim;
+                            if ($cla === 99) goto login;
+                            break;
+                        }
+                    }
+                }
+            }
+            if (!empty($cla)) {
+                $m = scraper::_jP($cla, "/Swal\.fire\(\{.*?title\s*:\s*(['\"])(.*?)\\1.*?\}\)/s");
+                if (isset($m[2][0])) {
+                    print(FGd['CYN'].maskEmail($mail).RSET." ");
+                    logg(true, $m[2][0]);
+                }
+            }
+        } else {
+            logx('err', 'ptc habis');
+            $ADDONE = true;
+            break;
+        }
+    } while (!$ADDONE);
 
     if ($box) {
         for ($i = 1; $i <= $co; $i++) {

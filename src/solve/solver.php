@@ -24,7 +24,7 @@
  */
 class Solve {
     
-    public static function exec($html, $host, ?Provider $api, $pa = null, $ins = false) {
+    public static function exec($html, $host, ?Provider $api, $pa = null, $ins = false, $force = false) {
         
         #return [];
         
@@ -93,7 +93,8 @@ class Solve {
         }
 
         if (!empty($_cap['antibot'])) {
-            $resAtb = locally::ATB($_cap['antibot']['type'], $api, $html);
+            $atbData = $_cap['antibot']['data'] ?? [];
+            $resAtb = locally::ATB($_cap['antibot']['type'], $api, $html, $force, $atbData);
             if ($resAtb === 77) return ['trouble' => 'reload'];
             if ($resAtb) $solution['antibotlinks'] = $resAtb;
         }
@@ -215,22 +216,22 @@ class Solve {
             
             if ($t === 777) {
                 if (!isset(Api::TKN[get_class($api)][$type])) return 471; 
-                
                 logx('ok', "Switching to ".get_class($api));
                 $t = $api->token($key, $host, $type, $Params);
                 
                 if ($t === 71) return 471;
-                if ($t === 77 || $t === false) return 404;
+                if (in_array($t, [77, false], true)) return 404;
                 if ($t) break;
             }
             
-            if ($t === 71) return 471; 
+            if ($t === 71) return 471;
             if ($t === 77) return 404;
-            if ($t && $t !== 777) break;
+            if ($t) break; 
+            
             _sle(1);
         }
         
-        if ($t === false) return 404; 
+        if ($t === false) return 404;
         
         $api->getInfo();
         logg(false, 'elapsed: ' . number_format(microtime(true) - $set, 3).'s');
@@ -239,39 +240,29 @@ class Solve {
 
     public static function img($api, $host, $type, $img) {
         $solver = config::getKeys($api, $type, 'b64');
-        print(DIMM.BOLD.ITAL.FGo['MAG']."solving image... ".RSET);
+        
+        print(DIMM.BOLD.ITAL.FGo['MAG']."solving  ".RSET);
         $set = microtime(true);
         $res = null;
         
         for ($retry = 0; $retry < 2; $retry++) {
-            if (isset(Api::B64[get_class($solver)][$type])) {
-                $res = $solver->base64($img, $type);
-            } else {
-                $res = 777; 
-            }
+            $res = isset(Api::B64[get_class($solver)][$type]) ? $solver->base64($img, $type) : 777;
             
             if ($res === 777) {
-                if (!isset(Api::B64[get_class($api)][$type])) {
-                    return ['trouble' => 'reload']; 
-                }
+                if (!isset(Api::B64[get_class($api)][$type])) return ['trouble' => 'reload'];
                 
                 logx('ok', "Switching to " . get_class($api));
                 $res = $api->base64($img, $type);
                 
-                if ($res === 71) {
-                    return ['trouble' => 'reload'];
-                }
-                
+                if ($res === 71) return ['trouble' => 'reload'];
                 if ($res && $res !== 777) {
                     $api->getInfo();
                     break;
                 }
             }
             
-            if ($res === 77) return ['trouble' => 'reload'];
-            
-            if ($res === 71) {
-                logx('err', 'unsupported image provider');
+            if (in_array($res, [71, 77], true)) {
+                if ($res === 71) logx('err', 'unsupported image provider');
                 return ['trouble' => 'reload'];
             }
             
@@ -288,8 +279,6 @@ class Solve {
     }
 
     private static function rss($rss, $api, $host, $html) {
-        $solution = [];
-        $token = null;
         
         $_M = $rss['type'] ?? null;
         $_K = $rss['keys'] ?? null;
@@ -297,44 +286,33 @@ class Solve {
         $_J = $rss['extra']['js'] ?? null;
         
         if (in_array(null, [$_M, $_K, $_T, $_J], true)) return false;
-        
         if (!filter_var($_K, FILTER_VALIDATE_URL)) {
             $_host = rtrim($host, '/');
             $_path = ltrim($_K, '/');
-            if (strpos($_host, 'http') !== 0) {
-                $_K = "https://$_host/$_path";
-            } else {
-                $_K = $_host . "/" . $_path;
-            }
+            $_K = (str_starts_with($_host, 'http')) ? "{$_host}/{$_path}" : "https://{$_host}/{$_path}";
         }
         
         $img = Net::C($_K, 'GET', null, inf::$cookie, [], $host, inf::$uagent);
-        #_put('img.png', $img);
-        if (!empty($img) && $img !== 99) {
-            $co = self::img($api, $host, $_M, $img);
-            if (!isset($co['trouble'])) {
-                $_coMatches = scraper::_jP($co, '/\d+/');
-                $_co = $_coMatches[0] ?? $_coMatches; 
-                
-                if (is_array($_co) && count($_co) >= 2) {
-                    $x = $_co[0];
-                    $y = $_co[1];
-                    $utils = ['html' => $html, 'js' => $_J];
-                    $token = self::rs($api, $utils, $x, $y, $host);
-                    if ($token) {
-                        #logx('info', 'token:' . $token);
-                        $solution = [
-                            'rscaptcha_token' => $_T,
-                            'rscaptcha_response' => $token
-                        ];
-                        # print_r($solution);
-                    }
-                }
+        if (empty($img) || $img === 99) return false;
+        
+        $co = self::img($api, $host, $_M, $img);
+        if (isset($co['trouble'])) return false;
+        
+        $_coMatches = scraper::_jP($co, '/\d+/');
+        $_co = $_coMatches[0] ?? $_coMatches; 
+        
+        if (is_array($_co) && count($_co) >= 2) {
+            [$x, $y] = $_co;
+            $token = self::rs($api, ['html' => $html, 'js' => $_J], $x, $y, $host);
+            if ($token) {
+                return [
+                    'rscaptcha_token' => $_T,
+                    'rscaptcha_response' => $token
+                ];
             }
         }
-    
-    return !empty($solution) ? $solution : false;
-}
+        return false;
+    }
 
     private static function rs($api, $utils, $x, $y, $host) {
         $provider = strtolower(get_class($api));
@@ -342,8 +320,8 @@ class Solve {
         
         # if some provider got many invalid
         # u can change to use locally fallback
-        
         # uncomment to use by provider, it'll consume few credit
+        
         /*
         if ($provider === 'tertuyul') {
             $data = [
@@ -864,12 +842,13 @@ class locally {
         });
     }
     
-    public static function ATB($type, $apii, $html) {
+/*
+    public static function ATB($type, $a, $h, $fe = false) {
         
-        if (!$apii) return null;
+        if (!$a) return null;
         
-        if ($type === 'image') return self::atb_I($apii, $html);
-        if ($type === 'emoji') return self::atb_E($html);
+        if ($type === 'image') return self::atb_I($a, $h, $fe);
+        if ($type === 'emoji') return self::atb_E($h);
         return null;
     }
     
@@ -922,26 +901,96 @@ class locally {
         return implode(' ', array_values($solution));
     }
     
-    public static function atb_I($api, $html) {
+    public static function atb_I($api, $html, $force = false) {
+        if (!isset(Api::B64[get_class($api)]['antibot'])) {
+            logx('err', 'provider not support atb');
+            return 77;
+        }
         $data = ATBtest::get($html);
-        #print_r($data);
         if (empty($data['main'])) return 77; 
         
-        $solver = config::getKeys($api, 'antibot', 'b64');
-        if (!isset(Api::B64[get_class($api)]['antibot'])) (logx('err', 'provider not support atb') ?: die);
+        if ($force) {
+            $atb = $api->atb($data);
+        } else {
+            $solver = config::getKeys($api, 'antibot', 'b64');
+            
+            $atb = $solver->atb($data);
+        }
         
-        $atb = $solver->atb($data);
+        return in_array($atb, [null, 77, false], true) ? 77 : $atb;
         
-        if ($atb === 777) $atb = $api->atb($data);
+        #return $atb;
+
+    }
+*/
+
+    public static function ATB($type, $a, $h, $fe = false, $d = []) {
+        if (!$a) return null;
         
-        if ($atb === null) die;
-        if ($atb === 77 || $atb === false) return 77;
-        
-        return $atb;
-        
-        #return $api->atb($data);
+        // Oper $atbData ke masing-masing solver khusus
+        if ($type === 'image') return self::atb_I($a, $fe, $d);
+        if ($type === 'emoji') return self::atb_E($d);
+        return null;
     }
     
+    public static function atb_E($data) {
+        $_ask = $data['main'] ?? []; 
+        $ab_t = $data['rels'] ?? []; 
+        
+        if (empty($_ask) || empty($ab_t)) return 77;
+
+        $db_file = LIBDIR . '/atb_e.json';
+        $db = file_exists($db_file) ? json_decode(_get($db_file), true) : [];
+        if (!is_array($db)) $db = [];
+
+        $solution = [];
+        $_tokens = $ab_t;
+
+        foreach ($_ask as $e_nam) {
+            $e_nam = strtolower($e_nam);
+            $ab_e = array_search($e_nam, $db);
+            
+            if ($ab_e !== false && isset($ab_t[$ab_e])) {
+                $solution[$e_nam] = $ab_t[$ab_e];
+                unset($_tokens[$ab_e]);
+            } else {
+                $solution[$e_nam] = null;
+            }
+        }
+
+        foreach ($solution as $e_nam => $token) {
+            if ($token === null && count($_tokens) === 1) {
+                $solution[$e_nam] = array_shift($_tokens);
+            }
+        }
+
+        if (in_array(null, $solution, true)) {
+            logx("err", "Antibot Unknown");
+            return 77;
+        }
+
+        return implode(' ', $solution);
+    }
+    
+    public static function atb_I($api, $force = false, $data = []) {
+        if (!isset(Api::B64[get_class($api)]['antibot'])) {
+            logx('err', 'provider not support atb');
+            return 77;
+        }
+
+        if (empty($data['main'])) return 77; 
+        
+        if ($force) {
+            $atb = $api->atb($data);
+        } else {
+            $solver = config::getKeys($api, 'antibot', 'b64');
+            $atb = $solver->atb($data);
+        }
+        
+        return in_array($atb, [null, 77, false], true) ? 77 : $atb;
+    }
+
+
     public static function rotCaptcha($html) {
         $solution = ['rot_captcha_val' => 0];
         if (!getDeps('gd@php')) {
@@ -1165,4 +1214,5 @@ class locally {
     }
     
 }
+
 

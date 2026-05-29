@@ -3,7 +3,7 @@ if (!defined('ROOT')) { die; }
 #_die();
 $api = onKeys();
 
-$acc = config::credential([], false, ['login', 'PROXY']);
+$acc = config::credential([], true, ['login', 'PROXY']);
 $login = $acc['login'];
 putenv("PROXY=".$acc['PROXY']);
 
@@ -267,24 +267,14 @@ while (true) {
                         $f = Scraper::payload($lok)[0] ?? [];
                         if (!empty($f)) {
                             $pa = $f['payload'];
-                            /*
+                            
                             $cap = Solve::exec($lok, $host, $api, $pa);
                             
                             if (isset($cap['trouble'])) {
                                 _sle(60);
                                 continue;
                             }
-                            */
-
-$token = _rl('token: ');
-$cap = [
-    'g-recaptcha-response'    => $token,
-    'cf-turnstile-response'   => $token,
-    'h-captcha-response'      => $token,
-    'hcaptcha-response'       => $token,
-    'g-recaptcha-response-v3' => $token
-];
-
+                            
                             $po = array_merge($pa, $cap);
                             break;
                         }
@@ -346,9 +336,9 @@ $cap = [
                 }
                 
                 if (!empty($ver)) {
-                    _put('ver.html', $ver); #die;
+                    #_put('ver.html', $ver); #die;
                     $_suc = scraper::_jP($ver, "/Swal\.fire\(\s*\{.*?title:\s*'([^']+)'.*?text:\s*'([^']+)'.*?icon:\s*'([^']+)'/s") ?? [];
-                    print_r($_suc); #die;
+                    #print_r($_suc); #die;
                     if (!empty($_suc[1][0])) {
                         $status = $_suc[1][0];
                         $msg = $_suc[2][0];

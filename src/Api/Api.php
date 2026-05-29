@@ -330,6 +330,7 @@ final class Api { #contractor
 
         gmxch::class => [
             'antibot' => true,
+            'zercaptcha' => true,
         ],
 
         solverify::class => [

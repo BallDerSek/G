@@ -8,13 +8,13 @@ class Menu {
     public static function main() {
         while (true) { 
             _cle();
-            logx('', "\nMENU   ", false, true);
+            logx('', "\nMENU", true, true);
             echo FGd['CYN'] . RUNNER . "\n" . RSET;
             logx('info', IP(), true, true);
             echo FGd['CYN'] . TIMEZONE() . "\n" . RSET;
-            logx('', "  [0] SETTINGS\n  [1] RUN BOT\n  [2] GET BOT\n  [x] EXIT");
+            logx('info', "  [0] SETTINGS\n  [1] RUN BOT\n  [2] GET BOT\n  [x] EXIT", true, true);
 
-            switch (trim(_rl('input [restart]: '))) {
+            switch (trim(_rl('  input [boot]: '))) {
                 case '0': if (self::tools()) return true; break; 
                 case '1': self::runBot(); break;
                 case '2': self::getBotMenu(); break;
@@ -32,8 +32,8 @@ class Menu {
         while (true) {
             KEYS::sync(); 
             logx('warn', "\nINFO", true, true);
-            echo FGb['BLU'].BOLD."    IP"."          : ".FGd['CYN'].UNDR.IP()."\n".RSET;
-            echo FGb['BLU'].BOLD."    TIMEZONE"."    : ".FGd['CYN'].UNDR.TIMEZONE()."\n".RSET;
+            echo FGb['BLU'].BOLD."    IP"."    : ".FGd['CYN'].UNDR.IP()."\n".RSET;
+            echo FGb['BLU'].BOLD."    TZ"."    : ".FGd['CYN'].UNDR.TIMEZONE()."\n".RSET;
             
             logx('warn', "API STATUS", true, true);
             foreach ($GLOBALS['_CTX']['apikey'] as $p => $k) {
@@ -42,12 +42,14 @@ class Menu {
             }
 
             logx('', "\nSETTINGS", true, true);
-            logx('', "  [0] USAGE INFO\n  [1] UPDATE APIKEY\n  [2] PROXY SETTINGS");
+            logx('', "  [0] USAGE INFO");
+            logx('', "  [1] UPDATE APIKEY");
+            logx('', "  [2] PROXY SETTINGS");
             
-            switch (trim(_rl('input [back]: '))) {
+            switch (trim(_rl('  input [back]: '))) {
                 case '0': _cle(); self::usage(); break;
                 case '1': _cle(); KEYS::newKeys(); _cle(); break;
-                case '2': _cle(); if (self::proxy()) return true; break;
+                case '2': if (self::proxy()) return true; break;
                 default: _cle(); return false;
             }
         }
@@ -59,21 +61,21 @@ class Menu {
     public static function runBot() {
         $bots = BOTS::getInstalled(); 
         if (!$bots) {
-            logx('err', "UNAVAILABLE"); 
+            logx('err', "  UNAVAILABLE"); 
             _sle(2); 
             return; 
         }
         
-        logx('warn', "\nAVAILABLE:", true, true);
+        logx('warn', "\n  AVAILABLE:", true, true);
+        logx('err', "  dont forget check usage on settings");
+        logx('err', "  cookie handling is auto passed by email/credential");
         logx('info', "  Tips: Add suffix '_cle' to clean or '_cre' to reset credentials");
-        logx('info', "  eg: 1_cle or 1_cre");
-        logx('err', "  warn: if u running same bot on other session");
-        logx('err', "        and looking for multi-acount better use _cre");
-        logx('err', "        dont forget check usage on settings");
-        logx('err', "        cookie handling is auto passed by email/credential\n");
-        foreach ($bots as $i => $bot) printf("  [%d] %s\n", $i + 1, $bot);
+        logx('info', "        1_cle or 1_cre");
+        foreach ($bots as $i => $bot) {
+            printf("    [%d] %s\n", $i + 1, BOLD.FGb['GRN'].$bot.RSET);
+        }
         
-        $input = trim(_rl('  number[back]: '));
+        $input = trim(_rl('    number[back]: '));
         
         $parts = explode('_', $input);
         $sel = (int)$parts[0];
@@ -183,20 +185,32 @@ class Menu {
      */
     public static function proxy() {
         while (true) {
+            
+            logx('warn', "\n  FORMATS:", true, true);
+            logx('err', '    also support from environment variable');
+            logx('err', "    dont forget check usage on settings");
+            logx('', '    ssh://USER:PASS@HOST:22');
+            logx('', '    http://USER:PASS@HOST:8080');
+            logx('', '    socks5://USER:PASS@HOST:1080');
+            
             if (!empty($GLOBALS['_CTX']['proxy'])) {
                 $p = $GLOBALS['_CTX']['proxy'];
                 $alive = Proxy::_enable();
                 $st = $alive ? FGd['GRN'].'ALIVE' : FGd['RED'].'DEAD';
-                logx('info', "\nPROXY ACTIVE: {$p['host']}:{$p['port']} $st", true, true);
+                logx('info', "\n    PROXY ACTIVE: {$p['host']}:{$p['port']} $st", true, true);
             } else {
-                logx('err', "\nPROXY: OFF");
+                logx('err', "\n    PROXY: OFF");
             }
+            print('    [1]');
+            logx('ok', " ENABLE PROXY");
+            print('    [2]');
+            logx('ok', " DISABLE PROXY");
+            print('    [3]');
+            logx('ok', " RESTART/REFRESH");
 
-            logx('', "  [0] USAGE\n  [1] ENABLE PROXY\n  [2] DISABLE PROXY\n  [3] RESTART/REFRESH\n");
-
-            switch (trim(_rl('input [back]: '))) {
+            switch (trim(_rl('    input [back]: '))) {
                 case '1':
-                    $raw = trim(_rl('url: '));
+                    $raw = trim(_rl('    url: '));
                     if ($raw === '') continue 2;
                     putenv("PROXY=$raw");
                     $_ENV['PROXY'] = $raw;
@@ -205,17 +219,12 @@ class Menu {
                     break;
                 case '2':
                     Proxy::_unable();
-                    logx('err', "disabled");
+                    logx('err', "    disabled");
                     _sle(1); _cle();
                     break;
                 case '3':
                     bootApp();
                     return true;
-                case '0':
-                    _cle();
-                    logx('warn', "\nPROXY FORMATS:", true, true);
-                    echo "  ssh://USER:PASS@HOST:22\n  http://USER:PASS@HOST:8080\n  socks5://USER:PASS@HOST:1080\n";
-                    break;
                 default: _cle(); return false;
             }
         }
@@ -235,8 +244,10 @@ class Menu {
         echo "    CI='1'       : ci ready auto run\n";
         echo "    AN='0'       : disable animation\n";
         echo "\n    eg:\n";
-        logx('info', "BOT=feyorratop API=capsolver KEY=123 mail=xxx pass=xxx php run.php", true, true);
+        logx('info', "BOT=feyorratop mail=xxx pass=xxx php run.php", true, true);
+        logx('info', "BOT=botname API=tertuyul KEY=abc login=xxx  CI=1 PROXY=type://host:port php run.php", true, true);
         logx('info', "BOT=botname API=tertuyul KEY=321 login=xxx php run.php", true, true);
+        logx('info', "ENV=1 php run.php", true, true);
         _rl("\n Enter to back...");
         _cle();
     }

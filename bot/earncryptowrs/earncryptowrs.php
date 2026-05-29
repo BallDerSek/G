@@ -3,7 +3,7 @@ if (!defined('ROOT')) { die; }
 #_die();
 $api = onKeys();
 
-$acc = config::credential([], false, ['login', 'PROXY']);
+$acc = config::credential([], true, ['login', 'PROXY']);
 $login = $acc['login'];
 putenv("PROXY=".$acc['PROXY']);
 
@@ -32,6 +32,8 @@ $SLDONE = false;
 $claim = true;
 $habis = [];
 $curr = '';
+$atbforce = false;
+$atbfail = 0;
 while (true) {
     $ret = 0;
 
@@ -141,7 +143,8 @@ while (true) {
                 
                 
                 $pa = $f['payload'];
-                $cap = Solve::exec($fau, $host, $api, $pa);
+                if ($atbfail >= 3) $atbforce = true;
+                $cap = Solve::exec($fau, $host, $api, $pa, $atbforce);
                 
                 if (isset($cap['trouble'])) {
                     $tro = $cap['trouble'];
@@ -190,6 +193,11 @@ while (true) {
                         logx($is_ok ? 'ok' : 'err', "{$ttl} ", false);
                         logg(false, $msg);
                         
+                        if (stripos($msg, 'has been sent')) {
+                            $atbforce = false;
+                            $atbfail = 0;
+                        }
+                        
                         if (preg_match('/sufficient|could not be processed/i', $msg)) {
                             $habis[] = $fa;
                             break;
@@ -204,6 +212,9 @@ while (true) {
                             $claim = false;
                             $curr = $_c; 
                             break 2;
+                        }
+                        if (stripos($msg, 'nvalid Anti-Bot')) {
+                            $atbfail++;
                         }
                         if (stripos($msg, 'Shortlink')) {
                             

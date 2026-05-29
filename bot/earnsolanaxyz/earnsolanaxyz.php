@@ -31,6 +31,8 @@ $skipped = [];
 $SLDONE = true;
 $claim = true;
 $curr = '';
+$atbforce = false;
+$atbfail = 0;
 while (true) {
     $ret = 0;
 
@@ -131,11 +133,10 @@ while (true) {
             continue;
         }
             
-            
-            
         if (!empty($f['payload'])) {
             $pa = $f['payload'];
             
+            if ($atbfail >= 3) $atbforce = true;
             $cap = solve::exec($fau, $host, $api);
             if (isset($cap['trouble'])) {
                 _sle(60);
@@ -159,13 +160,17 @@ while (true) {
                 logg(false, $msg);
                 
                 if (preg_match('/sufficient|banned/i', $msg)) die;
+                if (stripos($msg, 'has been sent')) {
+                    $atbforce = false;
+                    $atbfail = 0;
+                }
+                if (stripos($msg, 'nvalid Anti-Bot')) {
+                    $atbfail++;
+                }
                 
             }
         }
     }
-    
-    
-    
     
     if (!$claim && $SLDONE) {
         print(FGd['CYN'].maskEmail($login).RSET." ");
@@ -190,7 +195,7 @@ function checkCF($url, $api, $body = null, $headersCF = []) {
         $cf = execCF($api, $url, inf::$cookie, inf::$uagent);
         
         if ($cf) {
-            var_dump($cf);
+            #var_dump($cf);
             [$headersCF, $ua] = $cf;
             inf::setup($ua, inf::$cookie);
             
@@ -199,7 +204,7 @@ function checkCF($url, $api, $body = null, $headersCF = []) {
                     _sle(3);
                     $fix = Net::X($url, 'GET', null, inf::$cookie, $headersCF, $url, inf::$uagent, d: true);
                     
-                    var_dump($fix['body']);
+                    #var_dump($fix['body']);
                     if (!empty($fix) && isset($fix['http_code'])) {
                         if ($fix['http_code'] === 200) {
                             config::credential()['ua'] = $ua;

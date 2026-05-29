@@ -25,15 +25,20 @@ $ip = '159.198.47.130';
     taskPrintCenter($mail, 'info');
 })($mail, $ip);
 
-$dash = null;
+
 $limit = false;
-$shortlink = false;
 $SLDONE = false;
-$skipped = [];
-$claim = false;
+$ADDONE = false;
+$skipped_sho = [];
+$skipped_ads = []; 
+$claim = true;
 $can_withdraw = true;
 $pending = null;
 while (true) {
+    $dash = null;
+    $owme = null;
+    $zer = null;
+    $ads = null;
     $ret = 0; 
     
     do {
@@ -104,12 +109,7 @@ while (true) {
         
     } while (empty($dash));
     #_put('dash.html', $dash);
-    
-    if (stripos($dash, 'Please check your inbox or spam folder to confirm your account')) {
-        $can_withdraw = false;
-        #var_dump($can_withdraw);
-    }
-    
+
     if (!empty($pending)) {
         for ($retry = 0; $retry < 2; $retry++) {
             $verr = Net::C($pending, 'GET', null, inf::$cookie, [], $host, inf::$uagent, ip: $ip);
@@ -121,6 +121,119 @@ while (true) {
                     logg(true, $m[2][0]);
                 }
                 break;
+            }
+        }
+        continue;
+    }
+    
+    if (stripos($dash, 'Please check your inbox or spam folder to confirm your account')) {
+        $can_withdraw = false;
+    }
+    
+    $_bal = Scraper::_xP($dash, "//small[text()='Main Balance']/preceding-sibling::h6/text()")[0] ?? '';
+    if ($_bal) {
+        print(FGd['CYN'].maskEmail($mail).RSET." ");
+        logx('info', "[ $_bal ]", true, true);
+        $bal = ((int)$_bal);
+        
+        if ($can_withdraw && ($bal >= 10000)) {
+            $po = null;
+            $jjn = [];
+            $wd = Net::C("$host/withdraw", 'GET', null, inf::$cookie, [], "$host/dashboard", inf::$uagent, false, false, $ip);
+            $jjn = _wd($wd);
+            
+            if (!empty($jjn['payload']) && !empty($jjn['url'])) {
+                $pa = $jjn['payload'];
+                
+                $cap = solve::exec($wd, $host, $api, $pa);
+                if (isset($cap['trouble'])) continue;
+                
+                $walletKey = isset($pa['address']) ? 'address' : (isset($pa['wallet']) ? 'wallet' : 'email');
+                if (empty($pa[$walletKey])) $pa[$walletKey] = $mail;
+                
+                $po = array_merge($pa, $cap);
+                
+                logg(true, '  tes ilmu: '.$jjn['info']['coin'], false);
+                logx('info', ' [ '.$po[$walletKey].' ]');
+                
+                $wdd = Net::C($jjn['url'], 'POST', $po, inf::$cookie, [], "$host/withdraw", inf::$uagent, false, false, $ip);
+                
+                $mW = scraper::_jP($wdd, "/Swal\.fire\s*\(\s*['\"]([^'\"]+)['\"]\s*,\s*['\"]([^'<]+)/i");
+                if (!empty($mW[2][0])) {
+                    print(FGd['CYN'].maskEmail($mail).RSET." ");
+                    logx('info', $mW[2][0]);
+                }
+            } else {
+                logx('err', 'gak bisa wd kayaknya');
+            }
+        } 
+    }
+
+    faucet:
+    $setF = 0; 
+    if ($claim) {
+        $ret99 = 0; 
+        while (true) {
+            $fau = Net::C("$host/faucet", 'GET', null, inf::$cookie, [], "$host/dashboard", inf::$uagent, false, false, $ip);
+            if ($fau === 99) {
+                $ret99++;
+                logx('warn', "masalah proxy, warm up dulu");
+                if ($ret99 >= 7) {
+                    goto login;
+                }
+                _sle(30);
+                continue;
+            }
+            $ret99 = 0; 
+            if (empty($fau)) continue;
+            
+            #_put('fauu.html', $fau);
+            
+            $po = null;
+            $cap = [];
+            $f = scraper::payload($fau)[0] ?? [];
+            if (empty($f)) {
+                if (stripos($fau, '/register') || !$SLDONE) {
+                    $setF = microtime(true); 
+                    break;
+                }
+                
+                styler('Waiting for faucet', fn() => _sle(30));
+                continue;
+            }
+            
+            if (!empty($f['payload'])) {
+                $pa = $f['payload'];
+                
+                $cap = solve::exec($fau, $host, $api);
+                if (isset($cap['trouble'])) {
+                    _sle(60);
+                    continue;
+                }
+                
+                $po = array_merge($pa, $cap);
+            }
+            
+            if (!empty($po)) {
+                
+                $cla = Net::C($f['url'], 'POST', $po, inf::$cookie, [], "$host/faucet", inf::$uagent, ip: $ip);
+                if (empty($cla) || ($cla === 99)) continue;
+                
+                #_put('cla.html', $cla);
+                $m = scraper::_jP($cla, "/Swal\.fire\s*\(\s*'([^']+)'\s*,\s*'([^']+)'\s*,\s*'([^']+)'\s*\)/");
+                if (isset($m[2][0])) {
+                    print(FGd['CYN'].maskEmail($mail).RSET." ");
+                    logg(true, $m[2][0]);
+                    if (stripos($m[2][0], 'has been added')) {
+                        #$deadline = 
+                        $setF = microtime(true); 
+                        break;
+                    }
+                }
+                
+                $alert_d = scraper::_xP($cla, "//div[contains(@class, 'alert-danger')]");
+                if (!empty($alert_d)) logx('err', $alert_d[0]);
+                    
             }
         }
     }
@@ -201,144 +314,11 @@ while (true) {
             }
         } else {
             logx('err', 'ptc habis');
-            $claim = true;
+            $ADDONE = true;
             break;
         }
-    } while (!$claim);
+    } while ($ADDONE);
     
-    
-    
-    
-    
-    
-    
-/*
-    $zer = Net::C("$host/zeradsptc/earn", 'GET', null, inf::$cookie, [], "$host/dashboard", inf::$uagent, false, false, $ip);
-    if (!empty($zer) && $zer !== 99) {
-        $zer_u = Scraper::_xP($zer, "//a[@id='generateBtn']/preceding-sibling::a[1]/@href")[0] ?? '';
-        if (!empty($zer_u)) {
-            $zer = Net::X($zer_u, 'GET', null, inf::$cookie, [], "", inf::$uagent);
-            if (!empty($zer) && $zer !== 99) {
-                if (stripos($zer, 'solve captcha')) {
-                    
-                    $zerC_m = Scraper::_xP($zer, "//td[contains(text(), 'Click')]/following-sibling::td/img/@src | //font[contains(text(), 'Click')]/../following-sibling::td/img/@src") ?? '';
-                    $zerC_o = Scraper::_xP($zer, "//a[contains(@href, 'scid=')]/@href");
-                    $zerC_i = Scraper::_xP($zer, "//a[contains(@href, 'scid=')]/img/@src");
-                    $zerC_p = [];
-                    if ($zerC_m && $zerC_o && $zerC_i) {
-                        
-                        #$tempDir = _lib('zer');
-                        $zer_h = 'https://zerads.com/';
-                        for ($_r = 0; $_r < 2; $_r++) {
-                            $M_z = Net::C($zer_h.$zerC_m[0], 'GET', null, inf::$cookie, [], $zer_u, inf::$uagent);
-                            
-                            if (!empty($M_z) && $M_z !== 99) {
-                                $zerC_p['main'] = base64_encode($M_z);
-                            }
-                            
-                        }
-                        
-                        #_put($tempDir.'/main.jpg', $M_z);
-                        foreach ($zerC_i as $i => $u) {
-                            $I_z = Net::C($zer_h.$u, 'GET', null, null, [], $zer_u, inf::$uagent);
-                            if (!empty($I_z) && $I_z !== 99) {
-                                $zerC_p['options'][$i] = base64_encode($I_z);
-                                #_put($tempDir."/$i.png", $I_z);
-                            }
-                        }
-                            
-                        
-                    }
-                    #print_r($zerC_p);
-                    if (!empty($zerC_p['options']) && isset($zerC_p['main'])) {
-                        
-                        if (count($zerC_i) === count($zerC_p['options'])) {
-                            print_r($zerC_p);
-                            logx('', "sesuai");
-                            
-                            
-                            if (AUTH_API()) {
-                                if (!method_exists($api, 'zer')) {
-                                    logx('err', 'not support');
-                                }
-                            }
-                            
-                            
-                            
-                        }
-                        
-                    }
-                    
-                    
-                }
-            }
-                
-            die;
-        }
-    }
-die;
-*/
-
-    if (!$limit && $claim) {
-        $ret99 = 0; 
-        while (true) {
-            $fau = Net::C("$host/faucet", 'GET', null, inf::$cookie, [], "$host/dashboard", inf::$uagent, false, false, $ip);
-            if ($fau === 99) {
-                $ret99++;
-                logx('warn', "masalah proxy, warm up dulu");
-                if ($ret99 >= 7) {
-                    goto login;
-                }
-                _sle(30);
-                continue;
-            }
-            $ret99 = 0; 
-            if (empty($fau)) continue;
-            
-            #_put('fauu.html', $fau);
-            
-            $po = null;
-            $cap = [];
-            $f = scraper::payload($fau)[0] ?? [];
-            if (empty($f)) {
-                if (stripos($fau, '/register') || !$SLDONE) break;
-                
-                styler('Waiting for faucet', fn() => _sle(30));
-                continue;
-            }
-            
-            if (!empty($f['payload'])) {
-                $pa = $f['payload'];
-                
-                $cap = solve::exec($fau, $host, $api);
-                if (isset($cap['trouble'])) {
-                    _sle(60);
-                    continue;
-                }
-                
-                $po = array_merge($pa, $cap);
-            }
-            
-            if (!empty($po)) {
-                
-                $cla = Net::C($f['url'], 'POST', $po, inf::$cookie, [], "$host/faucet", inf::$uagent, ip: $ip);
-                if (empty($cla) || ($cla === 99)) continue;
-                
-                #_put('cla.html', $cla);
-                $m = scraper::_jP($cla, "/Swal\.fire\s*\(\s*'([^']+)'\s*,\s*'([^']+)'\s*,\s*'([^']+)'\s*\)/");
-                if (isset($m[2][0])) {
-                    print(FGd['CYN'].maskEmail($mail).RSET." ");
-                    logg(true, $m[2][0]);
-                    if (stripos($m[2][0], 'has been added')) break;
-                }
-                
-                $alert_d = scraper::_xP($cla, "//div[contains(@class, 'alert-danger')]");
-                if (!empty($alert_d)) logx('err', $alert_d[0]);
-                    
-            }
-        }
-    }
-
     sl:
     $ret99 = 0; 
     do {
@@ -366,7 +346,7 @@ die;
         $can_process = false; 
         foreach ($short as $links => [$idd, $lmt]) {
             
-            if (!limit($lmt) || isset($skipped[$idd])) continue;
+            if (!limit($lmt) || isset($skipped_sho[$idd])) continue;
             
             $can_process = true;
             
@@ -387,7 +367,7 @@ die;
             $loc = $match[1] ?? '';
             
             if (!$loc) {
-                $skipped[$idd] = true;
+                $skipped_sho[$idd] = true;
                 continue; 
             }
             
@@ -396,7 +376,7 @@ die;
             foreach ($up as $blacklisted) {
                 if (str_contains($loc_u, $blacklisted)) {
                     logx('warn', "Domain $blacklisted Skipping..");
-                    $skipped[$idd] = true;
+                    $skipped_sho[$idd] = true;
                     $is_bl = true;
                     break; 
                 }
@@ -411,7 +391,7 @@ die;
             #var_dump($bakk);
             
             if (!$bakk) {
-                $skipped[$idd] = true; 
+                $skipped_sho[$idd] = true; 
                 _sle(5);
                 continue; 
             }
@@ -441,7 +421,6 @@ die;
                 if (isset($m[2][0])) {
                     print(FGd['CYN'].maskEmail($mail).RSET." ");
                     logg(true, $m[2][0]);
-                    break 2;
                 }
             }
             
@@ -455,7 +434,55 @@ die;
         
     } while (!$SLDONE);
     
+    $zer = Net::C("$host/zeradsptc/earn", 'GET', null, inf::$cookie, [], "$host/dashboard", inf::$uagent, false, false, $ip);
+    #_put('zer.html', $zer);
+    $zer_u = Scraper::_xP($zer, "//a[@id='generateBtn']/preceding-sibling::a[1]/@href")[0] ?? '';
     
+    if (!empty($zer_u)) {
+        $zera = new Zera($host, $api, $mail);
+    
+        $zera->exec($zer_u, $ip);
+    } elseif (stripos($zer, '/register')) continue;
+
+    $owme = Net::C("$host/ptc", 'GET', null, inf::$cookie, [], "$host/dashboard", inf::$uagent, false, false, $ip);
+    #_put('ptc.html', $owme); #die;
+    
+    if (!empty($owme) && $owme !== 99) {
+        $ow = new Owme($host, $mail);
+        $off = [];
+        
+        $urls = Scraper::_xP($owme, "//div[@id='offerwallme']//div[contains(@class, 'card')]//div[contains(@class, 'mt-auto')]/a/@href");
+        $tmrs = Scraper::_xP($owme, "//div[@id='offerwallme']//div[contains(@class, 'card')]//div[contains(@class, 'text-primary') and contains(@class, 'fw-semibold')]/text()");
+        
+        if (!empty($urls)) {
+            foreach ($urls as $index => $url) {
+                $tmr = isset($tmrs[$index]) ? $tmrs[$index] : '0';
+                $timer = (int)filter_var($tmr, FILTER_SANITIZE_NUMBER_INT);
+                $off[] = ['url' => $url, 'timer' => $timer];
+            }
+        }
+        
+        if (empty($off)) {
+            logx('err', "habis total kayaknya.");
+        } else {
+            foreach ($off as $ad) {
+                if (isset($skipped_ads[$ad['url']])) continue;
+
+                if ($setF > 0) {
+                    $endF = microtime(true) - $setF;
+                    if ($endF >= 4 * 60) break;
+                }
+                
+                $status = $ow->exec($ad['url'], $ad['timer']);
+                if ($status) {
+                    styler('Waiting', fn() => _sle(5));
+                } else {
+                    logx('err', "Gagal claim iklan");
+                    $skipped_ads[$ad['url']] = true; 
+                }
+            }
+        }
+    }
     
 }
 
@@ -466,3 +493,51 @@ die;
 tes:
 
 
+
+
+
+
+
+
+
+
+
+function _wd($html) {
+    $res = Scraper::payload($html)[0] ?? null;
+    if (!$res) return false;
+
+    $fp_area = explode('data-group="cwallet"', $html)[0] ?? $html;
+    
+    $cards = explode('class="currency-card', $fp_area);
+    array_shift($cards); 
+
+    foreach ($cards as $card) {
+        preg_match('/data-name="([^"]+)"/i', $card, $nameMatch);
+        $name = $nameMatch[1] ?? '';
+        
+        if (stripos($name, 'btc') !== false || stripos($name, 'bitcoin') !== false) {
+            continue;
+        }
+
+        preg_match('/aria-valuenow="(\d+)"/i', $card, $stockMatch);
+        $stock = (int)($stockMatch[1] ?? 0);
+
+        if ($stock >= 10) {
+            preg_match('/name="method"\s+value="(\d+)"/i', $card, $valMatch);
+            $value = $valMatch[1] ?? null;
+
+            if ($value !== null) {
+                $res['payload']['method'] = $value;
+                
+                $res['info'] = [
+                    'coin'  => $name,
+                    'stock' => $stock . '%'
+                ];
+                
+                return $res;
+            }
+        }
+    }
+    
+    return false;
+}
