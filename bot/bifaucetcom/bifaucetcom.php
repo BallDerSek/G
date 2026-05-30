@@ -28,12 +28,13 @@ $ip = '159.198.47.130';
 
 $limit = false;
 $SLDONE = false;
-$ADDONE = false;
 $skipped_sho = [];
 $skipped_ads = []; 
 $claim = true;
 $can_withdraw = true;
 $pending = null;
+$atbforce = false;
+$atbfail = 0;
 while (true) {
     $dash = null;
     $owme = null;
@@ -205,7 +206,8 @@ while (true) {
             if (!empty($f['payload'])) {
                 $pa = $f['payload'];
                 
-                $cap = solve::exec($fau, $host, $api);
+                if ($atbfail >= 3) $atbforce = true;
+                $cap = solve::exec($fau, $host, $api, $pa, false, $atbforce);
                 if (isset($cap['trouble'])) {
                     _sle(60);
                     continue;
@@ -224,9 +226,13 @@ while (true) {
                 if (isset($m[2][0])) {
                     print(FGd['CYN'].maskEmail($mail).RSET." ");
                     logg(true, $m[2][0]);
+                    if (stripos($cla, 'nvalid Anti-Bot')) $atbfail++;
+                    
                     if (stripos($m[2][0], 'has been added')) {
                         #$deadline = 
-                        $setF = microtime(true); 
+                        $atbforce = false;
+                        $atbfail = 0;
+                        $setF = microtime(true);
                         break;
                     }
                 }
@@ -238,23 +244,21 @@ while (true) {
         }
     }
     
-    do {
-        
-        $ads = Net::C("$host/ptc", 'GET', null, inf::$cookie, [], "$host/dashboard", inf::$uagent, false, false, $ip);
-        if ($ads === 99) { _sle(60); continue 2; }
+    $ads = Net::C("$host/ptc", 'GET', null, inf::$cookie, [], "$host/dashboard", inf::$uagent, false, false, $ip);
+    if (!empty($ads) && $ads !== 99) {
         #_put('ptc.html', $ads);
-        
         $_onclick = Scraper::_xP($ads, "//div[@id='local']//div[contains(@class, 'card')][.//button[@onclick]]//button/@onclick");
         $_tim = Scraper::_xP($ads, "//div[@id='local']//div[contains(@class, 'card')][.//button[@onclick]]//div[contains(@class, 'px-3')]/div[2]/div[contains(@class, 'fw-semibold')]");
-        
         $url_list = array_map(fn($u) => explode("'", $u)[1] ?? null, $_onclick);
         $vurl = $url_list[0] ?? null;
-        
         if ($vurl) {
             $cla = null;
+            $view = null;
             $tim = isset($_tim[0]) ? (int)preg_replace('/[^0-9]/', '', $_tim[0]) : 0;
+            /*
             logx('info', "[ $vurl ]: ", false);
             logx('', $tim);
+            */
             
             $ret99 = 0;
             while (true) {
@@ -262,49 +266,42 @@ while (true) {
                 if ($view === 99) {
                     $ret99++;
                     logx('warn', "masalah proxy, warm up dulu");
-                    if ($ret99 >= 5) {
-                        goto login;
-                    }
+                    if ($ret99 >= 5) continue 2;
                     _sle(30);
                     continue;
                 }
-                $ret99 = 0; 
                 if (!empty($view)) {
-                    #_put('view.html', $view);
-                    $set = microtime(true);
-                    $f = scraper::payload($view) ?? [];
-                    if (!empty($f)) {
-                        #print_r($f);
-                        $pa = $f[0]['payload'] ?? [];
+                    $ret99 = 0; 
+                    break;
+                }
+                
+            }
+            if (!empty($view)) {
+                #_put('view.html', $view);
+                $set = microtime(true);
+                $f = scraper::payload($view) ?? [];
+                if (!empty($f)) {
+                    $cap = [];
+                    $pa = $f[0]['payload'] ?? [];
+                    $cap = solve::exec($view, $host, $api);
+                    if (isset($cap['trouble'])) continue;
+                    $po = array_merge($pa, $cap);
+                    #print_r($po);
+                    
+                    if (!empty($po)) {
+                        $end = microtime(true) - $set;
+                        $wait = (int)($tim - $end);
+                        if ($wait > 0) styler("waiting for ads: $wait", fn() => _sle($wait));
                         
-                        $cap = [];
-                        $cap = solve::exec($view, $host, $api);
-                        if (isset($cap['trouble'])) {
-                            _sle(60);
-                            continue;
-                        }
-                        $po = array_merge($pa, $cap);
-                        #print_r($po);
-                        
-                        if (!empty($po)) {
-                            $end = microtime(true) - $set;
-                            $wait = (int)($tim - $end);
-                            if ($wait > 0) {
-                                styler("waiting for ads: $wait", fn() => _sle($wait));
-                            }
-                            claim:
+                        for ($re = 0; $re < 2; $re++) {
                             $cla = Net::X($f[0]['url'], 'POST', $po, inf::$cookie, [], $vurl, inf::$uagent, ip: $ip);
-                            if (empty($cla)) goto claim;
-                            if ($cla === 99) goto login;
-                            break;
-                            
+                            if (!empty($cla) && $cla !== 99) break;
                             
                         }
-                        
-                        
                     }
                 }
             }
+            
             if (!empty($cla)) {
                 $m = scraper::_jP($cla, "/Swal\.fire\s*\(\s*'([^']+)'\s*,\s*'([^']+)'\s*,\s*'([^']+)'\s*\)/");
                 if (isset($m[2][0])) {
@@ -314,10 +311,8 @@ while (true) {
             }
         } else {
             logx('err', 'ptc habis');
-            $ADDONE = true;
-            break;
         }
-    } while ($ADDONE);
+    }
     
     sl:
     $ret99 = 0; 
@@ -450,7 +445,7 @@ while (true) {
     if (!empty($owme) && $owme !== 99) {
         $ow = new Owme($host, $mail);
         $off = [];
-        
+        $owmeFail = 0;
         $urls = Scraper::_xP($owme, "//div[@id='offerwallme']//div[contains(@class, 'card')]//div[contains(@class, 'mt-auto')]/a/@href");
         $tmrs = Scraper::_xP($owme, "//div[@id='offerwallme']//div[contains(@class, 'card')]//div[contains(@class, 'text-primary') and contains(@class, 'fw-semibold')]/text()");
         
@@ -466,6 +461,7 @@ while (true) {
             logx('err', "habis total kayaknya.");
         } else {
             foreach ($off as $ad) {
+                if ($owmeFail >= 15) break;
                 if (isset($skipped_ads[$ad['url']])) continue;
 
                 if ($setF > 0) {
@@ -477,7 +473,7 @@ while (true) {
                 if ($status) {
                     styler('Waiting', fn() => _sle(5));
                 } else {
-                    logx('err', "Gagal claim iklan");
+                    $owmeFail++;
                     $skipped_ads[$ad['url']] = true; 
                 }
             }

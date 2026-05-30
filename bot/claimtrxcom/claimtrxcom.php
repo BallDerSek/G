@@ -210,8 +210,7 @@ while (true) {
                 
             if (isset($m[2][0])) {
                 print(FGd['CYN'].maskEmail($mail).RSET." ");
-                logg(true, $m[2][0], false);
-                $pttr = '/<h3>([^<]+)<\/h3>\s*<p>Balance<\/p>/';
+                logg(true, $m[2][0]);
                 if (stripos($m[2][0], 'has been added')) break;
             }
             
@@ -229,8 +228,10 @@ while (true) {
         if ($vurl) {
             $cla = null;
             $tim = isset($_tim[0]) ? (int)preg_replace('/[^0-9]/', '', $_tim[0]) : 0;
+            /*
             logx('info', "[ $vurl ]: ", false);
             logx('', $tim);
+            */
             #die;
             $ret99 = 0;
             while (true) {

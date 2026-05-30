@@ -26,7 +26,9 @@ class Owme {
     
     public function exec($url, $timer) {
         $attempt = 0;
-
+        
+        if (!AUTH_KEY || $url) return false;
+        
         while ($attempt < 3) {
             $attempt++;
 
@@ -187,7 +189,7 @@ class Zera {
 
         $retZer = 0;
         $current_ref = '';
-        
+        $claimed = 0;
         start:
         $zer = Net::C($zer_u, 'GET', null, $this->cookieFile, [], "", $this->userAgent);
         
@@ -201,6 +203,8 @@ class Zera {
                 $this->cleanup();
                 break;
             }
+            if ($claimed >= 10) break;
+            
             $zer_s = null; 
 
             if (stripos($zer, 'solve captcha')) {
@@ -213,7 +217,7 @@ class Zera {
                 
                 if ($sol = $this->_solve($zerC_p)) {
                     $target_url = $this->zer_h . $sol;
-                    logx('info', '0: '.$target_url);
+                    #logx('info', '0: '.$target_url);
                     $zer_s = Net::X($target_url, 'GET', null, $this->cookieFile, [], $current_ref, $this->userAgent);
                     #_put('zerS.html', $zer_s);
                     $current_ref = $target_url;
@@ -259,7 +263,7 @@ class Zera {
                     
                     
                     $target_url = $this->zer_h . $sol;
-                    logx('info', '1: '.$target_url);
+                    #logx('info', '1: '.$target_url);
                     $zer_d = Net::X($target_url, 'GET', null, $this->cookieFile, [], $current_ref, $this->userAgent);
                     
                     #_put('zerD.html', $zer_d);
@@ -270,6 +274,9 @@ class Zera {
                             print(FGd['CYN'] . maskEmail($this->email) . RSET . " ");
                             $message = trim(preg_replace('/\s+/', ' ', strip_tags($zer_r[0])));
                             logx('ok', $message, true, true);
+                            
+                            $claimed++;
+                            
                         }
                     }
                     

@@ -140,7 +140,7 @@ while (true) {
             $pa = $f['payload'];
             
             if ($atbfail >= 3) $atbforce = true;
-            $cap = solve::exec($fau, $host, $api);
+            $cap = solve::exec($fau, $host, $api, $pa, false, $atbforce);
             if (isset($cap['trouble'])) {
                 _sle(60);
                 continue;

@@ -236,8 +236,10 @@ while (true) {
         if ($vurl) {
             $cla = null;
             $tim = isset($_tim[0]) ? (int)preg_replace('/[^0-9]/', '', $_tim[0]) : 0;
+            /*
             logx('info', "[ $vurl ]: ", false);
             logx('', $tim);
+            */
             #die;
             $ret99 = 0;
             while (true) {
