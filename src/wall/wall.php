@@ -292,7 +292,6 @@ class Zera {
             }
         }
         
-        logx('info', "error gak danta");
         return true;
     }
 
@@ -315,7 +314,7 @@ class Zera {
                 
                 if (!empty($M_z) && $M_z !== 99) {
                     if ($M_z === "invalid access") {
-                        var_dump($M_z);
+                        #var_dump($M_z);
                         return 'main_reload';
                     }
                     $package['main'] = base64_encode($M_z);

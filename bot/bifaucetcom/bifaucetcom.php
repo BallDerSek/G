@@ -137,7 +137,7 @@ while (true) {
         logx('info', "[ $_bal ]", true, true);
         $bal = ((int)$_bal);
         
-        if ($can_withdraw && ($bal >= 10000)) {
+        if ($can_withdraw && ($bal >= 5000)) {
             $po = null;
             $jjn = [];
             $wd = Net::C("$host/withdraw", 'GET', null, inf::$cookie, [], "$host/dashboard", inf::$uagent, false, false, $ip);
@@ -223,10 +223,10 @@ while (true) {
                 
                 #_put('cla.html', $cla);
                 $m = scraper::_jP($cla, "/Swal\.fire\s*\(\s*'([^']+)'\s*,\s*'([^']+)'\s*,\s*'([^']+)'\s*\)/");
+                if (stripos($cla, 'nvalid Anti-Bot')) $atbfail++;
                 if (isset($m[2][0])) {
                     print(FGd['CYN'].maskEmail($mail).RSET." ");
                     logg(true, $m[2][0]);
-                    if (stripos($cla, 'nvalid Anti-Bot')) $atbfail++;
                     
                     if (stripos($m[2][0], 'has been added')) {
                         #$deadline = 
@@ -428,16 +428,6 @@ while (true) {
         }
         
     } while (!$SLDONE);
-    
-    $zer = Net::C("$host/zeradsptc/earn", 'GET', null, inf::$cookie, [], "$host/dashboard", inf::$uagent, false, false, $ip);
-    #_put('zer.html', $zer);
-    $zer_u = Scraper::_xP($zer, "//a[@id='generateBtn']/preceding-sibling::a[1]/@href")[0] ?? '';
-    
-    if (!empty($zer_u)) {
-        $zera = new Zera($host, $api, $mail);
-    
-        $zera->exec($zer_u, $ip);
-    } elseif (stripos($zer, '/register')) continue;
 
     $owme = Net::C("$host/ptc", 'GET', null, inf::$cookie, [], "$host/dashboard", inf::$uagent, false, false, $ip);
     #_put('ptc.html', $owme); #die;
@@ -479,6 +469,16 @@ while (true) {
             }
         }
     }
+    
+    $zer = Net::C("$host/zeradsptc/earn", 'GET', null, inf::$cookie, [], "$host/dashboard", inf::$uagent, false, false, $ip);
+    #_put('zer.html', $zer);
+    $zer_u = Scraper::_xP($zer, "//a[@id='generateBtn']/preceding-sibling::a[1]/@href")[0] ?? '';
+    
+    if (!empty($zer_u)) {
+        $zera = new Zera($host, $api, $mail);
+    
+        $zera->exec($zer_u, $ip);
+    } elseif (stripos($zer, '/register')) continue;
     
 }
 
