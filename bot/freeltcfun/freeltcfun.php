@@ -151,7 +151,7 @@ while (true) {
         
         if (!empty($po)) {
             $cla = Net::X($f['url'], 'POST', $po, inf::$cookie, $headersCF, '', inf::$uagent);
-            #_put('cla.html' ,$cla);
+            #_put('cla.html' ,$cla); #die;
             if (empty($cla) || ($cla === 99)) continue;
                 
             $_suc = scraper::_jP($cla, "/Swal\.fire\(\s*\{.*?icon:\s*'([^']+)'.*?title:\s*'([^']+)'.*?html:\s*'([^']+)'/s") ?? [];
@@ -169,6 +169,7 @@ while (true) {
                 }
                 if (stripos($msg, 'nvalid Anti-Bot')) {
                     $atbfail++;
+                    #die;
                 }
                 
                 if (stripos($msg, 'verify your account') !== false) {

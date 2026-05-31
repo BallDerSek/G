@@ -101,9 +101,10 @@ function logg($clock = true, $msg = '', $n = true, $check = false) {
     }
 }
 
-function logx($i = "", $msg = "\n", $n = true, $b = false) {
+function logx($in = "", $msg = "\n", $n = true, $b = false) {
     $b = $b ? BOLD : '';
     if (!$n && !animate()) $n = true;
+    $i = trim($in);
 
     switch (strtoupper(trim($i))) {
         case 'ERR':

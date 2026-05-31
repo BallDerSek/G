@@ -28,9 +28,9 @@ $ip = '';
 
 
 $limit = false;
+$claim = false;
 $SLDONE = false;
 $ADDONE = false;
-$claim = true;
 $skipped = [];
 $can_withdraw = true;
 while (true) {
@@ -112,7 +112,7 @@ while (true) {
     }
     
     $box = false;
-    if (!$limit) {
+    if (!$limit && $claim) {
         $ret99 = 0; 
         while (true) {
             $fau = Net::C("$host/faucet", 'GET', null, inf::$cookie, [], "$host/dashboard", inf::$uagent, false, false, $ip);

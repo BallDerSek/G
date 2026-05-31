@@ -142,7 +142,17 @@ class Solve {
             $rss_res = self::rss($_cap['rss'], $api, $host, $html);
             if (is_array($rss_res)) {
                 $solution = array_merge($solution, $rss_res);
-                if (!empty($_fields)) {
+                $found = null;
+                foreach ($pa as $key => $val) {
+                    if (stripos($val, 'rscaptcha') !== false) {
+                        $found = $key;
+                        break;
+                    }
+                }
+                
+                if ($found) {
+                    $solution[$found] = $pa[$found];
+                } elseif (!empty($_fields)) {
                     $solution[$_fields] = 'rscaptcha';
                 }
             } else {
@@ -262,7 +272,7 @@ class Solve {
             }
             
             if (in_array($res, [71, 77], true)) {
-                if ($res === 71) logx('err', 'unsupported image provider');
+                if ($res === 71) logx('err', 'unsupported provider');
                 return ['trouble' => 'reload'];
             }
             
@@ -284,6 +294,10 @@ class Solve {
         $_K = $rss['keys'] ?? null;
         $_T = $rss['extra']['token'] ?? null;
         $_J = $rss['extra']['js'] ?? null;
+        
+        if (str_starts_with($_M, 'rsc')) {
+            return self::rsc($rss, $api, $host);
+        }
         
         if (in_array(null, [$_M, $_K, $_T, $_J], true)) return false;
         if (!filter_var($_K, FILTER_VALIDATE_URL)) {
@@ -312,6 +326,64 @@ class Solve {
             }
         }
         return false;
+    }
+
+    private static function rsc($rss, $api, $host) {
+        
+        $token = null;
+        
+        $_D = $rss['extra'] ?? null;
+        $_I = $_D['app_id'] ?? null;
+        $_T = $_D['version'] ?? null;
+        $_K = $_D['public_key'] ?? null;
+        
+        $_H = 'https://rscaptcha.com';
+        
+        if (in_array(null, [$_D, $_I, $_T, $_K], true)) return false;
+        
+        if (strtolower(get_class($api)) === 'skibidixxx') {
+            $res = $api->rss($_D, $host);
+            if ($res) {
+                parse_str(str_replace([":", ","], ["=", "&"], $res), $out);
+                $rs_T = $out['rs_token'] ?? null;
+                $rs_R = $out['rs_res'] ?? null;
+            }
+        } else {
+            $_0 = SolveUtils::webkitID($_D, $boundary);
+            $head = ["Content-Type: multipart/form-data; boundary=$boundary"];
+            
+            $_get = json_decode(Net::S($_H."/captcha/$_T/get", 'POST', $_0, $head) ?: '', 1)['data'] ?? [];
+            
+            $coo = null;
+            if (!empty($_get) && isset($_get['captcha_key'])) {
+                $rs_T = $_get['captcha_key'];
+                if (method_exists($api, 'rss')) $coo = $api->rss($_get, $host);
+            }
+            if ($coo) {
+                $_coMatches = scraper::_jP($coo, '/\d+/');
+                $_co = $_coMatches[0] ?? $_coMatches;
+            }
+            if (is_array($_co) && count($_co) >= 2) {
+                [$x, $y] = $_co;
+                $_P = [
+                    'token' => $rs_T,
+                    'response' => "$x,$y",
+                    #'response' => "200,109",
+                ];
+                $_1 = SolveUtils::webkitID(array_merge($_P, $_D), $boundary);
+                $rs_R = json_decode(Net::S($_H."/captcha/$_T/verify", 'POST', $_1, $head) ?: '', 1)['result'] ?? null;
+            }
+        }
+        
+        if ($rs_R && $rs_T) {
+            return [
+                'rscaptcha_token' => $rs_T,
+                'rscaptcha_response' => $rs_R,
+            ];
+        }
+        
+        return ['trouble' => 'reload'];
+        
     }
 
     private static function rs($api, $utils, $x, $y, $host) {

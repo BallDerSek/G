@@ -28,9 +28,9 @@ $ip = '';
 
 
 $limit = false;
+$claim = false;
 $SLDONE = false;
 $ADDONE = false;
-$claim = true;
 $skipped = [];
 $can_withdraw = true;
 while (true) {
@@ -67,10 +67,10 @@ while (true) {
         if (empty($_0)) continue;
 
         $f = scraper::payload($_0)[0] ?? null;
-        
+        #_put('0.html', $_0);
         $po = null;
         if (!empty($f)) {
-            #print_r($f);
+            #print_r($f); die;
             $pa = $f['payload'];
             $cre = ['email' => $mail, 'password' => $pass];
             
@@ -116,11 +116,11 @@ while (true) {
     }
 
     $box = false;
-    if (!$limit) {
+    if (!$limit && $claim) {
         $ret99 = 0; 
         while (true) {
             $fau = Net::C("$host/faucet", 'GET', null, inf::$cookie, [], "$host/dashboard", inf::$uagent, false, false, $ip);
-            #_put('fau.html', $fau);
+            _put('fau.html', $fau);
             if ($fau === 99) {
                 $ret99++;
                 logx('warn', "masalah proxy, warm up dulu");
@@ -134,6 +134,7 @@ while (true) {
             if (empty($fau)) continue;
             
             $fo = scraper::payload($fau) ?? [];
+            #print_r($fo); die;
             if (empty($fo)) {
                 $alert_d = scraper::_xP($fau, "//div[contains(@class, 'alert-danger')]");
                 if (!empty($alert_d)) {

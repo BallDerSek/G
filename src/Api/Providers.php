@@ -117,6 +117,12 @@ skibidixxxget:
         return $short;
     }
     
+    public function rss($data, $url) {
+        
+        return $this->run('rslider', array_merge($data, ['referer' => $url]));
+        
+    }
+    
     public function getInfo(): bool{
         $maxRetry = 3;
         $r = null;
@@ -225,8 +231,20 @@ class tertuyul extends Provider {
         return $res;
     }
     
-    /** info saldo */
+    public function rss($data, $url) {
+        
+        if (!$data) return null;
+        
+        $param = [
+            'pageurl' => $url,
+            'body' => $data['master_image_base64'],
+        ];
+        
+        return $this->run('sliders', array_merge($param, $data));
+        
+    }
     
+    /** info saldo */
     public function getInfo(): bool{
     $maxRetry = 3;
     $i = null;

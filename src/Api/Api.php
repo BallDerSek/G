@@ -272,12 +272,10 @@ final class Api { #contractor
             'least' => ['t' => 'iconfinder', 'field' => 'body'],
             'rs_upside' => ['t' => 'upside', 'field' => 'body'],
             'upside' => ['t' => 'upside', 'field' => 'body'],
-            'of_odd' => ['t' => 'onlyfaucet', 'field' => 'body'],
             'vie_upside' => ['t' => 'upside', 'field' => 'body'],
             'fa_icon' => ['t' => 'hunter', 'field' => 'body'],
             'icon_up' => ['t' => 'iconflip', 'field' => 'body'],
             'rs_icon' => ['t' => 'rscaptcha', 'field' => 'body'],
-            'rs_slide' => ['t' => 'sliders', 'field' => 'body'],
         ],
 
         glitch::class => [
@@ -285,8 +283,6 @@ final class Api { #contractor
             'ocr' => ['t' => 'textcaptcha', 'field' => 'image_base64'],
             'rs_upside' => ['t' => 'rsv2', 'field' => 'image_base64'],
             'rs_icon' => ['t' => 'rsv2', 'field' => 'image_base64'],
-            'rs_slide' => ['t' => 'rsv5', 'field' => 'image_base64'],
-            'of_odd' => ['t' => 'onlyfaucet', 'field' => 'body'],
         ],
 
         xevil::class => [

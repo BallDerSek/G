@@ -122,7 +122,9 @@ class inf {
         if (!is_string($html)) {
             return ['ok' => false, 'html' => null, 'err' => 'Network error'];
         }
-        $ok = (stripos($html, 'logout') !== false || stripos($html, 'dashboard') !== false) && ($pattern === '' || stripos($html, $pattern) === false);
+        $ok = (stripos($html, 'logout') !== false || stripos($html, 'dashboard') !== false)
+            && ($pattern === '' || stripos($html, $pattern) === false)
+            && (!stripos($html, 'Just a moment') !== false || stripos(!$html, 'Attention Required!') !== false);
 
         return ['ok' => $ok, 'html' => $html];
 
