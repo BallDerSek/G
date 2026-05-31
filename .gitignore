@@ -24,6 +24,7 @@ credentials
 **/*opnssl.php
 bot/tes/
 bot/set/
+bot/fp/
 bot/bct/
 
 lib/*/

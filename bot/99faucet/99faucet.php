@@ -224,16 +224,13 @@ while (true) {
         (logx('err', 'gak bisa claim') ?: die);
     }
 
-
-
 /*
     $_sl = Scraper::_xP($dash, "//div[contains(normalize-space(), 'Shortlinks')]/following-sibling::div[@class='sub-menu-two']/a/@href");
-    #print_r($_sl);
+    print_r($_sl);
     foreach ($_sl as $sl) {
         $_c = basename($sl);
         if (trim(strtoupper($_c)) !== trim(strtoupper($curr))) continue;
         
-        $up = ['earnow','shortano', 'shortino', 'fc-lc'];
         $ret99 = 0;
         
         do {
@@ -354,7 +351,7 @@ while (true) {
                 }
                 
                 if (!empty($ver)) {
-                    #_put('ver.html', $ver); #die;
+                    _put('ver.html', $ver); #die;
                     $_suc = scraper::_jP($ver, "/Swal\.fire\(\s*\{.*?title:\s*'([^']+)'.*?text:\s*'([^']+)'.*?icon:\s*'([^']+)'/s") ?? [];
                     #print_r($_suc); #die;
                     if (!empty($_suc[1][0])) {

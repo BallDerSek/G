@@ -663,11 +663,11 @@ abstract class Provider {
         $this->apiKey = $apiKey;
     }
 
-    final public function run($method, array $params) {
-        return $this->call($method, $params);
+    final public function run($method, array $params, bool $strict = false) {
+        return $this->call($method, $params, $strict);
     }
 
-    final protected function call($method, array $params) {
+    final protected function call($method, array $params, bool $strict = false) {
         for ($i = 0; $i < 3; $i++) {
             try {
                 return styler(static::class . "=>$method", function() use ($method, $params) {
@@ -679,22 +679,21 @@ abstract class Provider {
                 $type = Api::errType($code);
                 logx('info', 'Api [ '.static::class.' ] ', false, true);
                 logx('err', $code);
-                
-                
-                #if (preg_match('/antibot|atb|shortlink/i', $method)) return false;
+                if ($strict) return false;
                 
                 if (in_array($type, ['ret','con','fail'], true)) {
-                    if ($method === 'antibot') return false;
-                    _sle(3); 
-                    continue; 
+                    _sle(3);
+                    continue;
                 }
+                
                 if (static::class === 'gmxch') return 777;
-                return 77; 
+                
+                return 77;
             }
         }
-
+        
         if (static::class === 'gmxch') return 777;
-        return false; 
+        return false;
     }
 
     public function token($siteKey, $siteUrl, $type, array $extraParams = []) {
@@ -759,7 +758,7 @@ abstract class Provider {
         
         $pa['main'] = $data['main'];
         #print_r($pa); 
-        $res = $this->run('antibot', $pa);
+        $res = $this->run('antibot', $pa, true);
         #logx('', $res);
         if ($res === 77) return 77;
         if ($res === 777) return 777;

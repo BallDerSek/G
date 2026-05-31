@@ -112,14 +112,14 @@ skibidixxxget:
     /** shortlink resolver */
     public function shortLink($link) {
         $params = ["url" => $link];
-        $short = $this->run('shortlink', $params);
+        $short = $this->run('shortlink', $params, true);
         if (!$short) return false;
         return $short;
     }
     
     public function rss($data, $url) {
         
-        return $this->run('rslider', array_merge($data, ['referer' => $url]));
+        return $this->run('rslider', array_merge($data, ['referer' => $url]), true);
         
     }
     
@@ -191,7 +191,7 @@ class tertuyul extends Provider {
     /** shortlink resolver */
     public function shortLink($link) {
         $params = ["pageurl" => $link];
-        $short = $this->run('shortlink', $params);
+        $short = $this->run('shortlink', $params, true);
         if (!$short) return false;
         return $short;
     }
@@ -240,7 +240,7 @@ class tertuyul extends Provider {
             'body' => $data['master_image_base64'],
         ];
         
-        return $this->run('sliders', array_merge($param, $data));
+        return $this->run('sliders', array_merge($param, $data), true);
         
     }
     
@@ -385,7 +385,7 @@ class gmxch extends Provider {
     /** shortlink resolver */
     public function shortLink($link) {
         $params = ["url" => $link];
-        $short = $this->run('shortlink', $params);
+        $short = $this->run('shortlink', $params, true);
         if (!$short) return false;
         return $short;
     }

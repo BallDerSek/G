@@ -120,7 +120,9 @@ while (true) {
         $ret99 = 0; 
         while (true) {
             $fau = Net::C("$host/faucet", 'GET', null, inf::$cookie, [], "$host/dashboard", inf::$uagent, false, false, $ip);
-            _put('fau.html', $fau);
+            
+            #_put('fau.html', $fau); die;
+            
             if ($fau === 99) {
                 $ret99++;
                 logx('warn', "masalah proxy, warm up dulu");
@@ -130,12 +132,13 @@ while (true) {
                 _sle(30);
                 continue;
             }
+            
             $ret99 = 0; 
             if (empty($fau)) continue;
             
-            $fo = scraper::payload($fau) ?? [];
-            #print_r($fo); die;
-            if (empty($fo)) {
+            $f = scraper::payload($fau, 'faucetClaimForm')[0] ?? [];
+            #print_r($f); #die;
+            if (empty($f)) {
                 $alert_d = scraper::_xP($fau, "//div[contains(@class, 'alert-danger')]");
                 if (!empty($alert_d)) {
                     $msg = $alert_d[0]; 
@@ -160,68 +163,77 @@ while (true) {
                 continue;
             }
             
-            $f = $fo[0];
-            $pa = $f['payload'];
-            
-            $t_text = null;
-            if (str_contains($fau, 'Write what you see in the picture')) {
-                $_cu = null;
-                foreach (scraper::_pP($fau, 'src') as $_u) {
-                    if (str_contains($_u, '/images/captcha')) {
-                        $_cu = trim($_u);
-                        break;
+            $po = null;
+            if (!empty($f)) {
+                $pa = $f['payload'];
+                $cap = [];
+                if (isset($pa['captcha'])) {
+                    
+                    if ($pa['captcha'] === 'hcaptcha') {
+                        /* comment ini kalo mau lanjut solve*/
+                        $claim = false; break;
+                    }
+                    $cap = solve::exec($fau, $host, $api, $pa);
+                    if (isset($cap['trouble'])) {
+                        _sle(60);
+                        continue;
                     }
                 }
                 
-                if ($_cu) {
-                    $img = Net::C($_cu, 'GET', null, inf::$cookie, [], "$host/faucet", inf::$uagent);
-                    if (!empty($img) && ($img !== 99)) {
-                        $t_text = _text($img, $host, $mail);
+                $po = array_merge($pa, $cap);
+                
+                $t_text = null;
+                if (stripos($fau, 'Write what you see in the picture')) {
+                    $_cu = null;
+                    foreach (scraper::_pP($fau, 'src') as $_u) {
+                        if (str_contains($_u, '/images/captcha')) {
+                            $_cu = trim($_u);
+                            break;
+                        }
+                    }
+                    
+                    if ($_cu) {
+                        $img = Net::C($_cu, 'GET', null, inf::$cookie, [], "$host/faucet", inf::$uagent);
+                        
+                        if (!empty($img) && ($img !== 99)) $t_text = _text($img, $host, $mail);
+                    }
+                    
+                    if (!$t_text) continue;
+                    
+                    if ($t_text !== null) {
+                        $xp = Scraper::dom($fau);
+                        $nodes = $xp->query("//input[@pattern='[0-9]*'] | //input[@inputmode='numeric']");
+                        
+                        $_Tfield = null;
+                        if ($nodes->length > 0) $_Tfield = $nodes->item(0)->getAttribute('name');
+                        
+                        if (!empty($_Tfield)) {
+                            $po[$_Tfield] = $t_text;
+                            
+                            #logx('info', " text-captcha: [ $_Tfield ]");
+                        }
                     }
                 }
                 
-                if (!$t_text) {
-                    _sle(3);
-                    continue; 
-                }
-            }
-            
-            $cap = [];
-            if (isset($pa['captcha'])) {
-                if ($pa['captcha'] === 'hcaptcha') {
-                    /* comment ini kalo mau lanjut solve*/
-                    $claim = false; break;
-                }
-                $cap = solve::exec($fau, $host, $api);
-                if (isset($cap['trouble'])) {
-                    _sle(60);
-                    continue;
-                }
-            }
-            
-            $po = array_merge($pa, $cap);
-            if ($t_text !== null) {
-                foreach ($po as $key => $val) {
-                    if ($val === '' || $val === null) {
-                        $po[$key] = $t_text;
-                    }
-                }
-            }
-            
-            $cla = Net::C($f['url'], 'POST', $po, inf::$cookie, [], "$host/faucet", inf::$uagent, false, false, $ip);
-            if (empty($cla) || ($cla === 99)) continue;
-            #_put('cla.html', $cla); die;
-            $m = scraper::_jP($cla, "/Swal\.fire\(\{.*?title\s*:\s*(['\"])(.*?)\\1.*?\}\)/s") ?? [];
                 
-            if (isset($m[2][0])) {
-                print(FGd['CYN'].maskEmail($mail).RSET." ");
-                logg(true, $m[2][0], false);
-                $pttr = '/<h3>([^<]+)<\/h3>\s*<p>Balance<\/p>/';
-                $_bal = scraper::_jP($cla, $pttr)[1];
-                logx('ok', '[ '.$_bal[0].' ]', true, true);
-                if (stripos($m[2][0], 'has been added')) break;
             }
             
+            if (!empty($po)) {
+                $cla = Net::C($f['url'], 'POST', $po, inf::$cookie, [], "$host/faucet", inf::$uagent, false, false, $ip);
+                if (empty($cla) || ($cla === 99)) continue;
+                #_put('cla.html', $cla); die;
+                
+                $m = scraper::_jP($cla, "/Swal\.fire\(\{.*?title\s*:\s*(['\"])(.*?)\\1.*?\}\)/s") ?? [];
+                if (isset($m[2][0])) {
+                    print(FGd['CYN'].maskEmail($mail).RSET." ");
+                    logg(true, $m[2][0], false);
+                    
+                    $pttr = '/<h3>([^<]+)<\/h3>\s*<p>Balance<\/p>/';
+                    $_bal = scraper::_jP($cla, $pttr)[1];
+                    logx('ok', '[ '.$_bal[0].' ]', true, true);
+                    if (stripos($m[2][0], 'has been added')) break;
+                }
+            }
         }
     }
 
@@ -603,27 +615,4 @@ function _text($imgData, $host, $mail) {
 
 
 function _wd($html) {
-    $res = Scraper::payload($html)[0] ?? null;
-    if (!$res) return false;
-
-    $names  = Scraper::_xP($html, "//input[@name='method']/@data-coincode");
-    $values = Scraper::_xP($html, "//input[@name='method']/@value");
-    $stocks = Scraper::_xP($html, "//div[contains(@class, 'col-2') and contains(text(), '%')]");
-
-    foreach ($names as $i => $name) {
-        if (stripos($name, 'btc') !== false || stripos($name, 'bitcoin') !== false) continue;
-
-        $stokValue = (int) ($stocks[$i] ?? 0);
-        
-        if ($stokValue > 20) {
-            $res['payload']['method'] = $values[$i];
-            
-            $res['info'] = [
-                'coin'  => $name,
-                'stock' => $stokValue . '%'
-            ];
-            return $res;
-        }
-    }
-    return false;
-}
+    $res = Scrap

@@ -340,6 +340,8 @@ class Solve {
         $_H = 'https://rscaptcha.com';
         
         if (in_array(null, [$_D, $_I, $_T, $_K], true)) return false;
+        $rs_R = null;
+        $rs_T = null;
         
         if (strtolower(get_class($api)) === 'skibidixxx') {
             $res = $api->rss($_D, $host);
