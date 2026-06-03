@@ -5,51 +5,127 @@
  * @return array|null
  */
 class Capt {
-    
+
     public static function cha($html): ?array {
         if (empty($html)) return null;
-
         $xp = Scraper::dom($html);
-        $found = [];
-
-        $scripts = Scraper::_xP($xp, "//script[@src]/@src") ?: [];
-        $scriptsStr = implode(' ', $scripts); 
         
-        $has_turnstile = str_contains($scriptsStr, 'challenges.cloudflare.com/turnstile');
-        $has_hcaptcha  = str_contains($scriptsStr, 'hcaptcha.com/1/api.js'); 
-        $has_recaptcha = str_contains($scriptsStr, 'google.com/recaptcha/api.js');
-
-        // --- 1. HCAPTCHA ---
+        $found = [];
+        
+        // --- 0. SCRIPTS COLLECTION ---
+        $allJs = implode('', array_merge(
+            Scraper::_sC($html)['external'],
+            Scraper::_sC($html)['inline']
+        ));
+        #print_r($allJs);
+        $has_turnstile = str_contains($allJs, 'challenges.cloudflare.com/turnstile');
+        $has_hcaptcha = str_contains($allJs, 'hcaptcha.com/1/api.js');
+        $has_recaptcha = str_contains($allJs, 'google.com/recaptcha/api.js');
+        
+        // --- 1. ANTICAPTCHA ---
+        $is_anticap = 
+            str_contains($html, 'anti-captcha') ||
+            str_contains($html, 'anti_captcha') ||
+            str_contains($html, 'data-id="anticap-box"') ||
+            str_contains($html, 'data-id="anticap-root"') ||
+            str_contains($html, 'anti_captcha_selected_icon') ||
+            str_contains($allJs, 'anticap') ||
+            (str_contains($allJs, 'ApiKey') && str_contains($allJs, 'SecretKey'));
+            
+        if ($is_anticap) {
+            $ac_api = Scraper::_jP($html, '/const\s+ApiKey\s*=\s*["\']([^"\']+)["\']/');
+            $ac_secret = Scraper::_jP($html, '/const\s+SecretKey\s*=\s*["\']([^"\']+)["\']/');
+            $ac_appUrl = Scraper::_jP($html, '/const\s+appUrl\s*=\s*["\']([^"\']+)["\']/');
+            $icons = Scraper::_xP($xp, "//div[@data-id='anticap-grid']//img/@src") ?: [];
+            
+            $key = $ac_api[1][0] ?? null;
+            $sec = $ac_secret[1][0] ?? null;
+            $app = $ac_appUrl[1][0] ?? null;
+            
+            $js_urls = [];
+            if ($key === null || $sec === null) {
+                foreach (Scraper::_sC($html)['external'] as $src) {
+                    if (str_contains($src, 'anticap') || str_contains($src, 'app.js')) {
+                        $js_urls[] = $src;
+                    }
+                }
+                foreach (Scraper::_sC($html)['inline'] as $content) {
+                    if (str_contains($content, 'ApiKey') || str_contains($content, 'SecretKey')) {
+                        if (preg_match('/ApiKey\s*=\s*["\']([^"\']+)["\']/', $content, $m)) $key = $m[1];
+                        if (preg_match('/SecretKey\s*=\s*["\']([^"\']+)["\']/', $content, $m)) $sec = $m[1];
+                    }
+                }
+            }
+            
+            $found['ucaptcha'] = [
+                'mods' => 'anti_captcha',
+                'type'  => 'match',
+                'keys'  => $key,
+                'extra' => [
+                    'sec' => $sec,
+                    'app' => $app,
+                    'icn' => !empty($icons) ? $icons : null,
+                    'js' => !empty($js_urls) ? $js_urls : null,
+                ]
+            ];
+        }
+        
+        // --- 2. UPSIDE CAPTCHA (uCaptcha) ---
+        $is_ucaptcha = 
+            str_contains($html, 'upside-captcha-widget') ||
+            str_contains($html, 'data-ucaptcha="widget"') ||
+            str_contains($html, 'upside_captcha') ||
+            str_contains($html, 'upside/css/captcha.css') ||
+            str_contains($allJs, 'UCaptchaPos') ||
+            (str_contains($allJs, 'flipped') && str_contains($allJs, 'ucaptcha'));
+        
+        if ($is_ucaptcha) {
+            $js_urls = [];
+            foreach (Scraper::_sC($html)['external'] as $src) {
+                if (str_contains($src, 'source/app.js') || str_contains($src, 'captcha.js')) {
+                    $js_urls[] = $src;
+                }
+            }
+            
+            $found['ucaptcha'] = [
+                'mods' => 'upside_captcha',
+                'type' => 'upside',
+                'keys' => null,
+                'extra' => [
+                    'js' => !empty($js_urls) ? $js_urls : null,
+                ]
+            ];
+        }
+        
+        // --- 3. HCAPTCHA ---
         if ($has_hcaptcha) {
-            $hc = Scraper::find($xp, 'h-captcha', '*', 'data-sitekey') 
+            $hc = Scraper::find($xp, 'h-captcha', '*', 'data-sitekey')
                ?? Scraper::_xP($xp, "//div[contains(@class,'h-captcha')]/@data-sitekey")
                ?? Scraper::_xP($xp, "//h-captcha/@site-key");
-            
+               
             if (!empty($hc) && isset($hc[0])) {
                 $found['hc'] = [
                     'type' => 'hc',
                     'keys' => $hc[0],
                     'extra' => ['invisible' => str_contains($html, 'data-size="invisible"')]
                 ];
-            } else {
-                if (preg_match('/["\']sitekey["\']\s*:\s*["\']([a-zA-Z0-9_-]+)["\']/i', $html, $matches)) {
-                    $found['hc'] = [
-                        'type' => 'hc',
-                        'keys' => $matches[1],
-                        'extra' => ['invisible' => str_contains($html, 'data-size="invisible"')]
-                    ];
-                }
+            } elseif (preg_match('/["\']sitekey["\']\s*:\s*["\']([a-zA-Z0-9_-]+)["\']/i', $html, $matches)) {
+                $found['hc'] = [
+                    'type'  => 'hc',
+                    'keys'  => $matches[1],
+                    'extra' => ['invisible' => str_contains($html, 'data-size="invisible"')]
+                ];
             }
         }
         
-        // --- 2. TURNSTILE ---
+        // --- 4. TURNSTILE ---
         if ($has_turnstile) {
             $cft = array_filter(array_merge(
                 Scraper::_xP($xp, "//div[contains(@class,'cf-turnstile')]/@data-sitekey") ?: [],
                 Scraper::_xP($xp, "//*[@data-sitekey][contains(@id,'cf-turnstile')]/@data-sitekey") ?: [],
                 Scraper::_xP($xp, "//div[contains(@class,'g-recaptcha')]/@data-sitekey") ?: []
             ));
-
+            
             if (!empty($cft)) {
                 $keys = array_values(array_unique($cft));
                 $mCda = Scraper::_jP($html, "/cdata\s*:\s*['\"]([^'\"]+)['\"]/");
@@ -58,47 +134,45 @@ class Capt {
                     'keys' => $keys[0],
                     'extra' => ['cdata' => $mCda[1][0] ?? null]
                 ];
-            } else {
-                if (preg_match('/data-sitekey=["\'](0x[a-zA-Z0-9_-]+)["\']/', $html, $matches) || 
-                    preg_match('/sitekey\s*:\s*["\'](0x[a-zA-Z0-9_-]+)["\']/', $html, $matches)) {
-                    $found['cft'] = [
-                        'type' => 'cft',
-                        'keys' => $matches[1],
-                    ];
-                }
+            } elseif (preg_match('/data-sitekey=["\'](0x[a-zA-Z0-9_-]+)["\']/', $html, $matches) || preg_match('/sitekey\s*:\s*["\'](0x[a-zA-Z0-9_-]+)["\']/', $html, $matches)) {
+                $found['cft'] = [
+                    'type' => 'cft',
+                    'keys' => $matches[1],
+                ];
             }
         }
-
-        // --- 3. RECAPTCHA V2 ---
+        
+        // --- 5. RECAPTCHA V2 ---
         if ($has_recaptcha) {
-            $v2 = Scraper::find($xp, 'g-recaptcha', 'div', 'data-sitekey') 
+            $v2 = Scraper::find($xp, 'g-recaptcha', 'div', 'data-sitekey')
                ?? Scraper::find($xp, 'sitekey', '*', 'data-sitekey');
-
+               
             if (!empty($v2) && isset($v2[0])) {
                 $found['rc2'] = [
                     'type' => 'rc2',
                     'keys' => $v2[0],
                     'extra' => [
                         'invisible' => str_contains($html, 'data-size="invisible"'),
-                        'data-s' => Scraper::find($xp, 'data-s', '*', 'data-s')[0] ?? null
+                        'data-s'    => Scraper::find($xp, 'data-s', '*', 'data-s')[0] ?? null
                     ]
                 ];
             }
         }
-
-        // --- 4. RECAPTCHA V3 ---
+        
+        // --- 6. RECAPTCHA V3 ---
         $v3_raw = [];
-        foreach ($scripts as $src) {
+        foreach (Scraper::_sC($html)['external'] as $src) {
             if (preg_match('/render=([^&]+)/', $src, $m)) {
                 if (strlen($m[1]) > 20 && $m[1] !== 'explicit') {
                     $v3_raw[] = $m[1];
                 }
             }
         }
+        
         if (preg_match_all('/grecaptcha\.execute\(\s*[\'"]([^\'"]+)/', $html, $m)) {
             $v3_raw = array_merge($v3_raw, $m[1]);
         }
-
+        
         $v3_keys = array_values(array_unique($v3_raw));
         if (!empty($v3_keys)) {
             $mAct = Scraper::_jP($html, "/action\s*[:=]\s*['\"]((?!http)[^'\"]+)['\"]/");
@@ -109,15 +183,19 @@ class Capt {
             ];
         }
         
-        // --- 5. ICONCAPTCHA ---
+        // --- 7. ICONCAPTCHA ---
         if (str_contains($html, 'iconcaptcha-widget') || str_contains($html, '_iconcaptcha-token')) {
+            $endpoint = null;
+            if (preg_match("~IconCaptcha\.init.*?endpoint\s*:\s*['\"]([^'\"]+)['\"]~is", $html, $m)) $endpoint = $m[1];
+            
             $found['ic_fw'] = [
-                'keys' => Scraper::find($html, '_iconcaptcha-token')[0] ?? null
+                'keys' => Scraper::find($html, '_iconcaptcha-token')[0] ?? null,
+                'url' => $endpoint 
             ];
         }
-
-        // --- 6. RSCAPTCHA ---
-        foreach ($scripts as $src) {
+        
+        // --- 8. RSCAPTCHA ---
+        foreach (Scraper::_sC($html)['external'] as $src) {
             if (preg_match('/rscaptcha\.com.*\?(.*)$/', $src, $m)) {
                 parse_str($m[1] ?? '', $params);
                 if (!empty($params['public_key'])) {
@@ -126,30 +204,29 @@ class Capt {
                         'keys' => $params['public_key'],
                         'extra' => $params
                     ];
-                    break;
+                break;
                 }
-            } 
+            }
         }
-
         if (stripos($html, 'rscaptcha_token')) {
             $rs_token = Scraper::find($html, 'rscaptcha_token')[0] ?? null;
             $rs_image = Scraper::_xP($xp, "//img[@id='rscaptcha_img']/@src")[0] ?? null;
             $js_content = Scraper::_xP($xp, "//div[@id='rscap_js']/script/text()")[0] ?? null;
-
+            
             if ($rs_token && $rs_image) {
                 $_t = stripos($html, 'the least amount of times') ? 'icon' : 'upside';
                 $found['rss'] = [
-                    'type'  => "rs_{$_t}",
-                    'keys'  => $rs_image,
+                    'type' => "rs_{$_t}",
+                    'keys' => $rs_image,
                     'extra' => [
                         'token' => $rs_token,
-                        'js' => $js_content 
+                        'js' => $js_content
                     ]
                 ];
             }
         }
         
-        // --- 7. ANTIBOTLINKS ---
+        // --- 9. ANTIBOTLINKS ---
         if (str_contains($html, 'antibotlinks_reset')) {
             $is_emoji = Scraper::_jP($html, '/data-token=\\\\*"(?<token>[^"\\\\]+)\\\\*"/');
             
@@ -175,7 +252,6 @@ class Capt {
                 ];
             } else {
                 $images = self::extractAtbImages($xp, $html);
-                
                 if (!empty($images['main'])) {
                     $found['antibot'] = [
                         'type' => 'image',
@@ -184,10 +260,9 @@ class Capt {
                 }
             }
         }
-
+        
         return !empty($found) ? $found : null;
     }
-
     
     private static function extractAtbImages($xp, $html): array {
         $ret = ['main' => null, 'rels' => []];

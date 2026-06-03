@@ -3,14 +3,14 @@ if (!defined('ROOT')) { die; }
 #_die();
 $api = onKeys();
 
-$acc = config::credential([], false, ['login', 'PROXY']);
+$acc = config::credential([], true, ['login', 'PROXY']);
 $login = $acc['login'];
 putenv("PROXY=".$acc['PROXY']);
 
 login:
 $host = 'https://earnsolana.xyz';
 $domain = parse_url($host, PHP_URL_HOST);
-$r = '/?r=7974';
+$r = '/?r=2166';
 $ip = null;
 
 (function ($login, $ip) {
@@ -38,7 +38,7 @@ while (true) {
 
     do {
         $ret++;
-        $l = inf::check("$host/", $headersCF, '/auth/login');
+        $l = inf::check("$host", $headersCF, '/auth/login', true);
         #_put('l.html', $l['html']); _rl('lanjut: ');
         
         if ($l['ok']) {
@@ -55,16 +55,17 @@ while (true) {
         
         logx('err', "logging in ", false); 
         _sle(3); _clr();
-        $_0 = Net::X($host, 'GET', null, inf::$cookie, $headersCF, '', inf::$uagent);
+        $_0 = Net::X($host.$r, 'GET', null, inf::$cookie, $headersCF, '', inf::$uagent);
         if ($_0 === 99) {
             logx('warn', "masalah proxy, warm up dulu");
             _sle(60);
             continue;
         }
         if (empty($_0)) continue;
-        #_put('0.html', $_0); _rl('lanjut: ');
+        #_put('0.html', $_0);
+        
         $f = scraper::payload($_0)[0] ?? null;
-        #print_r($f); #die;
+        #print_r($f); die;
         $po = null;
         
         if (!empty($f)) {
@@ -83,8 +84,8 @@ while (true) {
         }
         
         if (!empty($po)) {
-            #print_r($po); _rl('lanjut: ');
-            $ve = Net::X($f['url'], 'POST', $po, inf::$cookie, $headersCF, $host, inf::$uagent);
+            #print_r($po); die;
+            $ve = Net::X($f['url'], 'POST', $po, inf::$cookie, $headersCF, $host.$r, inf::$uagent);
             #_put('ve.html', $ve);
             if ($ve === 99) {
                 logx('warn', 'Proxy issue, wait 30s');
@@ -98,7 +99,7 @@ while (true) {
     $ret99 = 0;
     while ($claim) {
         $fau = Net::C("$host/faucet/currency/sol", 'GET', null, inf::$cookie, $headersCF, "$host/dashboard", inf::$uagent);
-        #_put('fau.html', $fau);
+        #_put('fauu.html', $fau);
         
         if ($fau === 99) {
             $ret99++;
@@ -113,27 +114,35 @@ while (true) {
         if (empty($fau)) continue;
         
         check:
+            
             $cf = Net::C("$host/faucet/verify/sol", 'GET', null, inf::$cookie, [], "$host/dashboard", inf::$uagent, d: true);
                 $cff = checkCF("$host/faucet/verify/sol", $api, $cf, $headersCF);
-            if (empty($cff['html'])) {
-                continue;
-            } else {
+            if (!empty($cff['html'])) {
                 $headersCF = $cff['head'];
                 $fau = $cff['html'];
             }
+            
         
+        #_put('fau.html', $fau);
         $po = null;
         $cap = [];
-        $f = scraper::payload($fau)[0] ?? [];
+        $f = scraper::payload($fau, 'fauform')[0] ?? [];
         if (empty($f)) {
             if (stripos($fau, '/auth/login')) goto login;
             if (!$SLDONE) break;
             
+            if (stripos($fau, 'lease verify your account')) {
+                logx('err', 'verify first on telegram');
+                die;
+            }
+            
             styler('Waiting for faucet', fn() => _sle(5));
             continue;
         }
-            
+        
+        #print_r($f);
         if (!empty($f['payload'])) {
+            
             $pa = $f['payload'];
             
             if ($atbfail >= 3) $atbforce = true;
@@ -147,17 +156,27 @@ while (true) {
         }
         
         if (!empty($po)) {
+            #print_r($po);
             $cla = Net::X($f['url'], 'POST', $po, inf::$cookie, $headersCF, '', inf::$uagent);
-            
             if (empty($cla) || ($cla === 99)) continue;
+            
+            
+            $ti = scraper::title($cla);
+            if (stripos($ti, 'firewall') !== false) {
+                logx('info', $ti);
+                $fw = _fW($cla, inf::$context, $host);
+                if (!$fw) continue;
+            }
                 
             $_suc = scraper::_jP($cla, "/Swal\.fire\(\s*\{.*?icon:\s*'([^']+)'.*?title:\s*'([^']+)'.*?html:\s*'([^']+)'/s") ?? [];
             if (!empty($_suc[2][0])) {
                 $msg = $_suc[3][0];
                 print(FGd['CYN'].maskEmail($login).RSET." ");
                 
-                logx($_suc[1][0], $_suc[2][0].' ', false);
+                logx($_suc[2][0], $_suc[2][0].' ', false);
                 logg(false, $msg);
+                
+                if (stripos($msg, 'banned') && !empty(getenv('AN'))) continue;
                 
                 if (preg_match('/sufficient|banned/i', $msg)) die;
                 if (stripos($msg, 'has been sent')) {
@@ -177,6 +196,56 @@ while (true) {
         (logx('err', 'gak bisa claim') ?: die);
     }
 
+}
+
+
+
+
+
+
+
+
+
+
+tes:
+$cla = _get('cla.html');
+$ti = scraper::title($cla);
+if (stripos($ti, 'firewall') !== false) {
+    logx('info', $ti);
+    $fw = _fW($cla, inf::$context, $host);
+}
+
+
+
+
+
+
+function _fW($html, $ctx, $host) {
+    
+    $_id = null;
+    $f = scraper::payload($html)[0] ?? [];
+    
+    $url = $host.'/firewall/load_image_captcha';
+    $_0 = json_decode(Net::X($url, 'GET', null, $ctx['cookie'], [], $host, $ctx['uagent']) ?: '', 1);
+    
+    #print_r($_0);
+    if (!empty($f) && !empty($_0)) {
+        $pa = $f['payload'];
+        foreach ($_0 as $item) {
+            if ($item['rotate'] != 0) {
+                $_id = $item['id'];
+                break;
+            }
+        }
+        if ($_id !== null) {
+            $payload = array_merge($pa,['img_captcha' => $_id]);
+            $ver = Net::X($f['url'], 'POST', $payload, $ctx['cookie'], [], $host, $ctx['uagent']);
+            _put('ver.html', $ver);
+        }
+    }
+    
+    return null;
+    
 }
 
 
@@ -217,7 +286,8 @@ function checkCF($url, $api, $body = null, $headersCF = []) {
             }
         }
     } else {
-        return ['html' => $html, 'head' => $headersCF];
+        return [];
+        #return ['html' => $html, 'head' => $headersCF];
     }
     
     return [];

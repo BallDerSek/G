@@ -132,9 +132,7 @@ while (true) {
                 if ($status) {
                     $anySuccess = true; 
                     styler('Waiting', fn() => _sle(5));
-                } else {
-                    logx('err', "Gagal claim iklan");
-                }
+                } 
             }
             if (!$anySuccess) $wallOwme = true;
         }

@@ -506,6 +506,13 @@ class Net {
                 $errno = curl_errno($ch);
                 $err = curl_error($ch);
                 
+/*
+var_dump($info);
+var_dump($body);
+var_dump($errno);
+var_dump($err);
+*/
+                
                 if ($body !== false) {
                     if (($info['http_code'] ?? 0) === 407) {
                         logx('err', "Proxy Auth Failed (407)");

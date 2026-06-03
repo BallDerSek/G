@@ -1,6 +1,6 @@
 <?php
 if (!defined('ROOT')) { die; }
-#_die();
+_die();
 $api = onKeys();
 
 $acc = config::credential([], false, ['login', 'PROXY']);
@@ -150,7 +150,8 @@ while (true) {
         }
         
         if (!empty($po)) {
-            $cla = Net::X($f['url'], 'POST', $po, inf::$cookie, $headersCF, '', inf::$uagent);
+            #print_r($po);
+            $cla = Net::X($f['url'], 'POST', $po, inf::$cookie, $headersCF, $host, inf::$uagent);
             #_put('cla.html' ,$cla); #die;
             if (empty($cla) || ($cla === 99)) continue;
                 

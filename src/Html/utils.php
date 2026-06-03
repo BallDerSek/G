@@ -1,9 +1,10 @@
 <?php
 /** @class Capt 
- * @type cha
-     * @param string $html
-     * @return array|null
-class Captt {
+ * @method cha
+ * @param string $html
+ * @return array|null
+ */
+class Caapt {
     
     public static function cha($html): ?array {
         if (empty($html)) return null;
@@ -18,6 +19,7 @@ class Captt {
         $has_hcaptcha  = str_contains($scriptsStr, 'hcaptcha.com/1/api.js'); 
         $has_recaptcha = str_contains($scriptsStr, 'google.com/recaptcha/api.js');
 
+        // --- 1. HCAPTCHA ---
         if ($has_hcaptcha) {
             $hc = Scraper::find($xp, 'h-captcha', '*', 'data-sitekey') 
                ?? Scraper::_xP($xp, "//div[contains(@class,'h-captcha')]/@data-sitekey")
@@ -40,6 +42,7 @@ class Captt {
             }
         }
         
+        // --- 2. TURNSTILE ---
         if ($has_turnstile) {
             $cft = array_filter(array_merge(
                 Scraper::_xP($xp, "//div[contains(@class,'cf-turnstile')]/@data-sitekey") ?: [],
@@ -58,7 +61,6 @@ class Captt {
             } else {
                 if (preg_match('/data-sitekey=["\'](0x[a-zA-Z0-9_-]+)["\']/', $html, $matches) || 
                     preg_match('/sitekey\s*:\s*["\'](0x[a-zA-Z0-9_-]+)["\']/', $html, $matches)) {
-                    
                     $found['cft'] = [
                         'type' => 'cft',
                         'keys' => $matches[1],
@@ -67,6 +69,7 @@ class Captt {
             }
         }
 
+        // --- 3. RECAPTCHA V2 ---
         if ($has_recaptcha) {
             $v2 = Scraper::find($xp, 'g-recaptcha', 'div', 'data-sitekey') 
                ?? Scraper::find($xp, 'sitekey', '*', 'data-sitekey');
@@ -106,12 +109,14 @@ class Captt {
             ];
         }
         
+        // --- 5. ICONCAPTCHA ---
         if (str_contains($html, 'iconcaptcha-widget') || str_contains($html, '_iconcaptcha-token')) {
             $found['ic_fw'] = [
                 'keys' => Scraper::find($html, '_iconcaptcha-token')[0] ?? null
             ];
         }
 
+        // --- 6. RSCAPTCHA ---
         foreach ($scripts as $src) {
             if (preg_match('/rscaptcha\.com.*\?(.*)$/', $src, $m)) {
                 parse_str($m[1] ?? '', $params);
@@ -129,7 +134,6 @@ class Captt {
         if (stripos($html, 'rscaptcha_token')) {
             $rs_token = Scraper::find($html, 'rscaptcha_token')[0] ?? null;
             $rs_image = Scraper::_xP($xp, "//img[@id='rscaptcha_img']/@src")[0] ?? null;
-            
             $js_content = Scraper::_xP($xp, "//div[@id='rscap_js']/script/text()")[0] ?? null;
 
             if ($rs_token && $rs_image) {
@@ -144,79 +148,81 @@ class Captt {
                 ];
             }
         }
-
-
+        
+        // --- 7. ANTIBOTLINKS ---
         if (str_contains($html, 'antibotlinks_reset')) {
-            $is_emoji = Scraper::_jP($html, '/data-token=\\\\"(?<token>[^"\\\\]+)\\\\"/');
-            $found['antibot'] = ['type' => !empty($is_emoji[1][0]) ? 'emoji' : 'image'];
+            $is_emoji = Scraper::_jP($html, '/data-token=\\\\*"(?<token>[^"\\\\]+)\\\\*"/');
+            
+            if (!empty($is_emoji[1][0])) {
+                $ab_ins = Scraper::_xP($html, "//strong[contains(text(),',')]");
+                $_ask = !empty($ab_ins) ? array_map('trim', explode(',', $ab_ins[0])) : [];
+                $_ab = '/data-token=\\\\*"(?<token>[^"\\\\]+)\\\\*".*?>(?<emoji>.*?)<\/a>/u';
+                $ab_rel = Scraper::_jP($html, $_ab);
+                
+                $ab_t = [];
+                if (!empty($ab_rel['token'])) {
+                    foreach ($ab_rel['token'] as $idx => $_rel) {
+                        $ab_e = $ab_rel['emoji'][$idx] ?? null;
+                        if ($ab_e !== null) $ab_t[$ab_e] = $_rel;
+                    }
+                }
+                $found['antibot'] = [
+                    'type' => 'emoji',
+                    'data' => [
+                        'main' => $_ask,
+                        'rels' => $ab_t
+                    ]
+                ];
+            } else {
+                $images = self::extractAtbImages($xp, $html);
+                
+                if (!empty($images['main'])) {
+                    $found['antibot'] = [
+                        'type' => 'image',
+                        'data' => $images
+                    ];
+                }
+            }
         }
 
         return !empty($found) ? $found : null;
     }
 
-}
- */
-
-
-
-
-
     
-/** @class ATBtest
- * @type b64
-     * @param string $uri
-     * @return string|null
- * @type mainATB
-     * @param string $html
-     * @return string|null
- * @type relsATB
-     * @param string $html
-     * @return array
- * @type get
-     * @param string $html
-     * @return array
-final class ATBtest {
-
-    private static function b64($uri): ?string {
-        if (!preg_match('~^data:image/[a-z0-9.+-]+;base64,([a-z0-9+/=\s]+)$~i', $uri, $m)) {
-            return null;
-        }
-        return preg_replace('~\s+~', '', $m[1]);
-    }
-
-    private static function mainATB($html): ?string {
-        $xp = Scraper::dom($html);
-
+    private static function extractAtbImages($xp, $html): array {
+        $ret = ['main' => null, 'rels' => []];
+        
+        $mainUrl = null;
         $a = $xp->query("//input[@id='antibotlinks' or @name='antibotlinks']")->item(0)
           ?: $xp->query("//*[contains(concat(' ',normalize-space(@class),' '),' antibotlinks ')]")->item(0);
 
         if ($a) {
-            for ($up=0; $up<=6; $up++) {
+            for ($up = 0; $up <= 6; $up++) {
                 $ctx = $a;
-                for ($i=0; $i<$up && $ctx?->parentNode; $i++) $ctx = $ctx->parentNode;
+                for ($i = 0; $i < $up && $ctx?->parentNode; $i++) $ctx = $ctx->parentNode;
                 $n = $ctx ? $xp->query(".//img[starts-with(@src,'data:image')]/@src", $ctx)->item(0) : null;
-                if ($n) return $n->nodeValue;
+                if ($n) {
+                    $mainUrl = $n->nodeValue;
+                    break;
+                }
             }
-
-            // Fallback: Preceding/Following sibling
-            $p = (string)$xp->evaluate("string((preceding::img[starts-with(@src,'data:image')][1]/@src))", $a);
-            if ($p !== '') return $p;
-
-            $f = (string)$xp->evaluate("string((following::img[starts-with(@src,'data:image')][1]/@src))", $a);
-            if ($f !== '') return $f;
+            if (!$mainUrl) {
+                $p = (string)$xp->evaluate("string((preceding::img[starts-with(@src,'data:image')][1]/@src))", $a);
+                $mainUrl = ($p !== '') ? $p : (string)$xp->evaluate("string((following::img[starts-with(@src,'data:image')][1]/@src))", $a);
+            }
         }
 
-        if (($pos = stripos($html, 'antibotlinks')) !== false) {
-            $chunk = substr($html, max(0, $pos-8000), 16000);
+        if (!$mainUrl && ($pos = stripos($html, 'antibotlinks')) !== false) {
+            $chunk = substr($html, max(0, $pos - 8000), 16000);
             if (preg_match('~src\s*=\s*(["\'])(data:image/[a-z0-9.+-]+;base64,[a-z0-9+/=\s]+)\1~i', $chunk, $m)) {
-                return $m[2];
+                $mainUrl = $m[2];
             }
         }
-        return null;
-    }
 
-    private static function relsATB($html): array {
-        $out = [];
+        if ($mainUrl) {
+            $ret['main'] = self::cleanB64($mainUrl);
+        }
+
         $rx = [
             '~\brel\s*=\s*["\'](\d+)["\'][\s\S]{0,8000}?\bsrc\s*=\s*["\'](data:image/[a-z0-9.+-]+;base64,[a-z0-9+/=\s]+)["\']~i',
             '~\brel\s*=\s*\\\\?"(\d+)\\\\?"[\s\S]{0,8000}?\bsrc\s*=\s*\\\\?"(data:image/[a-z0-9.+-]+;base64,[a-z0-9+/=\s]+)\\\\?"~i',
@@ -225,27 +231,20 @@ final class ATBtest {
         foreach ($rx as $re) {
             if (preg_match_all($re, $html, $mm, PREG_SET_ORDER)) {
                 foreach ($mm as $m) {
-                    $out[$m[1]] ??= $m[2];
+                    if ($b64 = self::cleanB64($m[2])) {
+                        $ret['rels'][$m[1]] ??= $b64;
+                    }
                 }
             }
         }
-        return $out;
-    }
 
-    public static function get($html): array {
-        $ret = ['main' => null, 'rels' => []];
-        
-        if (($u = self::mainATB($html))) {
-            $ret['main'] = self::b64($u);
-        }
-
-        foreach (self::relsATB($html) as $rel => $u) {
-            if ($b = self::b64($u)) {
-                $ret['rels'][$rel] = $b;
-            }
-        }
         return $ret;
     }
-    
+
+    private static function cleanB64($uri): ?string {
+        if (!preg_match('~^data:image/[a-z0-9.+-]+;base64,([a-z0-9+/=\s]+)$~i', $uri, $m)) {
+            return null;
+        }
+        return preg_replace('~\s+~', '', $m[1]);
+    }
 }
- */

@@ -44,8 +44,14 @@ class Scraper {
         return new DOMXPath($dom);
     }
 
+    public static function title($html) {
+        $t = self::_xP($html, "//title/text()");
+        #var_dump($t); die;
+        return trim($t[0] ?? '');
+    }
+
     # PAYLOAD
-    public static function payload($html, ?string $id = null): array {
+    public static function payload($html, $id = null): array {
         $xp = self::dom($html);
         
         $query = $id ? "//form[@id=" . self::xlit($id) . "]" : "//form";
@@ -105,7 +111,6 @@ class Scraper {
         }
         return $out;
     }
-
 
     # DOMXp BASED
     public static function _xP($html, $query): array {
@@ -231,6 +236,40 @@ foreach ($inputs as $input) {
         }
 
         return $payload;
+    }
+    
+    # Script
+    public static function _sC($html): array {
+        $xp = self::dom($html);
+        
+        $external = self::_xP($xp, "//script[@src]/@src") ?: [];
+        $inlineNodes = $xp->query("//script[not(@src)]");
+        
+        $inline = [];
+        foreach ($inlineNodes as $node) {
+            $content = trim($node->textContent);
+            if (!empty($content)) $inline[] = $content;
+        }
+        
+        return [
+            'external' => $external,
+            'inline' => $inline
+        ];
+    }
+    
+    public static function _get($html, $key) {
+        $scripts = self::_sC($html);
+        
+        foreach ($scripts['external'] as $src) {
+            if (str_contains($src, $key)) return $src;
+        }
+        
+        foreach ($scripts['inline'] as $content) {
+            if (str_contains($content, $key)) return $content;
+        }
+        
+        return null;
+        
     }
     
 }

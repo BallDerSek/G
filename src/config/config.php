@@ -46,6 +46,50 @@
      * @return mixed
  */
 
+trait WorkDir {
+    protected string $workDir;
+
+    protected function setupWorkDir(?string $type = null, ?string $host = null, ?string $mail = null, int $ttl = 120): string {
+        $base = _lib($type, $host, $mail);
+        
+        $time = time();
+        $dir  = $base . DIRECTORY_SEPARATOR . $time;
+
+        $this->cleanOld($base, $ttl);
+
+        if (!is_dir($dir)) mkdir($dir, 0755, true);
+        
+        $this->workDir = $dir;
+        return $dir;
+    }
+
+    protected function cleanOld(string $base, int $ttl = 120): void {
+        $olds = glob($base . DIRECTORY_SEPARATOR . '*', GLOB_ONLYDIR);
+        if (!is_array($olds)) return;
+
+        $now = time();
+
+        foreach ($olds as $dir) {
+            $name = basename($dir);
+            if (is_numeric($name) && ($now - (int)$name) > $ttl) {
+                $this->rmdir($dir);
+            }
+        }
+    }
+
+    protected function rmdir(string $path): void {
+        if (!is_dir($path)) return;
+        
+        $items = array_diff(scandir($path), ['.', '..']);
+        foreach ($items as $item) {
+            $full = "$path/$item";
+            is_dir($full) ? $this->rmdir($full) : @unlink($full);
+        }
+        @rmdir($path);
+    }
+}
+
+
 class Config {
     private static array $cred_cache = [];
     private static ?string $ua_static = null;

@@ -207,7 +207,6 @@ function links($api, $url) {
     
     if (($res === 777 || $res === false) && $solver !== $api) {
         if (method_exists($api, 'shortLink')) {
-            logx('warn', " Switching to primary API...");_clr();
             $res = $api->shortLink($url); 
             $winner = $api; 
         } else {
@@ -219,12 +218,7 @@ function links($api, $url) {
     $end = microtime(true);
     $time = number_format($end - $set, 3) . 's';
     
-    if ($res && $res !== 99) {
-        logx('ok', ' SL ' . get_class($winner) . ' passed in ' . $time);
-        return $res;
-    }
-
-    logx('err', ' SL ' . get_class($winner) . ' failed');
+    if ($res && $res !== 99) return $res;
 
     return false;
 }

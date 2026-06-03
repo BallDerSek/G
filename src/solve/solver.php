@@ -23,14 +23,22 @@
  * @return string|null
  */
 class Solve {
+    public static $ua;
+    public static $ck;
+    public static $ip;
+    public static $in;
+    public static $context;
     
     public static function exec($html, $host, ?Provider $api, $pa = null, $ins = false, $force = false) {
         
         #return [];
         
-        $ua = inf::$uagent;
-        $cookie = inf::$cookie;
-        $ip = inf::$ip;
+        self::$ua = inf::$uagent;
+        self::$ck = inf::$cookie;
+        self::$ip = inf::$ip;
+        self::$in = inf::$ins;
+        
+        self::$context = inf::$context;
         
         $solution = [];
         $_cap = Capt::cha($html);
@@ -98,7 +106,7 @@ class Solve {
             if ($resAtb === 77) return ['trouble' => 'reload'];
             if ($resAtb) $solution['antibotlinks'] = $resAtb;
         }
-
+        
         if ($_select) {
             $_checks = str_replace(['-', '_'], '', strtolower($_select));
             
@@ -127,15 +135,53 @@ class Solve {
                     break;
             }
         }
-
+        
         if (isset($_cap['ic_fw'])) {
-            $ic = null; $attempt = 0;
-            while (!$ic && $attempt < 5) {
-                $ic = locally::iCaptcha($html, $host);
+            $data = [
+                'token' => $_cap['ic_fw']['keys'],
+                'endpoint' => $_cap['ic_fw']['url'],
+            ];
+            
+            $ic = null; 
+            $attempt = 0;
+            while (!$ic && $attempt < 3) {
+                $ic = locally::iCaptcha($host, $data, self::$context);
                 if ($ic === 99) return ['trouble' => 'proxy'];
                 $attempt++;
             }
-            if ($ic) $solution = array_merge($solution, $ic);
+            
+            if ($ic) {
+                $solution = array_merge($solution, $ic);
+                
+                $found = null;
+                foreach ($pa as $key => $val) {
+                    if (stripos($val, 'icaptcha') !== false || stripos($key, 'icon') !== false) {
+                        $found = $key;
+                        break;
+                    }
+                }
+                
+                if ($found) {
+                    $solution[$found] = $pa[$found];
+                } elseif (!empty($_fields)) {
+                    $solution[$_fields] = 'icaptcha';
+                }
+            } else {
+                $solution['trouble'] = 'reload';
+            }
+        }
+        
+        if (isset($_cap['ucaptcha'])) {
+            $utype = $_cap['ucaptcha']['mods'];
+            $ucap_res = null;
+            $attempt = 0;
+            while (!$ucap_res && $attempt < 3) {
+                $ucap_res = self::ucap($_cap['ucaptcha'], $host, $html);
+                if (!is_array($ucap_res)) $attempt++;
+            }
+            #var_dump($ucap_res); die;
+            if (is_array($ucap_res)) $solution = array_merge($solution, $ucap_res);
+            else $solution['trouble'] = 'reload';
         }
         
         if (isset($_cap['rss'])) {
@@ -150,16 +196,13 @@ class Solve {
                     }
                 }
                 
-                if ($found) {
-                    $solution[$found] = $pa[$found];
-                } elseif (!empty($_fields)) {
+                if ($found) $solution[$found] = $pa[$found];
+                elseif (!empty($_fields)) {
                     $solution[$_fields] = 'rscaptcha';
                 }
-            } else {
-                $solution['trouble'] = 'reload';
-            }
+            } else $solution['trouble'] = 'reload';
         }
-    
+        
         $ignoreFields = array_merge(['antibotlinks'], $captchaFields);
         $mainSolved = count(array_diff(array_keys($solution), $ignoreFields)) > 0;
 
@@ -217,7 +260,6 @@ class Solve {
         $solver = config::getKeys($api, $type); 
         
         print(DIMM.BOLD.ITAL.FGo['MAG']."solving  ".RSET);
-        $set = microtime(true);
         $t = null;
         
         $Params = array_merge($data, ['userAgent' => inf::$uagent]);
@@ -244,7 +286,6 @@ class Solve {
         if ($t === false) return 404;
         
         $api->getInfo();
-        logg(false, 'elapsed: ' . number_format(microtime(true) - $set, 3).'s');
         return $t;
     }
 
@@ -252,7 +293,6 @@ class Solve {
         $solver = config::getKeys($api, $type, 'b64');
         
         print(DIMM.BOLD.ITAL.FGo['MAG']."solving  ".RSET);
-        $set = microtime(true);
         $res = null;
         
         for ($retry = 0; $retry < 2; $retry++) {
@@ -280,14 +320,36 @@ class Solve {
             _sle(1);
         }
         
-        if ($res && $res !== 777) {
-            logg(false, 'elapsed: ' . number_format(microtime(true) - $set, 3).'s');
-            return $res; 
-        }
+        if ($res && $res !== 777) return $res; 
         
         return ['trouble' => 'reload'];
     }
 
+    private static function rss($rss, $api, $host, $html) {
+        /*
+        $ctx = [
+            'host' => $host,
+            'ua' => self::$ua,
+            'ck' => self::$ck,
+            'in' => self::$in,
+            'ip' => self::$ip,
+        ];
+        */
+        
+        $utils = ['host' => $host];
+        $ctx = array_merge(self::$context, $utils);
+        return (new rscaptcha($ctx))->exec($rss, $api, $html);
+    }
+
+    private static function ucap($ucap, $host, $html) {
+        $utils = ['host' => $host, 'html' => $html];
+        $ctx = array_merge(self::$context, $utils);
+        
+        #var_dump($ctx); die;
+        return (new uCaptcha($ctx))->exec($ucap);
+    }
+
+/* legacy 
     private static function rss($rss, $api, $host, $html) {
         
         $_M = $rss['type'] ?? null;
@@ -306,7 +368,7 @@ class Solve {
             $_K = (str_starts_with($_host, 'http')) ? "{$_host}/{$_path}" : "https://{$_host}/{$_path}";
         }
         
-        $img = Net::C($_K, 'GET', null, inf::$cookie, [], $host, inf::$uagent);
+        $img = Net::C($_K, 'GET', null, self::$ck, [], $host, self::$ua, ip: self::$ip, ins: self::$in);
         if (empty($img) || $img === 99) return false;
         
         $co = self::img($api, $host, $_M, $img);
@@ -329,7 +391,7 @@ class Solve {
     }
 
     private static function rsc($rss, $api, $host) {
-        
+        # problematic provider need much parameter
         $token = null;
         
         $_D = $rss['extra'] ?? null;
@@ -384,7 +446,7 @@ class Solve {
             ];
         }
         
-        return ['trouble' => 'reload'];
+        return null;
         
     }
 
@@ -396,7 +458,7 @@ class Solve {
         # u can change to use locally fallback
         # uncomment to use by provider, it'll consume few credit
         
-        /*
+        
         if ($provider === 'tertuyul') {
             $data = [
                 'clickX' => $x,
@@ -422,7 +484,7 @@ class Solve {
                 }
             }
         }
-       */
+       
        
         if (!$token) {
             # this is got 2 method and auto pass
@@ -433,7 +495,204 @@ class Solve {
         return $token;
 
     }
+*/
+    
+/* legacy 
+    private static function ucap($ucap, $api, $host, $html) {
+        #print_r($ucap);
+        if (!$ucap) return false;
+        
+        $_D = $ucap['extra'];
+        $_M = $ucap['mods'] ?? '';
+        $_K = $ucap['keys'] ?? null;
+        $_S = $_D['sec'] ?? null;
+        $_A = $_D['app'] ?? null;
+        
+        if (in_array(null, [$_K, $_S, $_A], true)) {
+            $_0 = self::ucapJ($_D['js'], $host);
+            if (is_array($_0)) [$_K, $_S, $_A] = $_0;
+            else return false;
+        }
+        
+        $isUcaptcha = ($_M ?? '') === 'upside_captcha';
+        
+        $fingerprint = [
+            'X-Uid' => md5(IP().self::$ua),
+            'X-Ai' => $isUcaptcha ? 'LitoshiPay' : 'AntiCaptcha',
+            'X-Agent' => self::$ua,
+            'X-Screen-Width'  => 437,
+            'X-Screen-Height' => 973,
+            'X-Color-Depth'  => 24,
+            'X-Device-Pixel-Ratio' => 2.1,
+            'X-Lang' => LANGUAGE(),
+            'X-Langs' => LANGUAGE(),
+            'X-Timezone' => TIMEZONE(),
+            'X-Referrer' => $host,
+            'X-Title'  => scraper::title($html),
+            'X-Timestamp' => time(),
+            'X-Page-Url' => $host,
+            'X-Device' => 'Android',
+        ] + ($isUcaptcha ? [
+            'X-Ip' => IP(),
+            'X-Hash' => hash('sha256', self::$ua.LANGUAGE() . '437'.'973'.'false'),
+            'X-Browser' => 'Chrome',
+            'X-Browser-Private-Window'=> false,
+        ] : []);
+        $serverHash = _enc($fingerprint, $_K, $_S);
+        
+        $solution = null;
+        if ($isUcaptcha) {
+            $_1 = json_decode(Net::X($_A.'captcha/get_captcha', 'GET', null, self::$ck, ["X-Server-Hash: $serverHash"], $host, self::$ua, foll: false, ip: self::$ip, ins: self::$in)?: '', 1)['iconPositions'] ?? null;
+            if (!empty($_1)) {
+                foreach ($_1 as $pos) {
+                    if (!empty($pos['flipped'])) {
+                        $answer = $pos;
+                        break;
+                    }
+                }
+                $validation = [
+                    'U-Answer' => $answer['index'],
+                    'U-Hash' => $answer['hash'],
+                    'U-Full-Res' => $_1,
+                ];
+                
+                $solution = [
+                    'answer' => $answer['index'],
+                    'hash' => $answer['hash'],
+                    'upside-secret' => _enc($fingerprint, $_K, $_S),
+                    'validation-secret' => _enc($validation, $_K, $_S),
+                ];
+            }
+        } else {
+            $_1 = json_decode(Net::X($_A.'anticap/get_token', 'GET', null, self::$ck, [], $host, self::$ua), 1)['token'] ?? null;
+            if (!$_1) return false;
+            
+            $_2 = json_decode(Net::X($_A.'anticap/get_challenge','GET',null,self::$ck,["X-Server-Hash: $serverHash"],$host,self::$ua,foll: false,ip: self::$ip,ins: self::$in) ?: '', 1);
+            if (!empty($_2) && !empty($_2["question_image"])) {
+                $solved = self::ucapA($_2, $host, rtrim($_A, '/'));
+                if (is_array($solved)) {
+                    [$key, $idx] = $solved;
+                    $pa = [
+                        'selected' => $idx,
+                        'key' => $key,
+                        'token' => $_1,
+                    ];
+                    $_3 = json_decode(Net::X($_A.'anticap/validate_choice','POST',$pa,self::$ck,['X-Captcha-Header: anticap-v1'],$host,self::$ua)?: '', 1)['status'];
+                    logx('',$_3, true, true);
+                    if (!empty($_3) && $_3 === 'valid') {
+                        $solution = [
+                            'anti_captcha_token' => $_1,
+                            'anti_captcha_key' => $key,
+                            'anti_captcha_selected_icon' => $idx,
+                            'anti_hash' => _enc($fingerprint, $_K, $_S),
+                        ];
+                    }
+                }
+                
+                
+                
+                
+            }
+            
+        }
+        
+        return !empty($solution) ? $solution : false;
+        
+    }
+    
+    private static function ucapJ($data = [], $host = '') {
+        
+        if (empty($data)) return false;
+        
+        $h = [];
+        foreach ($data as $u) {
+            if (empty($u)) continue;
+            
+            if (!preg_match('#^https?://#', $u)) $u = rtrim($host, '/').'/'.ltrim($u,'/');
+            
+            if (filter_var($u, FILTER_VALIDATE_URL)) $h[] = $u;
+            
+        }
+        
+        if (empty($h)) return false;
+        
+        foreach ($h as $url) {
+            $js = Net::X($url, 'GET', null, self::$ck, [], $host, self::$ua, foll: false, ip: self::$ip, ins: self::$in);
+            if ($js === 99 || empty($js)) return false;
+            if (!str_contains($js, 'litoshi_api_key')) $js = dumpJsFlex($js);
+            
+            $key = scraper::_jP($js, "/litoshi_api_key\s*=\s*['\"]([^'\"]+)['\"]/");
+            $sec = scraper::_jP($js, "/litoshi_secret_key\s*=\s*['\"]([^'\"]+)['\"]/");
+            $url = scraper::_jP($js, "/app_url\s*=\s*['\"]([^'\"]+)['\"]/");
+            
+            $_A = $key[1][0] ?? null;
+            $_S = $sec[1][0] ?? null;
+            $_U = $url[1][0] ?? null;
+            if ($_A && $_S) return [$_A ,$_S, $_U,];
+        }
+        
+        return false;
+    }
+    
+    private static function ucapA($data, $host, $app) {
+        $_base = _lib('ucaptcha');
+        
+        $key = $data["anti_captcha_key"];
+        $ins = $data["question_image"];
+        $icn = $data["icons"];
+        
+        $hashFile = LIBDIR . '/anticaptcha.json';
+        $hashes = file_exists($hashFile) ? json_decode(_get($hashFile), true) : [];
+        
+        $main = Net::X($ins, 'GET', null, self::$ck, [], $host, self::$ua);
+        if (empty($main) || $main === 99) return null;
+        _put($_base . '/main.png', $main);
+        
+        $qA = SolveUtils::aHash($_base . '/main.png');
+        $qD = SolveUtils::dHash($_base . '/main.png');
+        unlink($_base . '/main.png');
+        
+        $best = null;
+        $bestScore = PHP_INT_MAX;
+        
+        foreach ($icn as $_i) {
+            if (isset($hashes[$_i])) {
+                $iA = $hashes[$_i]['a'];
+                $iD = $hashes[$_i]['d'];
+            } else {
+                $iconU = "$app/assets/anticap/icons/$_i";
+                $iconC = Net::X($iconU, 'GET', null, self::$ck, [], $host, self::$ua);
+                if (empty($iconC) || $iconC === 99) continue;
+                _put("$_base/$_i", $iconC);
+                $iA = SolveUtils::aHash("$_base/$_i");
+                $iD = SolveUtils::dHash("$_base/$_i");
+                unlink("$_base/$_i");
+                
+                $hashes[$_i] = ['a' => $iA, 'd' => $iD];
+                _put($hashFile, json_encode($hashes));
+            }
+            
+            if (!$iA || !$iD) continue;
+            $score = SolveUtils::hamming($qA, $iA) + SolveUtils::hamming($qD, $iD);
+            
+            #logx('info', "$_i [ $score ]", true, true);
+            #logx('ok', "  dH: ".SolveUtils::hamming($qD, $iD));
+            #logx('ok', "  aH: ".SolveUtils::hamming($qA, $iA));
+            
+            if ($score < $bestScore) {
+                $bestScore = $score;
+                $best = $_i;
+            }
+        }
+        
+        #logx('ok', "Best: $best (score: $bestScore)");
+        
+        if ($best) return [$key, $best];
 
+        return null;
+        
+    }
+*/ 
     
 }
 
@@ -499,104 +758,120 @@ class SolveUtils {
         return $uuid;
     }
 
-    public static function webkitID(array $fo, &$boundary) {
-        if (empty($boundary)) {
-            $boundary = '----WebKitFormBoundary' . bin2hex(random_bytes(8));
+    public static function webkitID(array $fo, &$bo) {
+        if (empty($bo)) {
+            $bo = '----WebKitFormBoundary' . bin2hex(random_bytes(8));
         }
         
         $body = '';
         foreach ($fo as $name => $value) {
-            $body .= "--{$boundary}\r\n";
+            $body .= "--{$bo}\r\n";
             $body .= "Content-Disposition: form-data; name=\"{$name}\"\r\n\r\n";
             $body .= $value . "\r\n"; 
         }
-        $body .= "--{$boundary}--\r\n";
+        $body .= "--{$bo}--\r\n";
         return $body;
     }
     
-    public static function oddCaptcha($base64, $m = 'angle', $s = 5) {
+    public static function histC($input): ?array {
         if (!getDeps('gd@php')) {
             logx('err', "gd@php is missing");
             exit(9);
         }
         
-        $data = (base64_decode($base64, true)) ?: $base64; 
-        $image = @imagecreatefromstring($data);
-        if (!$image) return false;
+        $im = self::createImg($input);
+        if (!$im) return null;
         
-        $width = imagesx($image);
-        $height = imagesy($image);
-        $segW = intdiv($width, $s); 
-        $scores = [];
+        $size = 32;
+        $thumb = imagecreatetruecolor($size, $size);
+        imagecopyresampled($thumb, $im, 0, 0, 0, 0, $size, $size, imagesx($im), imagesy($im));
         
-        for ($idx = 0; $idx < $s; $idx++) {
-            $start = $idx * $segW;
-            if ($m === 'color') {
-                $targetX = $start + intdiv($segW, 2);
-                $targetY = intdiv($height, 2);
+        $bins = 8;
+        $hist = array_fill(0, $bins * 3, 0);
+        $total = $size * $size;
+        
+        for ($y = 0; $y < $size; $y++) {
+            for ($x = 0; $x < $size; $x++) {
+                $rgb = imagecolorat($thumb, $x, $y);
+                $r = ($rgb >> 16) & 0xFF;
+                $g = ($rgb >> 8) & 0xFF;
+                $b = $rgb & 0xFF;
                 
-                $totalGray = 0;
-                $count = 0;
-
-                for ($ox = -3; $ox <= 3; $ox++) {
-                    for ($oy = -3; $oy <= 3; $oy++) {
-                        $rgb = imagecolorat($image, $targetX + $ox, $targetY + $oy);
-                        $r = ($rgb >> 16) & 0xFF;
-                        $g = ($rgb >> 8) & 0xFF;
-                        $b = $rgb & 0xFF;
-
-                        if (($r + $g + $b) > 150) {
-                            $totalGray += self::getGray($rgb);
-                            $count++;
-                        }
-                    }
-                }
-                $scores[$idx] = ($count > 0) ? ($totalGray / $count) : self::getGray(imagecolorat($image, $targetX, $targetY));
-            } else {
-                $xCoords = []; 
-                $yCoords = [];
-                for ($y = 0; $y < $height; $y++) {
-                    for ($x = $start; $x < $start + $segW; $x++) {
-                        $rgb = imagecolorat($image, $x, $y);
-                        if ((($rgb >> 16) & 0xFF) < 220) {
-                            $xCoords[] = $x - $start; 
-                            $yCoords[] = $y;
-                        }
-                    }
-                }
-                if (count($xCoords) < 10) {
-                    $scores[$idx] = 0.0;
-                    continue; 
-                }
-                
-                $mX = array_sum($xCoords) / count($xCoords);
-                $mY = array_sum($yCoords) / count($yCoords);
-                $vX = $vY = $cXY = 0.0;
-                for ($i = 0; $i < count($xCoords); $i++) {
-                    $dx = $xCoords[$i] - $mX; 
-                    $dy = $yCoords[$i] - $mY;
-                    $vX += $dx * $dx; $vY += $dy * $dy; $cXY += $dx * $dy;
-                }
-                $scores[$idx] = ($vY == $vX) ? 0.0 : 0.5 * rad2deg(atan2(2 * $cXY, $vY - $vX));
+                $hist[(int)($r / 256 * $bins)]++;
+                $hist[$bins + (int)($g / 256 * $bins)]++;
+                $hist[$bins * 2 + (int)($b / 256 * $bins)]++;
             }
         }
         
-        $sorted = $scores; sort($sorted);
-        $median = $sorted[intdiv(count($sorted), 2)]; 
-        
-        $maxDev = -1; $res = 0;
-        foreach ($scores as $idx => $val) {
-            $dev = abs($val - $median);
-            if ($m === 'angle' && $dev > 90) $dev = 180 - $dev;
-            if ($dev > $maxDev) {
-                $maxDev = $dev;
-                $res = $idx;
-            }
+        @imagedestroy($thumb);
+        @imagedestroy($im);
+        return array_map(fn($v) => $v / $total, $hist);
+    }
+    
+    public static function histD(array $h1, array $h2) {
+        $d = 0.0;
+        $len = min(count($h1), count($h2));
+        for ($i = 0; $i < $len; $i++) {
+            $sum = $h1[$i] + $h2[$i];
+            if ($sum > 0) $d += (($h1[$i] - $h2[$i]) ** 2) / $sum;
         }
-        @imagedestroy($image);
-        return $res;
+        return $d;
     }
 
+    public static function pHash($input) {
+        if (!getDeps('gd@php')) {
+            logx('err', "gd@php is missing");
+            exit(9);
+        }
+        
+        $im = self::createImg($input);
+        if (!$im) return null;
+        
+        $N = 32;
+        $thumb = imagecreatetruecolor($N, $N);
+        imagecopyresampled($thumb, $im, 0, 0, 0, 0, $N, $N, imagesx($im), imagesy($im));
+        
+        $gray = [];
+        for ($y = 0; $y < $N; $y++) {
+            for ($x = 0; $x < $N; $x++) {
+                $rgb = imagecolorat($thumb, $x, $y);
+                $gray[$y * $N + $x] = self::getGray($rgb);
+            }
+        }
+        
+        $dct = [];
+        for ($u = 0; $u < 8; $u++) {
+            for ($v = 0; $v < 8; $v++) {
+                $sum = 0.0;
+                for ($y = 0; $y < $N; $y++) {
+                    for ($x = 0; $x < $N; $x++) {
+                        $sum += $gray[$y * $N + $x]
+                             * cos((2 * $x + 1) * $u * M_PI / (2 * $N))
+                             * cos((2 * $y + 1) * $v * M_PI / (2 * $N));
+                    }
+                }
+                $cu = ($u === 0) ? 1 / sqrt(2) : 1.0;
+                $cv = ($v === 0) ? 1 / sqrt(2) : 1.0;
+                $dct[$u * 8 + $v] = (2.0 / $N) * $cu * $cv * $sum;
+            }
+        }
+        
+        $ac = array_slice($dct, 1);
+        sort($ac);
+        $mid = (int)(count($ac) / 2);
+        $median = (count($ac) % 2 === 0) ? ($ac[$mid - 1] + $ac[$mid]) / 2 : $ac[$mid];
+        
+        $hash = '';
+        foreach ($dct as $i => $v) {
+            if ($i === 0) continue;
+            $hash .= ($v > $median) ? '1' : '0';
+        }
+        
+        @imagedestroy($thumb);
+        @imagedestroy($im);
+        return $hash;
+    }
+    
     public static function aHash($input) {
         if (!getDeps('gd@php')) {
             logx('err', "gd@php is missing");
@@ -621,7 +896,8 @@ class SolveUtils {
         $avg = $sum / 256; $hash = '';
         foreach ($pixels as $p) $hash .= ($p >= $avg) ? '1' : '0';
         
-        imagedestroy($thumb); imagedestroy($im);
+        @imagedestroy($thumb); 
+        @imagedestroy($im);
         return $hash;
     }
 
@@ -646,7 +922,8 @@ class SolveUtils {
                 $hash .= ($g1 > $g2) ? '1' : '0';
             }
         }
-        imagedestroy($thumb); imagedestroy($im);
+        @imagedestroy($thumb);
+        @imagedestroy($im);
         return $hash;
     }
 
@@ -788,80 +1065,58 @@ class SolveUtils {
  */
 class locally {
     
-    public static function iCaptcha($html, $host) {
-        $cookie = inf::$cookie;
-        $ua = inf::$uagent;
-        $ip = inf::$ip;
-        return styler("SOLVING icaptcha", function() use ($html, $host, $ip, $cookie, $ua) {
-            $endpoint = null;
-            $scripts = Scraper::_xP($html, "//script/text()");
-            
-            foreach ($scripts as $js) {
-                if (preg_match("~IconCaptcha\.init.*?endpoint\s*:\s*['\"]([^'\"]+)['\"]~is", $js, $m)) {
-                    $path = $m[1];
-                    $endpoint = (str_starts_with($path, 'http')) ? $path : rtrim($host, '/') . '/' . ltrim($path, '/');
-                    break;
-                }
-            }
-            $token = Scraper::find($html, '_iconcaptcha-token')[0] ?? null;
-            
+    public static function iCaptcha($host, $data, $ctx) {
+        $endpoint = $data['endpoint'];
+        $token = $data['token'];
+        if (!str_starts_with($endpoint, 'http')) {
+            $endpoint = rtrim($host, '/') . '/' . ltrim($endpoint, '/');
+        }
+        
+        return styler("SOLVING icaptcha", function() use ($endpoint, $token, $host, $ctx) {
             if (!$endpoint || !$token) return false;
+            
+            $ck = $ctx['cookie'];
+            $ua = $ctx['uagent'];
+            $in = $ctx['ins'];
+            $ip = $ctx['ip'];
             
             $widgetID = SolveUtils::widgetID();
             $ts = round(microtime(true) * 1000);
+            
             $json = ["payload" => base64_encode(json_encode([
-                "widgetId" => $widgetID, 
-                "action" => "LOAD", 
-                "theme" => "light",
-                "token" => $token, 
-                "timestamp" => $ts, 
-                "initTimestamp" => $ts - 2000
+                "widgetId" => $widgetID, "action" => "LOAD", "theme" => "light",
+                "token" => $token, "timestamp" => $ts, "initTimestamp" => $ts - 2000
             ]))];
             
-            $challengeId = null; 
+            $challengeId = null;
             for ($retry = 0; $retry < 3; $retry++) {
-                $res = Net::X($endpoint, 'POST', $json, $cookie, ["x-iconcaptcha-token: $token"], $host, $ua, false, false, $ip);
-                #var_dump($res);
-                if (!empty($res) && $res !== 99) {
-                    $r = json_decode(base64_decode($res), true);
-                    $challengeId = $r['identifier'] ?? null;
-                    if ($challengeId) break;
-                    _sle(1);
-                }
+                $he = ["x-iconcaptcha-token: $token"];
+                $res = Net::X($endpoint, 'POST', $json, $ck, $he, $host, $ua, false, false, $ip, $in);
+                $challengeId = json_decode(base64_decode($res ?: ''), true)['identifier'] ?? null;
+                if ($challengeId) break;
             }
-            
             if (!$challengeId) return false;
             
+            // Selection Loop
             for ($i = 0; $i < 5; $i++) {
-                $x = (int)(($i * 64) + rand(20, 40));
                 $ts = round(microtime(true) * 1000);
                 $payload = base64_encode(json_encode([
-                    "x" => $x,
-                    "y" => rand(22,30),
-                    "width" => 320,
-                    "token" => $token,
-                    "action" => "SELECTION",
-                    "widgetId" => $widgetID,
-                    "timestamp" => $ts,
-                    "challengeId" => $challengeId,
+                    "x" => (int)(($i * 64) + rand(20, 40)), "y" => rand(22, 30),
+                    "width" => 320, "token" => $token, "action" => "SELECTION",
+                    "widgetId" => $widgetID, "timestamp" => $ts, "challengeId" => $challengeId,
                     "initTimestamp" => $ts - 2000
                 ]));
                 
                 $boundary = '';
                 $body = SolveUtils::webkitID(["payload" => $payload], $boundary);
-                $s = Net::X($endpoint, 'POST', $body, $cookie, ["x-iconcaptcha-token: $token", "Content-Type: multipart/form-data; boundary=$boundary"], $host, $ua, false, false, $ip);
-                #var_dump($s);
-                if ($s === 99) return 99;
-                $r = json_decode(base64_decode($s), true);
+                $head = ["x-iconcaptcha-token: $token", "Content-Type: multipart/form-data; boundary=$boundary"];
+                
+                $r = json_decode(base64_decode(Net::X($endpoint, 'POST', $body, $ck, $head, $host, $ua, false, false, $ip, $in) ?: ''), true);
                 
                 if (!empty($r['completed']) || (isset($r['success']) && $r['success'] == true)) {
                     return [
-                        'captcha' => 'icaptcha',
-                        '_iconcaptcha-token' => $token,
-                        'ic-rq' => 1,
-                        'ic-wid' => $widgetID,
-                        'ic-cid' => $challengeId,
-                        'ic-hp' => ''
+                        '_iconcaptcha-token' => $token, 'ic-rq' => 1,
+                        'ic-wid' => $widgetID, 'ic-cid' => $challengeId, 'ic-hp' => ''
                     ];
                 }
                 _sle(1);
@@ -916,7 +1171,7 @@ class locally {
         });
     }
     
-/*
+/* legacy 
     public static function ATB($type, $a, $h, $fe = false) {
         
         if (!$a) return null;
@@ -1001,7 +1256,6 @@ class locally {
     public static function ATB($type, $a, $h, $fe = false, $d = []) {
         if (!$a) return null;
         
-        // Oper $atbData ke masing-masing solver khusus
         if ($type === 'image') return self::atb_I($a, $fe, $d);
         if ($type === 'emoji') return self::atb_E($d);
         return null;
@@ -1063,7 +1317,6 @@ class locally {
         
         return in_array($atb, [null, 77, false], true) ? 77 : $atb;
     }
-
 
     public static function rotCaptcha($html) {
         $solution = ['rot_captcha_val' => 0];
@@ -1288,5 +1541,3 @@ class locally {
     }
     
 }
-
-

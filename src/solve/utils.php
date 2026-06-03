@@ -186,3 +186,44 @@ function rsAescipher($jsFile) {
         'rskp2305' => $rskp_val
     ];
 }
+
+function _derive($secret, $salt): array {
+    $masterKey = hash('sha512', $secret . $salt, true);
+    return [
+        'enc'  => hash_hmac('sha256', 'encryption',     $masterKey, true),
+        'auth' => hash_hmac('sha256', 'authentication', $masterKey, true),
+    ];
+}
+
+function _enc($data, $apiKey, $secretKey) {
+    $_key = _derive($apiKey, $secretKey);
+
+    if (is_array($data) || is_object($data)) {
+        $data = json_encode($data, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+    }
+
+    $_ivv = random_bytes(16);
+    $_cip = openssl_encrypt($data, 'aes-256-cbc', $_key['enc'], OPENSSL_RAW_DATA, $_ivv);
+    $_sgn = hash_hmac('sha256', $_ivv . $_cip, $_key['auth'], true);
+    $solution = base64_encode($_ivv . $_sgn . $_cip);
+
+    return rtrim(strtr($solution, '+/', '-_'), '=');
+}
+
+function _dec($data, $apiKey, $secretKey) {
+    $data = strtr($data, '-_', '+/');
+    while (strlen($data) % 4) $data .= '=';
+    $raw = base64_decode($data);
+
+    $_key = _derive($apiKey, $secretKey);
+    $_ivv = substr($raw, 0, 16);
+    $_sgn = substr($raw, 16, 32);
+    $_cip = substr($raw, 48);
+
+    $expect = hash_hmac('sha256', $_ivv . $_cip, $_key['auth'], true);
+    if (!hash_equals($expect, $_sgn)) return null;
+
+    $decrypt = openssl_decrypt($_cip, 'aes-256-cbc', $_key['enc'], OPENSSL_RAW_DATA, $_ivv);
+    $json = json_decode($decrypt, true);
+    return $json ?? $decrypt;
+}

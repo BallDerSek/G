@@ -28,7 +28,7 @@ $ip = '';
 
 
 $limit = false;
-$claim = false;
+$claim = true;
 $SLDONE = false;
 $ADDONE = false;
 $skipped = [];
@@ -136,7 +136,7 @@ while (true) {
             $ret99 = 0; 
             if (empty($fau)) continue;
             
-            $f = scraper::payload($fau, 'faucetClaimForm')[0] ?? [];
+            $f = scraper::payload($fau)[0] ?? [];
             #print_r($f); #die;
             if (empty($f)) {
                 $alert_d = scraper::_xP($fau, "//div[contains(@class, 'alert-danger')]");
@@ -567,7 +567,7 @@ function pre($in_put, $threshold = 128) {
 function _text($imgData, $host, $mail) {
     if (empty($imgData)) return null;
 
-    $tmpDir = _lib($host, $mail); 
+    $tmpDir = _lib('ocr', $host, $mail); 
     $originalImg = $tmpDir . '/raw.png';
 
     _put($originalImg, $imgData);
@@ -615,4 +615,27 @@ function _text($imgData, $host, $mail) {
 
 
 function _wd($html) {
-    $res = Scrap
+    $res = Scraper::payload($html)[0] ?? null;
+    if (!$res) return false;
+
+    $names  = Scraper::_xP($html, "//input[@name='method']/@data-coincode");
+    $values = Scraper::_xP($html, "//input[@name='method']/@value");
+    $stocks = Scraper::_xP($html, "//div[contains(@class, 'col-2') and contains(text(), '%')]");
+
+    foreach ($names as $i => $name) {
+        if (stripos($name, 'btc') !== false || stripos($name, 'bitcoin') !== false) continue;
+        
+        $stokValue = (int) ($stocks[$i] ?? 0);
+        
+        if ($stokValue > 20) {
+            $res['payload']['method'] = $values[$i];
+            
+            $res['info'] = [
+                'coin'  => $name,
+                'stock' => $stokValue . '%'
+            ];
+            return $res;
+        }
+    }
+    return false;
+}

@@ -182,7 +182,7 @@ while (true) {
                     $cla = Net::C($f['url'], 'POST', $po, inf::$cookie, $headersCF, $fa, inf::$uagent);
                     
                     if (!empty($cla) && $cla !== 99) {
-                        _put('cla.html', $cla);
+                        #_put('cla.html', $cla);
                         $_suc = scraper::_jP($cla, "/Swal\.fire\s*\(\s*['\"]([^'\"]+)['\"]\s*,\s*['\"]([^'<]+)/i");
                         print(FGd['CYN'].maskEmail($login).RSET." ");
                         if (isset($_suc[2][0])) {
@@ -196,7 +196,10 @@ while (true) {
                                 $habis[] = $fa;
                                 break;
                             }
-                            if (preg_match('/banned|flagged|anti-fraud/i', $msg)) die;
+                            if (preg_match('/banned|flagged|anti-fraud/i', $msg)) {
+                                if (empty(getenv('AN'))) die;
+                                
+                            }
                             #if (preg_match('/banned|flagged/i', $msg)) die;
                         }
                         

@@ -2,10 +2,24 @@
 if (!defined('ROOT')) { die; }
 
 $api = onKeys();
-$login = _rl('email/address: ');
+$acc = config::credential([], false, ['login', 'PROXY']);
+$login = $acc['login'];
+$proxy = $acc['PROXY'];
 
 $userAgent = config::uagent();
 $cookieFile = config::cookie($login);
+
+(function ($login, $px) {
+    putenv("PROXY=".$px);
+    Proxy::load();
+    Check::Geo();
+    
+    _cle();
+    banner();
+    taskPrintCenter($login, 'ok');
+} ) ($login, $proxy);
+
+
 
 $ip = '162.213.248.69';
 $r = '/?r=gamamoch@gmail.com';
@@ -14,9 +28,6 @@ $sites = [
     'https://beefaucet.org' => '6LfwaSgTAAAAAJJNz6oAdimVHmIe3s4fHj4D0at4',
     'https://claimfreecoins.io' => '6LfwaSgTAAAAAJJNz6oAdimVHmIe3s4fHj4D0at4'
 ];
-
-banner();
-logx('info', 'using: '.$login, true, true);
 
 while (true) {
 
@@ -36,12 +47,20 @@ while (true) {
         $_coo = $cookieFile . '/' . $domain;
         if (!is_dir($_coo)) mkdir($_coo, 0755, true);
         
+        $rett0 = 0;
         while (true) {
-            $_0 = Net::C($host, 'GET', null, $_coo . '/main', [], '', $userAgent, ip: $ip, ins: true);
-            if (!empty($_0)) {
+            $rett0++;
+            $_0 = Net::X($host, 'GET', null, $_coo . '/main', [], '', $userAgent, ip: $ip, ins: true);
+            if (!empty($_0) && $_0 !== 99) {
                 $_u = scraper::_xP($_0, "//div[contains(@class, 'dropdown-menu')]//a/@href");
                 break;
             }
+            
+            if ($rett0 >= 9) {
+                logx('err', 'broken proxy maybe');
+                die;
+            }
+            
         }
 
         $prep_queue = [];

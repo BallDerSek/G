@@ -1,7 +1,10 @@
 <?php
 
-
+if (!trait_exists('WorkDir')) {
+    require_once SRCDIR . '/config/config.php';
+}
 class _shortlinks {
+    use WorkDir;
     private $url, $host, $path, $cookie, $uagent;
     private $proxied, $proxy, $oldProxy, $oldCtx;
 
@@ -18,8 +21,9 @@ class _shortlinks {
         $this->host = $part['host'] ?? $url;
         $this->path = trim($part['path'] ?? '', '/');
         
-        $_H = preg_replace('/[^a-zA-Z0-9]/', '_', $this->host);
-        $this->cookie = _lib('shortlink') . '/' . trim($_H, '_') . '.tmp';
+        $this->setupWorkDir('shortlinks');
+        
+        $this->cookie = $this->workDir . '/session.tmp';
         
         $this->url = $url;
         $this->uagent = config::uagent("desktop");
@@ -27,23 +31,7 @@ class _shortlinks {
         $this->proxy = "http://gamamoch-rotate:playernoob@p.webshare.io:3128";
     }
 
-    private function enableProxy() {
-        if ($this->proxied) {
-            throw new RuntimeException("blocked"); 
-        }
-
-        @unlink($this->cookie); 
-        $pTarget = ($this->oldProxy ?: $this->proxy);
-        putenv("PROXY=" . $pTarget);
-        Proxy::load();
-        
-        $this->proxied = true;
-        _sle(2);
-        return true;
-    }
-
     public function links($api) {
-        
         $rules = [
             'coinclix' => ['coinclix.co'],
             'clk' => ['lnbz.la','tpi.li','oii.la','aii.sh'],
@@ -59,19 +47,32 @@ class _shortlinks {
         } finally {
             $this->cleanup();
         }
-        
     }
 
     private function cleanup() {
+        $this->rmdir($this->workDir);
         
-        @unlink($this->cookie);
         putenv("PROXY=" . ($this->oldProxy ?: ""));
         
         if ($this->oldCtx !== null) {
             $GLOBALS['_CTX']['proxy'] = $this->oldCtx;
         }
         Proxy::load();
+    }
+
+    private function enableProxy() {
+        if ($this->proxied) {
+            throw new RuntimeException("blocked"); 
+        }
+
+        @unlink($this->cookie); 
+        $pTarget = ($this->oldProxy ?: $this->proxy);
+        putenv("PROXY=" . $pTarget);
+        Proxy::load();
         
+        $this->proxied = true;
+        _sle(2);
+        return true;
     }
 
     private function low($api) {

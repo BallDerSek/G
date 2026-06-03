@@ -42,12 +42,20 @@ class inf {
     public static $cookie;
     public static $ip;
     public static $ins;
+    public static $context;
 
-    public static function setup($ua, $cookie, $ip = null, $ins = false) {
+    public static function setup($ua, $ck, $ip = null, $ins = false) {
         self::$uagent = $ua;
-        self::$cookie = $cookie;
+        self::$cookie = $ck;
         self::$ip = $ip;
         self::$ins = $ins;
+        self::$context = [
+            'ip' => (string)$ip,
+            'ins' => (bool)$ins,
+            'cookie' => $ck,
+            'uagent' => $ua
+        ];
+        
     }
 
     public static function netHead(array $cookie = []) {

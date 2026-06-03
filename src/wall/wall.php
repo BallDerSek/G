@@ -1,7 +1,8 @@
 <?php
 
-
 class Owme {
+    use WorkDir; 
+    
     private string $cookieFile;
     private string $userAgent;
     private string $email;
@@ -15,13 +16,15 @@ class Owme {
         
         $user = ($mail && str_contains($mail, '@')) ? strstr($mail, '@', true) : ($mail ?: 'default');
         
-        $this->cookieFile = $cookie ?: (_lib('owme', $cleanHost) . "/{$user}.tmp");
+        if (!$cookie) {
+            $workDir = $this->setupWorkDir('owme', $cleanHost);
+            $this->cookieFile = $workDir . "/{$user}.tmp";
+        } else {
+            $this->cookieFile = $cookie;
+        }
         
         $this->email = $mail;
         
-        if (!is_dir(dirname($this->cookieFile))) {
-            mkdir(dirname($this->cookieFile), 0777, true);
-        }
     }
     
     public function exec($url, $timer) {
@@ -155,11 +158,9 @@ class Owme {
 
 }
 
-
-
-
-
 class Zera {
+    use WorkDir;
+    
     private string $cookieFile;
     private string $userAgent;
     private string $email;
@@ -171,18 +172,21 @@ class Zera {
         
         $this->userAgent = $ua ?: Config::uagent("desktop");
         $this->api = $api;
+        $this->email = $mail;
         
         $targetHost = parse_url($url)['host'] ?: $url;
         $cleanHost  = trim(preg_replace('/[^a-zA-Z0-9]/', '_', $targetHost), '_');
         
         $user = ($mail && str_contains($mail, '@')) ? strstr($mail, '@', true) : ($mail ?: 'default');
         
-        $this->cookieFile = $cookie ?: (_lib('zer', $cleanHost) . "/{$user}.tmp");
-        $this->email = $mail;
-        
-        if (!is_dir(dirname($this->cookieFile))) {
-            mkdir(dirname($this->cookieFile), 0777, true);
+        // Pakai WorkDir dengan TTL 300 detik (5 menit) untuk Zera
+        if (!$cookie) {
+            $workDir = $this->setupWorkDir('zer', $cleanHost, null, 300);
+            $this->cookieFile = $workDir . "/{$user}.tmp";
+        } else {
+            $this->cookieFile = $cookie;
         }
+        
     }
 
     public function exec($zer_u, $ip) {
