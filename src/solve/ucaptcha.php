@@ -19,31 +19,34 @@ final class uCaptcha {
     }
 
     public function exec(array $ucap) {
-        try {
-            if (!$ucap) return false;
-
-            $_D = $ucap['extra'];
-            $_M = $ucap['mods'] ?? '';
-            $_K = $ucap['keys'] ?? null;
-            $_S = $_D['sec'] ?? null;
-            $_A = $_D['app'] ?? null;
-
-            if (in_array(null, [$_K, $_S, $_A], true)) {
-                $keys = $this->_keys($_D['js'] ?? []);
-                if (!$keys) return false;
-                [$_K, $_S, $_A] = $keys;
+            
+        return styler("SOLVING uCaptcha", function() use ($ucap) {
+            try {
+                if (!$ucap) return false;
+                
+                $_D = $ucap['extra'];
+                $_M = $ucap['mods'] ?? '';
+                $_K = $ucap['keys'] ?? null;
+                $_S = $_D['sec'] ?? null;
+                $_A = $_D['app'] ?? null;
+                
+                if (in_array(null, [$_K, $_S, $_A], true)) {
+                    $keys = $this->_keys($_D['js'] ?? []);
+                    if (!$keys) return false;
+                    [$_K, $_S, $_A] = $keys;
+                }
+                
+                $isUc = ($_M === 'upside_captcha');
+                $fingerprint = $this->fingerprint($isUc);
+                $serverHash  = _enc($fingerprint, $_K, $_S);
+                
+                return $isUc
+                        ? $this->_uC($_A, $fingerprint, $serverHash, $_K, $_S)
+                        : $this->_aC($_A, $fingerprint, $serverHash, $_K, $_S);
+            } finally {
+                $this->rmdir($this->workDir);
             }
-
-            $isUc = ($_M === 'upside_captcha');
-            $fingerprint = $this->fingerprint($isUc);
-            $serverHash  = _enc($fingerprint, $_K, $_S);
-
-            return $isUc
-                ? $this->_uC($_A, $fingerprint, $serverHash, $_K, $_S)
-                : $this->_aC($_A, $fingerprint, $serverHash, $_K, $_S);
-        } finally {
-            $this->rmdir($this->workDir);
-        }
+        });
     }
 
     private function _solve(array $ch, $app): ?array {
@@ -121,22 +124,18 @@ final class uCaptcha {
         ];
         $upsideSecret = _enc($this->fingerprint(true), $apiKey, $secretKey);
         $validationSecret = _enc($validation, $apiKey, $secretKey);
-/*
-// === DEBUG ===
-$decrypted = _dec($upsideSecret, $apiKey, $secretKey);
-$json1 = json_encode($fp, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
-$json2 = json_encode($decrypted, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
-logx('DEBUG', 'FP: ' . $json1);
-logx('DEBUG', 'DC: ' . $json2);
-logx('DEBUG', 'Match: ' . ($json1 === $json2 ? 'YES' : 'NO'));
-// === END ===
-*/
-        return [
+
+        $solution = [
             'answer' => $answer['index'],
             'hash' => $answer['hash'],
             'upside-secret' => $upsideSecret,
             'validation-secret' => $validationSecret,
         ];
+        $head = "X-Server-Hash: $hash";
+        
+        return ['solution' => $solution, 'headers' => $head];
+        
+        
     }
 
     private function _aC($app, array $fp, $hash, $apiKey, $secretKey) {

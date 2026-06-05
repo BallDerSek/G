@@ -14,17 +14,14 @@ class Owme {
         $targetHost = parse_url($url)['host'] ?: $url;
         $cleanHost  = trim(preg_replace('/[^a-zA-Z0-9]/', '_', $targetHost), '_');
         
-        $user = ($mail && str_contains($mail, '@')) ? strstr($mail, '@', true) : ($mail ?: 'default');
-        
         if (!$cookie) {
-            $workDir = $this->setupWorkDir('owme', $cleanHost);
-            $this->cookieFile = $workDir . "/{$user}.tmp";
+            $workDir = $this->setupWorkDir('owme', $cleanHost, $mail);
+            $this->cookieFile = $workDir . "/" . $this->userdir($mail) . ".tmp";
         } else {
             $this->cookieFile = $cookie;
         }
-        
         $this->email = $mail;
-        
+
     }
     
     public function exec($url, $timer) {
@@ -45,7 +42,7 @@ class Owme {
             
             logx('info', "[ offerwall.me {$timer}s ] ", false, true);
             
-            _sle((int)$adData['params']['dur']);
+            styler("waiting for owme", fn() => _sle((int)$adData['params']['dur']));
             
             $capUrl = $adData['targetHost'] . '/system/libraries/captcha/request.php';
             $capIcons = $this->_getCap($capUrl, $adData['ref']);
@@ -127,6 +124,7 @@ class Owme {
             if (isset($res['status']) && $res['status'] == 200) {
                 _clr(); 
                 print(FGd['CYN'].maskEmail($this->email).RSET." ");
+                logx('info', "[ ".__CLASS__." ] ", false);
                 logx('ok', $msg, true, true);
                 
                 return true;
@@ -177,16 +175,12 @@ class Zera {
         $targetHost = parse_url($url)['host'] ?: $url;
         $cleanHost  = trim(preg_replace('/[^a-zA-Z0-9]/', '_', $targetHost), '_');
         
-        $user = ($mail && str_contains($mail, '@')) ? strstr($mail, '@', true) : ($mail ?: 'default');
-        
-        // Pakai WorkDir dengan TTL 300 detik (5 menit) untuk Zera
         if (!$cookie) {
-            $workDir = $this->setupWorkDir('zer', $cleanHost, null, 300);
-            $this->cookieFile = $workDir . "/{$user}.tmp";
+            $workDir = $this->setupWorkDir('zer', $cleanHost, $mail, 300);
+            $this->cookieFile = $workDir . "/" . $this->userdir($mail) . ".tmp";
         } else {
             $this->cookieFile = $cookie;
         }
-        
     }
 
     public function exec($zer_u, $ip) {
@@ -238,9 +232,8 @@ class Zera {
                 #styler("waiting for zerads", fn() => _sle((int)ceil($ti)));
                 
                 /*
-                logx('info', "[ zerads.com {$ti}s ] ", false, true);
-                _sle((int)($ti))
                 */
+                logx('info', "[ zerads.com {$ti}s ] ", false, true);
                 
                 $sol = null;
                 $zerC_p = $this->_parseImages($zer_v, $current_ref, 'id=');
@@ -262,7 +255,7 @@ class Zera {
                     $end = microtime(true);
                     
                     if (($wait = (int)$ti - ($end - $set)) >= 0) {
-                        styler("waiting for zerads", fn() => _sle((int)ceil($wait)));
+                        styler("waiting for zera", fn() => _sle((int)ceil($wait)));
                     }
                     
                     
@@ -275,7 +268,9 @@ class Zera {
                     if (!empty($zer_d) && $zer_d !== 99) {
                         $zer_r = Scraper::_xP($zer_d, "//div[@id='rwmsgbox']") ?? [];
                         if (!empty($zer_r[0])) {
+                            _clr();
                             print(FGd['CYN'] . maskEmail($this->email) . RSET . " ");
+                            logx('info', "[ ".__CLASS__." ] ", false);
                             $message = trim(preg_replace('/\s+/', ' ', strip_tags($zer_r[0])));
                             logx('ok', $message, true, true);
                             
@@ -419,4 +414,511 @@ class Zera {
     public function cleanup() {
         return @unlink($this->cookieFile);
     }
+}
+
+class Bctt {
+    use WorkDir;
+    
+    private string $cookieFile;
+    private string $userAgent;
+    private string $email;
+    private $api;
+    private string $bct_h = 'https://bitcotasks.com';
+    
+    public function __construct($url, $api, $mail = null, $cookie = null, $ua = null) {
+        if (empty($url)) return;
+        
+        $this->userAgent = $ua ?: Config::uagent("mobile");
+        $this->api = $api;
+        $this->email = $mail;
+        
+        $targetHost = parse_url($url)['host'] ?: $url;
+        $cleanHost  = trim(preg_replace('/[^a-zA-Z0-9]/', '_', $targetHost), '_');
+        
+        if (!$cookie) {
+            $workDir = $this->setupWorkDir('bct', $cleanHost, $mail, 300);
+            $this->cookieFile = $workDir . "/" . $this->userdir($mail) . ".tmp";
+        } else {
+            $this->cookieFile = $cookie;
+        }
+    }
+    
+    public function exec($url, $tmr = 5) {
+        if (empty($url)) return false;
+        
+        logx('info', "[ bitcotasks.com {$tmr}s ] ", false, true);
+        
+        $set = microtime(true);
+        $cc_get = Net::C($url, 'GET', null, $this->cookieFile, [], '', $this->userAgent);
+        $cc_getG = scraper::_jP($cc_get, "/window\.location\.href\s*=\s*['\"]([^'\"]+)['\"]/")[1][0] ?? null;
+        
+        $param = null;
+        if (!empty($cc_getG)) {
+            $cc_pre = Net::C($cc_getG, 'GET', null, $this->cookieFile, [], '', $this->userAgent);
+            
+            if ($cc_pre === 99) return 99;
+            
+            if (!empty($cc_pre) && $cc_pre !== 99) {
+                $cap_u = scraper::_xP($cc_pre, "//script[contains(@src,'captcha2/')]/@src")[0] ?? null;
+                
+                preg_match("/window\.(?:open|location\.replace)\('([^']+)'\)/", $cc_pre, $m);
+                $target_url = $m[1] ?? null;
+                if (!$target_url && preg_match("/location\.replace\('([^']+)'\)/", $cc_pre, $m)) {
+                    $target_url = $m[1] ?? null;
+                }
+                
+                $action = null;
+                if (preg_match("/action:\s*'([^']+)'/", $cc_pre, $m) && $m[1] !== 'start_view') $action = $m[1];
+                elseif (preg_match("/'action':\s*'([^']+)'/", $cc_pre, $m) && $m[1] !== 'start_view') $action = $m[1];
+                elseif (preg_match("/action\s*=\s*['\"]([^'\"]+)['\"]/", $cc_pre, $m) && $m[1] !== 'start_view') $action = $m[1];
+                else $action = 'proccessLead';
+                
+                $param = [
+                    'hash' => Scraper::_pP($cc_pre,'hash')[0] ?? null,
+                    'token' => Scraper::_pP($cc_pre,'token')[0] ?? null,
+                    'sub_id' => Scraper::_pP($cc_pre,'sub_id')[0] ?? null,
+                    'api_key' => Scraper::_pP($cc_pre,'api_key')[0] ?? null,
+                    'timer' => Scraper::_pP($cc_pre,'duration')[0] ?? $tmr,
+                    'target_url' => $target_url,
+                    'action' => $action
+                ];
+                
+                if (in_array(null, $param, true)) {
+                    return false;
+                }
+            }
+        }
+        
+        if (!empty($param) && $cc_getG) {
+            $cc_js = Net::C($this->bct_h . $cap_u, 'GET', null, $this->cookieFile, [], $cc_getG, $this->userAgent);
+            
+            $fjs = null;
+            $solution = null;
+            if (!empty($cc_js) && $cc_js !== 99) {
+                #styler("waiting for bitcotask", fn() => _sle((int)$tmr));
+                preg_match('/fetch\("([^"]+captcha[^"]+\.js\?action=captcha)"/', $cc_js, $m);
+                $cc_ep = $m[1] ?? $cap_u;
+                
+                $fjs = $this->_parseJs($cc_js);
+                
+                $cc_p0 = [
+                    't' => round(microtime(true) * 1000),
+                    'r' => mt_rand() / mt_getrandmax()
+                ];
+                
+                $cap_get = json_decode(Net::X($this->bct_h . $cc_ep, 'POST', $cc_p0, $this->cookieFile, [], $cc_getG, $this->userAgent, true) ?: '', true);
+                if (!empty($cap_get['options']) && !empty($cap_get['pixel'])) {
+                    $solution = $this->_solve($cap_get);
+                    if ($solution === 010) {
+                        return false;
+                    }
+                }
+            }
+            
+            if ($fjs && $solution) {
+                $cc_p1 = $this->_buildPayload($fjs, $param, $solution);
+                $cap_tok = json_decode(Net::X($this->bct_h . $cc_p1['url'], 'POST', $cc_p1['payload'], $this->cookieFile, [], $cc_getG, $this->userAgent) ?: '', true)[$fjs['cc_ver']] ?? false;
+                
+                if ($cap_tok) {
+                    $cc_p2 = [
+                        'hash' => $param['hash'],
+                        'sub_id' => $param['sub_id'],
+                        'key' => $param['api_key'],
+                        'token' => $param['token'],
+                        $fjs['cc_Fnm'] => $cap_tok,
+                        'action' => $param['action']
+                    ];
+                    
+                    $end = microtime(true);
+                    if (($wait = (int)$tmr - ($end - $set)) >= 0) {
+                        styler("waiting for bitcotask", fn() => _sle((int)ceil($wait)));
+                    }
+                    
+                    
+                    $cc_end = json_decode(Net::X($this->bct_h . "/system/ajax.php", 'POST', $cc_p2, $this->cookieFile, [], $cc_getG, $this->userAgent) ?: '', 1);
+                    print(FGd['CYN'] . maskEmail($this->email) . RSET . " ");
+                    $msg = strip_tags($cc_end['message'] ?? 'ora tau apa isinya');
+                    if ($cc_end && ($cc_end['status'] ?? 0) == 200) {
+                        _clr();
+                        print(FGd['CYN'] . maskEmail($this->email) . RSET . " ");
+                        logx('info', "[ ".__CLASS__." ] ", false);
+                        logx('ok', $msg, true, true);
+                        return true;
+                    }
+                    logx('err', $msg);
+                }
+            }
+        }
+        
+        return false;
+    }
+    
+    private function _parseJs($js) {
+        $result = [];
+        
+        $m = scraper::_jP($js, '/var payload = "([^"]+)"/')[1] ?? null;
+        if (!empty($m[0])) {
+            parse_str($m[0], $parsed);
+            foreach ($parsed as $key => $value) {
+                if (!in_array($key, ['_et', '_mv', '_cf', '_pw', '_ch', '_bh'], true)) {
+                    $result['cc_ran'][$key] = $value;
+                }
+            }
+        }
+        
+        preg_match('/<input type="hidden" id="([^"]+)" name="([^"]+)">/', $js, $m);
+        $result['cc_Fid'] = $m[1] ?? null;
+        $result['cc_Fnm'] = $m[2] ?? null;
+        
+        preg_match('/xhr\.open\("POST",\s*"([^"]+captcha2[^"]+)"/', $js, $m);
+        $result['cc_end'] = $m[1] ?? null;
+        
+        if ($result['cc_Fid']) {
+            preg_match('/document\.getElementById\("' . preg_quote($result['cc_Fid'], '/') . '"\)\.value\s*=\s*response\.([a-zA-Z0-9]+)/', $js, $m);
+            $result['cc_ver'] = $m[1] ?? null;
+        }
+        
+        if (empty($result['cc_ran']) || empty($result['cc_Fid']) || empty($result['cc_Fnm']) || empty($result['cc_end']) || empty($result['cc_ver'])) {
+            return false;
+        }
+        
+        return $result;
+    }
+    
+    private function _renderImage($b64, $w, $h) {
+        $raw = base64_decode($b64);
+        if (strlen($raw) < $w * $h * 4) return false;
+        
+        $img = imagecreatetruecolor($w, $h);
+        imagealphablending($img, false);
+        imagesavealpha($img, true);
+        
+        $i = 0;
+        for ($y = 0; $y < $h; $y++) {
+            for ($x = 0; $x < $w; $x++) {
+                $r = ord($raw[$i++] ?? "\x00");
+                $g = ord($raw[$i++] ?? "\x00");
+                $b = ord($raw[$i++] ?? "\x00");
+                $a = ord($raw[$i++] ?? "\x00");
+                
+                $alpha = 127 - (int)($a / 255 * 127);
+                $color = imagecolorallocatealpha($img, $r, $g, $b, $alpha);
+                imagesetpixel($img, $x, $y, $color);
+            }
+        }
+        
+        ob_start();
+        imagepng($img);
+        $imageData = ob_get_clean();
+        @imagedestroy($img);
+        
+        return base64_encode($imageData);
+    }
+    
+    private function _solve($data) {
+        
+        if (!method_exists($this->api, 'bct')) {
+            logx('err', 'provider not support bitcotask');
+            die;
+        }
+        
+        $pow_d = $data['difficulty'] ?? 4;
+        $pow_c = $data['challenge'] ?? null;
+        
+        $main = $this->_renderImage($data['pixel'], 200, 100);
+        $captcha['main'] = $main;
+        
+        foreach ($data['options'] as $i => $opt) {
+            $captcha['opsi'][$i] = $this->_renderImage($opt['pixels'], $opt['width'], $opt['height']);
+        }
+        
+        $solver = config::getKeys($this->api, 'bitcotask', 'b64');
+        if (method_exists($solver, 'bct')) {
+            $solution = $solver->bct($captcha);
+            if ($solution === 777) {
+                if (method_exists($this->api, 'bct')) {
+                    $solution = $this->api->bct($captcha);
+                }
+            }
+        } else {
+            return 010;
+        }
+        
+        if (!$solution) return false;
+        
+        #$pow = SolveUtils::Pow($pow_c, $pow_d);
+
+        return [
+            'pow' => array_merge(
+                SolveUtils::Pow($pow_c, $pow_d),
+                ['ch' => $pow_c, 'di' => $pow_d]
+                ),
+            'cap' => $solution
+        ];
+    }
+    
+    private function _buildPayload($fjs, $param, $solution) {
+        $fieldKeys = array_keys($fjs['cc_ran']);
+        $elapsed = rand(5000, 6000);
+        
+        $ch = $solution['pow']['ch'];
+        $nonce = $solution['pow']['nonce'];
+        $cf = rand(5000, 5500);
+        
+        $payload = [
+            $fieldKeys[0] => $fjs['cc_ran'][$fieldKeys[0]],
+            $fieldKeys[1] => json_encode([(int)$solution['cap']]),
+            '_et' => $elapsed,
+            '_mv' => rand(2, 5),
+            '_cf' => $cf,
+            '_pw' => json_encode(['nonce' => $nonce, 'hash' => $solution['pow']['hash'] ?? '']),
+            '_ch' => $ch,
+            '_bh' => hash('sha256', $elapsed . ':' . $nonce . ':' . $ch)
+        ];
+        
+        $payload = array_filter($payload, function($v) {
+            return $v !== '' && $v !== null;
+        });
+        
+        return [
+            'url' => $fjs['cc_end'],
+            'payload' => $payload,
+        ];
+    }
+    
+    public function cleanup() {
+        return @unlink($this->cookieFile);
+    }
+    
+}
+
+
+
+
+
+
+
+function bct($api, $url, $tmr = 5, $host = '') {
+    $url = 'https://bitcotasks.com/start/f3c5a822b8ad0ae56d0df4498e744cbb:675741365771472f6153375264667965495355664847393174392b454d6a32426d78626368744468706d774675382f48616e74514e4d774d67546e4e3351687532324967504a356839666e646b496147617063687849504e5a5a7661466c655335444e4e7931366b464d6e4d65725a50544c64524163684157446a73653275646a4a6931383535436376524c2b4c706152455a377733626d47696b482b4f4f6d6e6863317259436262762f7675577869736842616f526c2b31512b47756e64626b622b49377a7879596e2b62584e51676a456f6639644b513547634e4f50666d354f6832764c39783972383d';
+    
+    $bct_h = 'https://bitcotasks.com';
+    
+    $ck = config::cookie($host);
+    $ua = config::uagent('mobile');
+    
+    
+    
+    $cc_get = Net::C($url, 'GET', null, $ck, [], $host, $ua);
+    $cc_getG = scraper::_jP($cc_get, "/window\.location\.href\s*=\s*['\"]([^'\"]+)['\"]/")[1][0] ?? null;
+    
+    $param = null;
+    $cap_u = null;
+    if (!empty($cc_getG)) {
+        $cc_pre = Net::C($cc_getG, 'GET', null, $ck, [], '', $ua);
+        _put('0.html', $cc_pre);
+        
+        if ($cc_pre === 99) return 99;
+        
+        if (strlen($cc_pre) < 1000) return false;
+        
+        if (!empty($cc_pre) && $cc_pre !== 99) {
+            $cap_u = scraper::_xP($cc_pre, "//script[contains(@src,'captcha2/')]/@src")[0] ?? null;
+            
+            $param = [
+                'act' => scraper::_jP($cc_pre, '/\.post\(window\.location,\s*\{action:\s*\'([^\']+)\'\}/')[1][0] ?? 'redirect',
+                'tmr' => scraper::_jP($cc_pre, '/var time([a-f0-9]+) = (\d+)/')[2][0] ?? 10
+                ];
+                
+        }
+        
+    }
+    
+    $fjs = null;
+    $solution = null;
+    if (!empty($param) && $cap_u) {
+        _sle($param['tmr']);
+        $cc_js = Net::C($bct_h . $cap_u, 'GET', null, $ck, [], $cc_getG, $ua);
+        
+        if (!empty($cc_js) && $cc_js !== 99) {
+            preg_match('/fetch\("([^"]+captcha[^"]+\.js\?action=captcha)"/', $cc_js, $m);
+            $cc_ep = $m[1] ?? $cap_u;
+            
+            $fjs = parsecc($cc_js);
+            
+            $cc_p0 = [
+                't' => round(microtime(true) * 1000),
+                'r' => mt_rand() / mt_getrandmax()
+            ];
+            
+            $cap_get = json_decode(Net::X($bct_h . $cc_ep, 'POST', $cc_p0, $ck, [], $cc_getG, $ua, true) ?: '', true);
+            
+            if (!empty($cap_get['options']) && !empty($cap_get['pixel'])) {
+                $solution = _solveBCT($api,$cap_get);
+                if ($solution === 010) {
+                    return false;
+                }
+            }
+            
+        }
+    }
+    
+    if ($fjs && $solution) {
+        print_r($param);
+        print_r($fjs);
+        print_r($solution);
+        
+        
+        $cc_p1 = _bctPayload($fjs, $param, $solution);
+        $cap_tok = json_decode(Net::X($bct_h . $cc_p1['url'], 'POST', $cc_p1['payload'], $ck, [], $cc_getG, $ua) ?: '', true)[$fjs['cc_ver']] ?? false;
+        var_dump($cap_tok);
+        
+        var_dump($cc_getG);
+$headers = [
+    'Accept: application/json, text/javascript, */*; q=0.01',
+    'X-Requested-With: XMLHttpRequest'
+];
+
+$cc_end = Net::C($cc_getG, 'POST', 'action=redirect', $ck, $headers, $cc_getG, $ua);
+        var_dump($cc_end);
+        
+        
+        
+    }
+    
+    
+    
+    
+die;
+}
+
+function parsecc($js) {
+    $result = [];
+    
+    $m = scraper::_jP($js, '/var payload = "([^"]+)"/')[1] ?? null;
+    if (!empty($m[0])) {
+        parse_str($m[0], $parsed);
+        foreach ($parsed as $key => $value) {
+            if (!in_array($key, ['_et', '_mv', '_cf', '_pw', '_ch', '_bh'], true)) {
+                $result['cc_ran'][$key] = $value;
+            }
+        }
+    }
+    
+    preg_match('/<input type="hidden" id="([^"]+)" name="([^"]+)">/', $js, $m);
+    $result['cc_Fid'] = $m[1] ?? null;
+    $result['cc_Fnm'] = $m[2] ?? null;
+    
+    preg_match('/xhr\.open\("POST",\s*"([^"]+captcha2[^"]+)"/', $js, $m);
+    $result['cc_end'] = $m[1] ?? null;
+    
+    if ($result['cc_Fid']) {
+        preg_match('/document\.getElementById\("' . preg_quote($result['cc_Fid'], '/') . '"\)\.value\s*=\s*response\.([a-zA-Z0-9]+)/', $js, $m);
+        $result['cc_ver'] = $m[1] ?? null;
+    }
+    
+    if (empty($result['cc_ran']) || empty($result['cc_Fid']) || empty($result['cc_Fnm']) || empty($result['cc_end']) || empty($result['cc_ver'])) {
+        return false;
+    }
+    
+    return $result;
+}
+
+function _rndr($b64, $w, $h) {
+    
+    $raw = base64_decode($b64);
+    if (strlen($raw) < $w * $h * 4) return false;
+    
+    $img = imagecreatetruecolor($w, $h);
+    imagealphablending($img, false);
+    imagesavealpha($img, true);
+    
+    $i = 0;
+    for ($y = 0; $y < $h; $y++) {
+        for ($x = 0; $x < $w; $x++) {
+            $r = ord($raw[$i++] ?? "\x00");
+            $g = ord($raw[$i++] ?? "\x00");
+            $b = ord($raw[$i++] ?? "\x00");
+            $a = ord($raw[$i++] ?? "\x00");
+            
+            $alpha = 127 - (int)($a / 255 * 127);
+            $color = imagecolorallocatealpha($img, $r, $g, $b, $alpha);
+            imagesetpixel($img, $x, $y, $color);
+        }
+    }
+    
+    ob_start();
+    imagepng($img);
+    $imageData = ob_get_clean();
+    @imagedestroy($img);
+    
+    return base64_encode($imageData);
+}
+
+function _solveBCT($api, $data) {
+    
+    $pow_d = $data['difficulty'] ?? 4;
+    $pow_c = $data['challenge'] ?? null;
+    
+    $main = _rndr($data['pixel'],200,100);
+    $captcha['main'] = $main;
+    #_put('main.png', base64_decode($main));
+    foreach ($data['options'] as $i => $opt) {
+        $captcha['opsi'][$i] = _rndr($opt['pixels'],$opt['width'],$opt['height']);
+    }
+    
+    if (method_exists($api, 'bct')) {
+        $solved = $api->bct($captcha);
+    } else $solved = '4';
+    
+    $pow = SolveUtils::Pow($pow_c, $pow_d);
+    
+    return [
+        'pow' => array_merge($pow, ['ch' => $pow_c, 'di' => $pow_d]),
+        'cap' => $solved
+    ];
+}
+
+function _bctPayload($fjs, $param, $solution) {
+    $fieldKeys = array_keys($fjs['cc_ran']);
+    $elapsed = rand(5000, 6000);
+    
+    $ch = $solution['pow']['ch'];
+    $nonce = $solution['pow']['nonce'];
+    
+    $cf = rand(5000, 5500);
+    
+    $payload = [
+        $fieldKeys[0] => $fjs['cc_ran'][$fieldKeys[0]],
+        $fieldKeys[1] => json_encode([(int)$solution['cap']]),
+        '_et' => $elapsed,
+        '_mv' => rand(2, 5),
+        '_cf' => $cf,
+        '_pw' => json_encode(['nonce' => $nonce, 'hash' => $solution['pow']['hash'] ?? '']),
+        '_ch' => $ch,
+        '_bh' => hash('sha256', $elapsed . ':' . $nonce . ':' . $ch)
+    ];
+    
+    $payload = array_filter($payload, function($v) {
+        return $v !== '' && $v !== null;
+    });
+    
+    return [
+        'url' => $fjs['cc_end'],
+        'payload' => $payload,
+    ];
+}
+
+function savedebugbitcotask($num, $param) {
+    $dir = _lib('bitcotask', $num);
+    
+    $main = _rndr($param['pixel'],200,100);
+    _put($dir.'/main.png', base64_decode($main));
+    
+    foreach ($param['options'] as $i => $opt) {
+        if ($opsi = _rndr($opt['pixels'],$opt['width'],$opt['height'])) {
+            _put($dir."/$i.png", base64_decode($opsi));
+        }
+        
+    }
+    
 }

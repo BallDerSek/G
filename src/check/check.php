@@ -36,7 +36,7 @@ class check {
     }
 
     public static function Dep() {
-        self::$deps = underline("checking deps", function () {
+        self::$deps = styler("checking deps", function () {
             $isWin = (PHP_OS_FAMILY === 'Windows');
             $null  = $isWin ? 'NUL' : '/dev/null';
             $pyBin = $isWin ? 'python' : 'python3';
@@ -65,7 +65,7 @@ class check {
                 'synchrony@npm' => $hasSynchrony,
                 'tesseract' => self::depCmd('tesseract'),
             ];
-        });
+        }, 'underline');
         
         $missing = array_keys(array_filter(self::$deps, fn($v) => !$v));
         if ($missing) {
@@ -91,7 +91,7 @@ class check {
     }
 
     public static function Geo() {
-        $g = underline("checking nett", fn() => self::geoData());
+        $g = styler("checking nett", fn() => self::geoData(), 'underline');
         if (!is_array($g) || ($g === 99)) {
             logx('err', "unstable network");
             exit(99);

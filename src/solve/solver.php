@@ -183,7 +183,7 @@ class Solve {
             if (is_array($ucap_res)) $solution = array_merge($solution, $ucap_res);
             else $solution['trouble'] = 'reload';
         }
-        
+        #var_dump($solution); die;
         if (isset($_cap['rss'])) {
             $rss_res = self::rss($_cap['rss'], $api, $host, $html);
             if (is_array($rss_res)) {
@@ -336,7 +336,7 @@ class Solve {
         ];
         */
         
-        $utils = ['host' => $host];
+        $utils = ['host' => $host, 'html' => $html];
         $ctx = array_merge(self::$context, $utils);
         return (new rscaptcha($ctx))->exec($rss, $api, $html);
     }
@@ -1019,15 +1019,20 @@ class SolveUtils {
         return $res;
     }
 
-    public static function Pow($salt, $difficulty) {
-        $prefix = str_repeat('0', $difficulty);
+    public static function Pow($salt, $di = 4, $de = ':', $max = 2000000) {
+        $prefix = str_repeat('0', $di);
         $nonce = 0;
         
-        while (true) {
-            $hash = hash('sha256', $salt . $nonce);
-            if (strpos($hash, $prefix) === 0) return $nonce;
+        while ($nonce < $max) {
+            $test = $salt . $de . $nonce;
+            $hash = hash('sha256', $test);
+            
+            if (strpos($hash, $prefix) === 0) return ['nonce' => $nonce, 'hash' => $hash];
             $nonce++;
         }
+        
+        return null;
+        
     }
 
 }
@@ -1072,7 +1077,7 @@ class locally {
             $endpoint = rtrim($host, '/') . '/' . ltrim($endpoint, '/');
         }
         
-        return styler("SOLVING icaptcha", function() use ($endpoint, $token, $host, $ctx) {
+        return styler("SOLVING iCaptcha", function() use ($endpoint, $token, $host, $ctx) {
             if (!$endpoint || !$token) return false;
             
             $ck = $ctx['cookie'];
@@ -1130,7 +1135,7 @@ class locally {
         $ua = inf::$uagent;
         $ip = inf::$ip;
 
-        return styler("SOLVING ecaptcha", function() use ($host, $cookie, $ua, $ip) {
+        return styler("SOLVING eCaptcha", function() use ($host, $cookie, $ua, $ip) {
             $res = Net::X($host.'/ecaptcha/get_token', 'GET', null, $cookie, [], $host, $ua, false, false, $ip);
             #var_dump($res);
             if ($res === 99) return 99;
@@ -1170,88 +1175,6 @@ class locally {
             return false;
         });
     }
-    
-/* legacy 
-    public static function ATB($type, $a, $h, $fe = false) {
-        
-        if (!$a) return null;
-        
-        if ($type === 'image') return self::atb_I($a, $h, $fe);
-        if ($type === 'emoji') return self::atb_E($h);
-        return null;
-    }
-    
-    public static function atb_E($html) {
-        $ab_ins = Scraper::_xP($html, "//strong[contains(text(),',')]");
-        if (empty($ab_ins)) return null;
-        
-        $_ask = array_map('trim', explode(',', $ab_ins[0]));
-        
-        $_ab = '/data-token=\\\\"(?<token>[^"\\\\]+)\\\\".*?>(?<emoji>.*?)<\/a>/u';
-        $ab_rel = Scraper::_jP($html, $_ab);
-        
-        if (empty($ab_rel['token'])) return null;
-
-        $ab_t = [];
-        foreach ($ab_rel['token'] as $idx => $_rel) {
-            $ab_e = $ab_rel['emoji'][$idx];
-            $ab_t[$ab_e] = $_rel;
-        }
-
-        $db_file = LIBDIR . '/atb_e.json';
-        $db = file_exists($db_file) ? json_decode(_get($db_file), true) : [];
-
-        $solution = [];
-        $_tokens = $ab_t;
-
-        foreach ($_ask as $e_nam) {
-            $e_nam = strtolower($e_nam);
-            $ab_e = array_search($e_nam, $db);
-            
-            if ($ab_e !== false && isset($ab_t[$ab_e])) {
-                $solution[$e_nam] = $ab_t[$ab_e];
-                unset($_tokens[$ab_e]);
-            } else {
-                $solution[$e_nam] = null;
-            }
-        }
-
-        foreach ($solution as $e_nam => $token) {
-            if ($token === null && count($_tokens) === 1) {
-                $solution[$e_nam] = array_shift($_tokens);
-            }
-        }
-
-        if (in_array(null, $solution)) {
-            logx("err", "Antibot Unknown");
-            return null;
-        }
-
-        return implode(' ', array_values($solution));
-    }
-    
-    public static function atb_I($api, $html, $force = false) {
-        if (!isset(Api::B64[get_class($api)]['antibot'])) {
-            logx('err', 'provider not support atb');
-            return 77;
-        }
-        $data = ATBtest::get($html);
-        if (empty($data['main'])) return 77; 
-        
-        if ($force) {
-            $atb = $api->atb($data);
-        } else {
-            $solver = config::getKeys($api, 'antibot', 'b64');
-            
-            $atb = $solver->atb($data);
-        }
-        
-        return in_array($atb, [null, 77, false], true) ? 77 : $atb;
-        
-        #return $atb;
-
-    }
-*/
 
     public static function ATB($type, $a, $h, $fe = false, $d = []) {
         if (!$a) return null;

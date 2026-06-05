@@ -114,6 +114,7 @@ while (true) {
     $_fa = Scraper::_xP($dash, "//ul[@id='faucet'][contains(@class,'submenu')]//a/@href");
     #print_r($_fa);
     
+    static $afp = null;
     foreach ($_fa as $fa) {
         $_c = basename(parse_url($fa)['path']);
         
@@ -160,12 +161,18 @@ while (true) {
                         _sle(5);
                         continue;
                     }
+                    if (($cap['nocaptcha'] == true) && isset($pa['fp_os_name'])) {
+                        if ($afp === null) {
+                            $afp = _altcryptoken(inf::$uagent, $login);
+                        }
+                        $cap = $afp;
+                    }
                     $po = array_merge($pa, $cap);
                     
                 } else {
                     
                     if (stripos($fau, 'firewall')) {
-                        
+                        #_put('fwall.html', $fau); die;
                         $ff = scraper::payload($fau)[0] ?? [];
                         $cap = solve::exec($fau, $host, $api, $ff['payload']);
                         
@@ -175,10 +182,16 @@ while (true) {
                         
                     }
                     
+                    if (str_contains($fau, 'claim limit')) {
+                        #_put('fau.html', $fau); 
+                        $habis[] = $fa;
+                        break;
+                    }
+                    
                 }
                 
                 if (!empty($po)) {
-                    _sle(5);
+                    _sle(7);
                     $cla = Net::C($f['url'], 'POST', $po, inf::$cookie, $headersCF, $fa, inf::$uagent);
                     
                     if (!empty($cla) && $cla !== 99) {
@@ -240,7 +253,39 @@ tes:
 
 
 
-
+function _altcryptoken($ua, $mail) {
+    
+    $os = 'Windows';
+    if (str_contains($ua, 'Android')) $os = 'Android';
+    elseif (str_contains($ua, 'Macintosh')) $os = 'MacOS';
+    elseif (str_contains($ua, 'Linux') && !str_contains($ua, 'Android')) $os = 'Linux';
+    
+    $_B = 'Chrome';
+    if (str_contains($ua, 'Firefox')) $_B = 'Firefox';
+    elseif (str_contains($ua, 'Edg')) $_B = 'Edge';
+    elseif (str_contains($ua, 'Safari') && !str_contains($ua, 'Chrome')) $_B = 'Safari';
+    
+    $_M = str_contains($ua, 'Android') || str_contains($ua, 'Mobile');
+    
+    $resos_desktop = ['1920x1080', '1366x768', '1536x864'];
+    $resos_mobile = ['360x800', '412x915', '1080x2400'];
+    $cores_desktop = ['4', '6', '8', '12', '16'];
+    $cores_mobile = ['4', '6', '8'];
+    
+    $_reso = $_M ? $resos_mobile[array_rand($resos_mobile)] : $resos_desktop[array_rand($resos_desktop)];
+    $_core = $_M ? $cores_mobile[array_rand($cores_mobile)] : $cores_desktop[array_rand($cores_desktop)];
+    
+    return [
+        'fp_device_token' => 'FP_' . abs(crc32($ua . $mail)),
+        'fp_os_name' => $os,
+        'fp_browser_name' => $_B,
+        'fp_screen_res' => $_reso,
+        'fp_user_timezone' => TIMEZONE(),
+        'fp_browser_lang' => LANGUAGE(),
+        'fp_cpu_cores' => $_core,
+        'fp_adblocker' => 'Disabled',
+    ];
+}
 
 
 function checkCF($url, $api, $body = null, $headersCF = []) {

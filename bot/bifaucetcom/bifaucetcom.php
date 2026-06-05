@@ -391,7 +391,7 @@ while (true) {
                 continue; 
             }
             
-            styler("waiting for SL", fn() => _sle(50));
+            styler("waiting for SL", fn() => _sle(100));
             
             $retVer = 0;
             while (true) {

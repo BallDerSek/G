@@ -90,6 +90,52 @@ while (true) {
     } while (empty($dash));
     #_put('dash.html', $dash);
 
+/*
+    $owmeof = Net::C($host.'/offerwalls/offerwallme', 'GET', null, inf::$cookie, [], '', inf::$uagent);
+    _put('0.html', $owmeof);
+    if (!empty($owmeof) && $owmeof !== 99) {
+        $owme_if = Scraper::_xP($owmeof, "//div[contains(@class, 'offerwall-wrapper')]//iframe/@src");
+        $owme_ur = !empty($owme_if) ? trim($owme_if[0]) : null;
+        
+        while ($owmeOFF) {
+            $owme_bo = Net::C($owme_ur, 'GET', null, inf::$cookie, [], '', inf::$uagent);
+            _put('1.html', $owme_bo);
+            if (!empty($owme_bo) && $owme_bo !== 99) {
+                $po = null;
+                $owme_tkn = Scraper::_pP($owme_bo, 'token')[0] ?? null;
+                if ($owme_tkn) $po = ['type' => 'ptc','token' => $owme_tkn,'action' => 'switch_cat'];
+                
+                if (!empty($po)) {
+                    $owme = json_decode(Net::X($owme_ur, 'POST', $po, inf::$cookie, [], '', inf::$uagent)?: '', 1);
+                    
+                    if (isset($owme['status']) && $owme['status'] === 200 && !empty($owme['content'])) {
+                        #print_r($owme);
+                        _put('owme.html', $owme['content']);
+                        
+                        $owme_co = $owme['content'];
+                        
+                        $has = Scraper::_xP($owme_co, "//div[contains(@class, 'campaign-block')]/@data-hash");
+                        $key = Scraper::_xP($owme_co, "//div[contains(@class, 'campaign-block')]/@data-key");
+                        $sid = Scraper::_xP($owme_co, "//div[contains(@class, 'campaign-block')]/@data-sid");
+                        $tmr = Scraper::_xP($owme_co, "//div[contains(@class, 'campaign-block')]//span[contains(text(), 'Visit for')]/text()");
+                        var_dump($has);
+                        var_dump($key);
+                        var_dump($sid);
+                        var_dump($tmr);
+                        
+                    }
+                    
+                    
+                    
+                    
+                }
+            }
+            die;
+        }
+    }
+die;
+*/
+
     do {
         $ow = new Owme($host, $login);
         $retryList = 0;
@@ -139,52 +185,6 @@ while (true) {
         
     } while (!$wallOwme);
     
-/*
-    $owmeof = Net::C($host.'/offerwalls/offerwallme', 'GET', null, inf::$cookie, [], '', inf::$uagent);
-    _put('0.html', $owmeof);
-    if (!empty($owmeof) && $owmeof !== 99) {
-        $owme_if = Scraper::_xP($owmeof, "//div[contains(@class, 'offerwall-wrapper')]//iframe/@src");
-        $owme_ur = !empty($owme_if) ? trim($owme_if[0]) : null;
-        
-        while ($owmeOFF) {
-            $owme_bo = Net::C($owme_ur, 'GET', null, inf::$cookie, [], '', inf::$uagent);
-            _put('1.html', $owme_bo);
-            if (!empty($owme_bo) && $owme_bo !== 99) {
-                $po = null;
-                $owme_tkn = Scraper::_pP($owme_bo, 'token')[0] ?? null;
-                if ($owme_tkn) $po = ['type' => 'ptc','token' => $owme_tkn,'action' => 'switch_cat'];
-                
-                if (!empty($po)) {
-                    $owme = json_decode(Net::X($owme_ur, 'POST', $po, inf::$cookie, [], '', inf::$uagent)?: '', 1);
-                    
-                    if (isset($owme['status']) && $owme['status'] === 200 && !empty($owme['content'])) {
-                        #print_r($owme);
-                        _put('owme.html', $owme['content']);
-                        
-                        $owme_co = $owme['content'];
-                        
-                        $has = Scraper::_xP($owme_co, "//div[contains(@class, 'campaign-block')]/@data-hash");
-                        $key = Scraper::_xP($owme_co, "//div[contains(@class, 'campaign-block')]/@data-key");
-                        $sid = Scraper::_xP($owme_co, "//div[contains(@class, 'campaign-block')]/@data-sid");
-                        $tmr = Scraper::_xP($owme_co, "//div[contains(@class, 'campaign-block')]//span[contains(text(), 'Visit for')]/text()");
-                        var_dump($has);
-                        var_dump($key);
-                        var_dump($sid);
-                        var_dump($tmr);
-                        
-                    }
-                    
-                    
-                    
-                    
-                }
-            }
-            die;
-        }
-    }
-*/
-    
-
     $wd = Net::C($host.'/withdraw', 'GET', null, inf::$cookie, [], '', inf::$uagent);
     
     if (!empty($wd) && $wd !== 99) {

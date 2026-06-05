@@ -196,38 +196,20 @@ class tertuyul extends Provider {
         return $short;
     }
     
-    public function bct($path) {
-        $path = rtrim($path, '/');
-        $mainFile = $path . '/main.png';
+    public function bct($param) {
         
-        if (!file_exists($mainFile)) return false;
-        
-        $params = [
-            'main' => base64_encode(_get($mainFile))
-        ];
+        $_d['main'] = $param['main'];
+        foreach ($param['opsi'] as $_i => $_o) $_d[$_i] = $_o;
 
-        $optFiles = glob($path . '/opt_*.png');
-        foreach ($optFiles as $file) {
-            if (preg_match('/opt_(\d+)\.png/', $file, $m)) {
-                $params[$m[1]] = base64_encode(_get($file));
-            }
-        }
-
-        $res = $this->run('bitcotask', $params);
-
-        @unlink($mainFile);
-        foreach ($optFiles as $file) {
-            @unlink($file);
-        }
-        @unlink($path . '/cap.json'); 
-
+        $res =  $this->run('bitcotask', $_d, true);
+        #var_dump($res);
         if (!$res) return false;
-
+        
         if (strpos($res, ':') !== false) {
             $parts = explode(':', $res);
             return end($parts);
         }
-
+        
         return $res;
     }
     
@@ -393,7 +375,6 @@ class gmxch extends Provider {
     public function zer(array $data) {
         #print_r($data);
         $params = [
-            "type" => "visual",
             "method" => "zercaptcha",
             "main" => $data['main'],
             #"debug" => true,
@@ -409,7 +390,7 @@ class gmxch extends Provider {
             $i++;
         }
         
-        $res = $this->run('zercaptcha', $params);
+        $res = $this->run('visual', $params);
         
         if (is_numeric($res)) {
             $index_jawaban = (int)$res;
@@ -425,7 +406,6 @@ class gmxch extends Provider {
     public function atb(array $data) {
         
         $params = [
-            "type" => "visual",
             "method" => "antibotlinks",
             "main" => $data['main'],
             #"debug" => true,
@@ -441,7 +421,7 @@ class gmxch extends Provider {
             $i++;
         }
         
-        $res = json_decode($this->run('antibot', $params), true);
+        $res = json_decode($this->run('visual', $params), true);
         if (!is_array($res)) return 777;
         $links = [];
         foreach ($res as $val) {
@@ -452,6 +432,21 @@ class gmxch extends Provider {
         }
         
         return !empty($links) ? " " . implode(' ', $links) : false;
+    }
+    
+    public function bct(array $data) {
+        
+        $params = [
+            "method" => "bitcotasks",
+            "main" => $data['main'],
+            "options" => []
+        ];
+        
+        foreach ($data['opsi'] as $rel => $b64) {
+            $params['options'][] = $b64;
+        }
+        
+        return $this->run('visual', $params);
     }
     
     /** info saldo */

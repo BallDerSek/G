@@ -176,10 +176,12 @@ final class Api { #contractor
                 ],
             */
             'rc2' => [
-                'k' => 'sitekey', 'url' => 'domain', 'api' => 'recapv2'
+                'k' => 'sitekey', 'url' => 'domain', 'api' => 'userrecaptcha',
+                'defaults' => ['version' => '2']
                 ],
             'rc3' => [
-                'k' => 'sitekey', 'url' => 'domain', 'api' => 'recapv3'
+                'k' => 'sitekey', 'url' => 'domain', 'api' => 'userrecaptcha',
+                'defaults' => ['version' => '3']
                 ],
         ],
 
@@ -267,6 +269,7 @@ final class Api { #contractor
     public const B64 = [
 
         tertuyul::class => [
+            'bitcotask' => true,
             'antibot' => true,
             'ocr' => ['t' => 'universal', 'field' => 'body'],
             'least' => ['t' => 'iconfinder', 'field' => 'body'],
@@ -325,6 +328,7 @@ final class Api { #contractor
         ],
 
         gmxch::class => [
+            'bitcotask' => true,
             'antibot' => true,
             'zercaptcha' => true,
         ],

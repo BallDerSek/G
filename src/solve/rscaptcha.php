@@ -52,9 +52,10 @@ final class rscaptcha {
                 ];
             }
         }
+        
         return false;
     }
-
+    
     private function rsc($rss, $api) {
         # problematic provider need much parameter
         $token = null;
@@ -115,7 +116,7 @@ final class rscaptcha {
         return null;
         
     }
-
+    
     private function rss($api, $utils, $x, $y) {
         $provider = strtolower(get_class($api));
         $token = null;

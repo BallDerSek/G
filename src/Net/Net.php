@@ -155,9 +155,6 @@ class Mux {
         return $results;
     }
 
-    /**
-     * Parallel Request yang sudah diperbaiki
-     */
     public static function C(array ...$calls) {
         $queue = [];
         foreach ($calls as $key => $args) {
@@ -557,10 +554,11 @@ var_dump($err);
                     throw new Exception("Net($errno): $err");
                 }
                 
-                usleep(random_int(25, 50) * 10000);
+                _sle(1);
             } 
             throw new Exception("unstable connection");
         } catch (Throwable $e) {
+            _clr();
             logx('info', " \r {$e->getMessage()}", true, true);
             return null;
         

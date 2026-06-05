@@ -1,6 +1,6 @@
 <?php
 if (!defined('ROOT')) { die; }
-
+_die();
 $api = onKeys();
 
 $acc = config::credential([], false, ['login', 'PROXY']);

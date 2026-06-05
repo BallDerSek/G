@@ -77,6 +77,12 @@ trait WorkDir {
         }
     }
 
+    protected function userdir(?string $mail): string {
+        $user = ($mail && str_contains($mail, '@')) ? strstr($mail, '@', true) : ($mail ?? '');
+        $user = preg_replace('/[^a-zA-Z0-9]/', '_', $user);
+        return $user !== '' ? $user : 'cookie';
+    }
+
     protected function rmdir(string $path): void {
         if (!is_dir($path)) return;
         
