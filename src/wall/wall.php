@@ -27,7 +27,7 @@ class Owme {
     public function exec($url, $timer) {
         $attempt = 0;
         
-        if (!AUTH_KEY || $url) return false;
+        #if (!AUTH_KEY || $url) return false;
         
         while ($attempt < 3) {
             $attempt++;
@@ -40,7 +40,7 @@ class Owme {
                 continue;
             }
             
-            logx('info', "[ offerwall.me {$timer}s ] ", false, true);
+            #logx('info', "[ offerwall.me {$timer}s ] ", false, true);
             
             styler("waiting for owme", fn() => _sle((int)$adData['params']['dur']));
             
@@ -232,8 +232,8 @@ class Zera {
                 #styler("waiting for zerads", fn() => _sle((int)ceil($ti)));
                 
                 /*
-                */
                 logx('info', "[ zerads.com {$ti}s ] ", false, true);
+                */
                 
                 $sol = null;
                 $zerC_p = $this->_parseImages($zer_v, $current_ref, 'id=');
@@ -446,7 +446,7 @@ class Bctt {
     public function exec($url, $tmr = 5) {
         if (empty($url)) return false;
         
-        logx('info', "[ bitcotasks.com {$tmr}s ] ", false, true);
+        #logx('info', "[ bitcotasks.com {$tmr}s ] ", false, true);
         
         $set = microtime(true);
         $cc_get = Net::C($url, 'GET', null, $this->cookieFile, [], '', $this->userAgent);

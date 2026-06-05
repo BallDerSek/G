@@ -113,20 +113,24 @@ class Scraper {
     }
 
     # DOMXp BASED
-    public static function _xP($html, $query): array {
-        $xpath = self::dom($html);
-        $nodes = $xpath->query($query);
+    public static function _xP($html, $query, $context = null): array {
+        
+        if ($html instanceof DOMXPath) $xpath = $html;
+        else $xpath = self::dom($html);
+        
+        $nodes = $context ? $xpath->query($query, $context) : $xpath->query($query);
+        
         $out = [];
+        
         if (!$nodes) return [];
-
+        
         foreach ($nodes as $node) {
-            if ($node instanceof DOMAttr) {
-                $out[] = $node->value;
-            } else {
-                $out[] = trim($node->textContent);
-            }
+            if ($node instanceof DOMAttr) $out[] = $node->value;
+            else $out[] = trim($node->textContent);
         }
+        
         return $out;
+
     }
 
     public static function find(string|DOMXPath $html, $name, $tag='input', $attr='value', $key='name'): ?array {
