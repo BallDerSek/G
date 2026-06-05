@@ -199,7 +199,7 @@ while (true) {
                         }
                         
                         if (preg_match('/sufficient|could not be processed/i', $msg)) {
-                            $habis[] = $fa;
+                            $habis[$fa] = true;
                             break;
                         }
                         if (stripos($msg, 'ssion expired') !== false) continue 3;

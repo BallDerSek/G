@@ -184,7 +184,7 @@ while (true) {
                     
                     if (str_contains($fau, 'claim limit')) {
                         #_put('fau.html', $fau); 
-                        $habis[] = $fa;
+                        $habis[$fa] = true;
                         break;
                     }
                     
@@ -206,7 +206,7 @@ while (true) {
                             logg(false, "$msg");
                             
                             if (preg_match('/sufficient|could not be processed/i', $msg)) {
-                                $habis[] = $fa;
+                                $habis[$fa] = true;
                                 break;
                             }
                             if (preg_match('/banned|flagged|anti-fraud/i', $msg)) {

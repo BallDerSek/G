@@ -147,7 +147,7 @@ while (true) {
             $f = scraper::payload($fau)[0] ?? null;
             
             if (str_contains($fau, 'limit reached')) {
-                $habis[] = $fa;
+                $habis[$fa] = true;
                 break;
             }
             
@@ -187,7 +187,7 @@ while (true) {
                         break 2;
                     }
                     if (preg_match('/sufficient|could not be processed/i', $msg)) {
-                        $habis[] = $fa;
+                        $habis[$fa] = true;
                         break;
                     }
                     if (stripos($msg, 'Shortlink')) {

@@ -186,7 +186,7 @@ while (true) {
                             logg(false, "$msg");
                             
                             if (preg_match('/sufficient|could not be processed/i', $msg)) {
-                                $habis[] = $fa;
+                                $habis[$fa] = true;
                                 break;
                             }
                             if (stripos($msg, 'flagged')) die;

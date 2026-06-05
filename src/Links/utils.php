@@ -104,9 +104,9 @@ class sScraper {
 
     public static function extract($html): array {
         $xp = self::dom($html);
-
+        
         $nodes = $xp->query(
-            "//*[@data-link-id 
+            "//*[@data-slid] | //*[@data-link-id 
                or @href[contains(.,'/go/')] 
                or @href[contains(.,'/validate/')] 
                or @value[contains(.,'/go/')] 
@@ -119,34 +119,46 @@ class sScraper {
         
         $seen = [];
         $out  = [];
-
+        
         foreach ($nodes as $n) {
             $url = null;
-            foreach (['href','value','data-href','data-url', 'data-link-id'] as $attr) {
+            
+            foreach (['data-slid', 'href','value','data-href','data-url', 'data-link-id'] as $attr) {
+                
                 $a = $n->attributes?->getNamedItem($attr);
                 if (!$a) continue;
+                
+                if ($attr === 'data-slid') {
+                    $id = (int)$a->nodeValue;
+                    $url = "/shortlink/load/" . $id;
+                    break;
+                }
+                
                 if ($attr === 'data-link-id') {
                     $id  = (int)$a->nodeValue;
                     $url = $a->nodeValue;
                     break;
                 }
+                
                 if ($a && preg_match('~/go/(\d+)(?:/|$|\?)~', $a->nodeValue, $m)) {
                     $url = $a->nodeValue;
                     $id  = (int)$m[1];
                     break;
                 }
+                
                 if ($a && preg_match('~/validate/(\d+)(?:/|$|\?)~', $a->nodeValue, $m)) {
                     $url = $a->nodeValue;
                     $id  = (int)$m[1];
                     break;
                 }
             }
+            
             if (!isset($id)) continue;
             if (isset($seen[$id])) continue;
             $seen[$id] = true;
-
+            
             $container = self::_getCont($n, $xp);
-
+            
             $containerText = self::_getNodes($xp, $container);
             $limit = self::_getLimit($containerText);
             $name  = self::_getName($xp, $container);
@@ -155,7 +167,6 @@ class sScraper {
             $out[$key] = [$id, $limit ?? ''];
             unset($id);
         }
-
         return $out;
     }
 } 

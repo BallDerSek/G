@@ -169,7 +169,7 @@ die;
         }
         
         if (empty($off)) {
-            logx('err', "habis total kaya kayaknya.");
+            logx('err', "habis total kayaknya.");
             #_put('owme.html', $owme);
             $wallOwme = true;
         } else {
