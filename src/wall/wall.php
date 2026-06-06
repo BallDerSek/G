@@ -397,7 +397,9 @@ class Zera {
         if (!empty($package['rels']) && isset($package['main'])) {
             if (count($package['rels']) > 0) {
                 $solver = config::getKeys($this->api, 'zercaptcha', 'b64');
+                
                 $solution = $solver->zer($package);
+                if (!method_exists($solver, 'zer')) return null;
                 
                 if ($solution === 777) {
                     if (!method_exists($this->api, 'zer')) return null;
@@ -414,6 +416,7 @@ class Zera {
     public function cleanup() {
         return @unlink($this->cookieFile);
     }
+    
 }
 
 class Bctt {
@@ -585,7 +588,7 @@ class Bctt {
         return $result;
     }
     
-    private function _renderImage($b64, $w, $h) {
+    private function _parseImages($b64, $w, $h) {
         $raw = base64_decode($b64);
         if (strlen($raw) < $w * $h * 4) return false;
         
@@ -625,11 +628,11 @@ class Bctt {
         $pow_d = $data['difficulty'] ?? 4;
         $pow_c = $data['challenge'] ?? null;
         
-        $main = $this->_renderImage($data['pixel'], 200, 100);
+        $main = $this->_parseImages($data['pixel'], 200, 100);
         $captcha['main'] = $main;
         
         foreach ($data['options'] as $i => $opt) {
-            $captcha['opsi'][$i] = $this->_renderImage($opt['pixels'], $opt['width'], $opt['height']);
+            $captcha['opsi'][$i] = $this->_parseImages($opt['pixels'], $opt['width'], $opt['height']);
         }
         
         $solver = config::getKeys($this->api, 'bitcotask', 'b64');

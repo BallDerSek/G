@@ -523,6 +523,7 @@ final class Api { #contractor
             'ERROR_INTERNAL',
             'ERROR_BANNED',
             'ERROR_TASK_CREATION_FAILED',
+            "ERROR_SOLVER_RESPONSE",
             'INTENAL_SERVER_ERROR',
             'INTERNAL_SERVER_ERROR',
             'ERROR_PROXY_CONNECTION_FAILED',

@@ -158,7 +158,7 @@ class tertuyul extends Provider {
         $s = json_decode(
             Net::S($this->baseUrl."/in.php", "POST", array_merge(["key" => $this->apiKey, "json" => 1, "method" => $method], $params)) ?: ''
             , 1);
-
+#var_dump($s);
         if (!is_array($s) || ($s["status"] ?? 0) != 1) {
             throw new Exception(is_array($s) ? ($s["request"] ?? 'unknown') : 'unknown');
         }

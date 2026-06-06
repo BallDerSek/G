@@ -183,7 +183,9 @@ function limit($id) {
     return $current > 0;
 }
 
-function links($api, $url) {
+function links($api, $url, $noapi = false) {
+    
+    if ($noapi) $api = null;
     
     try {
         $bypass = new _shortlinks($url);
@@ -197,10 +199,7 @@ function links($api, $url) {
         logx('err', " SL Direct failed: ".$e->getMessage());
     }
     
-    if (!$api) {
-        logx('err', 'undefined provider');
-        return false;
-    }
+    if (!$api) return false;
     
     logx('info', " Switching to solver API", false); _clr();
     $solver = config::getKeys($api, 'shortlink', 'tkn');

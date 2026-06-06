@@ -441,8 +441,8 @@ class Net {
             CURLOPT_PROXY_SSL_VERIFYPEER => false,
             CURLOPT_PROXY_SSL_VERIFYHOST => 0,
             CURLOPT_HTTP09_ALLOWED => true,
-            CURLOPT_LOW_SPEED_LIMIT => 1,
-            CURLOPT_LOW_SPEED_TIME  => $opt['speed'] ?? 15,
+            #CURLOPT_LOW_SPEED_LIMIT => 1,
+            #CURLOPT_LOW_SPEED_TIME  => $opt['speed'] ?? 15,
             CURLOPT_ENCODING => '',
         ]);
 
@@ -498,6 +498,7 @@ class Net {
         try {
             $proxyFailCount = 0; 
             for ($attempt = 0; $attempt < 10; $attempt++) {
+                #logx('info', "ATTEMPT " . ($attempt+1) . $opt['url']);
                 $body = curl_exec($ch);
                 $info = curl_getinfo($ch);
                 $errno = curl_errno($ch);

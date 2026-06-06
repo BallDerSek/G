@@ -285,7 +285,7 @@ class Solve {
         
         if ($t === false) return 404;
         
-        $api->getInfo();
+        if ($api instanceof Provider) $api->getInfo();
         return $t;
     }
 
@@ -306,7 +306,7 @@ class Solve {
                 
                 if ($res === 71) return ['trouble' => 'reload'];
                 if ($res && $res !== 777) {
-                    $api->getInfo();
+                    if ($api instanceof Provider) $api->getInfo();
                     break;
                 }
             }
