@@ -433,7 +433,7 @@ while (true) {
     #_put('ptc.html', $owme); #die;
     
     if (!empty($owme) && $owme !== 99) {
-        $ow = new Owme($host, $mail);
+        $ow = new Owme($host, $api, $mail);
         $off = [];
         $owmeFail = 0;
         $urls = Scraper::_xP($owme, "//div[@id='offerwallme']//div[contains(@class, 'card')]//div[contains(@class, 'mt-auto')]/a/@href");

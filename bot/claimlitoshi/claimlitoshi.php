@@ -3,7 +3,7 @@ if (!defined('ROOT')) { die; }
 #_die();
 $api = onKeys();
 
-$acc = config::credential([], false, ['login', 'PROXY']);
+$acc = config::credential([], false, /*['login', 'PROXY']*/);
 $login = $acc['login'];
 putenv("PROXY=".$acc['PROXY']);
 
