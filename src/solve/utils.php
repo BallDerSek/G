@@ -36,7 +36,12 @@ function xtractJs($html): array {
  * @return string|false
  */
 function dumpJsFlex($_input, $_putin = null, $unlink = false, $fakeFile = 'input.js'): string|false {
-
+    
+    if (!getDeps('nodejs')) {
+        logx('err', 'nodejs missing');
+        exit;
+    }
+    
     if (is_file($_input)) {
         $jsCode = _get($_input);
         if ($jsCode === false) return false;
@@ -125,17 +130,12 @@ JS;
 
     proc_close($proc);
 
-    $all = (string)$out . (string)$err;
+    $all = (string)$out.(string)$err;
     if ($all === '') return false;
 
-    if (!preg_match_all('/DUMP_START(.*?)DUMP_END/is', $all, $mm) || empty($mm[1])) {
-        return false;
-    }
+    if (!preg_match_all('/DUMP_START(.*?)DUMP_END/is', $all, $mm) || empty($mm[1])) return false;
 
-    $cands = array_map(
-        fn($s) => html_entity_decode($s, ENT_QUOTES | ENT_HTML5, 'UTF-8'),
-        $mm[1]
-    );
+    $cands = array_map(fn($s) => html_entity_decode($s, ENT_QUOTES | ENT_HTML5, 'UTF-8'), $mm[1]);
 
     usort($cands, fn($a, $b) => strlen($b) <=> strlen($a));
     $best = $cands[0];
@@ -187,6 +187,7 @@ function rsAescipher($jsFile) {
     ];
 }
 
+/*
 function _derive($secret, $salt): array {
     $masterKey = hash('sha512', $secret . $salt, true);
     return [
@@ -227,3 +228,4 @@ function _dec($data, $apiKey, $secretKey) {
     $json = json_decode($decrypt, true);
     return $json ?? $decrypt;
 }
+*/

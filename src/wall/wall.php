@@ -1,11 +1,131 @@
 <?php
 
+function OwmeSL($url, $idd, $tkn, $ck, $ua, $api) {
+    $payload = [
+        'action' => 'getShortlink',
+        'data' => $idd,
+        'token' => $tkn
+    ];
+    
+    $go = json_decode(Net::X($url, 'POST', $payload, $ck, [], '', $ua)?: '', 1)['link'] ?? null;
+    #var_dump($go);
+    if (!$go) return false;
+    
+    $_0 = Net::X($go, 'GET', null, $ck, [], $url, $ua);
+    #var_dump($_0);
+    if (!empty($_0) && $_0 !== 99) 
+        return json_decode(
+            Net::X($go,
+                   'POST',
+                   array_merge(solve::exec($_0, $url, $api), ['action' => 'redirect']),
+                   $ck,
+                   [],
+                   $_0,
+                   $ua
+            )?: '',  1)['link'] ?? null;
+    
+    return false;
+    
+}
+
+function parseSL($html) {
+    $dom = Scraper::dom($html);
+    $campaigns = $dom->query("//div[contains(@class, 'campaign-block')][@data-slid]");
+    
+    $result = [];
+    
+    foreach ($campaigns as $camp) {
+        $slid = $camp->getAttribute('data-slid');
+        $limit = $camp->getAttribute('data-limit');
+        
+        $titleNode = $dom->query(".//div[contains(@class, 'fw-bold')]/text()", $camp)->item(0);
+        $title = $titleNode ? trim($titleNode->textContent) : '';
+        
+        $rewardNode = $dom->query(".//div[contains(@class, 'text-primary')]/text()", $camp)->item(0);
+        $reward = $rewardNode ? trim($rewardNode->textContent) : '';
+        
+        $currentNode = $dom->query(".//span[starts-with(@id, 'limit_')]/text()", $camp)->item(0);
+        $current = $currentNode ? (int)$currentNode->textContent : 0;
+        
+        if ($slid) {
+            $result[] = [
+                'id' => (int)$slid,
+                'title' => $title,
+                'reward' => $reward,
+                'limit' => $current . '/' . $limit
+            ];
+        }
+    }
+    
+    return $result;
+}
+
+function parseAD($html) {
+    $dom = Scraper::dom($html);
+    $_cmpg = $dom->query("//div[contains(@class, 'campaign-block')]");
+    
+    $result = [
+        'ptcs' => [],
+        'prom' => []
+    ];
+    
+    foreach ($_cmpg as $_cp) {
+        $_idh = $_cp->getAttribute('data-hash');
+        $_sid = $_cp->getAttribute('data-sid');
+        $_key = $_cp->getAttribute('data-key');
+        $_idt = $_cp->getAttribute('data-type');
+        $_idd = $_cp->getAttribute('id');
+        
+        $title = trim(Scraper::_xP($dom, ".//div[contains(@class, 'fw-bold')]/text()", $_cp)[0] ?? '');
+        
+        $timerNodes = Scraper::_xP($dom, ".//span[contains(text(), 'Visit for')]/text()", $_cp);
+        $timer = 0;
+        if ($timerNodes && preg_match('/(\d+)/', $timerNodes[0], $m)) {
+            $timer = (int)$m[1];
+        }
+        
+        $rewardNodes = Scraper::_xP($dom, ".//div[contains(@class, 'text-primary')]/text()", $_cp);
+        $reward = trim($rewardNodes[0] ?? '');
+        
+        $_direct = Scraper::_xP($dom, ".//a/@href", $_cp)[0] ?? '';
+        
+        if ($_idh && empty($_direct)) {
+            $result['ptcs'][] = [
+                'data' => [
+                    'hash' => $_idh,
+                    'sid' => $_sid,
+                    'key' => $_key,
+                    'type' => $_idt,
+                ],
+                'info' => [
+                    'title' => $title,
+                    'timer' => $timer,
+                    'reward' => $reward
+                ]
+            ];
+        } elseif ($_direct) {
+            $result['prom'][] = [
+                'url' => $_direct,
+                'info' => [
+                    'title' => $title,
+                    'reward' => $reward
+                ]
+            ];
+        }
+    }
+    $result['ptcs_'] = count($result['ptcs']);
+    $result['prom_'] = count($result['prom']);
+    return $result;
+}
+
 class Owme {
     use WorkDir; 
     
     private string $cookieFile;
     private string $userAgent;
     private string $email;
+    private $api; 
+    private string $owm_h = 'https://offerwall.me/';
 
     public function __construct($url, $mail = null, $cookie = null, $ua = null) {
         if (empty($url)) return null;
@@ -22,6 +142,46 @@ class Owme {
         }
         $this->email = $mail;
 
+    }
+    
+    
+    public function wall($url, $withSL = true) {
+        $_0 = Net::C($url, 'GET', null, $this->cookieFile, [], '', $this->userAgent);
+        $tkn = Scraper::_pP($_0, 'token')[0] ?? null;
+        
+        if ($tkn) {
+            $adsType = ['ptc', 'window'];
+            foreach ($adsType as $_type) {
+                $adsList = null;
+                $po = ['type' => $_type,'token' => $tkn,'action' => 'switch_cat'];
+                $_1 = json_decode(Net::X($url, 'POST', $po, $this->cookieFile, [], '', $this->userAgent)?: '', 1)['content'] ?? null;
+                
+                if (!empty($_1)) $adsList = parseAD($_1);
+                if ($adsList && $tkn) {
+                    if (!empty($adsList['ptcs']) && $adsList['ptcs_'] !== 0) {
+                        
+                        foreach ($adsList['ptcs'] as $_ptc) {
+                            $info = $_ptc['info'];
+                            $data = $_ptc['data'];
+                            $pa = array_merge($data, ['token' => $tkn, 'action' => 'init_transaction']);
+                            $_2 = json_decode(Net::X($url, 'POST', $pa, $this->cookieFile, [], '', $this->userAgent)?: '', 1);
+                            
+                            #var_dump($_2);
+                            if (isset($_2['status']) && $_2['status'] === 200) {
+                                $this->exec($_2['offer'], $info['timer']); 
+                            }
+                        }
+                    } else {
+                        print_r($adsList);
+                    }
+                }
+            }
+            
+        }
+        
+        
+        
+        return false;
     }
     
     public function exec($url, $timer) {
@@ -398,8 +558,8 @@ class Zera {
             if (count($package['rels']) > 0) {
                 $solver = config::getKeys($this->api, 'zercaptcha', 'b64');
                 
-                $solution = $solver->zer($package);
                 if (!method_exists($solver, 'zer')) return null;
+                $solution = $solver->zer($package);
                 
                 if ($solution === 777) {
                     if (!method_exists($this->api, 'zer')) return null;

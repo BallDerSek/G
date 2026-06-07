@@ -259,7 +259,7 @@ class Solve {
     public static function tkn($api, $host, $key, $type, array $data = []) {
         $solver = config::getKeys($api, $type); 
         
-        print(DIMM.BOLD.ITAL.FGo['MAG']."solving  ".RSET);
+        #print(DIMM.BOLD.ITAL.FGo['MAG']."solving  ".RSET);
         $t = null;
         
         $Params = array_merge($data, ['userAgent' => inf::$uagent]);
@@ -292,7 +292,7 @@ class Solve {
     public static function img($api, $host, $type, $img) {
         $solver = config::getKeys($api, $type, 'b64');
         
-        print(DIMM.BOLD.ITAL.FGo['MAG']."solving  ".RSET);
+        #print(DIMM.BOLD.ITAL.FGo['MAG']."solving  ".RSET);
         $res = null;
         
         for ($retry = 0; $retry < 2; $retry++) {

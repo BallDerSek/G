@@ -171,10 +171,10 @@ final class Api { #contractor
                 'k' => 'sitekey', 'url' => 'domain', 'api' => 'turnstile'
                 ],
             /*
+            */
             'hc' => [
                 'k' => 'sitekey', 'url' => 'domain', 'api' => 'hcaptcha'
                 ],
-            */
             'rc2' => [
                 'k' => 'sitekey', 'url' => 'domain', 'api' => 'userrecaptcha',
                 'defaults' => ['version' => '2']

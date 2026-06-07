@@ -224,9 +224,9 @@ while (true) {
         (logx('err', 'gak bisa claim') ?: die);
     }
 
-/*
+
     $_sl = Scraper::_xP($dash, "//div[contains(normalize-space(), 'Shortlinks')]/following-sibling::div[@class='sub-menu-two']/a/@href");
-    print_r($_sl);
+    #print_r($_sl);
     foreach ($_sl as $sl) {
         $_c = basename($sl);
         if (trim(strtoupper($_c)) !== trim(strtoupper($curr))) continue;
@@ -389,9 +389,8 @@ while (true) {
         
         if ($success_in_page || $curr === "") break; 
     }
-*/
 
-die;
+
 }
 
 tes:

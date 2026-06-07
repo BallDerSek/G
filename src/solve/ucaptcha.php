@@ -19,6 +19,10 @@ final class uCaptcha {
     }
 
     public function exec(array $ucap) {
+        if (!getDeps('nodejs')) {
+            logx('err', 'nodejs missing');
+            exit;
+        }
             
         return styler("SOLVING uCaptcha", function() use ($ucap) {
             try {
@@ -38,7 +42,7 @@ final class uCaptcha {
                 
                 $isUc = ($_M === 'upside_captcha');
                 $fingerprint = $this->fingerprint($isUc);
-                $serverHash  = _enc($fingerprint, $_K, $_S);
+                $serverHash  = $this->_enc($fingerprint, $_K, $_S);
                 
                 return $isUc
                         ? $this->_uC($_A, $fingerprint, $serverHash, $_K, $_S)
@@ -47,6 +51,47 @@ final class uCaptcha {
                 $this->rmdir($this->workDir);
             }
         });
+    }
+
+    private function _derive($secret, $salt): array {
+        $masterKey = hash('sha512', $secret . $salt, true);
+        return [
+            'enc'  => hash_hmac('sha256', 'encryption',     $masterKey, true),
+            'auth' => hash_hmac('sha256', 'authentication', $masterKey, true),
+        ];
+    }
+
+    private function _enc($data, $apiKey, $secretKey) {
+        $_key = $this->_derive($apiKey, $secretKey);
+
+        if (is_array($data) || is_object($data)) {
+            $data = json_encode($data, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        }
+
+        $_ivv = random_bytes(16);
+        $_cip = openssl_encrypt($data, 'aes-256-cbc', $_key['enc'], OPENSSL_RAW_DATA, $_ivv);
+        $_sgn = hash_hmac('sha256', $_ivv . $_cip, $_key['auth'], true);
+        $solution = base64_encode($_ivv . $_sgn . $_cip);
+
+        return rtrim(strtr($solution, '+/', '-_'), '=');
+    }
+
+    private function _dec($data, $apiKey, $secretKey) {
+        $data = strtr($data, '-_', '+/');
+        while (strlen($data) % 4) $data .= '=';
+        $raw = base64_decode($data);
+
+        $_key = $this->_derive($apiKey, $secretKey);
+        $_ivv = substr($raw, 0, 16);
+        $_sgn = substr($raw, 16, 32);
+        $_cip = substr($raw, 48);
+
+        $expect = hash_hmac('sha256', $_ivv . $_cip, $_key['auth'], true);
+        if (!hash_equals($expect, $_sgn)) return null;
+
+        $decrypt = openssl_decrypt($_cip, 'aes-256-cbc', $_key['enc'], OPENSSL_RAW_DATA, $_ivv);
+        $json = json_decode($decrypt, true);
+        return $json ?? $decrypt;
     }
 
     private function _solve(array $ch, $app): ?array {
@@ -122,8 +167,8 @@ final class uCaptcha {
             'U-Hash' => $answer['hash'],
             'U-Full-Res' => $positions,
         ];
-        $upsideSecret = _enc($this->fingerprint(true), $apiKey, $secretKey);
-        $validationSecret = _enc($validation, $apiKey, $secretKey);
+        $upsideSecret = $this->_enc($this->fingerprint(true), $apiKey, $secretKey);
+        $validationSecret = $this->_enc($validation, $apiKey, $secretKey);
 
         $solution = [
             'answer' => $answer['index'],
@@ -134,12 +179,9 @@ final class uCaptcha {
         $head = "X-Server-Hash: $hash";
         
         return ['solution' => $solution, 'headers' => $head];
-        
-        
     }
 
     private function _aC($app, array $fp, $hash, $apiKey, $secretKey) {
-
         $token = json_decode(Net::X(
             $app . 'anticap/get_token', 'GET', null, $this->ck,
             [], $this->host, $this->ua
@@ -171,7 +213,7 @@ final class uCaptcha {
             'anti_captcha_token' => $token,
             'anti_captcha_key' => $key,
             'anti_captcha_selected_icon' => $icon,
-            'anti_hash' => _enc($fp, $apiKey, $secretKey),
+            'anti_hash' => $this->_enc($fp, $apiKey, $secretKey),
         ];
     }
 
@@ -186,12 +228,11 @@ final class uCaptcha {
         }
         if (empty($urls)) return false;
         
-        #print_r($urls); die;
         foreach ($urls as $url) {
             $js = Net::X($url, 'GET', null, $this->ck, [], $this->host, $this->ua, foll: false, ip: $this->ip, ins: $this->in);
             if ($js === 99 || empty($js)) continue;
             if (!str_contains($js, 'litoshi_api_key')) $js = dumpJsFlex($js);
-            #_put('u.js', $js);
+            
             $api = Scraper::_jP($js, "/litoshi_api_key\s*=\s*['\"]([^'\"]+)['\"]/");
             $sec = Scraper::_jP($js, "/litoshi_secret_key\s*=\s*['\"]([^'\"]+)['\"]/");
             $app = Scraper::_jP($js, "/app_url\s*=\s*['\"]([^'\"]+)['\"]/");
@@ -232,7 +273,6 @@ final class uCaptcha {
         }
     
         return $base;
-        
     }
     
     private function _devices() {
@@ -250,6 +290,4 @@ final class uCaptcha {
         if (stripos($ua, 'Safari') !== false && stripos($ua, 'Chrome') === false) return 'Safari';
         return 'Chrome';
     }
-    
 }
-

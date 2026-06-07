@@ -161,7 +161,7 @@ while (true) {
                         _sle(5);
                         continue;
                     }
-                    if (($cap['nocaptcha'] == true) && isset($pa['fp_os_name'])) {
+                    if (isset($cap['nocaptcha']) && isset($pa['fp_os_name'])) {
                         if ($afp === null) {
                             $afp = _altcryptoken(inf::$uagent, $login);
                         }

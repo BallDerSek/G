@@ -206,14 +206,11 @@ class _shortlinks {
         $html = null; 
         foreach ($_dome as $_domain) {
             $dom = "https://" . $_domain;
-            $maxRetries = 7;
             $retryCount = 0; 
             
             while (true) {
                 $retryCount++;
-                if ($retryCount >= $maxRetries) {
-                    break; 
-                }
+                if ($retryCount >= 7) break;
 
                 $_1 = json_decode(Net::C($dom.'/link/process', 'POST', ['linkInit' => $_code], $cookie, [], $dom, $uagent), true);
                 
@@ -245,18 +242,15 @@ class _shortlinks {
         $code = null; 
         $errorCount = 0;
         while (true) {
-            $matches = scraper::_jP($html, '/<code class="link_code">([A-Za-z0-9]+)<\/code>/i') ?? [];
-            if (!empty($matches[1][0])) {
-                $code = $matches[1][0];
-                break; 
-            }
+            $matches = scraper::_jP($html, '/<code class="link_code">([A-Za-z0-9]+)<\/code>/i')[1][0] ?? null;
+            if (!empty($code)) break; 
 
             $st = scraper::_xP($html, "//*[@id='linkResHeader']//h4") ?? [];
             $ver = scraper::find($html, 'linkVer', 'input', 'value', 'id') ?? null;
 
             if (isset($st[0]) && $ver) {
                 $step = trim(preg_replace('/\s+/', ' ', $st[0]));
-                logx('info', $step." [".$ver[0]."] ");
+                logx('info', "$step [ {$ver[0]} ]", false, true);
 
                 $pis = scraper::find($html, 'pissoff', 'input', 'value', 'id');
                 $lpt = scraper::find($html, 'lpt', 'input', 'value', 'id');
@@ -267,14 +261,18 @@ class _shortlinks {
                 $start = microtime(true);
                 $po = _ccForm($api, $dom, $ver[0], $pis[0], $cnn[0], $_bg[0] ?? null, $_cp[0] ?? null);
                 $wait = (int)($lpt[0] ?? 0) - (int)(microtime(true) - $start);
-                if ($wait > 0) styler("waiting", fn() => _sle((int)ceil($wait)));
+                if ($wait > 0) {
+                    logx('', "\r", false);
+                    _clr();
+                    styler("waiting", fn() => _sle((int)ceil($wait)));
+                }
                 
                 $retTry = 0;
                 $maxTry = 3;
                 while (true) {
                     $retTry++;
                     if ($retTry >= $maxTry) throw new RuntimeException('totally failed');
-                    $_v1 = json_decode(Net::C($dom.'/link/process', 'POST', $po, $cookie, [], $dom, $uagent), true);
+                    $_v1 = json_decode(Net::C($dom.'/link/process', 'POST', $po, $cookie, [], $dom, $uagent)?: '', true);
                     if (empty($_v1) || ($_v1 === 99)) {
                         _sle(30); 
                         continue;
@@ -320,8 +318,7 @@ class _shortlinks {
         
         if (!$code) throw new RuntimeException("no code found");
         
-        $res_ver = Net::X("https://$host/members/shortener/linkprocess/", 'POST', ['linkVerify' => $code], $cookie, [], $this->url, $uagent);
-        $ver_fin = json_decode($res_ver, true);
+        $ver_fin = json_decode(Net::X("https://$host/members/shortener/linkprocess/", 'POST', ['linkVerify' => $code], $cookie, [], $this->url, $uagent)?: '', true);
         $msg = $ver_fin['message'] ?? '';
         if (str_contains($msg, 'Invalid verification code')) throw new RuntimeException('invalid code');
         $match = scraper::_jP($msg, '/href="([^"]+)"/') ?? [];
