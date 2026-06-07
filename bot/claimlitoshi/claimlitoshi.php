@@ -3,7 +3,7 @@ if (!defined('ROOT')) { die; }
 #_die();
 $api = onKeys();
 
-$acc = config::credential([], false, /*['login', 'PROXY']*/);
+$acc = config::credential([], false, ['login', 'PROXY']);
 $login = $acc['login'];
 putenv("PROXY=".$acc['PROXY']);
 
@@ -102,7 +102,6 @@ while (true) {
 #goto ptc;
     $_fa = [];
     $_fau = Scraper::dom($dash)->query("//li[.//span[text()='Faucet']]//ul[@class='pc-submenu']//a");
-    
     foreach ($_fau as $link) {
         $_u = $link->getAttribute('href');
         $_t = trim($link->textContent);
@@ -113,6 +112,7 @@ while (true) {
             ];
         }
     }
+    #print_r($_fa); die;
     
     foreach ($_fa as $data) {
         if (!$claim) break;

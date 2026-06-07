@@ -97,7 +97,7 @@ while (true) {
     }
 
     do {
-        $ow = new Owme($host, $login);
+        $ow = new Owme($host, $api, $login);
         $retryList = 0;
         $off = [];
         $anySuccess = false; 
