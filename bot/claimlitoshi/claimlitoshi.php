@@ -3,8 +3,9 @@ if (!defined('ROOT')) { die; }
 #_die();
 $api = onKeys();
 
-$acc = config::credential([], false, ['login', 'PROXY']);
+$acc = config::credential([], false, ['login', 'cwallet', 'PROXY']);
 $login = $acc['login'];
+$cwid = $acc['cwallet'];
 putenv("PROXY=".$acc['PROXY']);
 
 login:
@@ -95,6 +96,7 @@ while (true) {
             $head = [$he, "Content-Type: multipart/form-data; boundary=$bo"];
             
             $ve = Net::X($f['url'], 'POST', $body, inf::$cookie, $head, $host.$r, inf::$uagent);
+            #var_dump($ve);
         }
         
     } while (empty($dash));
@@ -146,11 +148,6 @@ while (true) {
             $he = '';
             $f = scraper::payload($fau)[0] ?? null;
             
-            if (str_contains($fau, 'limit reached')) {
-                $habis[$fa] = true;
-                break;
-            }
-            
             if (!empty($f) && stripos($f['url'], 'faucet')) {
                 #print_r($f); die;
                 $pa = $f['payload'];
@@ -162,7 +159,38 @@ while (true) {
                     $he = $cap['headers'];
                 } else $po = array_merge($pa, $cap);
                 
-            } else continue 3;
+            } else {
+                
+                if (stripos($fau, 'Enter Your Cwallet ID') !== false) {
+                    
+                    if (!empty($cwid)) {
+                        $pa = $f['payload'];
+                        $crw = ['cwallet' => $cwid];
+                        $cap = Solve::exec($fau, $host, $api, $pa);
+                        
+                        if (isset($cap['headers'])) {
+                            $po = array_merge($pa, $cap['solution'], $crw);
+                            $he = $cap['headers'];
+                        } else $po = array_merge($pa, $cap);
+                        $ver = json_decode(Net::X(
+                            $f['url'],
+                            'POST',
+                            SolveUtils::webkitID($po, $bo),
+                            inf::$cookie,
+                            [$he, "Content-Type: multipart/form-data; boundary=$bo"],
+                            '',
+                            inf::$uagent
+                        )?: '', 1)['status'] ?? null;
+                        
+                        if (!empty($ver) && $ver == 'success') continue 3;
+                    }
+                    $habis[$fa] = true;
+                    break;
+                    
+                }
+                
+                continue 3;
+            }
                 
             if (!empty($po)) {
                 $bo = '';
@@ -170,7 +198,6 @@ while (true) {
                 $head = [$he, "Content-Type: multipart/form-data; boundary=$bo"];
                 
                 $cla = json_decode(Net::X($f['url'], 'POST', $body, inf::$cookie, $head, $fa, inf::$uagent)?: '', 1);
-                
                 if (!empty($cla) && isset($cla['status'])) {
                     $stt = $cla['status'];
                     $msg = $cla['msg'] ?? 'unknown';
@@ -183,6 +210,7 @@ while (true) {
                     if (stripos($msg, 'No Faucet EXP left') !== false) {
                         $ptcc = true;
                         $curr_id = basename(parse_url($fa)['path']);
+                        $curr = $_c;
                         
                         break 2;
                     }
@@ -205,12 +233,13 @@ while (true) {
         }
         
     }
-    
+
     if (count($habis) === count($_fa)) {
+        goto ptc;
         print(FGd['CYN'].maskEmail($login).RSET." ");
         (logx('err', 'gak bisa claim') ?: die);
     }
-    
+
     ptc:
     $ads99 = 0;
     $bcttView = 0;
@@ -331,7 +360,6 @@ while (true) {
     }
     
     
-
 }
 
 

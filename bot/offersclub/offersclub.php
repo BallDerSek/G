@@ -137,7 +137,7 @@ while (true) {
                 $status = $ow->exec($ad['url'], $ad['timer']);
                 if ($status) {
                     $anySuccess = true; 
-                    styler('Waiting', fn() => _sle(5));
+                    styler('Waiting', fn() => _sle(1));
                 } 
             }
             if (!$anySuccess) $wallOwme = true;
