@@ -148,6 +148,11 @@ while (true) {
             $he = '';
             $f = scraper::payload($fau)[0] ?? null;
             
+            if (str_contains($fau, 'limit reached')) {
+                $habis[$fa] = true;
+                break;
+            }
+            
             if (!empty($f) && stripos($f['url'], 'faucet')) {
                 #print_r($f); die;
                 $pa = $f['payload'];
@@ -235,7 +240,7 @@ while (true) {
     }
 
     if (count($habis) === count($_fa)) {
-        goto ptc;
+        #goto ptc;
         print(FGd['CYN'].maskEmail($login).RSET." ");
         (logx('err', 'gak bisa claim') ?: die);
     }

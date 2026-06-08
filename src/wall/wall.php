@@ -4,7 +4,6 @@ function owmeCamp($html, $type = 'SL') {
     $dom = Scraper::dom($html);
     
     if ($type == 'SL') {
-        // Format SL
         $campaigns = $dom->query("//div[contains(@class, 'campaign-block')][@data-slid]");
         $result = [];
         
@@ -33,8 +32,7 @@ function owmeCamp($html, $type = 'SL') {
         
         return $result;
         
-    } else { // type == 'AD'
-        // Format AD
+    } else {
         $_cmpg = $dom->query("//div[contains(@class, 'campaign-block')][not(@data-slid)]");
         $result = ['ptcs' => [], 'prom' => []];
         
