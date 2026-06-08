@@ -21,3 +21,4 @@ RUN pip3 install --upgrade pip && pip3 install seledroid
 ENV PATH="/usr/local/bin:${PATH}"
 
 CMD ["php", "run.php"]
+#docker
