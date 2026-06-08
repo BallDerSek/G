@@ -103,18 +103,19 @@ while (true) {
     #_put('dash.html', $dash);
 #goto ptc;
     $_fa = [];
-    $_fau = Scraper::dom($dash)->query("//li[.//span[text()='Faucet']]//ul[@class='pc-submenu']//a");
-    foreach ($_fau as $link) {
-        $_u = $link->getAttribute('href');
-        $_t = trim($link->textContent);
-        if (preg_match('/Claim\s+([A-Z]+)/', $_t, $_c)) {
+    $xpath = Scraper::dom($dash);
+    $links = $xpath->query("//li[.//span[text()='Faucet']]//ul[@class='pc-submenu']//a");
+    foreach ($links as $link) {
+        $text = trim($link->textContent);
+        if (!str_contains($text, '~ FP')) continue;
+        $url = $link->getAttribute('href');
+        if (preg_match('/Claim\s+([A-Z]+)\s+~/', $text, $m)) {
             $_fa[] = [
-                'url' => $_u,
-                'coin' => $_c[1]
+                'url' => $url,
+                'coin' => $m[1]
             ];
         }
     }
-    #print_r($_fa); die;
     
     foreach ($_fa as $data) {
         if (!$claim) break;
@@ -131,7 +132,7 @@ while (true) {
             $fau = null;
             $fau = Net::X($fa, 'GET', null, inf::$cookie, $headersCF, $host, inf::$uagent);
             
-            #_put('fau.html', $fau); die;
+            #_put('fau.html', $fau); #die;
             
             if ($fau === 99) {
                 $ret99++;
@@ -143,12 +144,18 @@ while (true) {
             $ret99 = 0; 
             if (empty($fau)) continue;
             
+            if (isset($habis[$fa])) {
+                $curr = '';
+                continue 2;
+            }
+            
             $po = null;
             $cap = [];
             $he = '';
             $f = scraper::payload($fau)[0] ?? null;
             
             if (str_contains($fau, 'limit reached')) {
+                $curr = '';
                 $habis[$fa] = true;
                 break;
             }
@@ -168,6 +175,7 @@ while (true) {
                 
                 if (stripos($fau, 'Enter Your Cwallet ID') !== false) {
                     
+                    /*
                     if (!empty($cwid)) {
                         $pa = $f['payload'];
                         $crw = ['cwallet' => $cwid];
@@ -189,10 +197,17 @@ while (true) {
                         
                         if (!empty($ver) && $ver == 'success') continue 3;
                     }
+                    */
                     $habis[$fa] = true;
                     break;
                     
                 }
+                
+                if (preg_match('/<b id="minute">(\d+)<\/b>:<b id="second">(\d+)<\/b>/', $fau, $m)) {
+                    styler("waiting for next claim", fn() => _sle((int)$m['2']));
+                    continue;
+                }
+                
                 
                 continue 3;
             }
@@ -232,7 +247,7 @@ while (true) {
                     
                 }
                 
-                styler("waiting for next claim", fn() => _sle(30));
+                styler("waiting for next claim", fn() => _sle(25));
             }
             
         }
@@ -240,7 +255,7 @@ while (true) {
     }
 
     if (count($habis) === count($_fa)) {
-        #goto ptc;
+        $claim = false; goto ptc;
         print(FGd['CYN'].maskEmail($login).RSET." ");
         (logx('err', 'gak bisa claim') ?: die);
     }
@@ -251,7 +266,7 @@ while (true) {
     $viewed = false;
     while ($ptcc || !$viewed) {
         
-        $ads = Net::X($host . '/account/change_currency','GET',['method' => $curr_id],inf::$cookie,[],$host.'/ptc',inf::$uagent);
+        if ($curr_id) Net::X($host . '/account/change_currency','GET',['method' => $curr_id],inf::$cookie,[],$host.'/ptc',inf::$uagent);
         $ads = Net::X($host.'/ptc', 'GET', null, inf::$cookie, $headersCF, $host, inf::$uagent);
         
         if ($ads99 >= 3) goto login;

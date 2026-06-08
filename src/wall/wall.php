@@ -115,95 +115,6 @@ function OwmeSL($url, $idd, $tkn, $ck, $ua, $api) {
     
 }
 
-function parseSL($html) {
-    $dom = Scraper::dom($html);
-    $campaigns = $dom->query("//div[contains(@class, 'campaign-block')][@data-slid]");
-    
-    $result = [];
-    
-    foreach ($campaigns as $camp) {
-        $slid = $camp->getAttribute('data-slid');
-        $limit = $camp->getAttribute('data-limit');
-        
-        $titleNode = $dom->query(".//div[contains(@class, 'fw-bold')]/text()", $camp)->item(0);
-        $title = $titleNode ? trim($titleNode->textContent) : '';
-        
-        $rewardNode = $dom->query(".//div[contains(@class, 'text-primary')]/text()", $camp)->item(0);
-        $reward = $rewardNode ? trim($rewardNode->textContent) : '';
-        
-        $currentNode = $dom->query(".//span[starts-with(@id, 'limit_')]/text()", $camp)->item(0);
-        $current = $currentNode ? (int)$currentNode->textContent : 0;
-        
-        if ($slid) {
-            $result[] = [
-                'id' => (int)$slid,
-                'title' => $title,
-                'reward' => $reward,
-                'limit' => $current . '/' . $limit
-            ];
-        }
-    }
-    
-    return $result;
-}
-
-function parseAD($html) {
-    $dom = Scraper::dom($html);
-    $_cmpg = $dom->query("//div[contains(@class, 'campaign-block')]");
-    
-    $result = [
-        'ptcs' => [],
-        'prom' => []
-    ];
-    
-    foreach ($_cmpg as $_cp) {
-        $_idh = $_cp->getAttribute('data-hash');
-        $_sid = $_cp->getAttribute('data-sid');
-        $_key = $_cp->getAttribute('data-key');
-        $_idt = $_cp->getAttribute('data-type');
-        $_idd = $_cp->getAttribute('id');
-        
-        $title = trim(Scraper::_xP($dom, ".//div[contains(@class, 'fw-bold')]/text()", $_cp)[0] ?? '');
-        
-        $timerNodes = Scraper::_xP($dom, ".//span[contains(text(), 'Visit for')]/text()", $_cp);
-        $timer = 0;
-        if ($timerNodes && preg_match('/(\d+)/', $timerNodes[0], $m)) {
-            $timer = (int)$m[1];
-        }
-        
-        $rewardNodes = Scraper::_xP($dom, ".//div[contains(@class, 'text-primary')]/text()", $_cp);
-        $reward = trim($rewardNodes[0] ?? '');
-        
-        $_direct = Scraper::_xP($dom, ".//a/@href", $_cp)[0] ?? '';
-        
-        if ($_idh && empty($_direct)) {
-            $result['ptcs'][] = [
-                'data' => [
-                    'hash' => $_idh,
-                    'sid' => $_sid,
-                    'key' => $_key,
-                    'type' => $_idt,
-                ],
-                'info' => [
-                    'title' => $title,
-                    'timer' => $timer,
-                    'reward' => $reward
-                ]
-            ];
-        } elseif ($_direct) {
-            $result['prom'][] = [
-                'url' => $_direct,
-                'info' => [
-                    'title' => $title,
-                    'reward' => $reward
-                ]
-            ];
-        }
-    }
-    $result['ptcs_'] = count($result['ptcs']);
-    $result['prom_'] = count($result['prom']);
-    return $result;
-}
 
 class Owme {
     use WorkDir; 
@@ -232,11 +143,12 @@ class Owme {
         }
     }
     
-    public function wall($url, $withSL = true) {
+    public function wall($url, $menu = false) {
         $_0 = Net::C($url, 'GET', null, $this->cookieFile, [], '', $this->userAgent);
         $tkn = Scraper::_pP($_0, 'token')[0] ?? null;
         
         if ($tkn) {
+            
             $adsType = ['ptc', 'window'];
             foreach ($adsType as $_type) {
                 $adsList = null;
@@ -244,7 +156,8 @@ class Owme {
                 $_1 = json_decode(Net::X($url, 'POST', $po, $this->cookieFile, [], '', $this->userAgent)?: '', 1)['content'] ?? null;
                 
                 if (!empty($_1)) $adsList = owmeCamp($_1, 'AD');
-                if ($adsList && $tkn) {
+                
+                if ($adsList && !$menu) {
                     #print_r($adsList); die;
                     if (!empty($adsList['ptcs']) && $adsList['ptcs_'] !== 0) {
                         
@@ -263,13 +176,72 @@ class Owme {
                         #print_r($adsList);
                     }
                 }
+                
             }
+            
+            $_1 = null;
+            $shoList = null;
+            $pa = ['type' => 'shortlinks','token' => $tkn,'action' => 'switch_cat'];
+            $_1 = json_decode(Net::X($url, 'POST', $pa, $this->cookieFile, [], '', $this->userAgent)?: '', 1)['content'] ?? null;
+            if (!empty($_1)) $shoList = owmeCamp($_1, 'SL');
+            
+            if ($shoList && !$menu) {
+                
+                foreach ($shoList as $sl) {
+                    $idSL = $sl['id'];
+                    
+                    $get = OwmeSL($url, $idSL, $tkn, $this->cookieFile, $this->userAgent, $this->api);
+                    
+                    if (!$get) continue;
+                    
+                    $start = microtime(true);
+                    $bakk = links($this->api, $get, true);
+                    
+                    if ($bakk) {
+                        $wait = 100 - (int)(microtime(true) - $start);
+                        if ($wait > 0) styler("waiting {$wait}.s for SL", fn() => _sle((int)ceil($wait)));
+                        
+                        $ver = Net::C($bakk, 'GET', null, $this->cookieFile, [], $get, $this->userAgent);
+                        if (!empty($ver) && $ver !== 99) {
+                            
+                            _clr(); 
+                            print(FGd['CYN'].maskEmail($this->email).RSET." ");
+                            
+                            $_als = scraper::_xP($ver, "//div[contains(@class, 'alert-success')]");
+                            if (!empty($_als[0])) {
+                                logg(false, $_als[0]);
+                                continue;
+                            }
+                            $_ald = scraper::_xP($ver, "//div[contains(@class, 'alert-danger')]")[0] ?? 'gatau error apa';
+                            logx('err', $_als[0]);
+                        }
+                    }
+                }
+                
+            }
+            
+            if ($menu) {
+                $available = [
+                    'SL' => $shoList,
+                    'AD' => $adsList
+                ];
+                return $this->_menu($available);
+            }
+            
             
         }
         
         
         
         return false;
+    }
+    
+    private function _menu($list) {
+        print_r($list);
+        
+        
+        
+    die;
     }
     
     public function exec($url, $timer) {
@@ -282,7 +254,6 @@ class Owme {
 
             $adData = $this->_get($url);
             
-            if ($adData === 000) return false;
             if (!$adData) {
                 _sle(3); 
                 continue;
@@ -293,14 +264,15 @@ class Owme {
             styler("waiting for owme", fn() => _sle((int)$adData['params']['dur']));
             
             $capUrl = $adData['targetHost'] . '/system/libraries/captcha/request.php';
-            $capIcons = $this->_getCap($capUrl, $adData['ref']);
+            
+            $capIcons = json_decode(Net::X($capUrl, 'POST', ['cID' => '0', 'rT' => '1', 'tM' => 'light'], $this->cookieFile, [], $adData['ref'], $this->userAgent) ?: '', 1);
             if (!$capIcons) {
                 _sle(3); 
                 continue;
             }
 
             foreach ($capIcons as $iconId) {
-                if ($this->_verCap($capUrl, $iconId, $adData['ref'])) {
+                if ($this->_solve($capUrl, $iconId, $adData['ref'])) {
                     
                     $ajaxUrl = $adData['targetHost'] . '/system/ajax.php';
                     if ($this->_set($ajaxUrl, $adData['params'], $iconId, $adData['ref'])) {
@@ -327,7 +299,7 @@ class Owme {
         $body = $view['body'];
         $targetHost = 'https://' . parse_url($ref)['host'];
         
-        if (stripos($body, 'went wrong')) return 000;
+        if (stripos($body, 'went wrong')) return null;
         
         $params = [
             'tkn' => Scraper::_jP($body, "/var\s+token\s*=\s*'([^']+)';/")[1][0] ?? null,
@@ -384,15 +356,7 @@ class Owme {
         return false;
     }
 
-    private function _getCap($capUrl, $ref) {
-        $capReq = json_decode(Net::X($capUrl, 'POST', ['cID' => '0', 'rT' => '1', 'tM' => 'light'], $this->cookieFile, [], $ref, $this->userAgent) ?: '', 1);
-
-        if (!$capReq || !is_array($capReq)) return null;
-
-        return $capReq;
-    }
-
-    private function _verCap($capUrl, $iconId, $ref) {
+    private function _solve($capUrl, $iconId, $ref) {
         $payload = ['cID' => '0', 'rT' => '2', 'pC' => $iconId];
         $check = Net::X($capUrl, 'POST',$payload , $this->cookieFile, [], $ref, $this->userAgent, d: true);
         return (!empty($check) && isset($check['http_code']) && $check['http_code'] === 200);
@@ -756,7 +720,7 @@ class Bctt {
                 preg_match('/fetch\("([^"]+captcha[^"]+\.js\?action=captcha)"/', $cc_js, $m);
                 $cc_ep = $m[1] ?? $cap_u;
                 
-                $fjs = $this->_getcap($cc_js);
+                $fjs = $this->_get($cc_js);
                 
 
                 $cc_p0 = [
@@ -780,47 +744,11 @@ class Bctt {
             
             if ($fjs && $solution) {
                 $cc_p1 = $this->_buildPayload($fjs, $param, $solution);
-                
                 $cap_tok = json_decode(Net::X($this->bct_h . $cc_p1['url'], 'POST', $cc_p1['payload'], $this->cookieFile, [], $cc_getG, $this->userAgent) ?: '', true)[$fjs['cc_ver']] ?? false;
-                
                 if ($cap_tok) {
-                    $cc_p2 = [
-                        'hash' => $param['hash'],
-                        'sub_id' => $param['sub_id'],
-                        'key' => $param['api_key'],
-                        'token' => $param['token'],
-                        $fjs['cc_Fnm'] => $cap_tok,
-                        'action' => $param['action']
-                    ];
-                    
                     $end = microtime(true);
-                    if (($wait = (int)$tmr - ($end - $set)) >= 0) {
-                        styler("waiting for bitcotask", fn() => _sle((int)ceil($wait)));
-                    }
-                    
-                    
-                    $cc_end = json_decode(Net::X($this->bct_h . "/system/ajax.php", 'POST', $cc_p2, $this->cookieFile, [], $cc_getG, $this->userAgent) ?: '', 1);
-                    
-                    /*
-                    var_dump($solution);
-                    var_dump($cc_p2);
-                    var_dump($cc_p1);
-                    var_dump($cap_tok);
-                    var_dump($fjs); 
-                    var_dump($param); 
-                    var_dump($cc_end); die;
-                    */
-                    
-                    print(FGd['CYN'] . maskEmail($this->email) . RSET . " ");
-                    $msg = strip_tags($cc_end['message'] ?? 'ora tau apa isinya');
-                    if ($cc_end && ($cc_end['status'] ?? 0) == 200) {
-                        _clr();
-                        print(FGd['CYN'] . maskEmail($this->email) . RSET . " ");
-                        logx('info', "[ ".__CLASS__." ] ", false);
-                        logx('ok', $msg, true, true);
-                        return true;
-                    }
-                    logx('err', $msg);
+                    if (($wait = (int)$tmr - ($end - $set)) >= 0) styler("waiting for bitcotask", fn() => _sle((int)ceil($wait)));
+                    return $this->_set($fjs, $param, $cap_tok, $cc_getG);
                 }
             }
         }
@@ -828,7 +756,7 @@ class Bctt {
         return false;
     }
     
-    private function _getcap($js) {
+    private function _get($js) {
         $result = [];
         
         $m = scraper::_jP($js, '/var payload = "([^"]+)"/')[1] ?? null;
@@ -860,6 +788,71 @@ class Bctt {
         return $result;
     }
     
+    private function _set($fjs, $param, $cap_tok, $cc_getG) {
+        
+        $cc_p2 = [
+            'hash' => $param['hash'],
+            'sub_id' => $param['sub_id'],
+            'key' => $param['api_key'],
+            'token' => $param['token'],
+            $fjs['cc_Fnm'] => $cap_tok,
+            'action' => $param['action']
+        ];
+        $cc_end = json_decode(Net::X($this->bct_h . "/system/ajax.php", 'POST', $cc_p2, $this->cookieFile, [], $cc_getG, $this->userAgent) ?: '', 1);
+        
+        print(FGd['CYN'].maskEmail($this->email).RSET." ");
+        $msg = strip_tags($cc_end['message'] ?? 'ora tau apa isinya');
+        if ($cc_end && ($cc_end['status'] ?? 0) == 200) {
+            _clr();
+            print(FGd['CYN'].maskEmail($this->email).RSET." ");
+            logx('info', "[ ".__CLASS__." ] ", false);
+            logx('ok', $msg, true, true);
+            return true;
+        }
+        logx('err', $msg);
+        
+        return false;
+        
+    }
+    
+    private function _solve($data) {
+        /*
+        if (!method_exists($this->api, 'bct')) {
+            logx('err', 'provider not support bitcotask');
+            die;
+        }
+        */
+        $pow_d = $data['difficulty'] ?? 4;
+        $pow_c = $data['challenge'] ?? null;
+        
+        $main = $this->_parseImages($data['pixel'], 200, 100);
+        $captcha['main'] = $main;
+        
+        foreach ($data['options'] as $i => $opt) {
+            $captcha['opsi'][$i] = $this->_parseImages($opt['pixels'], $opt['width'], $opt['height']);
+        }
+        
+        $solver = config::getKeys($this->api,'bitcotask','b64');
+        if (method_exists($solver, 'bct')) {
+            $solution = $solver->bct($captcha,$data);
+            if ($solution === 777 && method_exists($this->api, 'bct')) {
+                    $solution = $this->api->bct($captcha,$data);
+            }
+        } else {
+            return 010;
+        }
+        
+        if (!$solution) return false;
+        
+        return [
+            'pow' => array_merge(
+                SolveUtils::Pow($pow_c, $pow_d),
+                ['ch' => $pow_c, 'di' => $pow_d]
+                ),
+            'cap' => $solution
+        ];
+    }
+    
     private function _parseImages($b64, $w, $h) {
         $raw = base64_decode($b64);
         if (strlen($raw) < $w * $h * 4) return false;
@@ -888,46 +881,6 @@ class Bctt {
         @imagedestroy($img);
         
         return base64_encode($imageData);
-    }
-    
-    private function _solve($data) {
-        
-        if (!method_exists($this->api, 'bct')) {
-            logx('err', 'provider not support bitcotask');
-            die;
-        }
-        
-        $pow_d = $data['difficulty'] ?? 4;
-        $pow_c = $data['challenge'] ?? null;
-        
-        $main = $this->_parseImages($data['pixel'], 200, 100);
-        $captcha['main'] = $main;
-        
-        foreach ($data['options'] as $i => $opt) {
-            $captcha['opsi'][$i] = $this->_parseImages($opt['pixels'], $opt['width'], $opt['height']);
-        }
-        
-        $solver = config::getKeys($this->api, 'bitcotask', 'b64');
-        if (method_exists($solver, 'bct')) {
-            $solution = $solver->bct($captcha);
-            if ($solution === 777) {
-                if (method_exists($this->api, 'bct')) {
-                    $solution = $this->api->bct($captcha);
-                }
-            }
-        } else {
-            return 010;
-        }
-        
-        if (!$solution) return false;
-        
-        return [
-            'pow' => array_merge(
-                SolveUtils::Pow($pow_c, $pow_d),
-                ['ch' => $pow_c, 'di' => $pow_d]
-                ),
-            'cap' => $solution
-        ];
     }
     
     private function _buildPayload($fjs, $param, $solution) {

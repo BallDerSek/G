@@ -125,7 +125,7 @@ class inf {
         
         $html = Net::X($host, 'GET', null, self::$cookie, $h, $host, self::$uagent, ip: self::$ip, foll: $foll, ins: self::$ins);
         
-        #_put('l.html', $html); _rl('lanjut: ');
+        #var_dump($html); _rl('lanjut: ');
         
         if (!is_string($html)) {
             return ['ok' => false, 'html' => null, 'err' => 'Network error'];

@@ -81,7 +81,7 @@ skibidixxxget:
         $s = json_decode(
             Net::S($this->baseUrl."/in.php", "POST", array_merge(["apikey" => $this->apiKey, "methods" => $method], $params), json: true) ?: ''
             , 1);
-#var_dump($s); goto skibidixxxget;
+#var_dump($s);
         if (!is_array($s) || ($s["status"] ?? 0) != 1) {
             throw new Exception(is_array($s) ? ($s["request"] ?? 'unknown') : 'unknown');
         }
@@ -121,6 +121,25 @@ skibidixxxget:
         
         return $this->run('rslider', array_merge($data, ['referer' => $url]), true);
         
+    }
+    
+    public function bct($data, array $json) {
+        
+        $params = [
+            'body' => $json,
+            'type' => 'canvas'
+        ];
+        
+        $sol = $this->run('bitcocaptcha', $params);
+        
+        if (preg_match('/class:([^,]+), array:(\d+)/', $sol, $m)) {
+            $cls = $m[1];
+            $num = (int)$m[2];
+            
+            return $num;
+        }
+        
+        return false;
     }
     
     public function getInfo(): bool{
@@ -435,6 +454,7 @@ class gmxch extends Provider {
     }
     
     public function bct(array $data) {
+        #return 777;
         
         $params = [
             "method" => "bitcotasks",

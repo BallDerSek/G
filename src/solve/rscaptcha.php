@@ -200,7 +200,8 @@ class rsResponse {
             return $this->fallback($x, $y, $html);
         }
         
-        $hasil = $this->_dump($jsContent);
+        $hasil = solveUtils::dumpJs($jsContent);
+        #$hasil = $this->_dump($jsContent);
         $i = $this->workDir . '/i.js';
         $o = $this->workDir . '/o.js';
         if ($hasil && is_file($i)) exec("synchrony $i -o $o");

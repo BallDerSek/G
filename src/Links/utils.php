@@ -25,15 +25,6 @@ class sScraper {
     private static function _getLimit($txt) {
         return preg_match('~(\d+)\s*/\s*(\d+)~', $txt, $m) ? ($m[1].'/'.$m[2]) : null;
     }
-
-    private static function _getContt(DOMNode $node): DOMNode {
-        $cur = $node;
-        for ($i=0; $i<8 && $cur && $cur->parentNode; $i++) {
-            if (in_array($cur->nodeName, ['div','section','article','li'], true)) return $cur;
-            $cur = $cur->parentNode;
-        }
-        return $node;
-    }
     
     private static function _getCont(DOMNode $node, DOMXPath $xp): DOMNode {
         $cur = $node;
@@ -51,18 +42,17 @@ class sScraper {
 
     private static function _badName($s) {
         $s = self::norm($s);
-        if ($s === '')
-        return true;
-        if (mb_strlen($s) > 60)
-        return true;
-        if (preg_match('~^\d+\s*/\s*\d+$~', $s)) 
-        return true;
-        if (preg_match('~^\d+(\.\d+)?\s*[A-Z]{2,6}$~', $s))
-        return true;
-        if (preg_match('~^https?://~i', $s))
-        return true;
-        if (preg_match('~\b(claim|login|submit|continue|next)\b~i', $s))
-        return true;
+        
+        if ($s === '') return true;
+        
+        if (mb_strlen($s) > 60) return true;
+        
+        if (preg_match('~^\d+\s*/\s*\d+$~', $s)) return true;
+        
+        if (preg_match('~^\d+(\.\d+)?\s*[A-Z]{2,6}$~', $s)) return true;
+        
+        if (preg_match('~^https?://~i', $s)) return true;
+        if (preg_match('~\b(claim|login|submit|continue|next)\b~i', $s)) return true;
         
         return false;
     }
@@ -173,13 +163,9 @@ class sScraper {
 
 function limit($id) {
     $parts = explode('/', $id);
-    
-    if (count($parts) < 2) {
-        return (int)$id > 0;
-    }
+    if (count($parts) < 2) return (int)$id > 0;
 
     $current = (int)$parts[0];
-
     return $current > 0;
 }
 
@@ -188,8 +174,7 @@ function links($api, $url, $noapi = false) {
     if ($noapi) $api = null;
     
     try {
-        $bypass = new _shortlinks($url);
-        $f_url = $bypass->links($api); 
+        $f_url = new _shortlinks($url)->links($api); 
         
         if ($f_url && is_string($f_url)) {
             logx('ok', " SL Direct passed", true, true);
@@ -211,24 +196,16 @@ function links($api, $url, $noapi = false) {
         return false;
     }
 
-    $set = microtime(true);
     $res = $solver->shortLink($url);
-    $winner = $solver; 
-    
     if (($res === 777 || $res === false) && $solver !== $api) {
         if (method_exists($api, 'shortLink')) {
             $res = $api->shortLink($url); 
-            $winner = $api; 
         } else {
             logx('err', " (" . get_class($api) . ") doesn't support shortLink!");
             $res = false; 
         }
     }
     
-    $end = microtime(true);
-    $time = number_format($end - $set, 3) . 's';
-    
     if ($res && $res !== 99) return $res;
-
     return false;
 }

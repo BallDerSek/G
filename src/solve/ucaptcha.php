@@ -231,7 +231,8 @@ final class uCaptcha {
         foreach ($urls as $url) {
             $js = Net::X($url, 'GET', null, $this->ck, [], $this->host, $this->ua, foll: false, ip: $this->ip, ins: $this->in);
             if ($js === 99 || empty($js)) continue;
-            if (!str_contains($js, 'litoshi_api_key')) $js = dumpJsFlex($js);
+            #if (!str_contains($js, 'litoshi_api_key')) $js = dumpJsFlex($js);
+            if (!str_contains($js, 'litoshi_api_key')) $js = solveUtils::dumpJs($js);
             
             $api = Scraper::_jP($js, "/litoshi_api_key\s*=\s*['\"]([^'\"]+)['\"]/");
             $sec = Scraper::_jP($js, "/litoshi_secret_key\s*=\s*['\"]([^'\"]+)['\"]/");
