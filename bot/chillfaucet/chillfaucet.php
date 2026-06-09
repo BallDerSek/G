@@ -12,6 +12,8 @@ login:
 $host = 'https://chillfaucet.in';
 $domain = parse_url($host, PHP_URL_HOST);
 $r = '/?r=31169&xpost=true';
+$ip = '156.67.104.252';
+$ip = '80.65.208.108';
 $ip = null;
 
 (function ($login, $ip) {
@@ -221,6 +223,7 @@ while (true) {
                         break 2;
                     }
                     
+                    if (stripos($msg, 'nvalid Claim') !== false) break;
                     if (stripos($msg, 'link your Cwallet') !== false) {
                         
                         $habis[$fa] = true;
