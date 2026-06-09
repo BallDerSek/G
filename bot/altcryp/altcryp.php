@@ -13,7 +13,7 @@ $domain = parse_url($host, PHP_URL_HOST);
 $r = '/?r=45909';
 $ip = null;
 
-(function ($login, $ip) {
+(function ($login, $ip, $host) {
     Proxy::load();
     Check::Geo();
     $cookieFile = config::cookie($login);
@@ -24,7 +24,9 @@ $ip = null;
     _cle();
     banner();
     taskPrintCenter($login, 'info');
-} ) ($login, $ip);
+    print(UNDR.BOLD."site:");
+    logx('ok', " $host");
+} ) ($login, $ip, $host);
 
 $headersCF = [];
 $skipped = [];

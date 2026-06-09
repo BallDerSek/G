@@ -172,7 +172,8 @@ class rsResponse {
     what a different between other?
     dont know what, but this class is using nodeJs pipeline.
     as the js is valid, the map will be as it given.
-    especially for icon type.
+    especially for icon type (i recommend this method).
+    dont forget to install nodejs and synchrony deobfuscator
     */
     
     private ?string $uagent;
@@ -200,10 +201,10 @@ class rsResponse {
             return $this->fallback($x, $y, $html);
         }
         
-        $hasil = solveUtils::dumpJs($jsContent);
         #$hasil = $this->_dump($jsContent);
         $i = $this->workDir . '/i.js';
         $o = $this->workDir . '/o.js';
+        $hasil = solveUtils::dumpJs($jsContent, $i);
         if ($hasil && is_file($i)) exec("synchrony $i -o $o");
         
         if ($hasil && is_file($o)) $token = $this->_token($o, $x, $y, $this->uagent);
@@ -212,7 +213,7 @@ class rsResponse {
         
         return $token ?: $this->fallback($x, $y, $html);
     }
-
+/*
     private function _dump($_input, $unlink = false) {
 
         if (is_file($_input)) {
@@ -323,11 +324,11 @@ JS;
 
         return $best;
     }
-    
+*/
     private function _token($jsFile, $x, $y, $ua) {
         if (!file_exists($jsFile)) return false;
         $jsContent = _get($jsFile);
-        
+
         /** Dumbass RSSHORT with Auto-Scaling */
         $startPos = strpos($jsContent, 'btoa(');
         if ($startPos === false) return false;
@@ -372,7 +373,7 @@ JS;
         return base64_encode(implode(',', $payloadArray));
     }
     
-    private function fallback ($x, $y, $html) {
+    private function fallback($x, $y, $html) {
         $rss = new rss_build();
         return $rss->build($y, $x, $html);
     }

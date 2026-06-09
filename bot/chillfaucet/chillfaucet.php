@@ -16,17 +16,20 @@ $ip = '156.67.104.252';
 $ip = '80.65.208.108';
 $ip = null;
 
-(function ($login, $ip) {
+(function ($login, $ip, $host) {
     Proxy::load();
     Check::Geo();
     $cookieFile = config::cookie($login);
-    $userAgent = config::uagent('mobile');
+    $c = config::credential(['ua' => fn() => config::uagent('mobile')]);
+    $userAgent = $c['ua'];
     
     inf::setup($userAgent, $cookieFile, $ip);
     _cle();
     banner();
     taskPrintCenter($login, 'info');
-} ) ($login, $ip);
+    print(UNDR.BOLD."site:");
+    logx('ok', " $host");
+} ) ($login, $ip, $host);
 
 $hhh = inf::netHead(['uf' => md5($login), 'ls' => LANGUAGE(), 'utt' => TIMEZONE()]);
 $skipped = [];

@@ -15,17 +15,20 @@ $r = '/?r=38637&xpost=true';
 $ip = '154.26.138.53';
 $ip = null;
 
-(function ($login, $ip) {
+(function ($login, $ip, $host) {
     Proxy::load();
     Check::Geo();
     $cookieFile = config::cookie($login);
-    $userAgent = config::uagent('mobile');
+    $c = config::credential(['ua' => fn() => config::uagent('mobile')]);
+    $userAgent = $c['ua'];
     
     inf::setup($userAgent, $cookieFile, $ip);
     _cle();
     banner();
     taskPrintCenter($login, 'info');
-} ) ($login, $ip);
+    print(UNDR.BOLD."site:");
+    logx('ok', " $host");
+} ) ($login, $ip, $host);
 
 $headersCF = [];
 $skipped = [];

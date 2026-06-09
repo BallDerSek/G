@@ -13,7 +13,7 @@ $domain = parse_url($host, PHP_URL_HOST);
 $r = '/?r=36785';
 $ip = null;
 
-(function ($login, $ip) {
+(function ($login, $ip, $host) {
     Proxy::load();
     Check::Geo();
     $cookieFile = config::cookie($login);
@@ -24,7 +24,9 @@ $ip = null;
     _cle();
     banner();
     taskPrintCenter($login, 'info');
-} ) ($login, $ip);
+    print(UNDR.BOLD."site:");
+    logx('ok', " $host");
+} ) ($login, $ip, $host);
 
 $headersCF = [];
 $skipped = [];
@@ -319,7 +321,7 @@ while (true) {
                     continue; 
                 }
                 
-                $wait = 100 - (int)(microtime(true) - $start);
+                $wait = 120 - (int)(microtime(true) - $start);
                 if ($wait > 0) styler("waiting {$wait}.s for SL", fn() => _sle((int)ceil($wait)));
                 
                 $ver = null;

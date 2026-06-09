@@ -218,30 +218,14 @@ class Owme {
                     }
                 }
                 
+                return true;
             }
-            
-            if ($menu) {
-                $available = [
-                    'SL' => $shoList,
-                    'AD' => $adsList
-                ];
-                return $this->_menu($available);
-            }
-            
             
         }
         
         
         
         return false;
-    }
-    
-    private function _menu($list) {
-        print_r($list);
-        
-        
-        
-    die;
     }
     
     public function exec($url, $timer) {

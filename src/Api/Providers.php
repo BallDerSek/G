@@ -130,7 +130,7 @@ skibidixxxget:
             'type' => 'canvas'
         ];
         
-        $sol = $this->run('bitcocaptcha', $params);
+        $sol = $this->run('bitcocaptcha', $params, true);
         
         if (preg_match('/class:([^,]+), array:(\d+)/', $sol, $m)) {
             $cls = $m[1];
@@ -466,7 +466,10 @@ class gmxch extends Provider {
             $params['options'][] = $b64;
         }
         
-        return $this->run('visual', $params);
+        $sol = $this->run('visual', $params, true);
+        if (!$sol) return 777;
+        
+        return $sol;
     }
     
     /** info saldo */

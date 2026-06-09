@@ -13,17 +13,20 @@ $domain = parse_url($host, PHP_URL_HOST);
 $r = '';
 $ip = null;
 
-(function ($login, $ip) {
+(function ($login, $ip, $host) {
     Proxy::load();
     Check::Geo();
     $cookieFile = config::cookie($login);
-    $userAgent = config::uagent('mobile');
-
+    $c = config::credential(['ua' => fn() => config::uagent('mobile')]);
+    $userAgent = $c['ua'];
+    
     inf::setup($userAgent, $cookieFile, $ip);
     _cle();
     banner();
     taskPrintCenter($login, 'info');
-} ) ($login, $ip);
+    print(UNDR.BOLD."site:");
+    logx('ok', " $host");
+} ) ($login, $ip, $host);
 
 $headersCF = [];
 $skipped = [];
@@ -31,7 +34,6 @@ $SLDONE = false;
 $curr = '';
 $dash = null;
 $wallOwme = false;
-$owmeOFF = true;
 while (true) {
     $ret = 0;
     
@@ -96,8 +98,9 @@ while (true) {
         $owme_ur = !empty($owme_if) ? trim($owme_if[0]) : null;
     }
 
+    $ow = new Owme($host, $api, $login);
+    
     do {
-        $ow = new Owme($host, $api, $login);
         $retryList = 0;
         $off = [];
         $anySuccess = false; 
@@ -156,7 +159,7 @@ while (true) {
         $po = null;
         $f = scraper::payload($wd)[0] ?? [];
         
-        if ($bal >= 0.1 && !empty($f['payload'])) {
+        if ($bal >= 0.01 && !empty($f['payload'])) {
             $cre = ['wallet' => $login, 'usd_amount' => $bal, 'method' => '1'];
             $po = array_merge($f['payload'], $cre);
         }
