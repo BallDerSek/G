@@ -302,6 +302,7 @@ while (true) {
                 if (isset($m[2][0])) {
                     print(FGd['CYN'].maskEmail($mail).RSET." ");
                     logg(true, $m[2][0]);
+                    break;
                 }
             }
         } else {

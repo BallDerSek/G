@@ -192,6 +192,8 @@ class Owme {
                     
                     $get = OwmeSL($url, $idSL, $tkn, $this->cookieFile, $this->userAgent, $this->api);
                     
+                    if (stripos($get, 'coinclix') !== false) continue;
+                    
                     if (!$get) continue;
                     
                     $start = microtime(true);
