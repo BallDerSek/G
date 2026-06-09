@@ -185,6 +185,8 @@ class Owme {
             $_1 = json_decode(Net::X($url, 'POST', $pa, $this->cookieFile, [], '', $this->userAgent)?: '', 1)['content'] ?? null;
             if (!empty($_1)) $shoList = owmeCamp($_1, 'SL');
             
+            return true;
+            
             if ($shoList && !$menu) {
                 
                 foreach ($shoList as $sl) {
