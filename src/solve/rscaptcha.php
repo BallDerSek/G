@@ -4,7 +4,7 @@ final class rscaptcha {
     
     private string $host, $ua, $ck, $ip;
     private bool $in;
-    private string $html;
+    private string $html, $id;
     
     public function __construct(array $ctx) {
         
@@ -14,6 +14,7 @@ final class rscaptcha {
         $this->ck = $ctx['cookie'] ?? null;
         $this->in = $ctx['ins'] ?? false;
         $this->ip = $ctx['ip'] ?? '';
+        $this->id = $ctx['id'] ?? '';
         
     }
     
@@ -155,7 +156,7 @@ final class rscaptcha {
        
         if (!$token) {
             # this is got 2 method and auto pass
-            $rss = new rsResponse($this->ua, $this->host);
+            $rss = new rsResponse($this->ua, $this->host, $this->id);
             $token = $rss->exec($utils, $x, $y);
             
         }
@@ -179,10 +180,10 @@ class rsResponse {
     private ?string $uagent;
     private ?string $host;
     
-    public function __construct(?string $ua, ?string $host) {
+    public function __construct(?string $ua, ?string $host, ?string $mail) {
         $this->uagent = $ua;
         $this->host = $host;
-        $this->workDir = $this->setupWorkDir('rscaptcha', $host);
+        $this->workDir = $this->setupWorkDir('rscaptcha', $host, $mail);
     }
     
     public function exec(array $data, $x, $y) {

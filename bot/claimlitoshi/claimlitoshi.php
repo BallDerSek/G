@@ -22,7 +22,7 @@ $ip = null;
     $c = config::credential(['ua' => fn() => config::uagent('mobile')]);
     $userAgent = $c['ua'];
     
-    inf::setup($userAgent, $cookieFile, $ip);
+    inf::setup($userAgent, $cookieFile, $ip, false, $login);
     _cle();
     banner();
     taskPrintCenter($login, 'info');

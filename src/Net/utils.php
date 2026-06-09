@@ -44,12 +44,13 @@ class inf {
     public static $ins;
     public static $context;
 
-    public static function setup($ua, $ck, $ip = null, $ins = false) {
+    public static function setup($ua, $ck, $ip = null, $ins = false, $id = null) {
         self::$uagent = $ua;
         self::$cookie = $ck;
         self::$ip = $ip;
         self::$ins = $ins;
         self::$context = [
+            'id' => (string)$id,
             'ip' => (string)$ip,
             'ins' => (bool)$ins,
             'cookie' => $ck,

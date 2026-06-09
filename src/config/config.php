@@ -51,46 +51,55 @@ trait WorkDir {
 
     protected function setupWorkDir(?string $type = null, ?string $host = null, ?string $mail = null, int $ttl = 120): string {
         $base = _lib($type, $host, $mail);
-        
-        $time = time();
-        $dir  = $base . DIRECTORY_SEPARATOR . $time;
+
+        if (!is_dir($base)) @mkdir($base, 0755, true);
 
         $this->cleanOld($base, $ttl);
 
-        if (!is_dir($dir)) mkdir($dir, 0755, true);
-        
+        $dir = $base . DIRECTORY_SEPARATOR .
+               str_replace('.', '', (string)microtime(true)).'_' .
+               bin2hex(random_bytes(4));
+        if (!is_dir($dir) && !@mkdir($dir, 0755, true)) {
+            usleep(100000);
+            if (!is_dir($dir) && !@mkdir($dir, 0755, true)) {
+                $this->workDir = '';
+                return '';
+            }
+        }
+
         $this->workDir = $dir;
         return $dir;
     }
 
     protected function cleanOld(string $base, int $ttl = 120): void {
-        $olds = glob($base . DIRECTORY_SEPARATOR . '*', GLOB_ONLYDIR);
-        if (!is_array($olds)) return;
-
-        $now = time();
-
-        foreach ($olds as $dir) {
-            $name = basename($dir);
-            if (is_numeric($name) && ($now - (int)$name) > $ttl) {
-                $this->rmdir($dir);
-            }
+        $dirs = glob($base . DIRECTORY_SEPARATOR . '*', GLOB_ONLYDIR);
+        if (!is_array($dirs)) return;
+        $now = microtime(true);
+        foreach ($dirs as $dir) {
+            $mtime = @filemtime($dir);
+            if ($mtime === false) continue;
+            if (($now - $mtime) > $ttl) $this->rmdir($dir);
         }
     }
 
     protected function userdir(?string $mail): string {
-        $user = ($mail && str_contains($mail, '@')) ? strstr($mail, '@', true) : ($mail ?? '');
+        $user = ($mail && str_contains($mail, '@'))
+            ? strstr($mail, '@', true)
+            : ($mail ?? '');
         $user = preg_replace('/[^a-zA-Z0-9]/', '_', $user);
         return $user !== '' ? $user : 'cookie';
     }
 
     protected function rmdir(string $path): void {
         if (!is_dir($path)) return;
-        
-        $items = array_diff(scandir($path), ['.', '..']);
-        foreach ($items as $item) {
-            $full = "$path/$item";
-            is_dir($full) ? $this->rmdir($full) : @unlink($full);
+        $items = @scandir($path);
+        if ($items === false) return;
+        foreach (array_diff($items, ['.', '..']) as $item) {
+            $full = $path.DIRECTORY_SEPARATOR.$item;
+            if (is_dir($full)) $this->rmdir($full);
+            else @unlink($full);
         }
+
         @rmdir($path);
     }
 }
@@ -99,131 +108,6 @@ trait WorkDir {
 class Config {
     private static array $cred_cache = [];
     private static ?string $ua_static = null;
-    
-    /* legacy 
-    public static function credentials(array $defaults = [], $required = false, array|bool $ask = false): ArrayAccess {
-        $trace = debug_backtrace();
-        $baseDir = dirname($trace[0]['file']);
-        $filePath = rtrim($baseDir, '/') . '/credentials';
-        
-        return new class($filePath, $defaults, $required, $ask) implements ArrayAccess {
-            
-            private array $cache = [];
-            private string $file;
-            private array $defaults;
-            private bool $required;
-            private array|bool $ask;
-            
-            public function __construct($file, array $defaults, $required, array|bool $ask) {
-                $this->defaults = $defaults;
-                $this->required = $required;
-                $this->ask = $ask;
-                $this->file = $file;
-                
-                if (is_file($this->file)) {
-                    foreach (file($this->file, FILE_IGNORE_NEW_LINES) as $l) {
-                        if ($l === '' || $l[0] === '#') continue;
-                        if (strpos($l, '=') === false) continue;
-                        
-                        [$k, $v] = explode('=', $l, 2);
-                        $this->cache[$k] = $v;
-                    }
-                }
-            }
-            
-            public function offsetExists($key): bool {
-                return true;
-            }
-            
-            private function shouldAsk($key): bool {
-                if ($this->ask === false) return false;
-                
-                if ($this->ask === true) return true;
-                
-                return in_array($key, $this->ask, true);
-            }
-            
-            public function offsetGet($key): mixed {
-                # ENV 
-                $env = getenv($key);
-                if ($env !== false && $env !== '') {
-                    return $this->cache[$key] = $this->enforce($key, $env);
-                }
-                
-                # CACHE
-                if (array_key_exists($key, $this->cache) && $this->cache[$key] !== '') {
-                    $current = $this->cache[$key];
-                    
-                    if ($this->shouldAsk($key)) {
-                        logx('warn', "found saved {$key} => {$current}, change?", true, true);
-                        $change = trim(_rl("[empty to use as is]: "));
-                        if ($change !== '') {
-                            $current = $change;
-                            $this->cache[$key] = $current;
-                            $this->save($key, $current);
-                        }
-                    }
-                    return $this->enforce($key, $current);
-                }
-                
-                # DEFAULT
-                if (array_key_exists($key, $this->defaults)) {
-                    $def = $this->defaults[$key];
-                    $value = is_callable($def) ? $def() : $def;
-                    if ($value !== null && $value !== '') {
-                        $this->save($key, $value);
-                        return $this->cache[$key] = $this->enforce($key, $value);
-                    }
-                }
-                
-                # INPUT
-                $value = trim(_rl("{$key}: "));
-                if ($value === '' && !$this->required) {
-                    $value = "__{$key}__"; # PLACEHOLDER
-                    logx('err', "{$key} empty");
-                }
-                $this->save($key, $value);
-                return $this->cache[$key] = $this->enforce($key, $value);
-            }
-            
-            public function offsetSet($key, $value): void {
-                $this->cache[$key] = $value;
-                $this->save($key, $value);
-            }
-            
-            public function offsetUnset($key): void {
-                unset($this->cache[$key]);
-            }
-            
-            private function enforce($key, $value) {
-                $isPlaceholder = ($value === "__{$key}__");
-                if ($this->required && ($value === null || $value === '' || $isPlaceholder)) {
-                    logx('err', "{$key} is required!");
-                    die;
-                }
-                return $isPlaceholder ? '' : $value;
-            }
-            
-            private function save($key, $value): void {
-                $lines = is_file($this->file) ? file($this->file, FILE_IGNORE_NEW_LINES) : [];
-                $found = false;
-                foreach ($lines as &$line) {
-                    if (strpos($line, $key . '=') === 0) {
-                        $line = $key . '=' . $value;
-                        $found = true;
-                        break;
-                    }
-                }
-                
-                if (!$found) {
-                    $lines[] = $key . '=' . $value;
-                }
-                _put($this->file, implode(PHP_EOL, $lines) . PHP_EOL);
-            }
-            
-        };
-    }
-    */
     
     public static function credential(array $defaults = [], $required = false, array|bool $ask = false): ArrayAccess {
         $baseDir = dirname(debug_backtrace()[0]['file']);

@@ -19,7 +19,7 @@ $ip = '159.198.47.130';
     $cookieFile = config::cookie($mail);
     $userAgent = config::uagent('mobile');
 
-    inf::setup($userAgent, $cookieFile, $ip);
+    inf::setup($userAgent, $cookieFile, $ip, false, $mail);
     _cle();
     banner();
     taskPrintCenter($mail, 'info');

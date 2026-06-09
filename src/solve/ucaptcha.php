@@ -15,7 +15,7 @@ final class uCaptcha {
         $this->in = $ctx['ins'] ?? false;
         $this->ip = $ctx['ip'] ?? '';
         
-        $this->workDir = $this->setupWorkDir('ucaptcha', $this->host);
+        $this->workDir = $this->setupWorkDir('ucaptcha', $this->host, $ctx['id'] ?? null);
     }
 
     public function exec(array $ucap) {
