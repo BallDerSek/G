@@ -34,6 +34,7 @@ $SLDONE = false;
 $curr = '';
 $dash = null;
 $wallOwme = false;
+$can_withdraw = false;
 while (true) {
     $ret = 0;
     
@@ -148,18 +149,27 @@ while (true) {
         
     } while (!$wallOwme);
     
+    if ($wallOwme) {
+        
+        if (!empty($owme_ur)) $ow->wall($owme_ur); 
+        
+        $ow->cleanup(); 
+        styler('Waiting cooldown offerwall.me', fn() => _sle(60));
+        $wallOwme = false;
+    }
+
     $wd = Net::C($host.'/withdraw', 'GET', null, inf::$cookie, [], '', inf::$uagent);
+    _put('wd.html', $wd);
     
     if (!empty($wd) && $wd !== 99) {
-        
+        $pendingExists = !empty(Scraper::_xP($wd, "//span[contains(@class, 'wd-badge-pending')]"));
         $jjn = Scraper::_xP($wd, "//span[contains(@class, 'balance-val')]")[0] ?? '0';
-        
         $bal = (float) filter_var($jjn, FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
         
         $po = null;
         $f = scraper::payload($wd)[0] ?? [];
         
-        if ($bal >= 0.01 && !empty($f['payload'])) {
+        if ($bal >= 0.01 && !empty($f['payload']) && !$pendingExists) {
             $cre = ['wallet' => $login, 'usd_amount' => $bal, 'method' => '1'];
             $po = array_merge($f['payload'], $cre);
         }
@@ -173,18 +183,10 @@ while (true) {
                 print(FGd['CYN'].maskEmail($login).RSET." ");
                 logx('info', $hasil, true, true);
             }
+        } elseif ($pendingExists) {
+            logx('warn', "Skip WD for {$login}", true, true);
         }
     }
-    
-    if ($wallOwme) {
-        
-        if (!empty($owme_ur)) $ow->wall($owme_ur); 
-        
-        $ow->cleanup(); 
-        styler('Waiting cooldown offerwall.me', fn() => _sle(60));
-        $wallOwme = false;
-    }
-    
 }
 
 
