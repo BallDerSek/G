@@ -19,8 +19,7 @@ $ip = null;
     Proxy::load();
     Check::Geo();
     $cookieFile = config::cookie($login);
-    $c = config::credential(['ua' => fn() => config::uagent('mobile')]);
-    $userAgent = $c['ua'];
+    $userAgent = config::uagent('mobile');
     
     inf::setup($userAgent, $cookieFile, $ip, false, $login);
     _cle();
