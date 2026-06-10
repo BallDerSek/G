@@ -67,6 +67,22 @@ class xevil extends Provider {
         logx('info', 'xevil: ' . ($r['request'] ?? 'unknown'));
         return true;
     }
+    
+    public function bctt($param) {
+        
+        $_d['main'] = $param['main'];
+        foreach ($param['opsi'] as $_i => $_o) $_d[$_i] = $_o;
+        
+        $res =  $this->run('bitcotask', $_d, true);
+        var_dump($res);
+        
+        die;
+        
+        if (!$res) return false;
+        
+        return $res;
+    }
+    
 } 
 
 class skibidixxx extends Provider {

@@ -12,6 +12,7 @@ login:
 $host = 'https://chillfaucet.in';
 $domain = parse_url($host, PHP_URL_HOST);
 $r = '/?r=31169&xpost=true';
+$r = '';
 $ip = '156.67.104.252';
 $ip = '80.65.208.108';
 $ip = null;
