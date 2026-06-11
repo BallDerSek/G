@@ -3,9 +3,8 @@ if (!defined('ROOT')) { die; }
 #_die();
 $api = onKeys();
 
-$acc = config::credential([], false, ['login', 'cwallet', 'PROXY']);
+$acc = config::credential([], false, ['login', 'PROXY']);
 $login = $acc['login'];
-$cwid = $acc['cwallet'];
 putenv("PROXY=".$acc['PROXY']);
 
 login:

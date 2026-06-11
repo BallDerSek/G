@@ -1,6 +1,6 @@
 <?php
 if (!defined('ROOT')) { die; }
-#_die();
+_die();
 #$api = onKeys();
 
 $acc = config::credential([], false, /*['login', 'PROXY']*/);
@@ -78,15 +78,8 @@ while (true) {
         }
         
     } while (empty($dash));
-    _put('dash.html', $dash);
+    #_put('dash.html', $dash);
     
-    $_se = 'session_' . substr(bin2hex(random_bytes(5)), 0, 9);
-    
-    
-    $bon = json_decode(Net::C($host."/DailyBonus/process_daily.php", 'GET', null, inf::$cookie, $hhh, '', inf::$uagent)?: '', 1);
-    if (!empty($bon['status'])) logx($bon['status'], $bon['message']);
-    
-    /*
     $_fa = [
         'HourlyFaucet' => 'process_hourly',
         'BonusFaucet' => 'process_bonus'
@@ -98,15 +91,14 @@ while (true) {
             preg_match('/secondsLeft\s*=\s*(\d+)/', $fau, $_s);
             
             $sec = (int)($_s[1] ?? 10);
-            if ($sec <= 10) {
-                _sle(10);
+            if ($sec === 0) {
                 $u_cla = $host . "/{$fa}/{$fe}.php";
                 $cla = json_decode(Net::C($u_cla, 'GET', null, inf::$cookie, $hhh, '', inf::$uagent)?: '', true);
-                var_dump($cla);
                 if (!empty($cla['status'])) {
+                    print(FGd['CYN'].maskEmail($login).RSET." ");
                     $stt = $cla['status'];
                     $msg = isset($cla['total_reward']) ? "claimed {$cla['total_reward']}" : ($cla['message'] ?? 'Unknown');
-                    logx($stt, "$fa ", false, true);
+                    logx($stt, "$fa  ", false, true);
                     logg(false, "$msg");
                     
                     
@@ -114,21 +106,76 @@ while (true) {
             }
         }
     }
-    */
+    
+    $spin = false;
+    for ($rrr = 0; $rrr < 2; $rrr++) {
+        $spin_tkn = json_decode(Net::C($host."/SpinFaucet/spinfaucet_backend.php", 'GET', null, inf::$cookie, $hhh, '', inf::$uagent)?: '', 1)["spin_token"] ?? null;
+        if ($spin_tkn) {
+            $spin_po = ['spin_token' => $spin_tkn];
+            $spin_cla = json_decode(Net::X($host."/SpinFaucet/spinfaucet_backend.php", 'POST', $spin_po, inf::$cookie, $hhh, '', inf::$uagent, json: true)?: '', 1);
+            
+            if (!empty($spin_cla['status'])) {
+                print(FGd['CYN'].maskEmail($login).RSET." ");
+                $stt = $spin_cla['status'];
+                if ($stt === 'success') {
+                    if ($spin_cla['total_reward'] > 0) {
+                        $msg = "won {$spin_cla['total_reward']}";
+                        break;
+                    } else $msg = $spin_cla['result_text'];
+                } else $msg = $spin_cla['message'] ?? 'Unknown';
+                
+                logx($stt, "SpinFaucet   ", false, true);
+                logg(false, $msg);
+            }
+        }
+    }
+    
+    $claimed = 0;
+    while ($claimed <= 5) {
+        $box_ttl = 0;
+        $_se = 'session_' . substr(md5(rand()), 0, 9);
+        
+        for ($i = 1; $i <= 3; $i++) {
+            $po = [
+                'action' => "open_box",
+                'box_id' => (string)rand(1, 5),
+                'session_id' => $_se,
+                'reward_amount' => "6577"
+            ];
+            
+            $box_get = json_decode(Net::X($host."/Game/game_process.php", 'POST', $po, inf::$cookie, $hhh, '', inf::$uagent)?: '', 1);
+            
+            if (($box_get['is_winner'] ?? false)) $box_ttl += $box_get['reward_amount'];
+            
+            if (($box_get['attempts_left'] ?? 1) === 0) break;
+            _sle(1);
+            
+        #die;
+        }
+        
+        $pa = [
+            'action' => 'claim_rewards',
+            'session_id' => $_se,
+            'total_earnings' => $box_ttl
+        ];
+        $box_cla = json_decode(Net::C($host."/Game/game_process.php", 'POST', $pa, inf::$cookie, $hhh, '', inf::$uagent)?: '', 1);
+        #print_r($box_cla);
+        if (!empty($box_cla['status'])) {
+            print(FGd['CYN'].maskEmail($login).RSET." ");
+            $stt = $box_cla['status'];
+            $msg = $box_cla['amount'] ?? $box_cla['note'] ?? 'unknown';
+            
+            logx($stt, "$stt [ $claimed ] ", false, true);
+            logx('info', "claimed: $msg", true, true);
+            $claimed++;
+        }
+        
+        _sle(1);
+    }
     
     
-    $fau = Net::C($host.'/SpinFaucet/spinfaucet.php', 'GET', null, inf::$cookie, $hhh, '', inf::$uagent);
-    _put('fau.html', $fau);
     
     
     
-die;
+    
 }
-
-
-
-
-
-tes:
-    
-

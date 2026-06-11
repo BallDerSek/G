@@ -98,11 +98,11 @@ final class uCaptcha {
         $key = $ch['anti_captcha_key'];
         $qImg = $ch['question_image'];
         $icons = $ch['icons'];
-
+        
         $base = $this->workDir;
         $hashFile = LIBDIR.'/anticaptcha.json';
         $hashes = file_exists($hashFile) ? json_decode(_get($hashFile), true) : [];
-
+        
         $main = Net::X($qImg, 'GET', null, $this->ck, [], $this->host, $this->ua);
         if (empty($main) || $main === 99) return null;
         _put($base . '/main.png', $main);
@@ -113,13 +113,13 @@ final class uCaptcha {
 
         $best = null;
         $bestScore = PHP_INT_MAX;
-
+        
         foreach ($icons as $icon) {
             if (isset($hashes[$icon])) {
                 $iA = $hashes[$icon]['a'];
                 $iD = $hashes[$icon]['d'];
             } else {
-                $iconUrl = "$app/assets/anticap/icons/$icon";
+                $iconUrl = "$app/assets/anticap/icons/" . rawurlencode($icon);
                 $iconData = Net::X($iconUrl, 'GET', null, $this->ck, [], $this->host, $this->ua);
                 if (empty($iconData) || $iconData === 99) continue;
                 _put("$base/$icon", $iconData);
@@ -186,6 +186,7 @@ final class uCaptcha {
             $app . 'anticap/get_token', 'GET', null, $this->ck,
             [], $this->host, $this->ua
         ), 1)['token'] ?? null;
+        
         if (!$token) return false;
 
         $ch = json_decode(Net::X(
