@@ -252,7 +252,11 @@ while (true) {
     $ads99 = 0;
     $bcttView = 0;
     $viewed = false;
+    $retptc = 0;
     while ($ptcc || !$viewed) {
+        
+        if ($retptc >= 3) break;
+        $retptc++;
         
         if ($curr_id) Net::X($host . '/account/change_currency','GET',['method' => $curr_id],inf::$cookie,$hhh,$host.'/ptc',inf::$uagent);
         
