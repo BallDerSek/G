@@ -33,6 +33,7 @@ $headersCF = [];
 $skipped = [];
 $SLDONE = false;
 $claim = true;
+$curr_id = '';
 $curr = '';
 $habis = [];
 $ptcc = false;
@@ -377,8 +378,6 @@ while (true) {
                 
             }
             
-            
-            if (!$viewed && $ptcc === true) die;
         }
     }
     

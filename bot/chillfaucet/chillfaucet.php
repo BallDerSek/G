@@ -35,6 +35,7 @@ $skipped = [];
 $SLDONE = false;
 $claim = true;
 $curr = '';
+$curr_id = '';
 $habis = [];
 $ptcc = false;
 
@@ -362,8 +363,6 @@ while (true) {
                 
             }
             
-            
-            if (!$viewed && $ptcc === true) die;
         }
     }
     

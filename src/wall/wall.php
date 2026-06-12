@@ -648,7 +648,6 @@ class Bctt {
     
     public function exec($url, $tmr = 5) {
         #var_dump($url);
-        
         if (empty($url)) return false;
         
         #logx('info', "[ bitcotasks.com {$tmr}s ] ", false, true);
@@ -726,7 +725,7 @@ class Bctt {
                 
                 if (!empty($cap_get['options']) && !empty($cap_get['pixel'])) {
                     $solution = $this->_solve($cap_get);
-                    if ($solution === 010) return false;
+                    if (!$solution) return false;
                 }
             }
             
@@ -803,13 +802,8 @@ class Bctt {
         
     }
     
-    private function _solve($data) {
-        /*
-        if (!method_exists($this->api, 'bct')) {
-            logx('err', 'provider not support bitcotask');
-            die;
-        }
-        */
+    private function _solve($data, $num = null) {
+        
         $pow_d = $data['difficulty'] ?? 4;
         $pow_c = $data['challenge'] ?? null;
         
@@ -1124,6 +1118,7 @@ function _bctPayload($fjs, $param, $solution) {
 
 function savedebugbitcotask($num, $param) {
     $dir = _lib('bitcotask', $num);
+    _put($dir."/$num.json", json_encode($param, JSON_PRETTY_PRINT, JSON_UNESCAPED_SLASHES));
     
     $main = _rndr($param['pixel'],200,100);
     _put($dir.'/main.png', base64_decode($main));
@@ -1134,5 +1129,5 @@ function savedebugbitcotask($num, $param) {
         }
         
     }
-    
+    logx('ok', "saved data $num");
 }

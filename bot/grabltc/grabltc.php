@@ -1,9 +1,9 @@
 <?php
 if (!defined('ROOT')) { die; }
-_die();
+#_die();
 #$api = onKeys();
 
-$acc = config::credential([], false, /*['login', 'PROXY']*/);
+$acc = config::credential([], false, ['login', 'PROXY']);
 $login = $acc['login'];
 putenv("PROXY=".$acc['PROXY']);
 
@@ -26,7 +26,6 @@ $ip = null;
 } ) ($login, $ip, $host);
 
 $hhh = ['detail-hints: false'];
-$_wd = 1000000;
 
 while (true) {
     $dash = null;
@@ -80,6 +79,21 @@ while (true) {
     } while (empty($dash));
     #_put('dash.html', $dash);
     
+    $_bal_raw = Scraper::_xP($dash, "//p[contains(@class, 'orbitron') and contains(@class, 'font-bold')]/text()")[0] ?? '0';
+    $_bal = (int) str_replace(',', '', trim($_bal_raw));
+    if ($_bal >= 1000000) {
+        $wd_p = [
+            'amount_pts' => (string)$_bal,
+            'currency_id' => '2'
+        ];
+        $wd = json_decode(Net::C($host."/Withdrawal/process_withdraw.php", 'POST', $wd_p, inf::$cookie, $hhh, '', inf::$uagent)?: '', 1)['message'] ?? null;
+        
+        if (!empty($wd)) {
+            print(FGd['CYN'].maskEmail($login).RSET." ");
+            logx('info', $wd, true, true);
+        }
+    }
+
     $_fa = [
         'HourlyFaucet' => 'process_hourly',
         'BonusFaucet' => 'process_bonus'
@@ -158,6 +172,7 @@ while (true) {
             'session_id' => $_se,
             'total_earnings' => $box_ttl
         ];
+        #print_r($pa);
         $box_cla = json_decode(Net::C($host."/Game/game_process.php", 'POST', $pa, inf::$cookie, $hhh, '', inf::$uagent)?: '', 1);
         #print_r($box_cla);
         if (!empty($box_cla['status'])) {
@@ -177,5 +192,5 @@ while (true) {
     
     
     
-    
 }
+

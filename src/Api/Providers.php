@@ -50,14 +50,15 @@ class xevil extends Provider {
     public function bctt($param, $j) {
         
         
+        
+        die;
         $_d['main'] = $j['pixel'];
         foreach ($j['options'] as $i => $r) $_d[$i] = $r['pixels'];
-        
         
         $res =  $this->run('bitcotask', $_d, true);
         var_dump($res);
         
-        #die;
+        die;
         
         if (!$res) return false;
         
@@ -611,9 +612,44 @@ class glitch extends Provider {
     
 }
 
-
-
-
+/*
+class abdulq extends Provider {
+    
+    
+    
+    protected $baseUrl = "https://bypassallshortlinks.space";
+    
+    protected function get_api($method, array $params) {
+        
+    }
+    
+    protected function res_api($method, array $params) {
+        
+    }
+    
+    
+    
+    public function getInfo(): bool{
+        $maxRetry = 3;
+        $b = null;
+        for ($attempt = 1; $attempt <= $maxRetry; $attempt++) {
+            $b = json_decode(Net::S($this->baseUrl.'/api.php', 'POST', ['action' => 'balance', 'api_key' => $this->apiKey])?: '', 1);
+            var_dump($b);
+            if ($b !== null) break;
+        }
+        
+        if ($b === null) return false;
+        
+        if (isset($b['error'])) {
+            logx('err', $b['error']);
+            return false;
+        }
+        logx('info', 'bas: ' . ($b['balance'] ?? 'unknown'));
+        return true;
+    }
+    
+}
+*/
 
 
 
