@@ -11,7 +11,7 @@ login:
 $host = 'https://claimlitoshi.top';
 $domain = parse_url($host, PHP_URL_HOST);
 $r = '/?r=38637&xpost=true';
-$r = '';
+#$r = '';
 $ip = '154.26.138.53';
 $ip = null;
 

@@ -318,9 +318,7 @@ class Net {
                 break;
             }
         }
-        if (!$manualHost) {
-            $head[] = "Host: " . $host_val;
-        }
+        if (!$manualHost) $head[] = "Host: " . $host_val;
 
         if ($ua !== '') {
             if ($useHints) {
@@ -336,9 +334,7 @@ class Net {
             $head[] = "User-Agent: $ua";
         }
         
-        if (!$ajx && $useHints) {
-            $head[] = "Upgrade-Insecure-Requests: 1";
-        }
+        if (!$ajx && $useHints) $head[] = "Upgrade-Insecure-Requests: 1";
         
         $he_cookie = null;
         foreach ($he_manual as $h) {
@@ -405,7 +401,6 @@ class Net {
 
         # HEADERS
         $opt['head'] = self::applyHead($opt);
-        #print_r($opt['head']); _sle(3);
 
         $ch = curl_init($opt['url']);
         if (!$ch) { logx('err', 'init failed'); return null; }
@@ -490,7 +485,6 @@ class Net {
             } 
             if (isset($opt['data'])) {
                 $payload = is_array($opt['data']) ? (!empty($opt['isJson']) ? json_encode($opt['data']) : http_build_query($opt['data'])) : $opt['data'];
-                #print_r($payload); logx();
                 curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
             }
         } 
@@ -665,12 +659,8 @@ var_dump($err);
 
     public static function S($url, $type = 'POST', $data = null, array $head = [], $json = false) {
         
-        if (!self::hasHeader($head, 'Connection')) {
-            $head[] = "Connection: keep-alive";
-        }
-        if ($json && !self::hasHeader($head, 'Content-Type')) {
-            $head[] = "Content-Type: application/json";
-        }
+        if (!self::hasHeader($head, 'Connection')) $head[] = "Connection: keep-alive";
+        if ($json && !self::hasHeader($head, 'Content-Type')) $head[] = "Content-Type: application/json";
         
         $res = self::Http([
             'url' => $url,

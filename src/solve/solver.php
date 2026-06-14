@@ -29,21 +29,18 @@ class Solve {
     public static $in;
     public static $context;
     
+/*
     public static function exec($html, $host, ?Provider $api, $pa = null, $ins = false, $force = false) {
         
         #return [];
         
-        /*
-        self::$ua = inf::$uagent;
-        self::$ck = inf::$cookie;
-        self::$ip = inf::$ip;
-        self::$in = inf::$ins;
-        */
         
         self::$context = inf::$context;
         
         $solution = [];
         $_cap = Capt::cha($html);
+        
+#var_dump($_cap); die;
         
         $_fields = null; 
         $_select = '';
@@ -247,7 +244,247 @@ class Solve {
                 }
             }
         } elseif (!$api) {
-            if (!$api) (logx('err', 'undefined provider') ?: die);
+            (logx('err', 'undefined provider') ?: die);
+        }
+
+        if (empty($solution) && empty($_cap)) {
+            logx('info', 'no captcha detected');
+            return ['nocaptcha' => true];
+        }
+
+        return !empty($solution) ? $solution : [];
+    }
+*/
+    public static function exec($html, $host, ?Provider $api, $pa = null, $ins = false, $force = false) {
+        
+        #return [];
+        
+        /*
+        self::$ua = inf::$uagent;
+        self::$ck = inf::$cookie;
+        self::$ip = inf::$ip;
+        self::$in = inf::$ins;
+        */
+        
+        self::$context = inf::$context;
+        
+        $solution = [];
+        $_cap = Capt::cha($html);
+        
+        #var_dump($_cap); die;
+        
+        $_fields = null; 
+        $_select = '';
+        $captchaFields = [];
+
+        if (is_array($pa)) {
+            $_option = null;
+            $_foundField = null;
+            foreach ($pa as $key => $val) {
+                if (str_contains(strtolower($key), 'captcha')) {
+                    
+                    $captchaFields[] = $key;
+                    if (is_array($val)) {
+                        $_option = $val;
+                    } else {
+                        $_foundField = $key;
+                    }
+                }
+            }
+            $_fields = $_foundField ?? $_fields;
+            if ($_option === null && $_foundField !== null) {
+                $_option = [$pa[$_foundField]];
+            }
+            if (!empty($_option)) {
+                $pref = ['shield', 'rot', 'smart', 'turnstile', 'hcaptcha', 'recaptcha'];
+                foreach ($pref as $p) {
+                    foreach ($_option as $opt) {
+                        if (str_contains(str_replace(['-', '_'], '', strtolower($opt)), $p)) {
+                            $_select = $opt;
+                            break 2;
+                        }
+                    }
+                }
+                if (!$_select) $_select = $_option[0];
+            }
+
+        } else {
+            $_select = (string)$pa;
+            $_fields = 'captcha';
+            $captchaFields[] = $_fields;
+        }
+
+        if ($_fields && $_select) {
+            $solution[$_fields] = $_select;
+            
+            if (is_array($pa)) {
+                foreach ($pa as $key => $val) {
+                    if (str_contains(strtolower($key), 'captcha')) {
+                        if ($key === $_fields) {
+                            $solution[$key] = $_select;
+                        } else {
+                            $solution[$key] = $_select;
+                        }
+                    }
+                }
+            }
+        }
+
+        if (!empty($_cap['antibot'])) {
+            $atbData = $_cap['antibot']['data'] ?? [];
+            $resAtb = locally::ATB($_cap['antibot']['type'], $api, $html, $force, $atbData);
+            if ($resAtb === 77) return ['trouble' => 'reload'];
+            if ($resAtb) $solution['antibotlinks'] = $resAtb;
+        }
+        
+        if ($_select) {
+            $_checks = str_replace(['-', '_'], '', strtolower($_select));
+            
+            switch ($_checks) {
+                case 'shield':
+                    if (isset($pa['shield_answer'])) {
+                        $resShi = sCaptcha::shield($html);
+                        if ($resShi) $solution = array_merge($solution, $resShi);
+                    }
+                    break;
+                
+                case 'rotcaptcha':
+                case 'rot':
+                    if (isset($pa['rot_captcha_val'])) {
+                        $resRot = sCaptcha::rotate($html);
+                        if ($resRot) $solution = array_merge($solution, $resRot);
+                    }
+                    break;
+                
+                case 'smartcaptcha':
+                case 'smart':
+                    if (isset($pa['smart_token'])) {
+                        $resSmt = locally::smartFP($html);
+                        if ($resSmt) $solution['smart_token'] = $resSmt;
+                    }
+                    break;
+            }
+        }
+        
+        
+        if (isset($_cap['ic_fw'])) {
+            $data = [
+                'token' => $_cap['ic_fw']['keys'],
+                'endpoint' => $_cap['ic_fw']['url'],
+            ];
+            
+            $ic = null; 
+            $attempt = 0;
+            while (!$ic && $attempt < 3) {
+                if ($attempt > 0) _sle(1); // Jeda sebelum retry
+                $ic = locally::iCaptcha($host, $data, self::$context);
+                if ($ic === 99) return ['trouble' => 'proxy'];
+                $attempt++;
+            }
+            
+            if ($ic) {
+                $solution = array_merge($solution, $ic);
+                
+                $found = null;
+                foreach ($pa as $key => $val) {
+                    if (stripos($val, 'icaptcha') !== false || stripos($key, 'icon') !== false) {
+                        $found = $key;
+                        break;
+                    }
+                }
+                
+                if ($found) {
+                    $solution[$found] = $pa[$found];
+                } elseif (!empty($_fields)) {
+                    $solution[$_fields] = 'icaptcha';
+                }
+            } else {
+                return ['trouble' => 'reload'];
+            }
+        }
+        
+        elseif (isset($_cap['ucaptcha'])) {
+            $utype = $_cap['ucaptcha']['mods'];
+            $ucap_res = null;
+            $attempt = 0;
+            while (!$ucap_res && $attempt < 3) {
+                if ($attempt > 0) _sle(1); // Jeda sebelum retry
+                $ucap_res = self::ucap($_cap['ucaptcha'], $host, $html);
+                if (!is_array($ucap_res)) $attempt++;
+            }
+            
+            if (is_array($ucap_res)) {
+                $solution = array_merge($solution, $ucap_res);
+            } else {
+                return ['trouble' => 'reload'];
+            }
+        }
+        
+        elseif (isset($_cap['rss'])) {
+            $rss_res = self::rss($_cap['rss'], $api, $host, $html);
+            if (is_array($rss_res)) {
+                $solution = array_merge($solution, $rss_res);
+                $found = null;
+                foreach ($pa as $key => $val) {
+                    if (stripos($val, 'rscaptcha') !== false) {
+                        $found = $key;
+                        break;
+                    }
+                }
+                
+                if ($found) $solution[$found] = $pa[$found];
+                elseif (!empty($_fields)) {
+                    $solution[$_fields] = 'rscaptcha';
+                }
+            } else {
+                return ['trouble' => 'reload'];
+            }
+        }
+        
+        
+        $ignoreFields = array_merge(['antibotlinks'], $captchaFields);
+        $mainSolved = count(array_diff(array_keys($solution), $ignoreFields)) > 0;
+
+        if ($api && !$mainSolved) {
+            $priority = [];
+            $lowType = str_replace(['-', '_'], '', strtolower($_select));
+
+            if (str_contains($lowType, 'turnstile')) {
+                $priority = ['cft'];
+            } elseif (str_contains($lowType, 'hcaptcha') || str_contains($lowType, 'hc')) {
+                $priority = ['hc'];
+            } elseif (str_contains($lowType, 'recaptcha')) {
+                $priority = ['rc3', 'rc2'];
+            } else {
+                $priority = ['cft', 'rc3', 'rc2', 'hc'];
+            }
+
+            foreach ($priority as $t) {
+                if (!isset($_cap[$t])) continue;
+                
+                $_ty = $_cap[$t]['type'] ?? $t; 
+                $_ke = $_cap[$t]['keys'] ?? null;
+                $_ex = array_filter($_cap[$t]['extra'] ?? [], fn($v) => !is_null($v));
+
+                if (!$_ke) continue;
+                
+                $token = self::tkn($api, $host, $_ke, $_ty, $_ex);
+                if ($token === 471) continue; 
+                if ($token === 404) return ['trouble' => 'reload']; 
+                
+                if (is_string($token) && !empty($token)) {
+                    $solution = array_merge($solution, [
+                        'g-recaptcha-response'    => $token,
+                        'cf-turnstile-response'   => $token,
+                        'h-captcha-response'      => $token,
+                        'hcaptcha-response'       => $token,
+                        'g-recaptcha-response-v3' => $token
+                    ]);
+                    break; 
+                }
+            }
+        } elseif (!$api) {
+            (logx('err', 'undefined provider') ?: die);
         }
 
         if (empty($solution) && empty($_cap)) {
@@ -264,7 +501,7 @@ class Solve {
         #print(DIMM.BOLD.ITAL.FGo['MAG']."solving  ".RSET);
         $t = null;
         
-        $Params = array_merge($data, ['userAgent' => inf::$uagent]);
+        $Params = array_merge($data, ['userAgent' => self::$context['uagent']]);
         for ($retry = 0; $retry < 2; $retry++) {
             $t = $solver->token($key, $host, $type, $Params);
             
@@ -328,19 +565,10 @@ class Solve {
     }
 
     private static function rss($rss, $api, $host, $html) {
-        /*
-        $ctx = [
-            'host' => $host,
-            'ua' => self::$ua,
-            'ck' => self::$ck,
-            'in' => self::$in,
-            'ip' => self::$ip,
-        ];
-        */
         
         $utils = ['host' => $host, 'html' => $html];
         $ctx = array_merge(self::$context, $utils);
-        return (new rscaptcha($ctx))->exec($rss, $api, $html);
+        return (new rsCaptcha($ctx))->exec($rss, $api, $html);
     }
 
     private static function ucap($ucap, $host, $html) {
@@ -351,351 +579,6 @@ class Solve {
         return (new uCaptcha($ctx))->exec($ucap);
     }
 
-/* legacy 
-    private static function rss($rss, $api, $host, $html) {
-        
-        $_M = $rss['type'] ?? null;
-        $_K = $rss['keys'] ?? null;
-        $_T = $rss['extra']['token'] ?? null;
-        $_J = $rss['extra']['js'] ?? null;
-        
-        if (str_starts_with($_M, 'rsc')) {
-            return self::rsc($rss, $api, $host);
-        }
-        
-        if (in_array(null, [$_M, $_K, $_T, $_J], true)) return false;
-        if (!filter_var($_K, FILTER_VALIDATE_URL)) {
-            $_host = rtrim($host, '/');
-            $_path = ltrim($_K, '/');
-            $_K = (str_starts_with($_host, 'http')) ? "{$_host}/{$_path}" : "https://{$_host}/{$_path}";
-        }
-        
-        $img = Net::C($_K, 'GET', null, self::$ck, [], $host, self::$ua, ip: self::$ip, ins: self::$in);
-        if (empty($img) || $img === 99) return false;
-        
-        $co = self::img($api, $host, $_M, $img);
-        if (isset($co['trouble'])) return false;
-        
-        $_coMatches = scraper::_jP($co, '/\d+/');
-        $_co = $_coMatches[0] ?? $_coMatches; 
-        
-        if (is_array($_co) && count($_co) >= 2) {
-            [$x, $y] = $_co;
-            $token = self::rs($api, ['html' => $html, 'js' => $_J], $x, $y, $host);
-            if ($token) {
-                return [
-                    'rscaptcha_token' => $_T,
-                    'rscaptcha_response' => $token
-                ];
-            }
-        }
-        return false;
-    }
-
-    private static function rsc($rss, $api, $host) {
-        # problematic provider need much parameter
-        $token = null;
-        
-        $_D = $rss['extra'] ?? null;
-        $_I = $_D['app_id'] ?? null;
-        $_T = $_D['version'] ?? null;
-        $_K = $_D['public_key'] ?? null;
-        
-        $_H = 'https://rscaptcha.com';
-        
-        if (in_array(null, [$_D, $_I, $_T, $_K], true)) return false;
-        $rs_R = null;
-        $rs_T = null;
-        
-        if (strtolower(get_class($api)) === 'skibidixxx') {
-            $res = $api->rss($_D, $host);
-            if ($res) {
-                parse_str(str_replace([":", ","], ["=", "&"], $res), $out);
-                $rs_T = $out['rs_token'] ?? null;
-                $rs_R = $out['rs_res'] ?? null;
-            }
-        } else {
-            $_0 = SolveUtils::webkitID($_D, $boundary);
-            $head = ["Content-Type: multipart/form-data; boundary=$boundary"];
-            
-            $_get = json_decode(Net::S($_H."/captcha/$_T/get", 'POST', $_0, $head) ?: '', 1)['data'] ?? [];
-            
-            $coo = null;
-            if (!empty($_get) && isset($_get['captcha_key'])) {
-                $rs_T = $_get['captcha_key'];
-                if (method_exists($api, 'rss')) $coo = $api->rss($_get, $host);
-            }
-            if ($coo) {
-                $_coMatches = scraper::_jP($coo, '/\d+/');
-                $_co = $_coMatches[0] ?? $_coMatches;
-            }
-            if (is_array($_co) && count($_co) >= 2) {
-                [$x, $y] = $_co;
-                $_P = [
-                    'token' => $rs_T,
-                    'response' => "$x,$y",
-                    #'response' => "200,109",
-                ];
-                $_1 = SolveUtils::webkitID(array_merge($_P, $_D), $boundary);
-                $rs_R = json_decode(Net::S($_H."/captcha/$_T/verify", 'POST', $_1, $head) ?: '', 1)['result'] ?? null;
-            }
-        }
-        
-        if ($rs_R && $rs_T) {
-            return [
-                'rscaptcha_token' => $rs_T,
-                'rscaptcha_response' => $rs_R,
-            ];
-        }
-        
-        return null;
-        
-    }
-
-    private static function rs($api, $utils, $x, $y, $host) {
-        $provider = strtolower(get_class($api));
-        $token = null;
-        
-        # if some provider got many invalid
-        # u can change to use locally fallback
-        # uncomment to use by provider, it'll consume few credit
-        
-        
-        if ($provider === 'tertuyul') {
-            $data = [
-                'clickX' => $x,
-                'clickY' => $y,
-                'script' => base64_encode($utils['js'])
-            ];
-            $token = $api->run('rstoken', $data);
-        } 
-        
-        if ($provider === 'skibidixxx') {
-            $data = [
-                "htmlContent" => $utils['html'],
-                "clickX" => $x,
-                "clickY" => $y
-            ];
-            for ($retry = 0; $retry < 3; $retry++) {
-                usleep(500000);
-                $res = json_decode(Net::S('https://api.waryono.my.id/rspayload.php', 'POST', $data, json: true) ?: '', true);
-                #var_dump($res);
-                if (isset($res['Payload'])) {
-                    $token = $res['Payload'];
-                    break;
-                }
-            }
-        }
-       
-       
-        if (!$token) {
-            # this is got 2 method and auto pass
-            $rss = new rsResponse(inf::$uagent, $host);
-            $token = $rss->exec($utils, $x, $y);
-            
-        }
-        return $token;
-
-    }
-*/
-    
-/* legacy 
-    private static function ucap($ucap, $api, $host, $html) {
-        #print_r($ucap);
-        if (!$ucap) return false;
-        
-        $_D = $ucap['extra'];
-        $_M = $ucap['mods'] ?? '';
-        $_K = $ucap['keys'] ?? null;
-        $_S = $_D['sec'] ?? null;
-        $_A = $_D['app'] ?? null;
-        
-        if (in_array(null, [$_K, $_S, $_A], true)) {
-            $_0 = self::ucapJ($_D['js'], $host);
-            if (is_array($_0)) [$_K, $_S, $_A] = $_0;
-            else return false;
-        }
-        
-        $isUcaptcha = ($_M ?? '') === 'upside_captcha';
-        
-        $fingerprint = [
-            'X-Uid' => md5(IP().self::$ua),
-            'X-Ai' => $isUcaptcha ? 'LitoshiPay' : 'AntiCaptcha',
-            'X-Agent' => self::$ua,
-            'X-Screen-Width'  => 437,
-            'X-Screen-Height' => 973,
-            'X-Color-Depth'  => 24,
-            'X-Device-Pixel-Ratio' => 2.1,
-            'X-Lang' => LANGUAGE(),
-            'X-Langs' => LANGUAGE(),
-            'X-Timezone' => TIMEZONE(),
-            'X-Referrer' => $host,
-            'X-Title'  => scraper::title($html),
-            'X-Timestamp' => time(),
-            'X-Page-Url' => $host,
-            'X-Device' => 'Android',
-        ] + ($isUcaptcha ? [
-            'X-Ip' => IP(),
-            'X-Hash' => hash('sha256', self::$ua.LANGUAGE() . '437'.'973'.'false'),
-            'X-Browser' => 'Chrome',
-            'X-Browser-Private-Window'=> false,
-        ] : []);
-        $serverHash = _enc($fingerprint, $_K, $_S);
-        
-        $solution = null;
-        if ($isUcaptcha) {
-            $_1 = json_decode(Net::X($_A.'captcha/get_captcha', 'GET', null, self::$ck, ["X-Server-Hash: $serverHash"], $host, self::$ua, foll: false, ip: self::$ip, ins: self::$in)?: '', 1)['iconPositions'] ?? null;
-            if (!empty($_1)) {
-                foreach ($_1 as $pos) {
-                    if (!empty($pos['flipped'])) {
-                        $answer = $pos;
-                        break;
-                    }
-                }
-                $validation = [
-                    'U-Answer' => $answer['index'],
-                    'U-Hash' => $answer['hash'],
-                    'U-Full-Res' => $_1,
-                ];
-                
-                $solution = [
-                    'answer' => $answer['index'],
-                    'hash' => $answer['hash'],
-                    'upside-secret' => _enc($fingerprint, $_K, $_S),
-                    'validation-secret' => _enc($validation, $_K, $_S),
-                ];
-            }
-        } else {
-            $_1 = json_decode(Net::X($_A.'anticap/get_token', 'GET', null, self::$ck, [], $host, self::$ua), 1)['token'] ?? null;
-            if (!$_1) return false;
-            
-            $_2 = json_decode(Net::X($_A.'anticap/get_challenge','GET',null,self::$ck,["X-Server-Hash: $serverHash"],$host,self::$ua,foll: false,ip: self::$ip,ins: self::$in) ?: '', 1);
-            if (!empty($_2) && !empty($_2["question_image"])) {
-                $solved = self::ucapA($_2, $host, rtrim($_A, '/'));
-                if (is_array($solved)) {
-                    [$key, $idx] = $solved;
-                    $pa = [
-                        'selected' => $idx,
-                        'key' => $key,
-                        'token' => $_1,
-                    ];
-                    $_3 = json_decode(Net::X($_A.'anticap/validate_choice','POST',$pa,self::$ck,['X-Captcha-Header: anticap-v1'],$host,self::$ua)?: '', 1)['status'];
-                    logx('',$_3, true, true);
-                    if (!empty($_3) && $_3 === 'valid') {
-                        $solution = [
-                            'anti_captcha_token' => $_1,
-                            'anti_captcha_key' => $key,
-                            'anti_captcha_selected_icon' => $idx,
-                            'anti_hash' => _enc($fingerprint, $_K, $_S),
-                        ];
-                    }
-                }
-                
-                
-                
-                
-            }
-            
-        }
-        
-        return !empty($solution) ? $solution : false;
-        
-    }
-    
-    private static function ucapJ($data = [], $host = '') {
-        
-        if (empty($data)) return false;
-        
-        $h = [];
-        foreach ($data as $u) {
-            if (empty($u)) continue;
-            
-            if (!preg_match('#^https?://#', $u)) $u = rtrim($host, '/').'/'.ltrim($u,'/');
-            
-            if (filter_var($u, FILTER_VALIDATE_URL)) $h[] = $u;
-            
-        }
-        
-        if (empty($h)) return false;
-        
-        foreach ($h as $url) {
-            $js = Net::X($url, 'GET', null, self::$ck, [], $host, self::$ua, foll: false, ip: self::$ip, ins: self::$in);
-            if ($js === 99 || empty($js)) return false;
-            if (!str_contains($js, 'litoshi_api_key')) $js = dumpJsFlex($js);
-            
-            $key = scraper::_jP($js, "/litoshi_api_key\s*=\s*['\"]([^'\"]+)['\"]/");
-            $sec = scraper::_jP($js, "/litoshi_secret_key\s*=\s*['\"]([^'\"]+)['\"]/");
-            $url = scraper::_jP($js, "/app_url\s*=\s*['\"]([^'\"]+)['\"]/");
-            
-            $_A = $key[1][0] ?? null;
-            $_S = $sec[1][0] ?? null;
-            $_U = $url[1][0] ?? null;
-            if ($_A && $_S) return [$_A ,$_S, $_U,];
-        }
-        
-        return false;
-    }
-    
-    private static function ucapA($data, $host, $app) {
-        $_base = _lib('ucaptcha');
-        
-        $key = $data["anti_captcha_key"];
-        $ins = $data["question_image"];
-        $icn = $data["icons"];
-        
-        $hashFile = LIBDIR . '/anticaptcha.json';
-        $hashes = file_exists($hashFile) ? json_decode(_get($hashFile), true) : [];
-        
-        $main = Net::X($ins, 'GET', null, self::$ck, [], $host, self::$ua);
-        if (empty($main) || $main === 99) return null;
-        _put($_base . '/main.png', $main);
-        
-        $qA = SolveUtils::aHash($_base . '/main.png');
-        $qD = SolveUtils::dHash($_base . '/main.png');
-        unlink($_base . '/main.png');
-        
-        $best = null;
-        $bestScore = PHP_INT_MAX;
-        
-        foreach ($icn as $_i) {
-            if (isset($hashes[$_i])) {
-                $iA = $hashes[$_i]['a'];
-                $iD = $hashes[$_i]['d'];
-            } else {
-                $iconU = "$app/assets/anticap/icons/$_i";
-                $iconC = Net::X($iconU, 'GET', null, self::$ck, [], $host, self::$ua);
-                if (empty($iconC) || $iconC === 99) continue;
-                _put("$_base/$_i", $iconC);
-                $iA = SolveUtils::aHash("$_base/$_i");
-                $iD = SolveUtils::dHash("$_base/$_i");
-                unlink("$_base/$_i");
-                
-                $hashes[$_i] = ['a' => $iA, 'd' => $iD];
-                _put($hashFile, json_encode($hashes));
-            }
-            
-            if (!$iA || !$iD) continue;
-            $score = SolveUtils::hamming($qA, $iA) + SolveUtils::hamming($qD, $iD);
-            
-            #logx('info', "$_i [ $score ]", true, true);
-            #logx('ok', "  dH: ".SolveUtils::hamming($qD, $iD));
-            #logx('ok', "  aH: ".SolveUtils::hamming($qA, $iA));
-            
-            if ($score < $bestScore) {
-                $bestScore = $score;
-                $best = $_i;
-            }
-        }
-        
-        #logx('ok', "Best: $best (score: $bestScore)");
-        
-        if ($best) return [$key, $best];
-
-        return null;
-        
-    }
-*/ 
-    
 }
 
 /** @class locally
@@ -901,7 +784,7 @@ class locally {
         
         return in_array($atb, [null, 77, false], true) ? 77 : $atb;
     }
-
+/*
     public static function rotCaptcha($html) {
         $solution = ['rot_captcha_val' => 0];
         if (!getDeps('gd@php')) {
@@ -1090,7 +973,7 @@ class locally {
         sort($ans);
         return ['shield_answer' => implode(',', $ans)];
     }
-    
+*/
     public static function smartFP($html) {
         $xpath = Scraper::dom($html);
         $node = $xpath->query("//input[@name='smart_token']")->item(0);

@@ -41,12 +41,10 @@ final class uCaptcha {
                 }
                 
                 $isUc = ($_M === 'upside_captcha');
-                $fingerprint = $this->fingerprint($isUc);
-                $serverHash  = $this->_enc($fingerprint, $_K, $_S);
+                $_fp = $this->fingerprint($isUc);
+                $_sh = $this->_enc($_fp, $_K, $_S);
                 
-                return $isUc
-                        ? $this->_uC($_A, $fingerprint, $serverHash, $_K, $_S)
-                        : $this->_aC($_A, $fingerprint, $serverHash, $_K, $_S);
+                return $isUc ? $this->_uC($_A, $_fp, $_sh, $_K, $_S) : $this->_aC($_A, $_fp, $_sh, $_K, $_S);
             } finally {
                 $this->rmdir($this->workDir);
             }
@@ -54,15 +52,18 @@ final class uCaptcha {
     }
 
     private function _derive($secret, $salt): array {
+        
         $masterKey = hash('sha512', $secret . $salt, true);
         return [
-            'enc'  => hash_hmac('sha256', 'encryption',     $masterKey, true),
+            'enc' => hash_hmac('sha256', 'encryption',     $masterKey, true),
             'auth' => hash_hmac('sha256', 'authentication', $masterKey, true),
         ];
+        
     }
 
-    private function _enc($data, $apiKey, $secretKey) {
-        $_key = $this->_derive($apiKey, $secretKey);
+    private function _enc($data, $apiKey, $secKey) {
+        
+        $_key = $this->_derive($apiKey, $secKey);
 
         if (is_array($data) || is_object($data)) {
             $data = json_encode($data, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
@@ -74,14 +75,15 @@ final class uCaptcha {
         $solution = base64_encode($_ivv . $_sgn . $_cip);
 
         return rtrim(strtr($solution, '+/', '-_'), '=');
+        
     }
 
-    private function _dec($data, $apiKey, $secretKey) {
+    private function _dec($data, $apiKey, $secKey) {
         $data = strtr($data, '-_', '+/');
         while (strlen($data) % 4) $data .= '=';
         $raw = base64_decode($data);
 
-        $_key = $this->_derive($apiKey, $secretKey);
+        $_key = $this->_derive($apiKey, $secKey);
         $_ivv = substr($raw, 0, 16);
         $_sgn = substr($raw, 16, 32);
         $_cip = substr($raw, 48);
@@ -103,7 +105,7 @@ final class uCaptcha {
         $hashFile = LIBDIR.'/anticaptcha.json';
         $hashes = file_exists($hashFile) ? json_decode(_get($hashFile), true) : [];
         
-        $main = Net::X($qImg, 'GET', null, $this->ck, [], $this->host, $this->ua);
+        $main = Net::X($qImg, 'GET', null, $this->ck, [], $this->host, $this->ua, false, false, $this->ip, $this->ins);
         if (empty($main) || $main === 99) return null;
         _put($base . '/main.png', $main);
 
@@ -120,7 +122,7 @@ final class uCaptcha {
                 $iD = $hashes[$icon]['d'];
             } else {
                 $iconUrl = "$app/assets/anticap/icons/" . rawurlencode($icon);
-                $iconData = Net::X($iconUrl, 'GET', null, $this->ck, [], $this->host, $this->ua);
+                $iconData = Net::X($iconUrl, 'GET', null, $this->ck, [], $this->host, $this->ua, false, false, $this->ip, $this->ins);
                 if (empty($iconData) || $iconData === 99) continue;
                 _put("$base/$icon", $iconData);
                 $iA = SolveUtils::aHash("$base/$icon");
@@ -128,6 +130,7 @@ final class uCaptcha {
                 @unlink("$base/$icon");
 
                 $hashes[$icon] = ['a' => $iA, 'd' => $iD];
+
                 if (count($hashes) > 500) $hashes = array_slice($hashes, -500, 500, true);
                 _put($hashFile, json_encode($hashes));
             }
@@ -138,14 +141,15 @@ final class uCaptcha {
                 $bestScore = $score;
                 $best = $icon;
             }
+
         }
 
         return $best ? [$key, $best] : null;
     }
     
-    private function _uC($app, array $fp, $hash, $apiKey, $secretKey) {
+    private function _uC($app, array $fp, $hash, $apiKey, $secKey) {
         $data = json_decode(Net::X(
-            $app . 'captcha/get_captcha', 'GET', null, $this->ck,
+            $app.'captcha/get_captcha', 'GET', null, $this->ck,
             ["X-Server-Hash: $hash"],
             $this->host, $this->ua, foll: false, ip: $this->ip, ins: $this->in
         ) ?: '', 1);
@@ -167,8 +171,8 @@ final class uCaptcha {
             'U-Hash' => $answer['hash'],
             'U-Full-Res' => $positions,
         ];
-        $upsideSecret = $this->_enc($this->fingerprint(true), $apiKey, $secretKey);
-        $validationSecret = $this->_enc($validation, $apiKey, $secretKey);
+        $upsideSecret = $this->_enc($this->fingerprint(true), $apiKey, $secKey);
+        $validationSecret = $this->_enc($validation, $apiKey, $secKey);
 
         $solution = [
             'answer' => $answer['index'],
@@ -181,16 +185,16 @@ final class uCaptcha {
         return ['solution' => $solution, 'headers' => $head];
     }
 
-    private function _aC($app, array $fp, $hash, $apiKey, $secretKey) {
+    private function _aC($app, array $fp, $hash, $apiKey, $secKey) {
         $token = json_decode(Net::X(
-            $app . 'anticap/get_token', 'GET', null, $this->ck,
+            $app.'anticap/get_token', 'GET', null, $this->ck,
             [], $this->host, $this->ua
         ), 1)['token'] ?? null;
         
         if (!$token) return false;
 
         $ch = json_decode(Net::X(
-            $app . 'anticap/get_challenge', 'GET', null, $this->ck,
+            $app.'anticap/get_challenge', 'GET', null, $this->ck,
             ["X-Server-Hash: $hash"],
             $this->host, $this->ua, foll: false, ip: $this->ip, ins: $this->in
         ) ?: '', 1);
@@ -201,11 +205,11 @@ final class uCaptcha {
         [$key, $icon] = $solved;
 
         $status = json_decode(Net::X(
-            $app . 'anticap/validate_choice', 'POST',
+            $app.'anticap/validate_choice', 'POST',
             ['selected' => $icon, 'key' => $key, 'token' => $token],
             $this->ck,
             ['X-Captcha-Header: anticap-v1'],
-            $this->host, $this->ua
+            $this->host, $this->ua, foll: false, ip: $this->ip, ins: $this->in
         ) ?: '', 1)['status'] ?? null;
 
         if ($status !== 'valid') return false;
@@ -214,41 +218,39 @@ final class uCaptcha {
             'anti_captcha_token' => $token,
             'anti_captcha_key' => $key,
             'anti_captcha_selected_icon' => $icon,
-            'anti_hash' => $this->_enc($fp, $apiKey, $secretKey),
+            'anti_hash' => $this->_enc($fp, $apiKey, $secKey),
         ];
     }
 
     private function _keys(array $jsUrls): array|false {
+        
         $urls = [];
         foreach ($jsUrls as $u) {
             if (empty($u)) continue;
-            if (!preg_match('#^https?://#', $u)) {
-                $u = rtrim($this->host, '/') . '/' . ltrim($u, '/');
-            }
+            if (!preg_match('#^https?://#', $u)) $u = rtrim($this->host, '/') . '/' . ltrim($u, '/');
             if (filter_var($u, FILTER_VALIDATE_URL)) $urls[] = $u;
         }
         if (empty($urls)) return false;
         
         foreach ($urls as $url) {
             $js = Net::X($url, 'GET', null, $this->ck, [], $this->host, $this->ua, foll: false, ip: $this->ip, ins: $this->in);
+            
             if ($js === 99 || empty($js)) continue;
-            #if (!str_contains($js, 'litoshi_api_key')) $js = dumpJsFlex($js);
             if (!str_contains($js, 'litoshi_api_key')) $js = solveUtils::dumpJs($js);
             
             $api = Scraper::_jP($js, "/litoshi_api_key\s*=\s*['\"]([^'\"]+)['\"]/");
             $sec = Scraper::_jP($js, "/litoshi_secret_key\s*=\s*['\"]([^'\"]+)['\"]/");
             $app = Scraper::_jP($js, "/app_url\s*=\s*['\"]([^'\"]+)['\"]/");
 
-            if (!empty($api[1][0]) && !empty($sec[1][0])) {
-                return [$api[1][0], $sec[1][0], $app[1][0] ?? null];
-            }
+            if (!empty($api[1][0]) && !empty($sec[1][0])) return [$api[1][0], $sec[1][0], $app[1][0] ?? null];
+            
         }
         return false;
     }
 
     private function fingerprint($isUc): array {
         $base = [
-            'X-Uid' => md5(IP() . $this->ua),
+            'X-Uid' => md5(IP().$this->ua),
             'X-Ai' => $isUc ? 'LitoshiPay' : 'AntiCaptcha',
             'X-Agent' => $this->ua,
             'X-Screen-Width' => 437,
@@ -268,7 +270,7 @@ final class uCaptcha {
         if ($isUc) {
             $base += [
                 'X-Ip' => IP(),
-                'X-Hash' => hash('sha256', $this->ua . LANGUAGE() . '437' . '973' . 'false'),
+                'X-Hash' => hash('sha256', $this->ua.LANGUAGE().'437'.'973'.'false'),
                 'X-Browser' => $this->_browser(),
                 'X-Browser-Private-Window' => false,
             ];

@@ -1,115 +1,13 @@
 <?php
-/** @class Config
- * @method credential
-     * @param array $defaults
-     * @param bool $required
-     * @param string|null $customPath
-     * @return ArrayAccess
-     * @method __construct
-             * @param string $file
-             * @param array $defaults
-             * @param bool $required
-     * @method offsetGet
-             * @param mixed $key
-             * @return mixed
-     * @method offsetSet
-             * @param mixed $key
-             * @param mixed $value
-             * @return void
-     * @method offsetUnset
-             * @param mixed $key
-             * @return void
-     * @method offsetExists
-             * @param mixed $key
-             * @return void
-     * @method enforce
-             * @param mixed $key
-             * @param mixed $value
-             * @return mixed
-     * @method shouldAsk
-             * @param mixed $key
-             * @param mixed $value
-             * @return void
-     * @method save
-             * @param mixed $key
-             * @param mixed $value
-             * @return void
- * @method cookie
-     * @param string $email
- * @method uagent
-     * @param string $type
-     * @return string
- * @method genUA
-     * @return string
- * @method getKeys
-     * @param mixed $api
-     * @return mixed
- */
 
-trait WorkDir {
-    protected string $workDir;
 
-    protected function setupWorkDir(?string $type = null, ?string $host = null, ?string $mail = null, int $ttl = 120): string {
-        $base = _lib($type, $host, $mail);
 
-        if (!is_dir($base)) @mkdir($base, 0755, true);
-
-        $this->cleanOld($base, $ttl);
-
-        $dir = $base . DIRECTORY_SEPARATOR .
-               str_replace('.', '', (string)microtime(true)).'_' .
-               bin2hex(random_bytes(4));
-        if (!is_dir($dir) && !@mkdir($dir, 0755, true)) {
-            usleep(100000);
-            if (!is_dir($dir) && !@mkdir($dir, 0755, true)) {
-                $this->workDir = '';
-                return '';
-            }
-        }
-
-        $this->workDir = $dir;
-        return $dir;
-    }
-
-    protected function cleanOld(string $base, int $ttl = 120): void {
-        $dirs = glob($base . DIRECTORY_SEPARATOR . '*', GLOB_ONLYDIR);
-        if (!is_array($dirs)) return;
-        $now = microtime(true);
-        foreach ($dirs as $dir) {
-            $mtime = @filemtime($dir);
-            if ($mtime === false) continue;
-            if (($now - $mtime) > $ttl) $this->rmdir($dir);
-        }
-    }
-
-    protected function userdir(?string $mail): string {
-        $user = ($mail && str_contains($mail, '@'))
-            ? strstr($mail, '@', true)
-            : ($mail ?? '');
-        $user = preg_replace('/[^a-zA-Z0-9]/', '_', $user);
-        return $user !== '' ? $user : 'cookie';
-    }
-
-    protected function rmdir(string $path): void {
-        if (!is_dir($path)) return;
-        $items = @scandir($path);
-        if ($items === false) return;
-        foreach (array_diff($items, ['.', '..']) as $item) {
-            $full = $path.DIRECTORY_SEPARATOR.$item;
-            if (is_dir($full)) $this->rmdir($full);
-            else @unlink($full);
-        }
-
-        @rmdir($path);
-    }
-}
-
-class Config {
+class Configgs {
     private static array $cred_cache = [];
     private static ?string $ua_static = null;
     
     public static function credential(array $defaults = [], $required = false, array|bool $ask = false): ArrayAccess {
-        $baseDir = dirname(debug_backtrace()[0]['file']);
+        $baseDir = CREDIR.'/'.$GLOBALS['_CTX']['current_bot'];
         $filePath = rtrim($baseDir, '/') . '/credentials';
         return new class($filePath, $defaults, $required, $ask) implements ArrayAccess {
             
@@ -257,14 +155,14 @@ class Config {
         };
     }
     
-    public static function cookie($email = null) {
-        $trace = debug_backtrace();
-        $b_dir = dirname($trace[0]['file']);
+    public static function cookiess($email = null) {
+        $b_dir = CREDIR.'/'.$GLOBALS['_CTX']['current_bot'];
 
-        if (empty($email)) return $b_dir . '/cookie';
+        if (empty($email)) return $b_dir . '/cookies';
 
         $norm = preg_replace('/[^a-z0-9]+/', '_', strtolower($email));
         $c_dir = $b_dir . '/cookies';
+        
         if (!is_dir($c_dir)) mkdir($c_dir, 0755, true);
 
         return $c_dir . '/' . $norm . '_cookie';
@@ -320,8 +218,4 @@ class Config {
         return $api;
     }
 
-}
-
-function AUTH_API() {
-    return $GLOBALS['_CTX']['AUTH_API'];
 }

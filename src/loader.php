@@ -6,12 +6,19 @@
  */
 
 if (!defined('ROOT')) define('ROOT', realpath(__DIR__ . '/../'));
-if (!defined('RUNNER')) define('RUNNER', '21.0.7'); 
+if (!defined('RUNNER')) define('RUNNER', '31.9.2'); 
 if (!defined('LIBDIR')) define('LIBDIR', ROOT . '/lib'); 
 if (!defined('SRCDIR')) define('SRCDIR', ROOT . '/src');
 if (!defined('UPDDIR')) define('UPDDIR', ROOT . '/upd');
 if (!defined('BOTDIR')) define('BOTDIR', ROOT . '/bot');
-#if (!defined('SLDIR')) define('SLDIR', ROOT . '/sl');
+if (!defined('CREDIR')) define('CREDIR', ROOT . '/cre');
+
+(function() {
+    if (!is_dir(LIBDIR)) mkdir(LIBDIR, 0777, true);
+    if (!is_dir(SRCDIR)) mkdir(SRCDIR, 0777, true);
+    if (!is_dir(BOTDIR)) mkdir(BOTDIR, 0777, true);
+    if (!is_dir(CREDIR)) mkdir(CREDIR, 0777, true);
+} )();
 
 (function() {
     
@@ -26,15 +33,11 @@ if (!defined('BOTDIR')) define('BOTDIR', ROOT . '/bot');
 
     foreach ($modules as $m) {
         $utils = "$src/$m/utils.php";
-        if (file_exists($utils)) {
-            #echo " [UTIL] -> $utils" . PHP_EOL; 
-            require_once $utils;
-        }
+        if (file_exists($utils)) require_once $utils;
     }
 
     foreach ($modules as $m) {
-        $dir = "$src/$m";
-        $it = new RecursiveDirectoryIterator($dir);
+        $it = new RecursiveDirectoryIterator("$src/$m");
         $fs = [];
 
         foreach (new RecursiveIteratorIterator($it) as $f) {
@@ -43,13 +46,8 @@ if (!defined('BOTDIR')) define('BOTDIR', ROOT . '/bot');
                 $fs[] = $f->getRealPath();
             }
         }
-
         sort($fs);
-
-        foreach ($fs as $path) {
-            #echo " [MOD]  -> $path" . PHP_EOL; 
-            require_once $path;
-        }
+        foreach ($fs as $path) require_once $path;
     }
     
 })();

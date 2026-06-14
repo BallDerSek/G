@@ -12,12 +12,12 @@ class Menu {
             echo FGd['CYN'] . RUNNER . "\n" . RSET;
             logx('info', IP(), true, true);
             echo FGd['CYN'] . TIMEZONE() . "\n" . RSET;
-            logx('info', "  [0] SETTINGS\n  [1] RUN BOT\n  [2] GET BOT\n  [x] EXIT", true, true);
+            logx('info', "  [0] SETTINGS\n  [1] RUN BOT\n  [x] EXIT", true, true);
 
             switch (trim(_rl('  input [boot]: '))) {
                 case '0': if (self::tools()) return true; break; 
                 case '1': self::runBot(); break;
-                case '2': self::getBotMenu(); break;
+                #case '2': self::getBotMenu(); break;
                 case 'x': exit();
                 default: _cle(); bootApp(); return true;
             }
@@ -164,7 +164,6 @@ class Menu {
 
     /**
      * MENU INSTALLER 
-     */
     public static function getBotMenu() {
         $pkgs = BOTS::getPackages(); // Ambil dari BOT
         if (!$pkgs) { logx('err', "No packages found"); _sle(2); return; }
@@ -179,6 +178,7 @@ class Menu {
             _sle(2);
         }
     }
+     */
 
     /**
      * MENU PROXY
@@ -246,11 +246,12 @@ class Menu {
         echo "\n    eg:\n";
         logx('info', "BOT=feyorratop mail=xxx pass=xxx php run.php", true, true);
         logx('info', "BOT=botname API=tertuyul KEY=abc login=xxx  CI=1 PROXY=type://host:port php run.php", true, true);
-        logx('info', "BOT=botname API=tertuyul KEY=321 login=xxx php run.php", true, true);
+        logx('info', "BOT=botname API=tertuyul KEY=321 CI=1 login=xxx php run.php", true, true);
         logx('info', "ENV=1 php run.php", true, true);
         _rl("\n Enter to back...");
         _cle();
     }
+    
 }
 
 class BOTS {
@@ -258,7 +259,6 @@ class BOTS {
     # installed scanner
     public static function getInstalled(): array {
         $bots = [];
-        if (!is_dir(BOTDIR)) { mkdir(BOTDIR, 0777, true); return $bots; }
         foreach (scandir(BOTDIR) as $dir) {
             if ($dir[0] === '.') continue;
             if (is_dir(BOTDIR."/$dir") && file_exists(BOTDIR."/$dir/$dir.php")) $bots[] = $dir;
@@ -266,67 +266,6 @@ class BOTS {
         return $bots;
     }
 
-    # update bot scanner
-    public static function getPackages(): array {
-        $files = glob(rtrim(UPDDIR, '/')."/*.txt");
-        if (!$files) return [];
-        sort($files, SORT_NATURAL | SORT_FLAG_CASE);
-        return array_map('basename', $files);
-    }
-
-    # installer logic
-    public static function install($pkgFile) {
-        styler("Installing bot", function() { _sle(1); });
-        $path = UPDDIR . "/$pkgFile";
-        $nameNoExt = pathinfo($pkgFile, PATHINFO_FILENAME);
-
-        try {
-            $raw = trim(_get($path));
-            $j = json_decode(base64_decode($raw, true), true);
-            
-            $key = str_pad($nameNoExt, 16, '0');
-            $iv = substr(hash('sha256', base64_encode($nameNoExt), true), 0, 16);
-
-            if (is_array($j) && ($j['v']) === 2) {
-                $decrypted = openssl_decrypt(base64_decode($j['ct'], true), 'AES-128-CBC', $key, OPENSSL_RAW_DATA, $iv);
-            } else {
-                $decrypted = openssl_decrypt(base64_decode($raw, true), 'AES-128-CBC', $key, OPENSSL_RAW_DATA, $iv);
-            }
-
-            if (!$decrypted) throw new Exception("Decrypt error");
-
-            $ds = self::parseDataset($decrypted);
-            
-            // Simpan ke folder
-            $botName = $ds['meta']['name'];
-            $botPath = BOTDIR . "/$botName";
-            if (!is_dir($botPath)) mkdir($botPath, 0777, true);
-            
-            $content = $ds['content'];
-            if (stripos(ltrim($content), '<?php') !== 0) $content = "<?php\n" . $content;
-            _put("$botPath/$botName.php", rtrim($content) . "\n");
-
-            logx('ok', "Installed: {$botName}");
-            @unlink($path); 
-
-        } catch (Throwable $e) {
-            logx('err', "Failed: {$e->getMessage()}");
-        }
-    }
-
-    private static function parseDataset($s): array {
-        if (!preg_match('/^DATASET\s*\[\s*meta:\[(.*?)\]\s*,\s*content:\[(.*?)\]\s*\]\s*$/s', $s, $m)) {
-            throw new Exception("Invalid DATASET");
-        }
-        $meta = [];
-        foreach (preg_split('/\s*;\s*/', $m[1], -1, PREG_SPLIT_NO_EMPTY) as $pair) {
-            if (strpos($pair, ':') === false) continue;
-            [$k, $v] = array_map('trim', explode(':', $pair, 2));
-            $meta[strtolower($k)] = $v;
-        }
-        if (!preg_match('/###(.*?)###/s', $m[2], $cm)) throw new Exception("No content");
-        return ['meta' => $meta, 'content' => base64_decode(preg_replace('/\s+/', '', $cm[1]))];
-    }
 }
 
 function onKeys() {
@@ -336,9 +275,7 @@ function onKeys() {
 function pickIndex(array $items, callable $callback) {
     $count = count($items);
 
-    if ($count === 0) {
-        return 0;
-    }
+    if ($count === 0) return 0;
 
     $idx = 0;
     $rawMode = false;
@@ -355,9 +292,7 @@ function pickIndex(array $items, callable $callback) {
 
             $char = fread(STDIN, 1);
             
-            if ($char === "\033") {
-                $char .= fread(STDIN, 2) ?: '';
-            }
+            if ($char === "\033") $char .= fread(STDIN, 2)?: '';
 
             if ($char === "\033[A") {
                 $idx = ($idx <= 0) ? $count - 1 : $idx - 1;
@@ -369,21 +304,15 @@ function pickIndex(array $items, callable $callback) {
                 continue;
             }
 
-            if ($char === "\n" || $char === "\r") {
-                return $idx;
-            }
+            if ($char === "\n" || $char === "\r") return $idx;
 
             if (ctype_digit($char)) {
                 $n = (int)$char - 1;
-                if (isset($items[$n])) {
-                    return $n;
-                }
+                if (isset($items[$n])) return $n;
             }
         }
     } finally {
-        if ($rawMode) {
-            system('stty sane');
-        }
+        if ($rawMode) system('stty sane');
     }
 }
 
@@ -402,36 +331,24 @@ class KEYS {
     ];
 
     public static function sync() {
-        $data = is_file(self::$file)
-            ? json_decode(_get(self::$file), true)
-            : [];
+        $data = is_file(self::$file) ? json_decode(_get(self::$file), 1) : [];
 
-        $data = (is_array($data) && !empty($data))
-            ? $data
-            : self::$defaultEndpoints;
+        $data = (is_array($data) && !empty($data)) ? $data : self::$defaultEndpoints;
 
-        foreach ($data as $ep => $val) {
-            $GLOBALS['_CTX']['apikey'][$ep] = $val;
-        }
+        foreach ($data as $ep => $val) $GLOBALS['_CTX']['apikey'][$ep] = $val;
     }
 
     public static function run() {
         self::sync();
 
-        if (!hasTty() || getenv('CI') === '1') {
-            return self::CI_env();
-        }
+        if (!hasTty() || getenv('CI') === '1') return self::CI_env();
 
         return self::CLI_env();
     }
 
     private static function CLI_env() {
 
-        $providers = array_merge(
-            ['no apikey'],
-            array_keys(self::$defaultEndpoints),
-            ['update keys']
-        );
+        $providers = array_merge(['no apikey'], array_keys(self::$defaultEndpoints), ['update keys']);
 
         $idx = pickIndex($providers, function($providers, $idx) {
 
@@ -440,15 +357,10 @@ class KEYS {
             foreach ($providers as $i => $url) {
 
                 $val = $GLOBALS['_CTX']['apikey'][$url] ?? '';
-                $status = empty($val)
-                    ? FGo["RED"] . '[NO]'
-                    : FGo["GRN"] . '[ON]';
 
-                echo $status
-                    . RSET
-                    . ($i === $idx ? FGo["BLU"] . " => " : "    ")
-                    . $url
-                    . RSET . "\n";
+                $status = empty($val) ? FGo["RED"] . '[NO]' : FGo["GRN"] . '[ON]';
+
+                echo $status.RSET.($i === $idx ? FGo["BLU"]." => " : "    ").$url.RSET."\n";
             }
         });
 
@@ -486,24 +398,18 @@ class KEYS {
         $endpoint = self::maps((string)getenv('API'));
         $apiKey = trim((string)getenv('KEY'));
 
-        if ($endpoint === '' || $apiKey === '') {
-            logx('err', "CI MODE: API/KEY missing");
-            die;
-        }
+        if ($endpoint === '' || $apiKey === '') (logx('err', 'API/KEY required') ?: die);
 
         $solver = Api::use($endpoint, $apiKey);
 
-        if (!self::viewKeys($solver)) {
-            logx('err', "rejected");
-            die;
-        }
+        if (!self::viewKeys($solver)) (logx('err', 'rejected') ?: die);
 
         return $solver;
     }
 
     private static function _ask($endpoint) {
 
-        echo "\n" . BOLD . $endpoint . RSET . "\n";
+        echo "\n".BOLD.$endpoint.RSET."\n";
 
         $apiKey = trim(_rl("  apikeys: "));
         if ($apiKey === '') return '';
@@ -531,6 +437,7 @@ class KEYS {
     private static function viewKeys($solver) {
         try {
             return styler("CHECK " . get_class($solver), function () use ($solver) {
+                _sle(2);
                 ob_start();
                 try {
                     $ok = $solver->getInfo();
@@ -556,15 +463,10 @@ class KEYS {
             foreach ($providers as $i => $url) {
 
                 $val = $GLOBALS['_CTX']['apikey'][$url] ?? '';
-                $status = empty($val)
-                    ? FGo["RED"] . '[NO]'
-                    : FGo["GRN"] . '[ON]';
 
-                echo $status
-                    . RSET
-                    . ($i === $idx ? FGo["BLU"] . " => " : "    ")
-                    . $url
-                    . RSET . "\n";
+                $status = empty($val) ? FGo["RED"].'[NO]' : FGo["GRN"].'[ON]';
+
+                echo $status.RSET.($i === $idx ? FGo["BLU"]." => " : "    ").$url.RSET."\n";
             }
         });
 
@@ -576,4 +478,5 @@ class KEYS {
         $cfg = Api::KEY[$v] ?? Api::KEY[strtolower($v)] ?? null;
         return $cfg['ep'] ?? $v;
     }
+
 }

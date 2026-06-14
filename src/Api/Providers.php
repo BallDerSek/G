@@ -49,13 +49,13 @@ class xevil extends Provider {
     
     public function bctt($param, $j) {
         
+        $_d['main'] = $param['main'];
         
+        foreach ($param['opsi'] as $i => $r) {
+            $_d[$i] = $r;
+        }
         
-        die;
-        $_d['main'] = $j['pixel'];
-        foreach ($j['options'] as $i => $r) $_d[$i] = $r['pixels'];
-        
-        $res =  $this->run('bitcotask', $_d, true);
+        $res =  $this->run('bitcotasks', $_d, true);
         var_dump($res);
         
         die;
@@ -473,7 +473,7 @@ class gmxch extends Provider {
     }
     
     public function bct(array $data) {
-        #return 777;
+        return 777;
         
         $params = [
             "method" => "bitcotasks",

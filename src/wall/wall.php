@@ -734,7 +734,7 @@ class Bctt {
                 $cap_tok = json_decode(Net::X($this->bct_h . $cc_p1['url'], 'POST', $cc_p1['payload'], $this->cookieFile, [], $cc_getG, $this->userAgent) ?: '', true)[$fjs['cc_ver']] ?? false;
                 if ($cap_tok) {
                     $end = microtime(true);
-                    if (($wait = (int)$tmr - ($end - $set)) >= 0) styler("waiting for bitcotask", fn() => _sle((int)ceil($wait)));
+                    if (($wait = (int)$param['timer'] - ($end - $set)) >= 0) styler("waiting for bitcotask", fn() => _sle((int)ceil($wait)));
                     return $this->_set($fjs, $param, $cap_tok, $cc_getG);
                 }
             }

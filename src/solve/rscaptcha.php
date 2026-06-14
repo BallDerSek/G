@@ -1,6 +1,6 @@
 <?php
 
-final class rscaptcha {
+final class rsCaptcha {
     
     private string $host, $ua, $ck, $ip;
     private bool $in;
@@ -214,118 +214,7 @@ class rsResponse {
         
         return $token ?: $this->fallback($x, $y, $html);
     }
-/*
-    private function _dump($_input, $unlink = false) {
 
-        if (is_file($_input)) {
-            $jsCode = _get($_input);
-            if ($jsCode === false) return false;
-            if ($unlink) @unlink($_input);
-        } else {
-            $jsCode = $_input;
-        }
-
-        if ($jsCode === '') return false;
-
-        $nodeWrapper = <<<'JS'
-const fs = require('fs');
-const jsCode = fs.readFileSync(0, 'utf8');
-
-global.window = { location: { hostname: '' }, screen: {}, clientInformation: {} };
-global.document = {
-  write: (s='') => { console.log("DUMP_START" + String(s) + "DUMP_END"); },
-  getElementById: () => ({ value: '' }),
-  querySelector: () => ({ value: '' })
-};
-global.navigator = { appCodeName: 'Mozilla', platform: 'Win32' };
-
-// hook decodeURIComponent
-const _dec = global.decodeURIComponent;
-global.decodeURIComponent = function(v) {
-  const out = _dec(v);
-  if (typeof out === 'string' && (out.includes('function') || out.includes('<') || out.length > 300)) {
-    console.log("DUMP_START" + out + "DUMP_END");
-  }
-  return out;
-};
-
-// hook eval
-const _eval = global.eval;
-global.eval = function(code) {
-  if (typeof code === 'string' && code.length > 200) {
-    console.log("DUMP_START" + code + "DUMP_END");
-  }
-  return _eval(code);
-};
-
-// hook Function constructor
-const _Function = global.Function;
-global.Function = function(...args) {
-  const body = args[args.length - 1];
-  if (typeof body === 'string' && body.length > 200) {
-    console.log("DUMP_START" + body + "DUMP_END");
-  }
-  return _Function(...args);
-};
-
-// hook atob 
-if (typeof global.atob !== 'function') {
-  global.atob = (s) => Buffer.from(String(s), 'base64').toString('binary');
-}
-const _atob = global.atob;
-global.atob = function(s){
-  const out = _atob(s);
-  if (typeof out === 'string' && out.length > 200) {
-    console.log("DUMP_START" + out + "DUMP_END");
-  }
-  return out;
-};
-
-try { _eval(jsCode); } catch (e) {}
-JS;
-
-        $cmd = 'node -e ' . escapeshellarg($nodeWrapper);
-
-        $proc = proc_open($cmd, [
-            0 => ['pipe', 'r'],
-            1 => ['pipe', 'w'],
-            2 => ['pipe', 'w'],
-        ], $pipes);
-
-        if (!is_resource($proc)) return false;
-
-        fwrite($pipes[0], $jsCode);
-        fclose($pipes[0]);
-
-        $out = stream_get_contents($pipes[1]);
-        $err = stream_get_contents($pipes[2]);
-        fclose($pipes[1]);
-        fclose($pipes[2]);
-
-        proc_close($proc);
-
-        $all = (string)$out . (string)$err;
-        if ($all === '') return false;
-
-        if (!preg_match_all('/DUMP_START(.*?)DUMP_END/is', $all, $mm) || empty($mm[1])) {
-            return false;
-        }
-
-        $cands = array_map(
-            fn($s) => html_entity_decode($s, ENT_QUOTES | ENT_HTML5, 'UTF-8'),
-            $mm[1]
-        );
-
-        usort($cands, fn($a, $b) => strlen($b) <=> strlen($a));
-        $best = $cands[0];
-
-        if (isset($this->workDir) && is_dir($this->workDir)) {
-            _put($this->workDir . '/i.js', $best);
-        }
-
-        return $best;
-    }
-*/
     private function _token($jsFile, $x, $y, $ua) {
         if (!file_exists($jsFile)) return false;
         $jsContent = _get($jsFile);
@@ -382,61 +271,57 @@ JS;
 
 class rss_build {
     
-    # xevil source
+    # other source builder
     
     private const FINGERPRINT = [
-        'screenWidth'        => '806',
-        'screenHeight'       => '320',
-        'availWidth'         => '806',
-        'availHeight'        => '320',
-        'colorDepth'         => '24',
-        'pixelDepth'         => '24',
-        'innerHeight'        => '320',
-        'innerWidth'         => '806',
-        'platform'           => 'Linux armv81',
-        'appCodeName'        => 'Mozilla',
+        'screenWidth' => '806',
+        'screenHeight' => '320',
+        'availWidth' => '806',
+        'availHeight' => '320',
+        'colorDepth' => '24',
+        'pixelDepth' => '24',
+        'innerHeight' => '320',
+        'innerWidth' => '806',
+        'platform' => 'Linux armv81',
+        'appCodeName' => 'Mozilla',
         'hardwareConcurrency'=> '8',
     ];
 
     private const SOURCE_TO_VALUE = [
-        'screen_0'    => 'screenWidth',
-        'screen_1'    => 'screenHeight',
-        'screen_2'    => 'availWidth',
-        'screen_3'    => 'availHeight',
-        'screen_4'    => 'colorDepth',
-        'screen_5'    => 'pixelDepth',
+        'screen_0' => 'screenWidth',
+        'screen_1' => 'screenHeight',
+        'screen_2' => 'availWidth',
+        'screen_3' => 'availHeight',
+        'screen_4' => 'colorDepth',
+        'screen_5' => 'pixelDepth',
         'navigator_0' => 'appCodeName',
         'navigator_1' => 'appCodeName',
         'navigator_2' => 'mozFlag',
         'clientInfo_0'=> 'platform',
         'clientInfo_1'=> 'hardwareConcurrency',
-        'window_0'    => 'innerHeight',
-        'window_1'    => 'innerWidth',
-        'document_0'  => 'hasFocus',
-        'click_0'     => 'clickX',
-        'click_1'     => 'clickY',
-        'timestamp'   => 'timestamp',
+        'window_0' => 'innerHeight',
+        'window_1' => 'innerWidth',
+        'document_0' => 'hasFocus',
+        'click_0' => 'clickX',
+        'click_1' => 'clickY',
+        'timestamp' => 'timestamp',
     ];
 
     public function build($x, $y, $html) {
-        $js    = $this->deobfuscate($html);
-        #_put('ccap1.js', $js);
-        $order = $js ? $this->extractFieldOrder($js) : $this->defaultOrder();
-        #print_r($order);
-        return $this->generateToken($x, $y, $order);
+        $_scjs = $this->deobfuscate($html);
+        $_ordr = $_scjs ? $this->extractFieldOrder($_scjs) : $this->defaultOrder();
+        return $this->generateToken($x, $y, $_ordr);
     }
 
     private function generateToken($x, $y, array $order) {
+        
         $dynamic = [
             'timestamp' => (string) time(),
             'clickX' => (string) $x,
             'clickY' => (string) $y,
         ];
 
-        $static = array_merge(self::FINGERPRINT, [
-            'hasFocus' => '1',
-            'mozFlag'  => '0',
-        ]);
+        $static = array_merge(self::FINGERPRINT, [ 'hasFocus' => '1', 'mozFlag'  => '0',]);
 
         $values = [];
         foreach ($order as $field) {
@@ -445,26 +330,28 @@ class rss_build {
         }
 
         return base64_encode(implode(',', $values));
+        
     }
 
     private function deobfuscate(string $html): ?string {
+        
         if (!preg_match('/\}\("([^"]+)",\d+,"([^"]+)",(\d+),(\d+),\d+\)\)/', $html, $m)) return null;
-
+        
         [$encoded, $alphabet, $shift, $base] = [$m[1], $m[2], (int)$m[3], (int)$m[4]];
-
+        
         if ($base >= strlen($alphabet)) return null;
-
+        
         $separator = $alphabet[$base];
         $result = '';
-
+        
         foreach (explode($separator, $encoded) as $seg) {
+            
             if ($seg === '') continue;
-
+            
             $converted = $seg;
             for ($j = 0; $j < strlen($alphabet); $j++) {
                 $converted = str_replace($alphabet[$j], (string)$j, $converted);
             }
-
             $charCode = $this->baseConvert($converted, $base) - $shift;
             if ($charCode > 0 && $charCode < 65536) $result .= mb_chr($charCode);
         }
@@ -487,6 +374,7 @@ class rss_build {
     }
 
     private function extractFieldOrder($js): array {
+        
         $btoaIdx = strpos($js, 'btoa');
         if ($btoaIdx === false) return $this->defaultOrder();
 
@@ -495,33 +383,26 @@ class rss_build {
         preg_match('/\((_0x[a-f0-9]+),/', $section, $first);
         preg_match_all('/\),(_0x[a-f0-9]+)\)/', $section, $rest);
 
-        $order = array_merge(
-            $first[1] ? [$first[1]] : [],
-            array_slice($rest[1], 0, 16)
-        );
+        $order = array_merge($first[1] ? [$first[1]] : [], array_slice($rest[1], 0, 16));
 
         if (count($order) < 17) return $this->defaultOrder();
 
         $map = [];
-        $this->mapVars($js, '/(_0x[a-f0-9]+)\s*=\s*screen\[/',             $map, 'screen',     6);
-        $this->mapVars($js, '/(_0x[a-f0-9]+)\s*=\s*navigator\[/',           $map, 'navigator',  3);
-        $this->mapVars($js, '/(_0x[a-f0-9]+)\s*=\s*clientInformation\[/',   $map, 'clientInfo', 2);
+        $this->mapVars($js, '/(_0x[a-f0-9]+)\s*=\s*screen\[/',             $map, 'screen', 6);
+        $this->mapVars($js, '/(_0x[a-f0-9]+)\s*=\s*navigator\[/',           $map, 'navigator', 3);
+        $this->mapVars($js, '/(_0x[a-f0-9]+)\s*=\s*clientInformation\[/', $map, 'clientInfo', 2);
         $this->mapVars($js, '/(_0x[a-f0-9]+)\s*=\s*Math\[.*?\]\(window\[.*?\]\)/', $map, 'window', 2);
-        $this->mapVars($js, '/(_0x[a-f0-9]+)\s*=\s*document\[/',            $map, 'document',   1);
-        $this->mapVars($js, '/(_0x[a-f0-9]+)\s*=\s*Math\[.*?\]\(_0x.*?\[/',$map, 'click',      2);
+        $this->mapVars($js, '/(_0x[a-f0-9]+)\s*=\s*document\[/',            $map, 'document', 1);
+        $this->mapVars($js, '/(_0x[a-f0-9]+)\s*=\s*Math\[.*?\]\(_0x.*?\[/',$map, 'click', 2);
 
-        if (preg_match('/(_0x[a-f0-9]+)\s*=\s*~~_0x/', $js, $m)) {
-            $map[$m[1]] = 'timestamp';
-        }
+        if (preg_match('/(_0x[a-f0-9]+)\s*=\s*~~_0x/', $js, $m)) $map[$m[1]] = 'timestamp';
 
         return array_map(fn($v) => ['source' => $map[$v] ?? 'unknown', 'is_flag' => false], array_slice($order, 0, 17));
     }
 
     private function mapVars($js, $pattern, array &$map, $prefix, $limit): void {
         preg_match_all($pattern, $js, $m);
-        foreach (array_slice($m[1], 0, $limit) as $i => $v) {
-            $map[$v] = "{$prefix}_{$i}";
-        }
+        foreach (array_slice($m[1], 0, $limit) as $i => $v) $map[$v] = "{$prefix}_{$i}";
     }
 
     private function defaultOrder(): array {
