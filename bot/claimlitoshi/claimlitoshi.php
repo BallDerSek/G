@@ -99,8 +99,14 @@ while (true) {
             $body = SolveUtils::webkitID($po, $bo);
             $head = [$he, "Content-Type: multipart/form-data; boundary=$bo"];
             
-            $ve = Net::X($f['url'], 'POST', $body, inf::$cookie, $head, $host.$r, inf::$uagent);
-            #var_dump($ve);
+            $ve = json_decode(Net::X($f['url'], 'POST', $body, inf::$cookie, $head, $host.$r, inf::$uagent)?: '', 1);
+            if (!empty($ve) && isset($ve['msg'])) {
+                logx($ve['status'], $ve['msg'], false, true);
+                _clr();
+                
+                if (str_contains($ve['msg'],'has been banned')) die;
+                
+            }
         }
         
     } while (empty($dash));
