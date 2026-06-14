@@ -501,7 +501,7 @@ class Solve {
         #print(DIMM.BOLD.ITAL.FGo['MAG']."solving  ".RSET);
         $t = null;
         
-        $Params = array_merge($data, ['userAgent' => self::$context['uagent']]);
+        $Params = array_merge($data, ['userAgent' => self::$context['uagent'] ?? '']);
         for ($retry = 0; $retry < 2; $retry++) {
             $t = $solver->token($key, $host, $type, $Params);
             
