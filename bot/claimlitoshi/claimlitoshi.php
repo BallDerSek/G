@@ -242,6 +242,7 @@ while (true) {
                         $habis[$fa] = true;
                         break;
                     }
+                    if (preg_match('/SameIp Other|banned|flagged/i', $msg)) die;
                     if (stripos($msg, 'Shortlink')) {
                         if ($SLDONE) (logx('err', 'Gada SL lagi') ?: die);
                         $curr = $_c;
