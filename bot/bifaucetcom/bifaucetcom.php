@@ -13,7 +13,7 @@ $host = 'https://bifaucet.com';
 $domain = parse_url($host, PHP_URL_HOST);
 $ip = '159.198.47.130';
 
-(function ($mail, $ip) {
+(function ($mail, $ip, $host) {
     Proxy::load();
     Check::Geo();
     $cookieFile = config::cookie($mail);
@@ -23,7 +23,9 @@ $ip = '159.198.47.130';
     _cle();
     banner();
     taskPrintCenter($mail, 'info');
-})($mail, $ip);
+    print(UNDR.BOLD."site:");
+    logx('ok', " $host");
+})($mail, $ip, $host);
 
 
 $limit = false;

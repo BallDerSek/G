@@ -14,17 +14,19 @@ $domain = parse_url($host, PHP_URL_HOST);
 $ip = '148.251.78.240';
 $ip = '';
 
-(function ($mail, $ip) {
+(function ($mail, $ip, $host) {
     Proxy::load();
     Check::Geo();
     $cookieFile = config::cookie($mail);
     $userAgent = config::uagent('mobile');
 
-    inf::setup($userAgent, $cookieFile, $ip);
+    inf::setup($userAgent, $cookieFile, $ip, false, $mail);
     _cle();
     banner();
     taskPrintCenter($mail, 'info');
-})($mail, $ip);
+    print(UNDR.BOLD."site:");
+    logx('ok', " $host");
+})($mail, $ip, $host);
 
 
 $limit = false;

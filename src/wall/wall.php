@@ -662,6 +662,8 @@ class Bctt {
             Net::X($cc_getG, 'POST', ['action' => 'start_view'], $this->cookieFile, [], $cc_getG, $this->userAgent);
             
             $cc_pre = Net::C($cc_getG, 'GET', null, $this->cookieFile, [], '', $this->userAgent);
+            #_put('ccpre.html', $cc_pre);
+            if (str_contains($cc_pre,'Forbidden')) return false;
             
             if ($cc_pre === 99) return 99;
             
@@ -689,7 +691,7 @@ class Bctt {
                     'target_url' => $target_url,
                     'action' => $action
                 ];
-                
+                #print_r($param);
                 if (in_array(null, $param, true)) {
                     return false;
                 }
@@ -776,6 +778,12 @@ class Bctt {
     }
     
     private function _set($fjs, $param, $cap_tok, $cc_getG) {
+        
+        /*
+        print_r($param);
+        print_r($fjs);
+        print_r($cc_getG);
+        */
         
         $cc_p2 = [
             'hash' => $param['hash'],
