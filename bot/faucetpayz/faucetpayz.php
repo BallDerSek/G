@@ -192,11 +192,12 @@ while (true) {
     
     
     $ads = Net::C("$host/surf", 'GET', null, inf::$cookie, [], "$host/dashboard", inf::$uagent, false, false, $ip);
+    #_put('ads.html', $ads);
     if (!empty($ads) && $ads !== 99) {
         $_ad = [];
         
-        $uvv = Scraper::_xP($ads, "//a[contains(@href, '/surf/')]/@href");
-        $tmr = Scraper::_xP($ads, "//div[contains(@class, 'pill sec')]/text()[normalize-space()]");
+        $uvv = Scraper::_xP($ads, "//a[contains(@href, '/surf/') and not(contains(@class, 'd-none'))]/@href");
+        $tmr = Scraper::_xP($ads, "//a[not(contains(@class, 'd-none'))]//div[contains(@class, 'pill sec')]/text()[normalize-space()]");
         $url_c = count($uvv);
         $tmr_c = count($tmr);
         for ($i = 0; $i < $url_c; $i++) {
@@ -204,7 +205,8 @@ while (true) {
             $_ad[] = [$uvv[$i], $_ti];
         }
         
-        if (!empty($_ad[0])) {
+        #print_r($_ad); die;
+        if (!empty($_ad[0]) && !$ADDONE) {
             
             for ($rrv = 0; $rrv < 2; $rrv++) {
                 $cla = null;
@@ -241,6 +243,9 @@ while (true) {
                     if ($wait > 0) styler("waiting for ads: $wait", fn() => _sle($wait));
                     
                     $cla = json_decode(Net::X("$host/ajax/surf", 'POST', $po, inf::$cookie, [], $ad_u, inf::$uagent)?: '', 1)['message'] ?? null;
+                    
+                    #if (str_contains($cla, 'get back tomorrow')) $ADDONE = true;
+                    
                     if (!empty($cla)) {
                         print(FGd['CYN'].maskEmail($mail).RSET." ");
                         logg(0, $cla);
@@ -248,6 +253,7 @@ while (true) {
                     }
                 }
             }
+            
         }
     }
     
