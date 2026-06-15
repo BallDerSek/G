@@ -368,9 +368,10 @@ while (true) {
             }
             
         }
+        
     }
     
-    
+    if ($ptcc && !$viewed) die;
     
 }
 

@@ -27,7 +27,7 @@ $ip = '';
     logx('ok', " $host");
 })($mail, $ip, $host);
 
-$limit = false;
+$limit = true;
 $claim = true;
 $SLDONE = false;
 $ADDONE = false;
@@ -138,10 +138,7 @@ while (true) {
             $f = scraper::payload($fau)[0] ?? [];
             #print_r($f); die;
             if (empty($f)) {
-                if (stripos($fau, '/register') || !$SLDONE) {
-                    $setF = microtime(true); 
-                    break;
-                }
+                if (stripos($fau, '/register')) continue 2;
                 
                 styler('Waiting for faucet', fn() => _sle(30));
                 continue;
@@ -183,13 +180,17 @@ while (true) {
                         break;
                     }
                     
+                    if (stripos($msg, 'get back tomorrow')) {
+                        $limit = true;
+                        $claim = false; 
+                        break;
+                    }
                 }
             }
             
             
         }
     }
-    
     
     $ads = Net::C("$host/surf", 'GET', null, inf::$cookie, [], "$host/dashboard", inf::$uagent, false, false, $ip);
     #_put('ads.html', $ads);
@@ -257,9 +258,25 @@ while (true) {
         }
     }
     
+    if ($limit) {
+        _put('dash.html', $dash);
+        $pa = null;
+        $pa = scraper::payload($dash, 'makeWithdrawForm')[0]['payload'] ?? null;
+        if (!empty($pa) && $pa['amount'] >= 10000) {
+            
+            
+            $cre = ['address' => $mail];
+            $po = array_merge($pa, $cre);
+            print_r($po);
+            
+            
+        }
+        
+        die;
+    }
+    
 }
 
 
 
 tes:
-    

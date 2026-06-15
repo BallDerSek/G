@@ -105,7 +105,7 @@ final class uCaptcha {
         $hashFile = LIBDIR.'/anticaptcha.json';
         $hashes = file_exists($hashFile) ? json_decode(_get($hashFile), true) : [];
         
-        $main = Net::X($qImg, 'GET', null, $this->ck, [], $this->host, $this->ua, false, false, $this->ip, $this->ins);
+        $main = Net::X($qImg, 'GET', null, $this->ck, [], $this->host, $this->ua, false, false, $this->ip, $this->in);
         if (empty($main) || $main === 99) return null;
         _put($base . '/main.png', $main);
 
@@ -122,7 +122,7 @@ final class uCaptcha {
                 $iD = $hashes[$icon]['d'];
             } else {
                 $iconUrl = "$app/assets/anticap/icons/" . rawurlencode($icon);
-                $iconData = Net::X($iconUrl, 'GET', null, $this->ck, [], $this->host, $this->ua, false, false, $this->ip, $this->ins);
+                $iconData = Net::X($iconUrl, 'GET', null, $this->ck, [], $this->host, $this->ua, false, false, $this->ip, $this->in);
                 if (empty($iconData) || $iconData === 99) continue;
                 _put("$base/$icon", $iconData);
                 $iA = SolveUtils::aHash("$base/$icon");
