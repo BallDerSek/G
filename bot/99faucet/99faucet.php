@@ -191,7 +191,9 @@ while (true) {
                                 $habis[$fa] = true;
                                 break;
                             }
-                            if (stripos($msg, 'flagged')) die;
+                            if (preg_match('/blacklisted|flagged|banned/i', $msg)) {
+                                die;
+                            }
                             
                             if (stripos($msg, 'Shortlink')) {
                                 if ($SLDONE) {

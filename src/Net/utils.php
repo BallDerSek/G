@@ -1,42 +1,5 @@
 <?php
-/** @class inf
- * @property static string|null $uagent
- * @property static string|null $cookie
- * @property static string|null $ip
- *
- * @method setup
- *   @param string $ua
- *   @param string $cookie
- *   @param string|null $ip
- *   @return void
- *
- * @method netHead
- *   @param array $cookie
- *   @return array
- *
- * @method wssHead
- *   @param string $or
- *   @param string $ua
- *   @param array $cookie
- *   @return array
- *
- * @method lastLocation
- *   @param array $respHeaders
- *   @param string $needle
- *   @param bool $last
- *   @return string|null
- *
- * @method getLog
- *   @param string|null $url
- *   @return string|null
- *
- * @method check
- *   @param string $host
- *   @param array $h
- *   @param string $pattern
- *   @param bool $ins
- *   @return array
- */
+
 class Inf {
     public static $uagent;
     public static $cookie;

@@ -27,7 +27,7 @@ $ip = '';
     logx('ok', " $host");
 })($mail, $ip, $host);
 
-$limit = true;
+$limit = false;
 $claim = true;
 $SLDONE = false;
 $ADDONE = false;
@@ -107,7 +107,7 @@ while (true) {
         }
         
     } while (empty($dash));
-    #_put('dash.html', $dash); 
+    #_put('dash.html', $dash); die;
     
     if ($dash && str_contains($dash, 'confirm your email')) {
         $can_withdraw = false;
@@ -140,6 +140,8 @@ while (true) {
             if (empty($f)) {
                 if (stripos($fau, '/register')) continue 2;
                 
+                if (!$ADDONE) break;
+                
                 styler('Waiting for faucet', fn() => _sle(30));
                 continue;
             }
@@ -148,7 +150,7 @@ while (true) {
                 $pa = $f['payload'];
                 
                 if ($atbfail >= 3) $atbforce = true;
-                $cap = solve::exec($fau, $host, $api, $pa, false, $atbforce);
+                $cap = solve::exec($fau, $host, $api, $pa, $atbforce);
                 if (isset($cap['trouble'])) {
                     _sle(60);
                     continue;
@@ -158,6 +160,7 @@ while (true) {
             }
             
             if (!empty($po)) {
+                #print_r($po);
                 $cla = Net::C($host.'/faucet', 'POST', $po, inf::$cookie, [], "$host/faucet", inf::$uagent, ip: $ip);
                 if (empty($cla) || ($cla === 99)) continue;
                 
@@ -169,7 +172,8 @@ while (true) {
                     $stt = $m[1][0];
                     $is_ok = $stt === 'danger' ? 'err' : 'suc';
                     $msg = $m[2][0];
-                    print(FGd['CYN'].maskEmail($mail).RSET." ");
+                    #print(FGd['CYN'].maskEmail($mail).RSET." ");
+                    logm($mail);
                     logx($is_ok, "$stt ", false, true);
                     logg(false, $msg);
                     
@@ -243,33 +247,41 @@ while (true) {
                     $wait = (int)($ad_t - $end);
                     if ($wait > 0) styler("waiting for ads: $wait", fn() => _sle($wait));
                     
-                    $cla = json_decode(Net::X("$host/ajax/surf", 'POST', $po, inf::$cookie, [], $ad_u, inf::$uagent)?: '', 1)['message'] ?? null;
+                    $cla = json_decode(Net::X("$host/ajax/surf", 'POST', $po, inf::$cookie, [], $ad_u, inf::$uagent)?: '', 1);
                     
                     #if (str_contains($cla, 'get back tomorrow')) $ADDONE = true;
                     
                     if (!empty($cla)) {
-                        print(FGd['CYN'].maskEmail($mail).RSET." ");
-                        logg(0, $cla);
+                        $stt = $cla['success'];
+                        $is_ok = $stt === 0 ? 'error' : 'success';
+                        $msg = $cla['message'];
+                        
+                        logm($mail);
+                        logx($is_ok, "$is_ok ", false, true);
+                        logg(0, $msg);
                         break;
                     }
                 }
             }
             
         }
+        if (empty($_ad)) $ADDONE = true;
     }
     
-    if ($limit) {
-        _put('dash.html', $dash);
+    if ($limit && $ADDONE) {
         $pa = null;
         $pa = scraper::payload($dash, 'makeWithdrawForm')[0]['payload'] ?? null;
-        if (!empty($pa) && $pa['amount'] >= 10000) {
-            
+        if (!empty($pa) && $pa['amount'] >= 1000) {
             
             $cre = ['address' => $mail];
             $po = array_merge($pa, $cre);
-            print_r($po);
             
-            
+            $jjn = json_decode(Net::X("$host/ajax/withdraw", 'POST', $po, inf::$cookie, [], $host.'/dashboard', inf::$uagent)?: '', 1)["notify"] ?? null;
+            #var_dump($jjn);
+            if (!empty($jjn['success'])) {
+                logm($mail);
+                logg(0, $jjn['success']);
+            }
         }
         
         die;
@@ -280,3 +292,5 @@ while (true) {
 
 
 tes:
+
+

@@ -215,9 +215,9 @@ class rsResponse {
         return $token ?: $this->fallback($x, $y, $html);
     }
 
-    private function _token($jsFile, $x, $y, $ua) {
-        if (!file_exists($jsFile)) return false;
-        $jsContent = _get($jsFile);
+    private function _token($_js, $x, $y, $ua) {
+        if (!file_exists($_js)) return false;
+        $jsContent = _get($_js);
 
         /** Dumbass RSSHORT with Auto-Scaling */
         $startPos = strpos($jsContent, 'btoa(');
@@ -273,7 +273,7 @@ class rss_build {
     
     # other source builder
     
-    private const FINGERPRINT = [
+    private const _ORI_ = [
         'screenWidth' => '806',
         'screenHeight' => '320',
         'availWidth' => '806',
@@ -287,7 +287,7 @@ class rss_build {
         'hardwareConcurrency'=> '8',
     ];
 
-    private const SOURCE_TO_VALUE = [
+    private const _GEN_ = [
         'screen_0' => 'screenWidth',
         'screen_1' => 'screenHeight',
         'screen_2' => 'availWidth',
@@ -321,11 +321,11 @@ class rss_build {
             'clickY' => (string) $y,
         ];
 
-        $static = array_merge(self::FINGERPRINT, [ 'hasFocus' => '1', 'mozFlag'  => '0',]);
+        $static = array_merge(self::_ORI_, [ 'hasFocus' => '1', 'mozFlag'  => '0',]);
 
         $values = [];
         foreach ($order as $field) {
-            $key = self::SOURCE_TO_VALUE[$field['source']] ?? '';
+            $key = self::_GEN_[$field['source']] ?? '';
             $values[] = $dynamic[$key] ?? $static[$key] ?? '0';
         }
 
@@ -333,55 +333,55 @@ class rss_build {
         
     }
 
-    private function deobfuscate(string $html): ?string {
+    private function deobfuscate($html) {
         
         if (!preg_match('/\}\("([^"]+)",\d+,"([^"]+)",(\d+),(\d+),\d+\)\)/', $html, $m)) return null;
         
-        [$encoded, $alphabet, $shift, $base] = [$m[1], $m[2], (int)$m[3], (int)$m[4]];
+        [$_enc, $_alp, $_shf, $_bse] = [$m[1], $m[2], (int)$m[3], (int)$m[4]];
         
-        if ($base >= strlen($alphabet)) return null;
+        if ($_bse >= strlen($_alp)) return null;
         
-        $separator = $alphabet[$base];
-        $result = '';
+        $_sep = $_alp[$_bse];
+        $_res = '';
         
-        foreach (explode($separator, $encoded) as $seg) {
+        foreach (explode($_sep, $_enc) as $seg) {
             
             if ($seg === '') continue;
             
-            $converted = $seg;
-            for ($j = 0; $j < strlen($alphabet); $j++) {
-                $converted = str_replace($alphabet[$j], (string)$j, $converted);
+            $_cvr = $seg;
+            for ($j = 0; $j < strlen($_alp); $j++) {
+                $_cvr = str_replace($_alp[$j], (string)$j, $_cvr);
             }
-            $charCode = $this->baseConvert($converted, $base) - $shift;
-            if ($charCode > 0 && $charCode < 65536) $result .= mb_chr($charCode);
+            $_chr = $this->baseConvert($_cvr, $_bse) - $_shf;
+            if ($_chr > 0 && $_chr < 65536) $_res .= mb_chr($_chr);
         }
 
-        return $result ?: null;
+        return $_res ?: null;
     }
 
-    private function baseConvert($encoded, $base) {
+    private function baseConvert($_enc, $_bse) {
+        $_res = 0;
         $chars  = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ+/';
-        $src = substr($chars, 0, $base);
-        $result = 0;
-        $len = strlen($encoded);
+        $src = substr($chars, 0, $_bse);
+        $len = strlen($_enc);
 
         for ($i = 0; $i < $len; $i++) {
-            $pos = strpos($src, $encoded[$len - 1 - $i]);
-            if ($pos !== false) $result += $pos * (int)pow($base, $i);
+            $pos = strpos($src, $_enc[$len - 1 - $i]);
+            if ($pos !== false) $_res += $pos * (int)pow($_bse, $i);
         }
 
-        return $result;
+        return $_res;
     }
 
     private function extractFieldOrder($js): array {
         
-        $btoaIdx = strpos($js, 'btoa');
-        if ($btoaIdx === false) return $this->defaultOrder();
+        $_b64 = strpos($js, 'btoa');
+        if ($_b64 === false) return $this->defaultOrder();
 
-        $section = substr($js, $btoaIdx, 3000);
+        $_sct = substr($js, $_b64, 3000);
 
-        preg_match('/\((_0x[a-f0-9]+),/', $section, $first);
-        preg_match_all('/\),(_0x[a-f0-9]+)\)/', $section, $rest);
+        preg_match('/\((_0x[a-f0-9]+),/', $_sct, $first);
+        preg_match_all('/\),(_0x[a-f0-9]+)\)/', $_sct, $rest);
 
         $order = array_merge($first[1] ? [$first[1]] : [], array_slice($rest[1], 0, 16));
 
@@ -400,29 +400,29 @@ class rss_build {
         return array_map(fn($v) => ['source' => $map[$v] ?? 'unknown', 'is_flag' => false], array_slice($order, 0, 17));
     }
 
-    private function mapVars($js, $pattern, array &$map, $prefix, $limit): void {
+    private function mapVars($js, $pattern, array &$map, $prefix, $limit) {
         preg_match_all($pattern, $js, $m);
         foreach (array_slice($m[1], 0, $limit) as $i => $v) $map[$v] = "{$prefix}_{$i}";
     }
 
-    private function defaultOrder(): array {
+    private function defaultOrder() {
         return [
             ['source' => 'screen_4', 'is_flag' => false],
             ['source' => 'navigator_0', 'is_flag' => true ],
             ['source' => 'click_1', 'is_flag' => false],
             ['source' => 'click_0', 'is_flag' => false],
-            ['source' => 'document_0', 'is_flag' => true ],
+            ['source' => 'document_0', 'is_flag' => true],
             ['source' => 'screen_1', 'is_flag' => false],
             ['source' => 'navigator_1', 'is_flag' => false],
-            ['source' => 'navigator_2', 'is_flag' => true ],
+            ['source' => 'navigator_2', 'is_flag' => true],
             ['source' => 'window_0', 'is_flag' => false],
             ['source' => 'clientInfo_0','is_flag' => false],
             ['source' => 'screen_0', 'is_flag' => false],
             ['source' => 'window_1', 'is_flag' => false],
             ['source' => 'screen_2', 'is_flag' => false],
             ['source' => 'timestamp', 'is_flag' => false],
-            ['source' => 'document_0', 'is_flag' => true ],
-            ['source' => 'navigator_2', 'is_flag' => true ],
+            ['source' => 'document_0', 'is_flag' => true],
+            ['source' => 'navigator_2', 'is_flag' => true],
             ['source' => 'screen_5', 'is_flag' => false],
         ];
     }

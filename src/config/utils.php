@@ -2,12 +2,13 @@
 
 
 
-class Configgs {
+class config {
     private static array $cred_cache = [];
     private static ?string $ua_static = null;
     
     public static function credential(array $defaults = [], $required = false, array|bool $ask = false): ArrayAccess {
-        $baseDir = CREDIR.'/'.$GLOBALS['_CTX']['current_bot'];
+        $bot = empty($GLOBALS['_CTX']['current_bot']) ? '' : $GLOBALS['_CTX']['current_bot'];
+        $baseDir = CREDIR . ($bot ? "/$bot" : '');
         $filePath = rtrim($baseDir, '/') . '/credentials';
         return new class($filePath, $defaults, $required, $ask) implements ArrayAccess {
             
@@ -128,7 +129,8 @@ class Configgs {
             }
             
             private function save($key, $value): void {
-                
+                $dir = dirname($this->file);
+                if (!is_dir($dir)) mkdir($dir, 0755, true);
                 $lines = is_file($this->file) ? file($this->file, FILE_IGNORE_NEW_LINES) : [];
                 
                 $found = false;
@@ -141,7 +143,6 @@ class Configgs {
                 }
                 
                 if (!$found) $lines[] = $key . '=' . $value;
-                
                 _put($this->file, implode(PHP_EOL, $lines) . PHP_EOL);
             }
             
@@ -155,7 +156,7 @@ class Configgs {
         };
     }
     
-    public static function cookiess($email = null) {
+    public static function cookie($email = null) {
         $b_dir = CREDIR.'/'.$GLOBALS['_CTX']['current_bot'];
 
         if (empty($email)) return $b_dir . '/cookies';

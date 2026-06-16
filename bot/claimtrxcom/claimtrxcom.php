@@ -163,11 +163,12 @@ while (true) {
             
             $po = null;
             if (!empty($f)) {
+                #print_r($f);
                 $pa = $f['payload'];
                 $cap = [];
                 if (isset($pa['captcha'])) {
-                    
-                    if ($pa['captcha'] === 'hcaptcha') {
+                    $_ca = $pa['captcha'];
+                    if (($_ca === 'hcaptcha') || ($_ca === 'faucetcaptcha')) {
                         /* comment ini kalo mau lanjut solve*/
                         $claim = false; break;
                     }

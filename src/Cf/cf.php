@@ -1,10 +1,5 @@
 <?php
 
-/** @function cfSet
- * @param string $class
- * @param mixed $res
- * @return array|null
- */
 function cfSet($class, $res) {
     if (!$res) return null;
     
@@ -38,14 +33,6 @@ function cfSet($class, $res) {
     }
 }
 
-/** @function execCF
- * @param mixed $api
- * @param string $url
- * @param string $cookie
- * @param string $uagent
- * @param array $data
- * @return array|string|bool|null
- */
 function execCF($api, $url, $cookie, $uagent, array $data = []) {
     
     if (!$api) (logx('err', 'undefined provider') ?: die);
@@ -90,7 +77,6 @@ function execCF($api, $url, $cookie, $uagent, array $data = []) {
     
 }
 
-#$res = execCF($api, $fa, inf::$cookie, inf::$uagent, []);
 function setCF($r, $c, $host) {
     #print_r($r);
     if (is_array($r) && isset($r['token'])) {

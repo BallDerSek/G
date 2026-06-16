@@ -232,7 +232,8 @@ while (true) {
                     $stt = $cla['status'];
                     $msg = $cla['msg'] ?? 'unknown';
                     $is_ok = (stripos($stt, 'success') !== false);
-                    print(FGd['CYN'].maskEmail($login).RSET." ");
+                    #print(FGd['CYN'].maskEmail($login).RSET." ");
+                    logm($login);
                     
                     logx($is_ok ? 'ok' : 'err', "{$stt} ", false);
                     logg(false, $msg);

@@ -1,18 +1,5 @@
 <?php
-/** @class check 
- * @method Env
-     * @return void
- * @method Dep
-     * @return void
- *  @method depCmd
-     * @param string $cmd
-     * @return bool
- * @method Geo
-     * @return void
- * @method Geo
-     * @param string $cc
-     * @return string
- */
+
 class check {
     
     public static $deps = [];
@@ -150,10 +137,6 @@ class check {
     
 }
 
-/** @function getDeps
- * @param string|array $deps
- * @return bool
- */
 function getDeps($deps) {
     if (empty($GLOBALS['_CTX']['deps'])) {
         logx('err', 'deps missing run script normally');
@@ -168,16 +151,6 @@ function getDeps($deps) {
     return true;
 }
 
-/** @function IP * @return string
-
- ** @function TIMEZONE * @return string
-
- ** @function COUNTRY * @return string
-
- ** @function COUNTRY_CODE * @return string
-
- ** @function LANGUAGE * @return string
- */
 function IP() {
     return $GLOBALS['_CTX']['geo']['ip'] ?? '0.0.0.0';
 }

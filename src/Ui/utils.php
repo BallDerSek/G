@@ -1,90 +1,7 @@
 <?php
 
-/** @file styler/utils.php
- * @constant string ANN
- * @constant string RSET
- * @constant string BOLD
- * @constant string DIMM
- * @constant string ITAL
- * @constant string UNDR
- * @constant string BLNK
- * @constant string RPID
- * @constant string RVRS
- * @constant string HDDN
- * @constant string STRK
- * @constant string FG256
- * @constant string BG256
- * @constant array FGo
- * @constant array FGb
- * @constant array FGd
- * @constant array BG
- * @function _sle
-     * @param int|float $time
-     * @return int
- * @function _cle
-     * @return void
- * @function _clr
-     * @return void
- * @function _get
-     * @param string $path
-     * @return string|null
- * @function _put
-     * @param string $path
-     * @param string $data
-     * @param bool $append
-     * @return bool
- * @function animate
-     * @return bool
- * @function hasTty
-     * @return bool
- * @function outTty
-     * @return bool
- * @function _rl
-     * @param string $prompt
-     * @return string|false
- */
 #STYLER
-define("ANN", "\033["); 
-define("FG256", ANN."38;5;"); define("BG256", ANN."48;5;");
 
-define("RSET", ANN."0m"); define("BOLD", ANN."1m");
-define("DIMM", ANN."2m"); define("ITAL", ANN."3m");
-define("UNDR", ANN."4m"); define("BLNK", ANN."5m");
-define("RPID", ANN."6m"); define("RVRS", ANN."7m");
-define("HDDN", ANN."8m"); define("STRK", ANN."9m"); 
-
-
-#foreround colours origin 
-define("FGo", [
-  "BLK" => ANN."30m", "RED" => ANN."31m",
-  "GRN" => ANN."32m", "YLW" => ANN."33m",
-  "BLU" => ANN."34m", "MAG" => ANN."35m",
-  "CYN" => ANN."36m", "WHT" => ANN."37m",
-]);
-
-#foreround colours bright 
-define("FGb", [
-  "BLK" => ANN."90m", "RED" => ANN."91m",
-  "GRN" => ANN."92m", "YLW" => ANN."93m",
-  "BLU" => ANN."94m", "MAG" => ANN."95m",
-  "CYN" => ANN."96m", "WHT" => ANN."97m",
-]);
-
-#foreround colours dark 
-define("FGd", [
-  "BLK" => DIMM.FGo["BLK"], "RED" => DIMM.FGo["RED"],
-  "GRN" => DIMM.FGo["GRN"], "YLW" => DIMM.FGo["YLW"],
-  "BLU" => DIMM.FGo["BLU"], "MAG" => DIMM.FGo["MAG"],
-  "CYN" => DIMM.FGo["CYN"], "WHT" => DIMM.FGo["WHT"],
-]);
-
-#background colours 
-define("BG", [
-  "BLK" => ANN."40m", "RED" => ANN."41m",
-  "GRN" => ANN."42m", "YLW" => ANN."43m",
-  "BLU" => ANN."44m", "MAG" => ANN."45m",
-  "CYN" => ANN."46m", "WHT" => ANN."47m",
-]);
 
 
 function _sle($time) {
@@ -232,14 +149,6 @@ function canRaw() {
     return $ok;
 }
 
-function _color($value) {
-    foreach ([BG, FGo, FGb, FGd] as $set) {
-        foreach ($set as $key => $val) {
-            if ($val === $value) return $key;
-        }
-    }
-    return null;
-}
 
 function _rl($prompt = '') {
     $old = null;

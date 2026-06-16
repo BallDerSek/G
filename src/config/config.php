@@ -1,50 +1,4 @@
 <?php
-/** @class Config
- * @method credential
-     * @param array $defaults
-     * @param bool $required
-     * @param string|null $customPath
-     * @return ArrayAccess
-     * @method __construct
-             * @param string $file
-             * @param array $defaults
-             * @param bool $required
-     * @method offsetGet
-             * @param mixed $key
-             * @return mixed
-     * @method offsetSet
-             * @param mixed $key
-             * @param mixed $value
-             * @return void
-     * @method offsetUnset
-             * @param mixed $key
-             * @return void
-     * @method offsetExists
-             * @param mixed $key
-             * @return void
-     * @method enforce
-             * @param mixed $key
-             * @param mixed $value
-             * @return mixed
-     * @method shouldAsk
-             * @param mixed $key
-             * @param mixed $value
-             * @return void
-     * @method save
-             * @param mixed $key
-             * @param mixed $value
-             * @return void
- * @method cookie
-     * @param string $email
- * @method uagent
-     * @param string $type
-     * @return string
- * @method genUA
-     * @return string
- * @method getKeys
-     * @param mixed $api
-     * @return mixed
- */
 
 trait WorkDir {
     protected string $workDir;
@@ -104,7 +58,7 @@ trait WorkDir {
     }
 }
 
-class Config {
+class Configs {
     private static array $cred_cache = [];
     private static ?string $ua_static = null;
     
