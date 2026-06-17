@@ -1,6 +1,6 @@
 <?php
 
-class Ws {
+class Wss {
     
     public static function Wait(array $c, $sec = 1, $usec = 0) {
         $fp = $c['fp'] ?? null;
@@ -153,18 +153,16 @@ class Ws {
         $pl = ($len > 0) ? self::readFr($c, $len) : '';
         if ($pl === null) return null;
 
-        if ($masked) {
-            $pl = self::ApplyMask($pl, $maskKey);
-        }
+        if ($masked) $pl = self::ApplyMask($pl, $maskKey);
 
         // control frames
         if ($op === 0x9) { // ping
             self::sendFr($fp, 0xA, $pl); // pong
             return ['type' => 'ping', 'payload' => $pl];
         }
-        if ($op === 0xA) {
-            return ['type' => 'pong', 'payload' => $pl];
-        }
+
+        if ($op === 0xA) return ['type' => 'pong', 'payload' => $pl];
+
         if ($op === 0x8) {
             $code = null;
             $reason = '';
@@ -186,9 +184,7 @@ class Ws {
         Proxy::ensure();
         $p = $GLOBALS['_CTX']['proxy'] ?? null;
 
-        if (!is_array($p) || !isset($p['host'], $p['port'], $p['type']) || $p['host'] === '' || (int)$p['port'] <= 0) {
-            return null; // proxy off / invalid
-        }
+        if (!is_array($p) || !isset($p['host'], $p['port'], $p['type']) || $p['host'] === '' || (int)$p['port'] <= 0) return null; // proxy off / invalid
 
         $checkHost = 'api.ipify.org';
         $checkPort = 443;
@@ -454,7 +450,6 @@ class Ws {
         $mk = random_bytes(4);
         fwrite($fp, $hdr . $mk . self::ApplyMask($pl, $mk));
     }
-
     
     public static function ApplyMask($d, $k) {
         $n = strlen($d);

@@ -17,7 +17,7 @@ $ip = null;
     Proxy::load();
     Check::Geo();
     $cookieFile = config::cookie($login);
-    $c = config::credential(['ua' => fn() => config::uagent('mobile')]);
+    $c = config::credential(['ua' => fn() => config::uagent('desktop')]);
     $userAgent = $c['ua'];
     
     inf::setup($userAgent, $cookieFile, $ip, false, $login);
@@ -166,7 +166,7 @@ while (true) {
             if (!empty($po)) {
                 
                 $cla = Net::X($f['url'], 'POST', $po, inf::$cookie, $headersCF, $host, inf::$uagent);
-                #_put('cla.html', $cla); #die;
+                #_put('cla.html', $cla); die;
                 
                 if (!empty($cla) && ($cla !== 99)) {
                     

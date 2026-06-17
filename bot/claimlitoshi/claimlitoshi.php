@@ -11,7 +11,6 @@ login:
 $host = 'https://claimlitoshi.top';
 $domain = parse_url($host, PHP_URL_HOST);
 $r = '/?r=38637&xpost=true';
-#$r = '';
 $ip = '154.26.138.53';
 $ip = null;
 
@@ -101,10 +100,13 @@ while (true) {
             
             $ve = json_decode(Net::X($f['url'], 'POST', $body, inf::$cookie, $head, $host.$r, inf::$uagent)?: '', 1);
             if (!empty($ve) && isset($ve['msg'])) {
-                logx($ve['status'], $ve['msg'], false, true);
-                _clr();
                 
-                if (str_contains($ve['msg'],'has been banned')) die;
+                $msg = strtolower(strip_tags($ve['msg']));
+                $stt = $ve['status'];
+                logx($stt, $msg, false, true);
+                
+                if (str_contains($msg,'has been banned') || str_contains($msg, 'blocked')) die;
+                _clr();
                 
             }
         }
@@ -282,7 +284,7 @@ while (true) {
         $retptc++;
         if ($retptc >= 2) break;
         
-        if ($curr_id) Net::X($host . '/account/change_currency','GET',['method' => $curr_id],inf::$cookie,[],$host.'/ptc',inf::$uagent);
+        if (!empty($curr_id)) Net::X($host . '/account/change_currency','GET',['method' => $curr_id],inf::$cookie,[],$host.'/ptc',inf::$uagent);
         $ads = Net::X($host.'/ptc', 'GET', null, inf::$cookie, $headersCF, $host, inf::$uagent);
         
         if ($ads99 >= 3) goto login;
@@ -294,7 +296,9 @@ while (true) {
         if (!empty($ads)) {
             
             $ptcList = parsePTC($ads);
-            #print_r($ptcList);
+            #print_r($ptcList); die;
+            $size = (int) ceil(count($ptcList) / 2);
+            
             foreach ($ptcList as $ptc) {
                 
                 
@@ -306,16 +310,16 @@ while (true) {
                     $ch = $bctt->exec($ptc['url'], $ptc['timer']);
                     if ($ch === 99) goto login;
                     
-                    if ($bcttView >= 10) {
+                    if ($ch) {
+                        $ptcc = false;
+                        $bcttView++;
+                    }
+                    
+                    if ($bcttView >= $size) {
                         $bctt->cleanup();
                         $viewed = true;
                         $ptcc = false;
                         break;
-                    }
-                    
-                    if ($ch) {
-                        $ptcc = false;
-                        $bcttView++;
                     }
                 }
                 
@@ -337,15 +341,7 @@ while (true) {
                         
                     }
                     
-                    if ($data) {
-                        $ch = postPTC($data, $host.'/ptc/verify/'.$ptc['adId'], [$he], true);
-                        if ($ch) {
-                            $viewed = true;
-                            $ptcc = false;
-                            break;
-                        }
-                    }
-                    
+                    if (!empty($data)) postPTC($data, $host.'/ptc/verify/'.$ptc['adId'], [$he], true);
                     
                 }
                 
@@ -371,17 +367,11 @@ while (true) {
                     }
                     
                     if (!empty($data)) {
-                        $bo = '';
-                        $body = SolveUtils::webkitID($data, $bo);
-                        $head = [$he, "Content-Type: multipart/form-data; boundary=$bo"];
-                        
-                        $ch = postPTC($body, $f['url'], $head);
-                        if ($ch) {
-                            $viewed = true;
-                            $ptcc = false;
-                            break;
-                        }
-                        
+                        postPTC(
+                            SolveUtils::webkitID($data, $bo),
+                            $f['url'],
+                            [$he, "Content-Type: multipart/form-data; boundary=$bo"]
+                        );
                     }
                     
                 }

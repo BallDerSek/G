@@ -11,7 +11,6 @@ login:
 $host = 'https://chillfaucet.in';
 $domain = parse_url($host, PHP_URL_HOST);
 $r = '/?r=31169&xpost=true';
-$r = '';
 $ip = '156.67.104.252';
 $ip = '80.65.208.108';
 $ip = null;
@@ -87,10 +86,21 @@ while (true) {
             }
             $po = array_merge($pa, $cap, $cre);
         }
+        #print_r($po);
         if (!empty($po)) {
-            $ve = Net::X($f['url'], 'POST', $po, inf::$cookie, $hhh, '', inf::$uagent);
-            #var_dump($ve);
+            $ve = json_decode(Net::X($f['url'], 'POST', $po, inf::$cookie, $hhh, '', inf::$uagent)?: '', 1);
+            #print_r($ve); #die;
             
+            if (!empty($ve) && isset($ve['msg'])) {
+                
+                $msg = strtolower(strip_tags($ve['msg']));
+                $stt = $ve['status'];
+                logx($stt, $msg, false, true);
+                
+                if (str_contains($msg,'has been banned') || str_contains($msg, 'blocked')) die;
+                _clr();
+                
+            }
         }
         
     #die;
@@ -201,6 +211,7 @@ while (true) {
                 $head = [$he, "Content-Type: multipart/form-data; boundary=$bo"];
                 
                 $cla = json_decode(Net::X($f['url'], 'POST', $body, inf::$cookie, array_merge($hhh, $head), $fa, inf::$uagent)?: '', 1);
+                #var_dump($cla);
                 if (!empty($cla) && isset($cla['status'])) {
                     $stt = $cla['status'];
                     $msg = trim(strip_tags($cla['msg'])) ?? 'unknown';
@@ -258,7 +269,7 @@ while (true) {
         if ($retptc >= 3) break;
         $retptc++;
         
-        if ($curr_id) Net::X($host . '/account/change_currency','GET',['method' => $curr_id],inf::$cookie,$hhh,$host.'/ptc',inf::$uagent);
+        if (!empty($curr_id)) Net::X($host . '/account/change_currency','GET',['method' => $curr_id],inf::$cookie,$hhh,$host.'/ptc',inf::$uagent);
         
         $ads = Net::X($host.'/ptc', 'GET', null, inf::$cookie, $hhh, $host, inf::$uagent);
         #_put('ads.html', $ads);
@@ -272,6 +283,8 @@ while (true) {
             
             $ptcList = parsePTC($ads);
             #print_r($ptcList); die;
+            
+            $size = (int) ceil(count($ptcList) / 2);
             foreach ($ptcList as $ptc) {
                 
                 
@@ -314,19 +327,11 @@ while (true) {
                         
                     }
                     
-                    if ($data) {
-                        $ch = postPTC($data, $host.'/ptc/verify/'.$ptc['adId'], array_merge($hhh, $he), true);
-                        if ($ch) {
-                            $viewed = true;
-                            $ptcc = false;
-                            break;
-                        }
-                    }
-                    
+                    if (!empty($data)) postPTC($data, $host.'/ptc/verify/'.$ptc['adId'], [$he], true);
                     
                 }
                 
-                if ($ptc['domain'] == 'claimlitoshi.top') {
+                if ($ptc['domain'] == 'chillfaucet.in') {
                     
                     $view = Net::C($ptc['url'], 'GET', null, inf::$cookie, [], $host, inf::$uagent);
                     
@@ -348,17 +353,11 @@ while (true) {
                     }
                     
                     if (!empty($data)) {
-                        $bo = '';
-                        $body = SolveUtils::webkitID($data, $bo);
-                        $head = [$he, "Content-Type: multipart/form-data; boundary=$bo"];
-                        
-                        $ch = postPTC($body, $f['url'], array_merge($hhh, $head));
-                        if ($ch) {
-                            $viewed = true;
-                            $ptcc = false;
-                            break;
-                        }
-                        
+                        postPTC(
+                            SolveUtils::webkitID($data, $bo),
+                            $f['url'],
+                            [$he, "Content-Type: multipart/form-data; boundary=$bo"]
+                        );
                     }
                     
                 }
