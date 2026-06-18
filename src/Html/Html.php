@@ -1,39 +1,5 @@
 <?php
-/** @class Scraper 
- * @method dom
-     * @param string|DOMXPath $html
-     * @return DOMXPath
- * @method payload
-     * @param string $html
-     * @return array
- * @method _xP
-     * @param string|DOMXPath $html
-     * @param string $query
-     * @return array
- * @method find
-     * @param string|DOMXPath $html
-     * @param string $name
-     * @param string $tag
-     * @param string|null $attr
-     * @param string $key
-     * @return array|null
- * @method xlit
-     * @param string $s
-     * @return string
- * @method _pP
-     * @param string $html
-     * @param string $targets
-     * @return array
- * @method _jP
-     * @param string $code
-     * @param string $pattern
-     * @return array|null
- * @method build
-     * @param string $html
-     * @param string $js
-     * @param array|string $tokenData
-     * @return array
- */
+
 class Scraper {
 
     public static function dom($html): DOMXPath {

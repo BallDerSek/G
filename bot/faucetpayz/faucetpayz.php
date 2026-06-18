@@ -166,7 +166,7 @@ while (true) {
                 
                 #_put('cla.html', $cla);
                 
-                if (stripos($cla, 'Invalid AntiBot')) $atbfail++;
+                if (checkATB($atbfail, $cla)) continue;
                 $m = Scraper::_jP($cla, '/type:\s*["\']([^"\']+)["\'],\s*message:\s*["\']([^"\']+)["\']/s');
                 if (isset($m[2][0])) {
                     $stt = $m[1][0];
@@ -257,8 +257,7 @@ while (true) {
                         $msg = $cla['message'];
                         
                         logm($mail);
-                        logx($is_ok, "$is_ok ", false, true);
-                        logg(0, $msg);
+                        logg(1, $msg);
                         break;
                     }
                 }

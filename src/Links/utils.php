@@ -173,6 +173,7 @@ function links($api, $url, $noapi = false) {
     
     if ($noapi) $api = null;
     $_direct = new _shortlinks($url);
+    
     try {
         $f_url = $_direct->links($api); 
         
@@ -186,24 +187,16 @@ function links($api, $url, $noapi = false) {
     
     if (!$api) return false;
     
-    logx('info', " Switching to solver API", false); _clr();
     $solver = config::getKeys($api, 'shortlink', 'tkn');
     
     if (stripos($url, 'coinclix')) return false;
     
-    if (!$solver || !method_exists($solver, 'shortLink')) {
-        logx('err', " (" . get_class($api) . ") doesn't support shortLink!");
-        return false;
-    }
+    if (!$solver || !method_exists($solver, 'shortLink')) return false;
 
     $res = $solver->shortLink($url);
     if (($res === 777 || $res === false) && $solver !== $api) {
-        if (method_exists($api, 'shortLink')) {
-            $res = $api->shortLink($url); 
-        } else {
-            logx('err', " (" . get_class($api) . ") doesn't support shortLink!");
-            $res = false; 
-        }
+        if (method_exists($api, 'shortLink')) $res = $api->shortLink($url); 
+        else $res = false;
     }
     
     if ($res && $res !== 99) return $res;

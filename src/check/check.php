@@ -43,8 +43,8 @@ class check {
             return [
                 'gd@php' => extension_loaded('gd'),
                 'python3' => self::depCmd($pyBin),
-                'seledroid@py' => $hasSeledroid,
-                'gost' => self::depCmd('gost'),
+                #'seledroid@py' => $hasSeledroid,
+                #'gost' => self::depCmd('gost'),
                 'ssh' => self::depCmd('ssh'),
                 'sshpass' => self::depCmd('sshpass'),
                 'nodejs' => $hasNode,

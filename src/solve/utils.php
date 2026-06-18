@@ -54,6 +54,18 @@ function rsAescipher($jsFile) {
     ];
 }
 
+function checkATB(&$err, ?string $html) {
+    if ($html && (
+            stripos($html, 'nvalid Anti-Bot') !== false ||
+            stripos($html, 'Invalid AntiBot') !== false
+    )) {
+        $err++;
+        return true;
+    }
+
+    return false;
+}
+
 class SolveUtils {
     
     private const NODE_WRAPPER = <<<'JS'
@@ -403,7 +415,7 @@ JS;
 
     public static function dumpJs($_input, $_putin = null, $unlink = false): string|false {
         
-        if (!getDeps('gd@php')) (logx('err', "gd@php is missing") ?: exit(9));
+        if (!getDeps('nodejs')) (logx('err', "nodeJs is missing") ?: exit(9));
         
         if (is_file($_input)) {
             $jsCode = _get($_input);

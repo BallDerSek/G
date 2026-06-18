@@ -409,10 +409,7 @@ while (true) {
             
             if (!empty($ver)) {
                 #_put('ver.html', $ver);
-                if (stripos($ver, '/register')) {
-                    $pending = $bakk;
-                    break 2;
-                }
+                if (stripos($ver, '/register')) goto login;
                 
                 $m = scraper::_jP($ver, "/Swal\.fire\s*\(\s*'([^']+)'\s*,\s*'([^']+)'\s*,\s*'([^']+)'\s*\)/");
                 if (isset($m[2][0])) {

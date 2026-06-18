@@ -215,9 +215,7 @@ while (true) {
                             $curr = $_c; 
                             break 2;
                         }
-                        if (stripos($msg, 'nvalid Anti-Bot')) {
-                            $atbfail++;
-                        }
+                        if (checkATB($atbfail, $msg)) continue;
                         if (stripos($msg, 'Shortlink')) {
                             
                             if ($SLDONE) (logx('err', 'Gada SL lagi') ?: die);
