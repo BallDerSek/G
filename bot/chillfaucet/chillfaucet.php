@@ -22,12 +22,14 @@ $ip = null;
     $userAgent = config::uagent('mobile');
     
     inf::setup($userAgent, $cookieFile, $ip, false, $login);
-    _cle();
-    banner();
-    taskPrintCenter($login, 'info');
-    print(UNDR.BOLD."site:");
-    logx('ok', " $host");
+    
+    $b = Banner::getInstance();
+    $b->show();
+    $b->task1('ok', "$login");
+    $b->task2('ok', "site: $host");
+    
 } ) ($login, $ip, $host);
+
 
 $hhh = inf::netHead(['uf' => md5($login), 'ls' => LANGUAGE(), 'utt' => TIMEZONE()]);
 $skipped = [];
@@ -106,8 +108,6 @@ while (true) {
     #die;
     } while (empty($dash));
     #_put('dash.html', $dash);
-    
-    #if (!empty($cwid)) $cid = linkCW($dash, $cwid, $hhh, $host);
     
     $_fa = [];
     $xpath = Scraper::dom($dash);
@@ -262,6 +262,7 @@ while (true) {
     ptc:
     $ads99 = 0;
     $bcttView = 0;
+    $bcttFail = 0;
     $viewed = false;
     $retptc = 0;
     while ($ptcc || !$viewed) {
@@ -296,17 +297,21 @@ while (true) {
                     $ch = $bctt->exec($ptc['url'], $ptc['timer']);
                     if ($ch === 99) goto login;
                     
-                    if ($bcttView >= 10) {
+                    if ($ch) {
+                        $ptcc = false;
+                        $bcttView++;
+                    } else {
+                        $bcttFail++;
+                        if ($bcttFail >= 10) break;
+                    }
+                    
+                    if ($bcttView >= $size) {
                         $bctt->cleanup();
                         $viewed = true;
                         $ptcc = false;
                         break;
                     }
                     
-                    if ($ch) {
-                        $ptcc = false;
-                        $bcttView++;
-                    }
                 }
                 
                 if ($ptc['domain'] == 't.me') {
@@ -388,16 +393,7 @@ tes:
 
 
 
-function linkCW($html, $cwid, $hhh, $host) {
-    if (preg_match("/decodeURIComponent\(match\[1\]\)\s*:\s*'([^']+)'/", $html, $m)) $token = $m[1];
-    
-    if (preg_match("/token\s*=\s*'([^']+)'/", $html, $m)) $token = $m[1];
-    
-    $pe = ['cwallet_id' => $cwid, 'csrf_test_name' => $token];
-    
-    return Net::X($host.'/dashboard/link_cwallet', 'POST', $pe, inf::$cookie, $hhh, $host, inf::$uagent);
-    
-}
+
 
 function parsePTC($html) {
     $result = [];

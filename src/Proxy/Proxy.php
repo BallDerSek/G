@@ -1,41 +1,5 @@
 <?php
 
-/** @class Proxy
- * @method ensure
-     * @return void
- * @method load
-     * @return void
- * @method _ssh
-     * @param array $u
-     * @param string $raw
-     * @return void
- * @method _base
-     * @param array $u
-     * @param string $raw
-     * @param string $scheme
-     * @return void
- * @method setSSH
-     * @param string $h
-     * @param int $p
-     * @param string $u
-     * @param string $pa
-     * @param int $localPort
-     * @param string $err
-     * @return bool
- * @method stopSSH
-     * @return void
- * @method _unable
-     * @return void
- * @method _enable
-     * @return bool
- * @method setPort
-     * @param string $host
-     * @param int $port
-     * @param int $ms
-     * @return bool
- * @method getPort
-     * @return int
- */
 class Proxy {
     private static $ctx_key = 'proxy';
     private static $ssh_key = 'ssh_tunnel';

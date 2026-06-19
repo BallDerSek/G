@@ -17,15 +17,15 @@ $ip = null;
     Proxy::load();
     Check::Geo();
     $cookieFile = config::cookie($login);
-    $c = config::credential(['ua' => fn() => config::uagent('mobile')]);
-    $userAgent = $c['ua'];
+    $userAgent = config::uagent('mobile');
     
     inf::setup($userAgent, $cookieFile, $ip, false, $login);
-    _cle();
-    banner();
-    taskPrintCenter($login, 'info');
-    print(UNDR.BOLD."site:");
-    logx('ok', " $host");
+    
+    $b = Banner::getInstance();
+    $b->show();
+    $b->task1('ok', "$login");
+    $b->task2('ok', "site: $host");
+    
 } ) ($login, $ip, $host);
 
 $headersCF = [];

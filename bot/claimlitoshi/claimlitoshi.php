@@ -21,13 +21,16 @@ $ip = null;
     $userAgent = config::uagent('mobile');
     
     inf::setup($userAgent, $cookieFile, $ip, false, $login);
-    _cle();
-    banner();
-    taskPrintCenter($login, 'info');
-    print(UNDR.BOLD."site:");
-    logx('ok', " $host");
+    
+    $b = Banner::getInstance();
+    $b->show();
+    $b->task1('ok', "$login");
+    $b->task2('ok', "site: $host");
+    
 } ) ($login, $ip, $host);
 
+
+$hhh = inf::netHead(['uf' => md5($login), 'ls' => LANGUAGE(), 'utt' => TIMEZONE()]);
 $headersCF = [];
 $skipped = [];
 $SLDONE = false;
@@ -105,7 +108,7 @@ while (true) {
                 $stt = $ve['status'];
                 logx($stt, $msg, false, true);
                 
-                if (str_contains($msg,'has been banned') || str_contains($msg, 'blocked')) die;
+                if (str_contains($msg,'has been banned') || str_contains($msg, 'blocked') || str_contains($msg, 'denied')) die;
                 _clr();
                 
             }
@@ -175,7 +178,7 @@ while (true) {
             if (!empty($f) && stripos($f['url'], 'faucet')) {
                 #print_r($f); die;
                 $pa = $f['payload'];
-                $cap = Solve::exec($fau, $host, $api, $pa);
+                $cap = Solve::exec($fau, $fa, $api, $pa);
                 
                 if (isset($cap['trouble'])) continue;
                 if (isset($cap['headers'])) {
@@ -184,36 +187,6 @@ while (true) {
                 } else $po = array_merge($pa, $cap);
                 
             } else {
-                
-                if (stripos($fau, 'Enter Your Cwallet ID') !== false) {
-                    
-                    /*
-                    if (!empty($cwid)) {
-                        $pa = $f['payload'];
-                        $crw = ['cwallet' => $cwid];
-                        $cap = Solve::exec($fau, $host, $api, $pa);
-                        
-                        if (isset($cap['headers'])) {
-                            $po = array_merge($pa, $cap['solution'], $crw);
-                            $he = $cap['headers'];
-                        } else $po = array_merge($pa, $cap);
-                        $ver = json_decode(Net::X(
-                            $f['url'],
-                            'POST',
-                            SolveUtils::webkitID($po, $bo),
-                            inf::$cookie,
-                            [$he, "Content-Type: multipart/form-data; boundary=$bo"],
-                            '',
-                            inf::$uagent
-                        )?: '', 1)['status'] ?? null;
-                        
-                        if (!empty($ver) && $ver == 'success') continue 3;
-                    }
-                    */
-                    $habis[$fa] = true;
-                    break;
-                    
-                }
                 
                 if (preg_match('/<b id="minute">(\d+)<\/b>:<b id="second">(\d+)<\/b>/', $fau, $m)) {
                     styler("waiting for next claim", fn() => _sle((int)$m['2']));
@@ -225,16 +198,18 @@ while (true) {
             }
                 
             if (!empty($po)) {
+                #print_r($po);
+                
                 $bo = '';
                 $body = SolveUtils::webkitID($po, $bo);
                 $head = [$he, "Content-Type: multipart/form-data; boundary=$bo"];
                 
-                $cla = json_decode(Net::X($f['url'], 'POST', $body, inf::$cookie, $head, $fa, inf::$uagent)?: '', 1);
+                $cla = json_decode(Net::X($f['url'], 'POST', $body, inf::$cookie, array_merge($hhh, $head), $fa, inf::$uagent)?: '', 1);
+                #var_dump($cla);
                 if (!empty($cla) && isset($cla['status'])) {
                     $stt = $cla['status'];
                     $msg = $cla['msg'] ?? 'unknown';
                     $is_ok = (stripos($stt, 'success') !== false);
-                    #print(FGd['CYN'].maskEmail($login).RSET." ");
                     logm($login);
                     
                     logx($is_ok ? 'ok' : 'err', "{$stt} ", false);
@@ -252,16 +227,17 @@ while (true) {
                         break;
                     }
                     if (preg_match('/SameIp Other|banned|flagged/i', $msg)) die;
+                    
                     if (stripos($msg, 'Shortlink')) {
                         if ($SLDONE) (logx('err', 'Gada SL lagi') ?: die);
                         $curr = $_c;
                         break 2;
                     }
                     
-                    
+                    styler("waiting for next claim", fn() => _sle(27));
                 }
                 
-                styler("waiting for next claim", fn() => _sle(25));
+                
             }
             
         }
@@ -277,6 +253,7 @@ while (true) {
     ptc:
     $ads99 = 0;
     $bcttView = 0;
+    $bcttFail = 0;
     $viewed = false;
     $retptc = 0;
     while ($ptcc || !$viewed) {
@@ -313,6 +290,9 @@ while (true) {
                     if ($ch) {
                         $ptcc = false;
                         $bcttView++;
+                    } else {
+                        $bcttFail++;
+                        if ($bcttFail >= 10) break;
                     }
                     
                     if ($bcttView >= $size) {

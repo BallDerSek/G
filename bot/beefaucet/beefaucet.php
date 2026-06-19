@@ -1,24 +1,24 @@
 <?php
 if (!defined('ROOT')) { die; }
-
 $api = onKeys();
+
 $acc = config::credential([], false, ['login', 'PROXY']);
 $login = $acc['login'];
-$proxy = $acc['PROXY'];
+putenv("PROXY=".$acc['PROXY']);
 
 $userAgent = config::uagent();
 $cookieFile = config::cookie($login);
 
-(function ($login, $px) {
-    putenv("PROXY=".$px);
+(function ($login) {
     Proxy::load();
     Check::Geo();
     
-    _cle();
-    banner();
-    taskPrintCenter($login, 'ok');
-} ) ($login, $proxy);
-
+    $b = Banner::getInstance();
+    $b->show();
+    $b->task1('ok', "$login");
+    $b->task2('ok', "site: https://beefaucet.org");
+    
+} ) ($login);
 
 
 $ip = '162.213.248.69';

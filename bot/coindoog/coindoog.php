@@ -19,13 +19,14 @@ $ip = null;
     $cookieFile = config::cookie($login);
     $c = config::credential(['ua' => fn() => config::uagent('mobile')]);
     $userAgent = $c['ua'];
-    
+
     inf::setup($userAgent, $cookieFile, $ip, false, $login);
-    _cle();
-    banner();
-    taskPrintCenter($login, 'info');
-    print(UNDR.BOLD."site:");
-    logx('ok', " $host");
+    
+    $b = Banner::getInstance();
+    $b->show();
+    $b->task1('ok', "$login");
+    $b->task2('ok', "site: $host");
+    
 } ) ($login, $ip, $host);
 
 $headersCF = [];
@@ -399,10 +400,9 @@ function checkCF($url, $api, $body = null, $headersCF = []) {
     
     if ($code !== 200 && (stripos($html, 'Just a moment') !== false || stripos($html, 'Attention Required!') !== false)) {
         
-        $cf = execCF($api, $url, inf::$cookie, inf::$uagent);
+        $cf = Cloudflare::exec($api, $url, inf::$cookie, inf::$uagent, ['html' => $html]);
         
         if ($cf) {
-            #var_dump($cf);
             [$headersCF, $ua] = $cf;
             inf::setup($ua, inf::$cookie);
             
@@ -411,15 +411,13 @@ function checkCF($url, $api, $body = null, $headersCF = []) {
                     _sle(3);
                     $fix = Net::X($url, 'GET', null, inf::$cookie, $headersCF, $url, inf::$uagent, d: true);
                     
-                    #var_dump($fix);
                     if (!empty($fix) && isset($fix['http_code'])) {
                         $_c = $fix['http_code'];
                         $_b = $fix['body'];
                         
-                        if ($_c === 200 || (!stripos($_b, 'Just a moment') !== false || !stripos($_b, 'Attention Required!') !== false)) {
+                        if ($_c === 200 && stripos($_b, 'Just a moment') === false && stripos($_b, 'Attention Required!') === false) {
                             
                             config::credential()['ua'] = $ua;
-                            
                             return ['html' => $_b, 'head' => $headersCF];
                         }
                     }
@@ -432,5 +430,4 @@ function checkCF($url, $api, $body = null, $headersCF = []) {
     }
     
     return [];
-    
 }

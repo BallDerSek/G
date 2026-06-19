@@ -1,25 +1,5 @@
 <?php
 
-/** @class execPython
- * @method __construct
-     * @param string|null $cookie
-     * @param string|null $ua
- * @method run
-     * @param string $type
-     * @param string|null $url
-     * @param string|null $act
-     * @return array|string|null
- * @method exec
-     * @param string $m
-     * @param string|null $url
-     * @param bool $sync
-     * @param string|null $act
-     * @return string|null
- * @method cfCookie
-     * @param string $cfString
-     * @param string $url
-     * @return bool
- */
 final class execPython {
     private string $python = 'python3';
     private string $scriptPath;

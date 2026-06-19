@@ -17,7 +17,7 @@ class Banner {
         if (self::$instance === null) {
             self::$instance = new self();
         }
-
+        
         return self::$instance;
     }
 
@@ -103,7 +103,8 @@ class Banner {
     }
 
     public function show() {
-        $botName = $GLOBALS['_CTX']['current_bot'] ?? '71';
+        _cle();
+        $botName = $GLOBALS['_CTX']['current_bot'] ?? "runner version: ".RUNNER;
         $ip = IP();
         $timezone = TIMEZONE();
 
@@ -118,6 +119,7 @@ class Banner {
         $inner = max(1, $width - 2);
 
         $borderColor = FGb['MAG'];
+        $titleColor  = FGb['GRN'];
         $textColor   = FGb['WHT'];
 
         $this->moveCursor(1, 1);
@@ -135,7 +137,7 @@ class Banner {
         );
 
         echo $borderColor . "║" . RSET .
-             $textColor . $title . RSET .
+             $titleColor . $title . RSET .
              $borderColor . "║" . RSET . PHP_EOL;
 
         $this->moveCursor(3, 1);

@@ -19,15 +19,15 @@ $ip = '';
     Check::Geo();
     $cookieFile = config::cookie($mail);
     $userAgent = config::uagent('mobile');
-
+    
     inf::setup($userAgent, $cookieFile, $ip, false, $mail);
-    _cle();
-    banner();
-    taskPrintCenter($mail, 'info');
-    print(UNDR.BOLD."site:");
-    logx('ok', " $host");
-})($mail, $ip, $host);
-
+    
+    $b = Banner::getInstance();
+    $b->show();
+    $b->task1('ok', "$mail");
+    $b->task2('ok', "site: $host");
+    
+} ) ($mail, $ip, $host);
 
 $limit = false;
 $claim = true;

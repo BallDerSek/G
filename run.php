@@ -13,7 +13,7 @@ $GLOBALS['_CTX'] ??= [
     'geo' => [],
     'proxy' => [],
     'apikey' => [],
-    'banner' => [],
+    #'banner' => [],
 ];
 
 startingLib:

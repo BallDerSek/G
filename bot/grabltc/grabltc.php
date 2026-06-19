@@ -17,12 +17,14 @@ $ip = null;
     Proxy::load();
     Check::Geo();
     $cookieFile = config::cookie($login);
-    $userAgent = "CryptoHarvestApp/1.0_13.02.2025//JK";
+    $userAgent = config::uagent('mobile');
     
-    inf::setup($userAgent, $cookieFile, $ip);
-    _cle();
-    banner();
-    taskPrintCenter($login, 'info');
+    inf::setup($userAgent, $cookieFile, $ip, false, $login);
+    
+    $b = Banner::getInstance();
+    $b->show();
+    $b->task1('ok', "$login");
+    
 } ) ($login, $ip, $host);
 
 $hhh = ['detail-hints: false'];
