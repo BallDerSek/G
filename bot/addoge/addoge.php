@@ -1,21 +1,24 @@
 <?php
 
 
-banner();
+$banner = Banner::getInstance();
 
-
+$banner->show();
 $ck = config::cookie();
 $ua = config::uagent();
 
-$host = 'https://ad-doge.com';
-$ip = '45.14.135.47';
+
+$host = 'https://www.claimsfreecoins.com'; $ip = '';
+$host = 'https://starlavinia.com'; $ip = '';
+
+$host = 'https://ad-doge.com'; $ip = '45.14.135.47';
 
 $_0 = Net::C($host.'/login', 'GET', null, $ck, [], '', $ua, ip: $ip, ins: true);
 
-$num = 900;
+$num = 0;
 $icons = [];
 
-while ($num < 1000) {
+while ($num < 500) {
     $dir = _lib('ccaptcha', $num);
     #$cc = Net::C($host.'/captcha', 'GET', null, $ck, [], '', $ua, ip: $ip, ins: true);
 
@@ -58,7 +61,7 @@ while ($num < 1000) {
         'opsi' => $cc_ic
     ], JSON_PRETTY_PRINT));
 
-    taskPrintCenter("saved $num", 'ok');
+    $banner->taskPrint('ok', "saved $num");
 
     $num++;
 }

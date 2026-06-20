@@ -1,5 +1,6 @@
 <?php
 
+/*
 function cfSet($class, $res) {
     if (!$res) return null;
     
@@ -42,10 +43,10 @@ function execCF($api, $url, $cookie, $uagent, array $data = []) {
         'userAgent' => $uagent,
         'proxy' => $GLOBALS['_CTX']['proxy']['src'] ?? null
     ]);
-/*
-    logx('info', 'param for solver');
-    print_r($param);
-*/
+
+    #logx('info', 'param for solver');
+    #print_r($param);
+
     $solver = config::getKeys($api, 'interstitial', 'acc');
     $solve = $solver->access($url, 'interstitial', $param);
     
@@ -63,10 +64,10 @@ function execCF($api, $url, $cookie, $uagent, array $data = []) {
     
     if (is_array($solve) && !empty($solve[1])) {
         if ($solver instanceof Provider) $api->getInfo();
-/*
-        logx('info', 'param from solver');
-        print_r($solve); #die;
-*/
+
+        #logx('info', 'param from solver');
+        #print_r($solve); #die;
+
         [$_cl, $_cf] = $solve;
         $solution = cfSet($_cl, $_cf);
         #print_r($solution);
@@ -81,8 +82,6 @@ function setCF($r, $c, $host) {
     #print_r($r);
     if (is_array($r) && isset($r['token'])) {
         
-        # cari aman, inject cookie, biar gak boros kalau rerun karna solution headers hanya ada di memory
-        # belum ua, bingung ditambah inject nya. karna gak semua api support ua dari client
         
         $execPy = new execPython($c, $r['ua']);
         $clearance = "cf_clearance={$r['token']}";
@@ -97,7 +96,7 @@ function setCF($r, $c, $host) {
     
     return false;
 }
-
+*/
 
 
 
@@ -175,7 +174,9 @@ class Cloudflare {
 
     public static function injectCookie($cookiePath, $token, $url) {
         if (empty($cookiePath) || !file_exists($cookiePath)) return false;
-
+        
+        # cari aman, inject cookie, biar gak boros kalau rerun karna solution headers hanya ada di memory
+        
         $domain = parse_url($url, PHP_URL_HOST);
         $cookieDomain = '.' . ltrim($domain, '.');
         $secure = (parse_url($url, PHP_URL_SCHEME) === 'https') ? "TRUE" : "FALSE";

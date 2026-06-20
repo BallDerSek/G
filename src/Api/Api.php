@@ -1,45 +1,6 @@
 <?php
-/** @class Api
- * @constant string PX_AUTH
- * @constant string PX_TYPE
- * @constant string PROXY
- * @constant array KEY
- * @constant array TKN
- * @constant array B64
- * @constant array ACC
- * @constant array ERR
- *
- * @method use
- *   @param string $API
- *   @param string $KEY
- *   @return Provider
- *
- * @method cfgTkn
- *   @param string $c
- *   @param string $t
- *   @param string $siteKey
- *   @param string $siteUrl
- *   @param array $extra
- *   @return array
- *
- * @method cfgB64
- *   @param string $c
- *   @param string $t
- *   @param string $b64
- *   @return array
- *
- * @method cfgAcc
- *   @param string $c
- *   @param string $t
- *   @param string $siteUrl
- *   @param array $extra
- *   @return array
- *
- * @method errType
- *   @param string $msgOrCode
- *   @return string|false
- */
-final class Api { #contractor
+
+final class Api {
     public const PX_AUTH = '';
     public const PX_TYPE = '';
     public const PROXY = self::PX_TYPE . '://' . self::PX_AUTH;
@@ -96,10 +57,10 @@ final class Api { #contractor
             'rc2' => [
                 'k'=>'siteKey','url'=>'domain','api'=>'popularcaptcha', 'defaults' => ['method' => 'recaptcha2']
                 ],
-            */
             'rc3' => [
                 'k'=>'siteKey','url'=>'domain','api'=>'popularcaptcha', 'defaults' => ['method' => 'recaptcha3']
                 ],
+            */
 
             'pcc' => [
                 'k'=>'cpobj','url'=>'domain','api'=>'coinclix', 'defaults' => ['method' => 'pc']
@@ -613,53 +574,7 @@ final class Api { #contractor
     
 } 
 
-/** @class Provider
- * @property mixed $apiKey
- *
- * @method __construct
- *   @param mixed $apiKey
- *
- * @method run
- *   @param string $method
- *   @param array $params
- *   @return mixed
- *
- * @method call
- *   @param string $method
- *   @param array $params
- *   @return mixed
- *
- * @method token
- *   @param string $siteKey
- *   @param string $siteUrl
- *   @param string $type
- *   @param array $extraParams
- *   @return mixed
- *
- * @method base64
- *   @param string $img
- *   @param string $type
- *   @return mixed
- *
- * @method access
- *   @param string $siteUrl
- *   @param string $type
- *   @param array $extraParams
- *   @return mixed
- *
- * @method atb
- *   @param array $data
- *   @return string|false|int
- *
- * @method get_api
- *   @param string $method
- *   @param array $params
- *   @return mixed
- *
- * @method res_api
- *   @param mixed $jobId
- *   @return mixed
- */
+
 abstract class Provider {
     protected $apiKey;
     #protected $baseUrl;
