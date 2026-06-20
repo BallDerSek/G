@@ -205,12 +205,12 @@ while (true) {
             }
                 
             if (!empty($po)) {
-                
+                _sle(2);
                 $bo = '';
                 $body = SolveUtils::webkitID($po, $bo);
                 $head = [$he, "Content-Type: multipart/form-data; boundary=$bo"];
                 
-                $cla = json_decode(Net::X($f['url'], 'POST', $body, inf::$cookie, array_merge($hhh, $head), $fa, inf::$uagent)?: '', 1);
+                $cla = json_decode(Net::X($f['url'], 'POST', $body, inf::$cookie, array_merge($hhh, $head), $fa, inf::$uagent, foll: false)?: '', 1);
                 #var_dump($cla);
                 if (!empty($cla) && isset($cla['status'])) {
                     $stt = $cla['status'];
@@ -244,9 +244,9 @@ while (true) {
                         break;
                     }
                     
+                    styler("waiting for next claim", fn() => _sle(5));
+                    
                 }
-                
-                styler("waiting for next claim", fn() => _sle(5));
             }
             
         }
