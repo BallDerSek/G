@@ -12,12 +12,12 @@ if (!is_file($mailPath)) {
 }
 $emails = file($mailPath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
 
-
-
-
 $urls = ['https://usdtblow.xyz', 'https://tronblow.site'];
 
-banner();
+$b = Banner::getInstance();
+$b->show();
+$b->task1('ok', "auto multi+batch");
+
 login:
     
 $chunks = array_chunk($emails, 50);
@@ -37,9 +37,12 @@ foreach ($chunks as $cIdx => $batch) {
             'base' => Config::cookie($mail),
             'sites' => $urls 
         ];
-        logx('info', "Batching: " . maskEmail($mail));
     }
-
+    
+    $b->show();
+    $b->task1('ok', "auto multi+batch");
+    $b->task2('info', "processing: ". count($batch));
+    
     while (!empty($accs)) {
         $maxWait = 0;
         foreach ($accs as $acc) {
@@ -48,9 +51,7 @@ foreach ($chunks as $cIdx => $batch) {
             $maxWait = max($maxWait, $sisa);
         }
 
-        if ($maxWait > 0) {
-            styler("Waiting $maxWait s", fn() => _sle($maxWait));
-        }
+        if ($maxWait > 0) styler("Waiting $maxWait s", fn() => _sle($maxWait));
 
         $calls = [];
         $keys = [];
@@ -86,7 +87,7 @@ foreach ($chunks as $cIdx => $batch) {
             if (!empty($f)) {
                 $pa = $f[0]['payload'];
                 if (isset($pa['math_answer'])) {
-                    $pa['math_answer'] = mA($pa['math_q1'], $pa['math_q2'], $pa['math_op']);
+                    $pa['math_answer'] = SolveUtils::math($pa['math_q1'], $pa['math_q2'], $pa['math_op']);
                     $pa['email'] = $accs[$info['idx']]['mail'];
                 }
                 $postKeys[] = $info;
@@ -103,6 +104,7 @@ foreach ($chunks as $cIdx => $batch) {
 
             $batchWait = 0;
             $toRemoveAcc = [];
+            $processedUrls = [];
 
             foreach ($_1 as $k => $res) {
                 $info = $postKeys[$k];
@@ -110,16 +112,18 @@ foreach ($chunks as $cIdx => $batch) {
                 $domain = parse_url($info['host'])['host'];
                 
                 $userDisp = maskEmail($accs[$idx]['mail']);
-                print(BOLD.FGb['BLU'].sprintf("%-10s", explode('.', $domain)[0]).FGd['CYN']." [ $userDisp ] ".RSET);
-
+                Logger::M($mail);
+                Logger::X('info', "$domain ", false, true);
+                
                 if (!empty($res)) {
                     
                     $_suc = scraper::_xP($res, "//div[contains(@class,'alert-success')]");
                     $_err = scraper::_xP($res, "//div[contains(@class,'alert-error')]");
-
+                    
                     if (!empty($_suc)) {
                         logx('ok', trim($_suc[0]));
                         $batchWait = max($batchWait, 62);
+                        $processedUrls[$idx][] = $info['host'];
                     } elseif (!empty($_err)) {
                         $errMsg = trim($_err[0]);
                         $lowErr = strtolower($errMsg);
@@ -129,6 +133,8 @@ foreach ($chunks as $cIdx => $batch) {
                             $sKey = array_search($info['host'], $accs[$idx]['sites']);
                             if ($sKey !== false) unset($accs[$idx]['sites'][$sKey]);
                             if (empty($accs[$idx]['sites'])) $toRemoveAcc[] = $idx;
+                        } else {
+                            $processedUrls[$idx][] = $info['host'];
                         }
 
                         if (preg_match('/(\d+)s/', $errMsg, $_w)) {
@@ -136,10 +142,21 @@ foreach ($chunks as $cIdx => $batch) {
                         }
                     } else {
                         logx();
+                        $processedUrls[$idx][] = $info['host'];
                     }
                     
                 }
                 @unlink($info['cFile']);
+            }
+
+            foreach ($processedUrls as $idx => $urlsProcessed) {
+                foreach ($urlsProcessed as $url) {
+                    $sKey = array_search($url, $accs[$idx]['sites']);
+                    if ($sKey !== false) unset($accs[$idx]['sites'][$sKey]);
+                }
+                if (empty($accs[$idx]['sites'])) {
+                    $toRemoveAcc[] = $idx;
+                }
             }
 
             if (!empty($toRemoveAcc)) {
@@ -158,6 +175,7 @@ foreach ($chunks as $cIdx => $batch) {
             _sle(30);
         }
     }
+    _cle();
 }
 
 logx('ok', "ALL BATCHES FINISHED");

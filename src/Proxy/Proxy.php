@@ -44,9 +44,7 @@ class Proxy {
         if (!empty($GLOBALS['_CTX'][self::$ctx_key]) && ($GLOBALS['_CTX'][self::$ctx_key]['src'] ?? '') === $raw) {
             if (($GLOBALS['_CTX'][self::$ctx_key]['mode'] ?? '') === 'ssh') {
                 if (self::_enable()) return;
-            } else {
-                return;
-            }
+            } else return;
         }
 
         self::stopSSH();
@@ -59,9 +57,7 @@ class Proxy {
                 return;
             }
             self::_ssh($u, $raw);
-        } else {
-            self::_base($u, $raw, $scheme);
-        }
+        } else self::_base($u, $raw, $scheme);
     }
 
     private static function _ssh($u, $raw) {
@@ -199,4 +195,5 @@ class Proxy {
         }
         return 20001; // Fallback
     }
+    
 }

@@ -18,14 +18,15 @@ $ip = '';
     Check::Geo();
     $cookieFile = config::cookie($mail);
     $userAgent = config::uagent('mobile');
-
+    
     inf::setup($userAgent, $cookieFile, $ip, false, $mail);
-    _cle();
-    banner();
-    taskPrintCenter($mail, 'info');
-    print(UNDR.BOLD."site:");
-    logx('ok', " $host");
-})($mail, $ip, $host);
+    
+    $b = Banner::getInstance();
+    $b->show();
+    $b->task1('ok', "$mail");
+    $b->task2('ok', "site: $host");
+    
+} ) ($mail, $ip, $host);
 
 $limit = false;
 $claim = true;
@@ -236,7 +237,6 @@ while (true) {
                 }
                 
                 if (!empty($view) && $view !== 99) {
-                    $set = microtime(true);
                     
                     $f = scraper::payload($view)[0] ?? [];
                     
@@ -253,9 +253,7 @@ while (true) {
                     }
                     
                     if (!empty($po)) {
-                        $end = microtime(true) - $set;
-                        $wait = (int)($ad_t - $end);
-                        if ($wait > 0) styler("waiting for ads: $wait", fn() => _sle($wait));
+                        styler("waiting for ads: $ad_t", fn() => _sle($ad_t));
                         
                         $cla = Net::X($f['url'], 'POST', $po, inf::$cookie, [], $ad_u, inf::$uagent, false, true, $ip);
                         #_put('cla.html', $cla);
@@ -391,7 +389,7 @@ while (true) {
     
     if ($limit && $SLDONE && $ADDONE) {
         $wd = Net::X("$host/withdraw", 'GET', null, inf::$cookie, [], "$host/dashboard", inf::$uagent, false, false, $ip);
-        #_put('wd.html', $wd); die;
+        _put('wd.html', $wd); die;
         
         
         

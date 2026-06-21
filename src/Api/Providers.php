@@ -1,12 +1,5 @@
 <?php
-/**
- * 
- * 
- * 
- */
-if (!defined('ROOT')) exit;
 
-if (!class_exists('Api', false)) exit(1);
 
 class xevil extends Provider {
     

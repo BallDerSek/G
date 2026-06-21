@@ -1,11 +1,11 @@
 <?php
 if (!defined('ROOT')) {die;}
 
+#$api = onKeys();
 $api = null;
-$api = onKeys();
     
 
-banner();
+$b = Banner::getInstance();
 $supportedSL = [
     'mid' => [
         $cuty = 'https://cuty.io/WrPYm6ec3EhF',
@@ -42,47 +42,37 @@ $supportedSL = [
         ]
 ];
 
-#goto tes;
-/*
-while(true) {
-    $shortLink = getenv('login');
-    if (!$shortLink || empty($shortLink)) {
-        $shortLink = _rl('shortlink: ');
-    }
-    
-    try {
-        $bypass = new _shortlinks("$shortLink");
-        
-        $set = microtime(true);
-        $finalUrl = $bypass->links($api);
-        $end = number_format(microtime(true) - $set, 0);
-        
-        logg(true, $shortLink, false);
-        logx('info', " passed in {$end}s");
-        
-        logx('ok', "[  done  ] ".$finalUrl, true, true);
-
-    } catch (RuntimeException $e) {
-        logg(true, $shortLink);
-        logx('err', "[  fail  ] ".$e->getMessage(), true, true);
-    }
-#die;
-}
-*/
 
 while (true) {
-    $shortLink = getenv('login');
-    if (!$shortLink || empty($shortLink)) {
-        $shortLink = _rl('shortlink: ');
+    $b->show();
+    $ddd = 0;
+    while (true) {
+        $ddd++;
+        $b->task1('info', "tips: direct first, api for fallback (if exist/support)");
+        $b->task2('info', "input ur shortlink");
+        
+        if ($ddd >= 10) break;
+        
+        $url = getenv('login');
+        if (!$url || empty($url)) {
+            $url = _rl('shortlink: ');
+        }
+        
+        $b->task1('warn', "processing");
+        $b->task2('info', "");
+        $bakk = links($api, $url);
+        if ($bakk) {
+            $b->task2('ok', "done");
+            logx('ok', "result: ".$bakk, true, true);
+        } else $b->task2('err', "fail");
+        
+        _sle(2);
     }
-    logg(true, $shortLink, false);
-    $bakk = links($api, $shortLink);
-    if ($bakk) logx('ok', "[  done  ] ".$bakk, true, true);
-    
-    
 }
 
 
+
+die;
 tes:
 $cookieFile = config::cookie();
 $userAgent = config::uagent();

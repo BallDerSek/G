@@ -135,7 +135,7 @@ class Cloudflare {
 
     public static function exec($api, $url, $cookiePath, $uagent, array $data = []) {
         
-        if (!$api) (logx('err', 'undefined provider') ?: die);
+        if (!$api) die(Logger::X('err', 'undefined provider'));
         
         $param = array_filter([
             'body' => !empty($data['html']) ? base64_encode($data['html']) : null,

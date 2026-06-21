@@ -235,7 +235,7 @@ while (true) {
                     }
                     
                     styler("waiting for next claim", fn() => _sle(27));
-                }
+                } elseif (empty($cla)) $ret99++;
                 
                 
             }

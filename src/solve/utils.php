@@ -162,10 +162,7 @@ JS;
     
     public static function histC($input): ?array {
         
-        if (!getDeps('gd@php')) {
-            logx('err', "gd@php is missing");
-            exit(9);
-        }
+        if (!getDeps('gd@php')) die(Logger::X('err', 'gd@php is missing'));
         
         $im = self::createImg($input);
         if (!$im) return null;
@@ -207,7 +204,8 @@ JS;
     }
 
     public static function pHash($input) {
-        if (!getDeps('gd@php')) (logx('err', "gd@php is missing") ?: exit(9));
+        
+        if (!getDeps('gd@php')) die(Logger::X('err', 'gd@php is missing'));
         
         $im = self::createImg($input);
         if (!$im) return null;
@@ -258,7 +256,8 @@ JS;
     }
     
     public static function aHash($input) {
-        if (!getDeps('gd@php')) (logx('err', "gd@php is missing") ?: exit(9));
+        
+        if (!getDeps('gd@php')) die(Logger::X('err', 'gd@php is missing'));
         
         $im = self::createImg($input);
         if (!$im) return null;
@@ -284,7 +283,8 @@ JS;
     }
 
     public static function dHash($input) {
-        if (!getDeps('gd@php')) (logx('err', "gd@php is missing") ?: exit(9));
+        
+        if (!getDeps('gd@php')) die(Logger::X('err', 'gd@php is missing'));
         
         $im = self::createImg($input);
         if (!$im) return null;
@@ -314,7 +314,8 @@ JS;
     }
 
     private static function createImg($input) {
-        if (!getDeps('gd@php')) (logx('err', "gd@php is missing") ?: exit(9));
+        
+        if (!getDeps('gd@php')) die(Logger::X('err', 'gd@php is missing'));
         
         $data = (is_string($input) && file_exists($input)) ? _get($input) : $input;
         return @imagecreatefromstring($data);
@@ -415,7 +416,7 @@ JS;
 
     public static function dumpJs($_input, $_putin = null, $unlink = false): string|false {
         
-        if (!getDeps('nodejs')) (logx('err', "nodeJs is missing") ?: exit(9));
+        if (!getDeps('nodejs')) die(Logger::X('err', 'nodeJs is missing'));
         
         if (is_file($_input)) {
             $jsCode = _get($_input);

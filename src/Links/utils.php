@@ -172,9 +172,9 @@ function limit($id) {
 function links($api, $url, $noapi = false) {
     
     if ($noapi) $api = null;
-    $_direct = new _shortlinks($url);
     
     try {
+        $_direct = new _shortlinks($url);
         $f_url = $_direct->links($api); 
         
         if ($f_url && is_string($f_url)) {

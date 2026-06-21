@@ -20,7 +20,7 @@ class Bctt {
         $cleanHost  = trim(preg_replace('/[^a-zA-Z0-9]/', '_', $targetHost), '_');
         
         if (!$cookie) {
-            $workDir = $this->setupWorkDir('bct', $cleanHost, $mail, 300);
+            $workDir = $this->setupWorkDir('bct', $cleanHost, $mail, 500);
             $this->cookieFile = $workDir . "/" . $this->userdir($mail) . ".tmp";
         } else {
             $this->cookieFile = $cookie;

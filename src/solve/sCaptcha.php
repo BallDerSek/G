@@ -5,10 +5,7 @@ class sCaptcha {
     
     public static function rotate($html) {
         $solution = ['rot_captcha_val' => 0];
-        if (!getDeps('gd@php')) {
-            logx('err', "gd@php is missing");
-            exit(9);
-        }
+        if (!getDeps('gd@php')) die(Logger::X('err', 'gd@php is missing'));
         
         $_targetText = Scraper::_xP($html, "//div[@id='rc-title']//strong");
         $targetStr = isset($_targetText[0]) ? strtoupper($_targetText[0]) : 'UP';
@@ -24,7 +21,8 @@ class sCaptcha {
         $_img = base64_decode($b64);
         if (!$_img) return $solution;
         
-        $img = imagecreatefromstring($_img);
+        #$img = imagecreatefromstring($_img);
+        $img = SolveUtils::createImg($_img);
         $W = imagesx($img);
         $H = imagesy($img);
         $_slc = max(5, (int)round(max($W, $H) * 0.08));
