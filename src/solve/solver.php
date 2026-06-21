@@ -11,7 +11,6 @@ class Solve {
         
         #return [];
         
-        
         self::$context = inf::$context;
         
         $solution = [];
@@ -112,7 +111,6 @@ class Solve {
             }
         }
         
-        
         if (isset($_cap['ic_fw'])) {
             $data = [
                 'token' => $_cap['ic_fw']['keys'],
@@ -187,14 +185,13 @@ class Solve {
             }
         }
         
-        
         $ignoreFields = array_merge(['antibotlinks'], $captchaFields);
         $mainSolved = count(array_diff(array_keys($solution), $ignoreFields)) > 0;
 
         if ($api && !$mainSolved) {
             $priority = [];
             $lowType = str_replace(['-', '_'], '', strtolower($_select));
-
+            
             if (str_contains($lowType, 'turnstile')) {
                 $priority = ['cft'];
             } elseif (str_contains($lowType, 'hcaptcha') || str_contains($lowType, 'hc')) {
@@ -204,7 +201,7 @@ class Solve {
             } else {
                 $priority = ['cft', 'rc3', 'rc2', 'hc'];
             }
-
+            
             foreach ($priority as $t) {
                 if (!isset($_cap[$t])) continue;
                 

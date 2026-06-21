@@ -29,7 +29,6 @@ $ip = null;
     
 } ) ($login, $ip, $host);
 
-
 $hhh = inf::netHead(['uf' => md5($login), 'ls' => LANGUAGE(), 'utt' => TIMEZONE()]);
 $headersCF = [];
 $skipped = [];
@@ -69,7 +68,7 @@ while (true) {
         _sle(3); _clr();
         Net::X($host.$r, 'GET', null, inf::$cookie, $headersCF, '', inf::$uagent);
         $_0 = Net::X($host, 'GET', null, inf::$cookie, $headersCF, $host.$r, inf::$uagent);
-        #_put('0.html', $_0);
+        #_put('0.html', $_0); die;
         if ($_0 === 99) {
             logx('warn', "masalah proxy, warm up dulu");
             _sle(60);
@@ -81,6 +80,8 @@ while (true) {
         $po = null;
         $he = '';
         if (!empty($f)) {
+            #print_r($f);
+            
             $pa = $f['payload'];
             $cre = ['wallet' => $login];
             $cap = solve::exec($_0, $host, $api, $pa);
@@ -91,6 +92,11 @@ while (true) {
             if (isset($cap['headers'])) {
                 $po = array_merge($pa, $cap['solution'], $cre);
                 $he = $cap['headers'];
+            } else {
+                
+                $po = array_merge($pa, $cap, $cre);
+                
+                $he = 'x-server-hash: '.getHead($_0, $host)['headers'];
             }
             
         }
@@ -101,7 +107,10 @@ while (true) {
             $body = SolveUtils::webkitID($po, $bo);
             $head = [$he, "Content-Type: multipart/form-data; boundary=$bo"];
             
-            $ve = json_decode(Net::X($f['url'], 'POST', $body, inf::$cookie, $head, $host.$r, inf::$uagent)?: '', 1);
+            $headers = array_merge($head, $hhh);
+            
+            $ve = json_decode(Net::X($f['url'], 'POST', $body, inf::$cookie, $headers, $host.$r, inf::$uagent)?: '', 1);
+            #print_r($ve); die;
             if (!empty($ve) && isset($ve['msg'])) {
                 
                 $msg = strtolower(strip_tags($ve['msg']));
@@ -184,7 +193,10 @@ while (true) {
                 if (isset($cap['headers'])) {
                     $po = array_merge($pa, $cap['solution']);
                     $he = $cap['headers'];
-                } else $po = array_merge($pa, $cap);
+                } else {
+                    $po = array_merge($pa, $cap);
+                    $he = 'x-server-hash: '.getHead($fau, $fa)['headers'];
+                }
                 
             } else {
                 
@@ -342,7 +354,10 @@ while (true) {
                         if (isset($sol['headers'])) {
                             $data = array_merge($pa, $sol['solution']);
                             $he = $sol['headers'];
-                        } else $data = array_merge($sol, $pa);
+                        } else {
+                            $data = array_merge($sol, $pa);
+                            $he = 'x-server-hash: '.getHead($ads, $host)['headers'];
+                        }
                         
                     }
                     
@@ -370,11 +385,24 @@ while (true) {
 
 
 tes:
+ 
+
+
+
+
+
+
+
+
+
+function getHead($html, $host) {
+    $scJs = array_merge(Scraper::_sC($html)['external'], Scraper::_sC($html)['inline']);
+    $param['extra']['js'] = $scJs;
+    $param['mods'] = 'upside_captcha';
     
-
-
-
-
+    $uCap = array_merge(inf::$context, ['html' => $html, 'host' => $host]);
+    return (new uCaptcha($uCap))->exec($param, true);
+}
 
 function parsePTC($html) {
     $result = [];

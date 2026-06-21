@@ -1,9 +1,5 @@
 <?php
-/** @class Capt 
- * @method cha
- * @param string $html
- * @return array|null
- */
+
 class Capt {
 
     public static function cha($html): ?array {

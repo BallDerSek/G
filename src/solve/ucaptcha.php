@@ -18,13 +18,13 @@ final class uCaptcha {
         $this->workDir = $this->setupWorkDir('ucaptcha', $this->host, $ctx['id'] ?? null);
     }
 
-    public function exec(array $ucap) {
+    public function exec(array $ucap, $headersOnly = false) {
         if (!getDeps('nodejs')) {
             logx('err', 'nodejs missing');
             exit;
         }
             
-        return styler("SOLVING uCaptcha", function() use ($ucap) {
+        return styler("SOLVING uCaptcha", function() use ($ucap, $headersOnly) {
             try {
                 if (!$ucap) return false;
                 
@@ -44,13 +44,15 @@ final class uCaptcha {
                 $_fp = $this->fingerprint($isUc);
                 $_sh = $this->_enc($_fp, $_K, $_S);
                 
+                if ($headersOnly) return ['headers' => $_sh];
+                
                 return $isUc ? $this->_uC($_A, $_fp, $_sh, $_K, $_S) : $this->_aC($_A, $_fp, $_sh, $_K, $_S);
             } finally {
                 $this->rmdir($this->workDir);
             }
         });
     }
-
+    
     private function _derive($secret, $salt): array {
         
         $masterKey = hash('sha512', $secret . $salt, true);
@@ -223,7 +225,7 @@ final class uCaptcha {
     }
 
     private function _keys(array $jsUrls): array|false {
-        
+        #print_r($jsUrls); die;
         $urls = [];
         foreach ($jsUrls as $u) {
             if (empty($u)) continue;
@@ -237,7 +239,7 @@ final class uCaptcha {
             
             if ($js === 99 || empty($js)) continue;
             if (!str_contains($js, 'litoshi_api_key')) $js = solveUtils::dumpJs($js);
-            
+            #_put('c.js', $js);
             $api = Scraper::_jP($js, "/litoshi_api_key\s*=\s*['\"]([^'\"]+)['\"]/");
             $sec = Scraper::_jP($js, "/litoshi_secret_key\s*=\s*['\"]([^'\"]+)['\"]/");
             $app = Scraper::_jP($js, "/app_url\s*=\s*['\"]([^'\"]+)['\"]/");
@@ -249,6 +251,7 @@ final class uCaptcha {
     }
 
     private function fingerprint($isUc): array {
+        $ts = time();
         $base = [
             'X-Uid' => md5(IP().$this->ua),
             'X-Ai' => $isUc ? 'LitoshiPay' : 'AntiCaptcha',
@@ -262,7 +265,7 @@ final class uCaptcha {
             'X-Timezone' => TIMEZONE(),
             'X-Referrer' => $this->host,
             'X-Title' => Scraper::title($this->html),
-            'X-Timestamp' => time(),
+            'X-Timestamp' => $ts,
             'X-Page-Url' => $this->host,
             'X-Device' => $this->_devices(),
         ];
