@@ -107,7 +107,7 @@ while (true) {
         $anySuccess = false; 
         
         while ($retryList < 5) {
-            $owme = Net::C($host.'/offerwalls/offerwallme-ptc', 'GET', null, inf::$cookie, [], '', inf::$uagent);
+            $owme = Net::C($host.'/offerwalls/offerwallme-ptc', 'GET', null, inf::$cookie, [], $host.'/offerwalls/offerwallme-ptc', inf::$uagent);
             #_put('owme.html', $owme); die;
             
             if (!empty($owme) && $owme !== 99) {
@@ -151,7 +151,7 @@ while (true) {
     
     if ($wallOwme) {
         
-        if (!empty($owme_ur)) $ow->wall($owme_ur); 
+        #if (!empty($owme_ur)) $ow->wall($owme_ur); 
         
         $ow->cleanup(); 
         styler('Waiting cooldown offerwall.me', fn() => _sle(60));
@@ -159,7 +159,7 @@ while (true) {
     }
 
     $wd = Net::C($host.'/withdraw', 'GET', null, inf::$cookie, [], '', inf::$uagent);
-    _put('wd.html', $wd);
+    #_put('wd.html', $wd);
     
     if (!empty($wd) && $wd !== 99) {
         $pendingExists = !empty(Scraper::_xP($wd, "//span[contains(@class, 'wd-badge-pending')]"));

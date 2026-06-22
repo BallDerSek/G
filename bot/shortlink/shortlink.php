@@ -1,9 +1,10 @@
 <?php
 if (!defined('ROOT')) {die;}
 
-#$api = onKeys();
+login:
 $api = null;
-    
+$api = onKeys();
+$apiName = $api ? get_class($api) : 'without api';
 
 $b = Banner::getInstance();
 $supportedSL = [
@@ -48,23 +49,31 @@ while (true) {
     $ddd = 0;
     while (true) {
         $ddd++;
-        $b->task1('info', "tips: direct first, api for fallback (if exist/support)");
-        $b->task2('info', "input ur shortlink");
+        $b->task1('info', "provider: ".$apiName);
+        $b->task2('info', "input shortlink or (change api)");
         
         if ($ddd >= 10) break;
         
-        $url = getenv('login');
-        if (!$url || empty($url)) {
-            $url = _rl('shortlink: ');
+        $url = getenv('login') ?: _rl('shortlink: ');
+        
+        if (!empty($url)) {
+            if ($url === 'change api') goto login;
+            
+            $b->task1('warn', "processing");
+            $b->task2('info', "");
+            $bakk = links($api, $url);
+            
+            if ($bakk) {
+                $b->task2('ok', "done");
+                logx('ok', "result: ".$bakk, true, true);
+            } else $b->task2('err', "fail");
+            
+        } else {
+            $b->task1('warn', "jangan kosong");
+            $b->task2('err', "fail");
         }
         
-        $b->task1('warn', "processing");
-        $b->task2('info', "");
-        $bakk = links($api, $url);
-        if ($bakk) {
-            $b->task2('ok', "done");
-            logx('ok', "result: ".$bakk, true, true);
-        } else $b->task2('err', "fail");
+        
         
         _sle(2);
     }

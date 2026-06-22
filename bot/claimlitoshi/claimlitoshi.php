@@ -195,7 +195,7 @@ while (true) {
                     $he = $cap['headers'];
                 } else {
                     $po = array_merge($pa, $cap);
-                    $he = 'x-server-hash: '.getHead($fau, $fa)['headers'];
+                    $he = 'x-server-hash: '.getHead($fau, $host)['headers'];
                 }
                 
             } else {
@@ -378,14 +378,52 @@ while (true) {
         }
     }
     
-    if ($ptcc && !$viewed) die;
+    #if ($ptcc && !$viewed) die;
     
 }
 
 
 
+
+
 tes:
- 
+
+_put('app.js',
+    _get('https://claimlitoshi.top/source/app.js?v=eYrUKTAizpsuFvPhDSMtydxlXBNOHVmn')
+);
+
+_put('fau.js',
+    _get('https://claimlitoshi.top/assets/js/litoshi/faucet/faucet.js?v=1.2.7')
+);
+
+_put('app.js',
+    _get('https://claimlitoshi.top/assets/js/app.js?v=1.2.7')
+);
+
+_put('pcd.js',
+    _get('https://claimlitoshi.top/assets/js/pcoded.js?v=1.2.7.1782099304')
+);
+
+_put('ajx.js',
+    _get('https://claimlitoshi.top/source/ajax.js?v=1.2.7')
+);
+
+_put('crp.js',
+    _get('https://claimlitoshi.top/source/crypto.js?v=1.2.7')
+);
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

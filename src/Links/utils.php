@@ -97,14 +97,16 @@ class sScraper {
         
         $nodes = $xp->query(
             "//*[@data-slid] | //*[@data-link-id 
-               or @href[contains(.,'/go/')] 
-               or @href[contains(.,'/validate/')] 
-               or @value[contains(.,'/go/')] 
-               or @value[contains(.,'/validate/')] 
-               or @data-href[contains(.,'/go/')] 
-               or @data-href[contains(.,'/validate/')] 
-               or @data-url[contains(.,'/go/')] 
-               or @data-url[contains(.,'/validate/')]]"
+                or @href[contains(.,'/go/')] 
+                or @href[contains(.,'/validate/')] 
+                or @href[contains(.,'/pre_verify/')] 
+                or @value[contains(.,'/go/')] 
+                or @value[contains(.,'/validate/')] 
+                or @value[contains(.,'/pre_verify/')] 
+                or @data-href[contains(.,'/go/')] 
+                or @data-href[contains(.,'/validate/')] 
+                or @data-url[contains(.,'/go/')] 
+                or @data-url[contains(.,'/validate/')]]"
         );
         
         $seen = [];
@@ -130,15 +132,9 @@ class sScraper {
                     break;
                 }
                 
-                if ($a && preg_match('~/go/(\d+)(?:/|$|\?)~', $a->nodeValue, $m)) {
+                if ($a && preg_match('~/(go|validate|pre_verify)/(\d+)(?:/|$|\?)~', $a->nodeValue, $m)) {
                     $url = $a->nodeValue;
-                    $id  = (int)$m[1];
-                    break;
-                }
-                
-                if ($a && preg_match('~/validate/(\d+)(?:/|$|\?)~', $a->nodeValue, $m)) {
-                    $url = $a->nodeValue;
-                    $id  = (int)$m[1];
+                    $id  = (int)$m[2];
                     break;
                 }
             }

@@ -90,6 +90,7 @@ while (true) {
         }
         #print_r($po);
         if (!empty($po)) {
+            _sle(1);
             $ve = json_decode(Net::X($f['url'], 'POST', $po, inf::$cookie, $hhh, '', inf::$uagent)?: '', 1);
             #print_r($ve); #die;
             

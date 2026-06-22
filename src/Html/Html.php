@@ -1,12 +1,34 @@
 <?php
 
 class Scraper {
+    
+    # legacy
+    public static function domm($html): DOMXPath {
+        if ($html instanceof DOMXPath) return $html;
+        libxml_use_internal_errors(true);
+        $dom = new DOMDocument();
+        $dom->loadHTML('<?xml encoding="utf-8" ?>' . $html, LIBXML_NOWARNING | LIBXML_NOERROR | LIBXML_NONET | LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
+        return new DOMXPath($dom);
+    }
 
     public static function dom($html): DOMXPath {
         if ($html instanceof DOMXPath) return $html;
         libxml_use_internal_errors(true);
         $dom = new DOMDocument();
-        $dom->loadHTML('<?xml encoding="utf-8" ?>' . $html, LIBXML_NOWARNING | LIBXML_NOERROR | LIBXML_NONET | LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
+        
+        // Inject meta charset untuk force UTF-8
+        if (stripos($html, '<meta charset') === false && stripos($html, '<head>') !== false) {
+            $html = str_ireplace('<head>', '<head><meta charset="UTF-8">', $html);
+        } elseif (stripos($html, '<meta charset') === false) {
+            $html = '<meta charset="UTF-8">' . $html;
+        }
+        
+        $dom->loadHTML(
+            $html, 
+            LIBXML_NOWARNING | LIBXML_NOERROR | LIBXML_NONET
+        );
+        
+        libxml_clear_errors();
         return new DOMXPath($dom);
     }
 
