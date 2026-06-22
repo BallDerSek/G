@@ -201,6 +201,7 @@ while (true) {
             } else {
                 
                 if (preg_match('/<b id="minute">(\d+)<\/b>:<b id="second">(\d+)<\/b>/', $fau, $m)) {
+                    
                     styler("waiting for next claim", fn() => _sle((int)$m['2']));
                     continue;
                 }
@@ -378,7 +379,7 @@ while (true) {
         }
     }
     
-    #if ($ptcc && !$viewed) die;
+    if ($ptcc && !$viewed) (Logger::X('err', 'ptc habis kayaknya')?: die);;
     
 }
 
@@ -388,29 +389,6 @@ while (true) {
 
 tes:
 
-_put('app.js',
-    _get('https://claimlitoshi.top/source/app.js?v=eYrUKTAizpsuFvPhDSMtydxlXBNOHVmn')
-);
-
-_put('fau.js',
-    _get('https://claimlitoshi.top/assets/js/litoshi/faucet/faucet.js?v=1.2.7')
-);
-
-_put('app.js',
-    _get('https://claimlitoshi.top/assets/js/app.js?v=1.2.7')
-);
-
-_put('pcd.js',
-    _get('https://claimlitoshi.top/assets/js/pcoded.js?v=1.2.7.1782099304')
-);
-
-_put('ajx.js',
-    _get('https://claimlitoshi.top/source/ajax.js?v=1.2.7')
-);
-
-_put('crp.js',
-    _get('https://claimlitoshi.top/source/crypto.js?v=1.2.7')
-);
 
 
 

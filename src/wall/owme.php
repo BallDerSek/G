@@ -1,120 +1,5 @@
 <?php
-/* legacy 
-function owmeCamp($html, $type = 'SL') {
-    $dom = Scraper::dom($html);
-    
-    if ($type == 'SL') {
-        $campaigns = $dom->query("//div[contains(@class, 'campaign-block')][@data-slid]");
-        $result = [];
-        
-        foreach ($campaigns as $camp) {
-            $slid = $camp->getAttribute('data-slid');
-            $limit = $camp->getAttribute('data-limit');
-            
-            $titleNode = $dom->query(".//div[contains(@class, 'fw-bold')]/text()", $camp)->item(0);
-            $title = $titleNode ? trim($titleNode->textContent) : '';
-            
-            $rewardNode = $dom->query(".//div[contains(@class, 'text-primary')]/text()", $camp)->item(0);
-            $reward = $rewardNode ? trim($rewardNode->textContent) : '';
-            
-            $currentNode = $dom->query(".//span[starts-with(@id, 'limit_')]/text()", $camp)->item(0);
-            $current = $currentNode ? (int)$currentNode->textContent : 0;
-            
-            if ($slid) {
-                $result[] = [
-                    'id' => (int)$slid,
-                    'title' => $title,
-                    'reward' => $reward,
-                    'limit' => $current . '/' . $limit
-                ];
-            }
-        }
-        
-        return $result;
-        
-    } else {
-        $_cmpg = $dom->query("//div[contains(@class, 'campaign-block')][not(@data-slid)]");
-        $result = ['ptcs' => [], 'prom' => []];
-        
-        foreach ($_cmpg as $_cp) {
-            $_idh = $_cp->getAttribute('data-hash');
-            $_sid = $_cp->getAttribute('data-sid');
-            $_key = $_cp->getAttribute('data-key');
-            $_idt = $_cp->getAttribute('data-type');
-            
-            $title = trim(Scraper::_xP($dom, ".//div[contains(@class, 'fw-bold')]/text()", $_cp)[0] ?? '');
-            
-            $timerNodes = Scraper::_xP($dom, ".//span[contains(text(), 'Visit for')]/text()", $_cp);
-            $timer = 0;
-            if ($timerNodes && preg_match('/(\d+)/', $timerNodes[0], $m)) {
-                $timer = (int)$m[1];
-            }
-            
-            $rewardNodes = Scraper::_xP($dom, ".//div[contains(@class, 'text-primary')]/text()", $_cp);
-            $reward = trim($rewardNodes[0] ?? '');
-            
-            $_direct = Scraper::_xP($dom, ".//a/@href", $_cp)[0] ?? '';
-            
-            if ($_idh && empty($_direct)) {
-                $result['ptcs'][] = [
-                    'data' => [
-                        'hash' => $_idh,
-                        'sid' => $_sid,
-                        'key' => $_key,
-                        'type' => $_idt,
-                    ],
-                    'info' => [
-                        'title' => $title,
-                        'timer' => $timer,
-                        'reward' => $reward
-                    ]
-                ];
-            } elseif ($_direct) {
-                $result['prom'][] = [
-                    'url' => $_direct,
-                    'info' => [
-                        'title' => $title,
-                        'reward' => $reward
-                    ]
-                ];
-            }
-        }
-        
-        $result['ptcs_'] = count($result['ptcs']);
-        $result['prom_'] = count($result['prom']);
-        
-        return $result;
-    }
-}
 
-function OwmeSL($url, $idd, $tkn, $ck, $ua, $api) {
-    $payload = [
-        'action' => 'getShortlink',
-        'data' => $idd,
-        'token' => $tkn
-    ];
-    
-    $go = json_decode(Net::X($url, 'POST', $payload, $ck, [], '', $ua)?: '', 1)['link'] ?? null;
-    #var_dump($go);
-    if (!$go) return false;
-    
-    $_0 = Net::X($go, 'GET', null, $ck, [], $url, $ua);
-    #var_dump($_0);
-    if (!empty($_0) && $_0 !== 99) 
-        return json_decode(
-            Net::X($go,
-                   'POST',
-                   array_merge(solve::exec($_0, $url, $api), ['action' => 'redirect']),
-                   $ck,
-                   [],
-                   $_0,
-                   $ua
-            )?: '',  1)['link'] ?? null;
-    
-    return false;
-    
-}
-*/
 
 class Owme {
     use WorkDir; 
@@ -269,7 +154,7 @@ class Owme {
                 $po = ['type' => $_type,'token' => $tkn,'action' => 'switch_cat'];
                 $_1 = json_decode(Net::X($url, 'POST', $po, $this->cookieFile, [], '', $this->userAgent)?: '', 1)['content'] ?? null;
                 
-                if (!empty($_1)) $adsList = $this->camp($_1, 'AD');  // ← pakai $this->camp()
+                if (!empty($_1)) $adsList = $this->camp($_1, 'AD');
                 
                 if ($adsList && !$menu) {
                     if (!empty($adsList['ptcs']) && $adsList['ptcs_'] !== 0) {
@@ -294,14 +179,14 @@ class Owme {
             $shoList = null;
             $pa = ['type' => 'shortlinks','token' => $tkn,'action' => 'switch_cat'];
             $_1 = json_decode(Net::X($url, 'POST', $pa, $this->cookieFile, [], '', $this->userAgent)?: '', 1)['content'] ?? null;
-            if (!empty($_1)) $shoList = $this->camp($_1, 'SL');  // ← pakai $this->camp()
+            if (!empty($_1)) $shoList = $this->camp($_1, 'SL');
             
             if ($shoList && !$menu) {
                 
                 foreach ($shoList as $sl) {
                     $idSL = $sl['id'];
                     
-                    $get = $this->processShortlink($url, $idSL, $tkn, $this->cookieFile, $this->userAgent, $this->api);  // ← pakai $this->processShortlink()
+                    $get = $this->processShortlink($url, $idSL, $tkn, $this->cookieFile, $this->userAgent, $this->api);
                     
                     if (stripos($get, 'coinclix') !== false) continue;
                     

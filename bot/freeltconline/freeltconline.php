@@ -3,7 +3,7 @@ if (!defined('ROOT')) { die; }
 
 $api = onKeys();
 
-$acc = config::credential([], false, ['mail', 'pass', 'PROXY']);
+$acc = config::credential([], false, /*['mail', 'pass', 'PROXY']*/);
 $mail = $acc['mail'];
 $pass = $acc['pass'];
 putenv("PROXY=".$acc['PROXY']);
@@ -30,7 +30,7 @@ $ip = '';
 
 $hhh = inf::netHead(['uf' => md5($mail), 'ls' => LANGUAGE(), 'utt' => TIMEZONE()]);
 $limit = false;
-$claim = false;
+$claim = true;
 $SLDONE = false;
 $ADDONE = false;
 $skipped = [];
@@ -156,7 +156,7 @@ while (true) {
                 if (stripos($fau, '/register')) continue 2;
                 
                 
-                if (!$SLDONE || $ADDONE) break;
+                #if (!$SLDONE || $ADDONE) break;
                 
                 styler('Waiting for faucet', fn() => _sle(30));
                 continue;
@@ -186,50 +186,53 @@ while (true) {
         
     }
     
-    sl:
-    $ret99 = 0;
-    do {
-        $sho = Net::C("$host/links", 'GET', null, inf::$cookie, [], "$host/dashboard", inf::$uagent, false, false, $ip);
-        #_put('sl.html', $sho);
-        if ($sho === 99) {
-            $ret99++;
-            logx('warn', "masalah proxy, warm up dulu");
-            if ($ret99 >= 7) {
-                goto login;
-            }
-            _sle(30);
-            continue;
+    /*
+    $offwall = Net::C("$host/offerwall/offerzono", 'GET', null, inf::$cookie, $hhh, "$host/dashboard", inf::$uagent, false, false, $ip);
+    if (!empty($offwall) && $offwall !== 99) {
+        #_put('off.html', $offwall);
+        
+        $zon_h = "https://offerzono.com";
+        $offz_if = Scraper::_xP($offwall, "//iframe/@src");
+        print_r($offz_if);
+        
+        $par = parse_url($offz_if[0])['query'];
+        
+        $_0 = Net::C($offz_if[0], 'GET', null, inf::$cookie, [], '', inf::$uagent);
+        _put('0.html', $_0);
+        
+        $f = Scraper::payload($_0)[0] ?? null;
+        print_r($f);
+        
+        
+        if (!empty($f) && !empty($f['payload'])) {
+            
+            $pa = $f['payload'];
+            $cap = solve::exec($_0, $offz_if[0], $api, $pa);
+            if (isset($cap['trouble'])) continue;
+            $po = array_merge($pa, $cap);
+            
+            
+            $_1 = Net::C($f['url'], 'POST', $po, inf::$cookie, [], '', inf::$uagent);
+            _put('1.html', $_1);
+            
+            $offz_PTC = Net::C($zon_h.'/offerwall/ptc?'.$par, 'POST', ['amount' => 10], inf::$cookie, [], '', inf::$uagent);
+            _put('ptc.html', $offz_PTC);
+            
+            
+            
+            
+            
+            
+            
+            
         }
-        $ret99 = 0; 
-        if (empty($sho)) continue;
-        
-        $short = sScraper::extract($sho);
-        
-        if (empty($short)) {
-            logx('info', "sl abis");
-            $SLDONE = true;
-            break;
-        }
-        $up = ['earnow','shortano', 'shortino', 'fc-lc'];
-        
-        $can_process = false; 
-        foreach ($short as $links => [$idd, $lmt]) {
-            if (!limit($lmt) || isset($skipped[$idd])) continue;
-            
-            $can_process = true;
-            
-            $ud = $host.'/links/go/'.$idd;
-            $getVer = 0;
-            
-            
-            
-        }
         
         
         
-        
-    die;
-    } while (!$SLDONE);
+    }
+    */
+    
+    
     
     
     
@@ -242,4 +245,7 @@ while (true) {
 
 
 tes:
+    
+    
+    
     
