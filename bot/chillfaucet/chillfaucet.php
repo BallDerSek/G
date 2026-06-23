@@ -13,13 +13,14 @@ $domain = parse_url($host, PHP_URL_HOST);
 $r = '/?r=31169&xpost=true';
 $ip = '156.67.104.252';
 $ip = '80.65.208.108';
-$ip = null;
+#$ip = null;
 
 (function ($login, $ip, $host) {
     Proxy::load();
     Check::Geo();
     $cookieFile = config::cookie($login);
-    $userAgent = config::uagent('mobile');
+    $c = config::credential(['ua' => fn() => config::uagent()]);
+    $userAgent = $c['ua'];
     
     inf::setup($userAgent, $cookieFile, $ip, false, $login);
     
@@ -30,8 +31,8 @@ $ip = null;
     
 } ) ($login, $ip, $host);
 
-
 $hhh = inf::netHead(['uf' => md5($login), 'ls' => LANGUAGE(), 'utt' => TIMEZONE()]);
+$headersCF = [];
 $skipped = [];
 $SLDONE = false;
 $claim = true;
@@ -39,7 +40,7 @@ $curr = '';
 $curr_id = '';
 $habis = [];
 $ptcc = false;
-
+#goto tes;
 while (true) {
     $dash = null;
     
@@ -47,7 +48,7 @@ while (true) {
     do {
         $ret++;
         
-        $l = inf::check("$host/dashboard", $hhh, '/auth/validation', true);
+        $l = inf::check("$host/dashboard", array_merge($hhh, $headersCF), '/auth/validation', true);
         
         if ($l['ok']) {
             $dash = $l['html'];
@@ -68,14 +69,15 @@ while (true) {
         logx('err', "logging in ", false); 
         _sle(3); _clr();
         Net::X($host.$r, 'GET', null, inf::$cookie, $hhh, '', inf::$uagent);
-        $_0 = Net::X($host, 'GET', null, inf::$cookie, $hhh, $host.$r, inf::$uagent);
+        $_0 = Net::X($host.$r, 'GET', null, inf::$cookie, $headersCF, '', inf::$uagent, d: true);
         if ($_0 === 99) {
             logx('warn', "masalah proxy, warm up dulu");
             _sle(60);
             continue;
         }
         if (empty($_0)) continue;
-        
+        $_0 = checkCF($host, $api, $_0)['html'] ?? null;
+        #var_dump($_0); die;
         $f = scraper::payload($_0)[0] ?? [];
         $po = null;
         if (!empty($f)) {
@@ -91,8 +93,8 @@ while (true) {
         
         if (!empty($po)) {
             #print_r($po);
-            $ve = json_decode(Net::X($f['url'], 'POST', $po, inf::$cookie, $hhh, '', inf::$uagent)?: '', 1);
-            #print_r($ve); #die;
+            $ve = json_decode(Net::X($f['url'], 'POST', $po, inf::$cookie, array_merge($hhh, $headersCF), '', inf::$uagent)?: '', 1);
+            #print_r($ve); die;
             
             if (!empty($ve) && isset($ve['msg'])) {
                 
@@ -385,7 +387,8 @@ while (true) {
 
 
 tes:
-
+$_0 = Net::X($host, 'GET', null, inf::$cookie, $hhh, $host.$r, inf::$uagent, ip: $ip);
+var_dump($_0);
 
 
 
@@ -472,4 +475,45 @@ function postPTC($data, $url, $head, $un = false) {
     
     return false;
     
+}
+
+function checkCF($url, $api, $body = null, $headersCF = []) {
+    
+    $html = $body['body'] ?? null;
+    $code = $body['http_code'] ?? null;
+    
+    if (!$html || !$code) return [];
+    
+    if ($code !== 200 && (stripos($html, 'Just a moment') !== false || stripos($html, 'Attention Required!') !== false)) {
+        
+        $cf = Cloudflare::exec($api, $url, inf::$cookie, inf::$uagent, ['html' => $html]);
+        
+        if ($cf) {
+            [$headersCF, $ua] = $cf;
+            inf::setup($ua, inf::$cookie);
+            
+            if (!empty($headersCF)) {
+                for ($try = 1; $try <= 3; $try++) {
+                    _sle(3);
+                    $fix = Net::X($url, 'GET', null, inf::$cookie, $headersCF, $url, inf::$uagent, d: true);
+                    
+                    if (!empty($fix) && isset($fix['http_code'])) {
+                        $_c = $fix['http_code'];
+                        $_b = $fix['body'];
+                        
+                        if ($_c === 200 && stripos($_b, 'Just a moment') === false && stripos($_b, 'Attention Required!') === false) {
+                            
+                            config::credential()['ua'] = $ua;
+                            return ['html' => $_b, 'head' => $headersCF];
+                        }
+                    }
+                    logx('info', "try-{$try} fail, reloading");
+                }
+            }
+        }
+    } else {
+        return ['html' => $html, 'head' => $headersCF];
+    }
+    
+    return [];
 }
