@@ -200,6 +200,7 @@ final class uCaptcha {
             ["X-Server-Hash: $hash"],
             $this->host, $this->ua, foll: false, ip: $this->ip, ins: $this->in
         ) ?: '', 1);
+        #var_dump($ch);
         if (empty($ch['question_image'])) return false;
 
         $solved = $this->_solve($ch, rtrim($app, '/'));
@@ -213,7 +214,7 @@ final class uCaptcha {
             ['X-Captcha-Header: anticap-v1'],
             $this->host, $this->ua, foll: false, ip: $this->ip, ins: $this->in
         ) ?: '', 1)['status'] ?? null;
-
+        #var_dump($status);
         if ($status !== 'valid') return false;
 
         return [
@@ -297,4 +298,5 @@ final class uCaptcha {
         if (stripos($ua, 'Safari') !== false && stripos($ua, 'Chrome') === false) return 'Safari';
         return 'Chrome';
     }
+    
 }

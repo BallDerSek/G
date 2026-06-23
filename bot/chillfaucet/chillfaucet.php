@@ -88,9 +88,9 @@ while (true) {
             }
             $po = array_merge($pa, $cap, $cre);
         }
-        #print_r($po);
+        
         if (!empty($po)) {
-            _sle(1);
+            #print_r($po);
             $ve = json_decode(Net::X($f['url'], 'POST', $po, inf::$cookie, $hhh, '', inf::$uagent)?: '', 1);
             #print_r($ve); #die;
             
@@ -100,7 +100,7 @@ while (true) {
                 $stt = $ve['status'];
                 logx($stt, $msg, false, true);
                 
-                if (str_contains($msg,'has been banned') || str_contains($msg, 'blocked')) die;
+                if (str_contains($msg,' banned') || str_contains($msg, 'blocked')) die;
                 _clr();
                 
             }

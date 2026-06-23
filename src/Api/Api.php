@@ -336,6 +336,17 @@ final class Api {
             'fingerprint' => [
                 'api'  => 'fingerprint','url' => 'domain','need' => ['userAgent'],
             ],
+            /*
+            'akamai_a' => [
+                'api'  => 'akamai','url' => 'domain','defaults' => ['method' => 'abck']
+            ],
+            'akamai_s' => [
+                'api'  => 'akamai','url' => 'domain','defaults' => ['method' => 'sbsd']
+            ],
+            'akamai_c' => [
+                'api'  => 'akamai','url' => 'domain','defaults' => ['method' => 'censorship']
+            ],
+            */
         ],
         
         tertuyul::class => [

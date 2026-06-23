@@ -34,7 +34,6 @@ $skipped_sho = [];
 $skipped_ads = []; 
 $claim = true;
 $can_withdraw = true;
-$pending = null;
 $atbforce = false;
 $atbfail = 0;
 while (true) {
@@ -113,22 +112,6 @@ while (true) {
     } while (empty($dash));
     #_put('dash.html', $dash);
 
-    if (!empty($pending)) {
-        for ($retry = 0; $retry < 2; $retry++) {
-            $verr = Net::C($pending, 'GET', null, inf::$cookie, [], $host, inf::$uagent, ip: $ip);
-            if (!empty($verr) && $verr !== 99) {
-                $pending = null;
-                $m = scraper::_jP($ver, "/Swal\.fire\s*\(\s*'([^']+)'\s*,\s*'([^']+)'\s*,\s*'([^']+)'\s*\)/");
-                if (isset($m[2][0])) {
-                    print(FGd['CYN'].maskEmail($mail).RSET." ");
-                    logg(true, $m[2][0]);
-                }
-                break;
-            }
-        }
-        continue;
-    }
-    
     if (stripos($dash, 'Please check your inbox or spam folder to confirm your account')) {
         $can_withdraw = false;
     }
