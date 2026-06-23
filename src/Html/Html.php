@@ -2,21 +2,12 @@
 
 class Scraper {
     
-    # legacy
-    public static function domm($html): DOMXPath {
-        if ($html instanceof DOMXPath) return $html;
-        libxml_use_internal_errors(true);
-        $dom = new DOMDocument();
-        $dom->loadHTML('<?xml encoding="utf-8" ?>' . $html, LIBXML_NOWARNING | LIBXML_NOERROR | LIBXML_NONET | LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
-        return new DOMXPath($dom);
-    }
-
-    public static function dom($html): DOMXPath {
+    public static function dom($html): ?DOMXPath {
+        if (!$html) return null;
         if ($html instanceof DOMXPath) return $html;
         libxml_use_internal_errors(true);
         $dom = new DOMDocument();
         
-        // Inject meta charset untuk force UTF-8
         if (stripos($html, '<meta charset') === false && stripos($html, '<head>') !== false) {
             $html = str_ireplace('<head>', '<head><meta charset="UTF-8">', $html);
         } elseif (stripos($html, '<meta charset') === false) {
@@ -41,7 +32,7 @@ class Scraper {
     # PAYLOAD
     public static function payload($html, $id = null): array {
         $xp = self::dom($html);
-        
+        if (!$xp) return [];
         $query = $id ? "//form[@id=" . self::xlit($id) . "]" : "//form";
         $forms = $xp->query($query);
         $out = [];
@@ -106,6 +97,8 @@ class Scraper {
         if ($html instanceof DOMXPath) $xpath = $html;
         else $xpath = self::dom($html);
         
+        if (!$xpath) return [];
+        
         $nodes = $context ? $xpath->query($query, $context) : $xpath->query($query);
         
         $out = [];
@@ -148,6 +141,7 @@ class Scraper {
 
     # REGexp BASED
     public static function _pP($html, $targets): array {
+        if (!$html) return [];
         $t = preg_quote($targets, '/');
         $pattern = "/{$t}\s*=\s*[\"']([^\"']+)[\"']/";
         preg_match_all($pattern, $html, $m);
@@ -155,8 +149,9 @@ class Scraper {
         #return $m ?? [];
     }
 
-    public static function _jP($code, $pattern): ?array {
-        preg_match_all($pattern, $code, $match);
+    public static function _jP($html, $pattern): array {
+        if (!$html) return [];
+        preg_match_all($pattern, $html, $match);
         return $match;
     }
     
@@ -184,6 +179,7 @@ class Scraper {
         $captchaTag = $cMatch[1] ?? null;
 
         $xp = self::dom($html);
+        if (!$xp) return [];
         $forms = $xp->query('//form');
         $payload = [];
 /*
@@ -233,6 +229,8 @@ foreach ($inputs as $input) {
     # Script
     public static function _sC($html): array {
         $xp = self::dom($html);
+        
+        if (!$xp) return ['external' => [], 'inline' => []];
         
         $external = self::_xP($xp, "//script[@src]/@src") ?: [];
         $inlineNodes = $xp->query("//script[not(@src)]");

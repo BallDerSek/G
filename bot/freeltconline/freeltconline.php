@@ -3,7 +3,7 @@ if (!defined('ROOT')) { die; }
 
 $api = onKeys();
 
-$acc = config::credential([], false, /*['mail', 'pass', 'PROXY']*/);
+$acc = config::credential([], false, ['mail', 'pass', 'PROXY']);
 $mail = $acc['mail'];
 $pass = $acc['pass'];
 putenv("PROXY=".$acc['PROXY']);
@@ -174,7 +174,8 @@ while (true) {
                 if (isset($m[1][0])) {
                     Logm($mail);
                     logg(0, $m[1][0]);
-                    
+                    $atbforce = false;
+                    $atbfail = 0;
                     
                 }
                 

@@ -99,9 +99,9 @@ class check {
 
     private static function geoData() {
         $services = [
-            'ipinfo'  => ['url' => 'https://ipinfo.io/json', 'map' => ['timezone','country','country','ip']],
             'ipapi'   => ['url' => 'http://ip-api.com/json/', 'map' => ['timezone','country','countryCode','query']],
             'geojs'   => ['url' => 'https://get.geojs.io/v1/ip/geo.json', 'map' => ['timezone','country','country_code','ip']],
+            'ipinfo'  => ['url' => 'https://ipinfo.io/json', 'map' => ['timezone','country','country','ip']],
             'ipwhois' => ['url' => 'https://ipwhois.app/json/', 'map' => ['timezone','country','country_code','ip']],
         ];
 
