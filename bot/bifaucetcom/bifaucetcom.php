@@ -30,6 +30,7 @@ $ip = '159.198.47.130';
 
 $limit = false;
 $SLDONE = false;
+$ADDONE = false;
 $skipped_sho = [];
 $skipped_ads = []; 
 $claim = true;
