@@ -110,14 +110,52 @@ while (true) {
         }
         
     } while (empty($dash));
-    #_put('dash.html', $dash); 
-    #goto sl;
+    #_put('dash.html', $dash);
     
     if ($dash && str_contains($dash, 'confirm your email')) {
         $can_withdraw = false;
     }
-
-    $box = false;
+    
+    $_bal = Scraper::_xP($dash, "//div[contains(@class, 'topStat_card')]//p[contains(text(), 'Coins')]/text()")[0] ?? '';
+    if ($_bal) {
+        Logger::M($mail);
+        logx('info', "[ $_bal ]", true, true);
+        $bal = ((int)$_bal);
+        
+        if ($can_withdraw && ($bal >= 10000)) {
+            $po = null;
+            $jjn = [];
+            $wd = Net::C("$host/withdraw", 'GET', null, inf::$cookie, [], "$host/dashboard", inf::$uagent, false, false, $ip);
+            $jjn = _wd($wd);
+            
+            if (!empty($jjn['payload']) && !empty($jjn['url'])) {
+                $pa = $jjn['payload'];
+                
+                $cap = solve::exec($wd, $host, $api, $pa);
+                if (isset($cap['trouble'])) $can_withdraw = false;
+                
+                $walletKey = isset($pa['address']) ? 'address' : (isset($pa['wallet']) ? 'wallet' : 'email');
+                if (empty($pa[$walletKey])) $pa[$walletKey] = $mail;
+                
+                $po = array_merge($pa, $cap);
+                
+                Logger::G(true, '  tes ilmu: '.$jjn['info']['coin'], false);
+                Logger::X('info', ' [ '.$po[$walletKey].' ]');
+                
+                $wdd = Net::C($jjn['url'], 'POST', $po, inf::$cookie, [], "$host/withdraw", inf::$uagent, false, false, $ip);
+                #_put('wd.html', $wdd);
+                $m = scraper::_jP($wdd, "/Swal\.fire\(\{.*?title\s*:\s*(['\"])(.*?)\\1.*?\}\)/s") ?? [];
+                if (isset($m[2][0])) {
+                    Logger::M($mail);
+                    Logger::X('info', $m[2][0]);
+                }
+            } else logx('err', 'gak bisa wd kayaknya');
+            
+        }
+        
+    }
+    
+    $setF = 0; 
     if (!$limit && $claim) {
         $ret99 = 0; 
         while (true) {
@@ -140,30 +178,6 @@ while (true) {
             
             $f = scraper::payload($fau)[0] ?? [];
             #print_r($f); #die;
-            if (empty($f)) {
-                $alert_d = scraper::_xP($fau, "//div[contains(@class, 'alert-danger')]");
-                if (!empty($alert_d)) {
-                    $msg = $alert_d[0]; 
-                    if (str_contains($msg, 'Pickabox game(s) required')) {
-                        preg_match('/\d+/', $msg, $num);
-                        $co = $num[0] ?? 1;
-                        logx('err', "$co Pickabox game(s) detected!");
-                        $box = true;
-                        break;
-                    }
-                }
-                
-                if (str_contains($fau, 'Daily limit reached, claim Shortlink Wall')) {
-                    $limit = true;
-                    logx('err', 'daily limit');
-                    break;
-                }
-                
-                if (!$SLDONE) break;
-                
-                styler('Waiting for faucet', fn() => _sle(30));
-                continue;
-            }
             
             $po = null;
             if (!empty($f)) {
@@ -218,6 +232,23 @@ while (true) {
                 }
                 
                 
+            } else {
+                if (str_contains($fau, '/register')) continue 2;
+                
+                if (str_contains($fau, 'Daily limit reached, claim Shortlink Wall')) {
+                    $limit = true;
+                    logx('err', 'daily limit');
+                    break;
+                }
+                
+                if (!$SLDONE || !$ADDONE) {
+                    $setF = microtime(true);
+                    break;
+                }
+                
+                styler('Waiting for faucet', fn() => _sle(30));
+                continue;
+                
             }
             
             if (!empty($po)) {
@@ -230,285 +261,242 @@ while (true) {
                     print(FGd['CYN'].maskEmail($mail).RSET." ");
                     logg(true, $m[2][0], false);
                     
-                    $pttr = '/<h3>([^<]+)<\/h3>\s*<p>Balance<\/p>/';
-                    $_bal = scraper::_jP($cla, $pttr)[1];
-                    logx('ok', '[ '.$_bal[0].' ]', true, true);
-                    if (stripos($m[2][0], 'has been added')) break;
+                    if (stripos($m[2][0], 'has been added')) {
+                        $setF = microtime(true);
+                        break;
+                    }
                 }
             }
+            
         }
     }
-
-    do {
-        $ads = Net::C("$host/ptc", 'GET', null, inf::$cookie, [], "$host/dashboard", inf::$uagent, false, false, $ip);
-        if ($ads === 99) { _sle(60); continue 2; }
-        $_tim = scraper::_xP($ads, "//div[@class='ptc_cards']//span[i[contains(@class, 'fa-clock')]]");
+    
+    $ads = Net::C("$host/ptc", 'GET', null, inf::$cookie, [], "$host/dashboard", inf::$uagent, false, false, $ip);
+    #_put('ads.html', $ads);
+    if (!empty($ads) && $ads !== 99) {
+        $ptcList = parsePtcAds($ads ,$host);
+        $ptcNumb = $ptcList['total'];
         
-        $_url = scraper::_xP($ads, "//button[not(contains(@onclick, 'bitcotask'))]/@onclick");
-        $url = array_map(fn($u) => explode("'", $u)[1], $_url);
-        $vurl = $url[0] ?? null;
-        
-        if ($vurl) {
-            $cla = null;
-            $tim = isset($_tim[0]) ? (int)preg_replace('/[^0-9]/', '', $_tim[0]) : 0;
-            /*
-            logx('info', "[ $vurl ]: ", false);
-            logx('', $tim);
-            */
-            #die;
-            $ret99 = 0;
-            while (true) {
-                $view = Net::C($vurl, 'GET', null, inf::$cookie, [], '', inf::$uagent, false, false, $ip);
-                if ($view === 99) {
-                    $ret99++;
-                    logx('warn', "masalah proxy, warm up dulu");
-                    if ($ret99 >= 5) {
-                        goto login;
-                    }
-                    _sle(30);
-                    continue;
-                }
-                $ret99 = 0; 
-                if (!empty($view)) {
-                    $set = microtime(true);
-                    $f = scraper::payload($view) ?? [];
+        if (!empty($ptcList['local'])) {
+            
+            foreach ($ptcList['local'] as $ptc) {
+                [$ad_u, $ad_t] = $ptc;
+                $cla = null;
+                $view = null;
+                
+                $view = Net::C($ad_u, 'GET', null, inf::$cookie, [], "$host/ptc", inf::$uagent, false, false, $ip);
+                if ($view === 99) continue 2;
+                
+                if (!empty($view) && $view !== 99) {
+                    $po = null;
+                    $f = scraper::payload($view)[0] ?? [];
+                    
                     if (!empty($f)) {
-                        $pa = $f[0]['payload'] ?? [];
-
-                        $cap = [];
-                        $cap = solve::exec($view, $host, $api);
+                        $pa = $f['payload'];
+                        $cap = solve::exec($view, $ad_u, $api, $pa);
                         if (isset($cap['trouble'])) {
                             _sle(60);
                             continue;
                         }
                         $po = array_merge($pa, $cap);
-                        #print_r($po);
                         
-                        if (!empty($po)) {
-                            $end = microtime(true) - $set;
-                            $wait = (int)($tim - $end);
-                            if ($wait > 0) {
-                                styler("waiting for ads: $wait", fn() => _sle($wait));
+                    }
+                    
+                    if (!empty($po)) {
+                        styler("waiting for ads: $ad_t", fn() => _sle($ad_t));
+                        $cla = Net::X($f['url'], 'POST', $po, inf::$cookie, [], $ad_u, inf::$uagent, false, true, $ip);
+                        #_put('cla.html', $cla);
+                        if (empty($cla) || ($cla === 99)) continue;
+                        
+                        $m = scraper::_jP($cla, "/Swal\.fire\(\{.*?title\s*:\s*(['\"])(.*?)\\1.*?\}\)/s");
+                        if (isset($m[2][0])) {
+                            Logger::M($mail);
+                            Logger::G(0, $m[2][0]);
+                            
+                            $endF = microtime(true);
+                            if ($setF > 0 && $claim) {
+                                $balik = $endF - $setF;
+                                if ($balik >= 4 * 60) continue 2;
                             }
-                            claim:
-                            $cla = Net::C($f[0]['url'], 'POST', $po, inf::$cookie, [], $vurl, inf::$uagent, false, false, $ip);
-                            if (empty($cla)) goto claim;
-                            if ($cla === 99) goto login;
+                            
+                        }
+                        
+                    }
+                    
+                }
+                
+            }
+            
+        } else {
+            
+            if (!empty($ptcList['bctt'])) {
+                foreach ($ptcList['bctt'] as $ptc) {
+                    [$ad_u, $ad_t] = $ptc;
+                    $bctt = new Bctt($host, $api, $mail);
+                    $ch = $bctt->exec($ad_u, $ad_t);
+                    if ($ch === 99) goto login;
+                    
+                    $endF = microtime(true);
+                    if ($setF > 0 && $claim) {
+                        $balik = $endF - $setF;
+                        if ($balik >= 4 * 60) continue 2;
+                    }
+                    
+                }
+                
+            }
+            
+            if ($ptcNumb <= 1) $ADDONE = true;
+        }
+        
+    }
+
+    sl:
+    $ret99 = 0;
+    if (!$SLDONE) {
+        do {
+            $sho = Net::C("$host/links", 'GET', null, inf::$cookie, [], "$host/dashboard", inf::$uagent, false, false, $ip);
+            if ($sho === 99) {
+                $ret99++;
+                logx('warn', "masalah proxy, warm up dulu");
+                if ($ret99 >= 7) {
+                    goto login;
+                }
+                _sle(30);
+                continue;
+            }
+            $ret99 = 0; 
+            if (empty($sho)) continue;
+            
+            $f = scraper::payload($sho)[0] ?? [];
+            $short = sScraper::extract($sho);
+            #print_r($short);
+            if (empty($short)) {
+                logx('info', "sl abis");
+                $SLDONE = true;
+                break;
+            }
+            $up = ['earnow','shortano', 'shortino', 'fc-lc'];
+            
+            if (!empty($f)) {
+                $po = $f['payload'];
+                
+                if (str_contains($sho, 'Write what you see in the picture')) {
+                    $t_text = null;
+                    $_cu = null;
+                    foreach (scraper::_pP($sho, 'src') as $_u) {
+                        if (str_contains($_u, '/images/captcha')) {
+                            $_cu = trim($_u);
                             break;
                         }
                     }
-                }
-            }
-            if (!empty($cla)) {
-                $m = scraper::_jP($cla, "/Swal\.fire\(\{.*?title\s*:\s*(['\"])(.*?)\\1.*?\}\)/s");
-                if (isset($m[2][0])) {
-                    print(FGd['CYN'].maskEmail($mail).RSET." ");
-                    logg(true, $m[2][0]);
-                    break;
-                }
-            }
-        } else {
-            logx('err', 'ptc habis');
-            $ADDONE = true;
-            break;
-        }
-    } while (!$ADDONE);
-
-    if ($box) {
-        for ($i = 1; $i <= $co; $i++) {
-            logx('info', "box $i/$co.");
-            
-            $box = Net::C("$host/pickabox", 'GET', null, inf::$cookie, [], "$host/dashboard", inf::$uagent, false, false, $ip);
-            $f = scraper::payload($box);
-            if (!empty($f)) {
-                $pa = $f[0]['payload'];
-                $pa['selected_box'] = rand(1,3);
-                $bet = Net::C($f[0]['url'], 'POST', $pa, inf::$cookie, [], "$host/faucet", inf::$uagent, false, false, $ip);
-                $_aa = scraper::_xP($bet, "//div[contains(@class, 'alert')]");
-                if (!empty($_aa)) {
-                    $resMsg = preg_replace('/\s+/', ' ', trim(strip_tags($_aa[0])));
-                    logx('info', "Result: $resMsg");
-                }
-                _sle(2); 
-            }
-        }
-    }
-    sl:
-    $ret99 = 0;
-    do {
-        $sho = Net::C("$host/links", 'GET', null, inf::$cookie, [], "$host/dashboard", inf::$uagent, false, false, $ip);
-        if ($sho === 99) {
-            $ret99++;
-            logx('warn', "masalah proxy, warm up dulu");
-            if ($ret99 >= 7) {
-                goto login;
-            }
-            _sle(30);
-            continue;
-        }
-        $ret99 = 0; 
-        if (empty($sho)) continue;
-        
-        $f = scraper::payload($sho)[0] ?? [];
-        $short = sScraper::extract($sho);
-        #print_r($short);
-        if (empty($short)) {
-            logx('info', "sl abis");
-            $SLDONE = true;
-            break;
-        }
-        $up = ['earnow','shortano', 'shortino', 'fc-lc'];
-        
-        if (!empty($f)) {
-            $po = $f['payload'];
-            
-            if (str_contains($sho, 'Write what you see in the picture')) {
-                $t_text = null;
-                $_cu = null;
-                foreach (scraper::_pP($sho, 'src') as $_u) {
-                    if (str_contains($_u, '/images/captcha')) {
-                        $_cu = trim($_u);
-                        break;
+                    if ($_cu) {
+                        $img = Net::C($_cu, 'GET', null, inf::$cookie, [], "$host/links", inf::$uagent);
+                        $t_text = _text($img, $host, $mail);
                     }
-                }
-                if ($_cu) {
-                    $img = Net::C($_cu, 'GET', null, inf::$cookie, [], "$host/links", inf::$uagent);
-                    $t_text = _text($img, $host, $mail);
-                }
-                if ($t_text) {
-                    foreach ($po as $key => $val) {
-                        if ($val === '' || $val === null) {
-                            $po[$key] = $t_text;
+                    if ($t_text) {
+                        foreach ($po as $key => $val) {
+                            if ($val === '' || $val === null) {
+                                $po[$key] = $t_text;
+                            }
                         }
                     }
                 }
-            }
-        } 
-
-        $can_process = false; 
-        foreach ($short as $links => [$idd, $lmt]) {
-            
-            if (!limit($lmt) || isset($skipped[$idd])) continue;
-            
-            $can_process = true;
-            
-            $ud = $host.'/links/go/'.$idd;
-            $getVer = 0;
-            while (true) {
-                $get = Net::X($ud, 'POST', $po, inf::$cookie, [], $host.'/links', inf::$uagent, ip: $ip, foll: false);
-                if ($get === 99) {
-                    $getVer++;
-                    if ($getVer >= 5) goto login;
-                    _sle(30);
-                    continue;
+            } 
+    
+            $can_process = false; 
+            foreach ($short as $links => [$idd, $lmt]) {
+                
+                if (!limit($lmt) || isset($skipped[$idd])) continue;
+                
+                $can_process = true;
+                
+                $ud = $host.'/links/go/'.$idd;
+                $getVer = 0;
+                while (true) {
+                    $get = Net::X($ud, 'POST', $po, inf::$cookie, [], $host.'/links', inf::$uagent, ip: $ip, foll: false);
+                    if ($get === 99) {
+                        $getVer++;
+                        if ($getVer >= 5) goto login;
+                        _sle(30);
+                        continue;
+                    }
+                    if (!empty($get)) break;
                 }
-                if (!empty($get)) break;
-            }
-            
-            preg_match('/location\.href\s*=\s*["\']([^"\']+)["\']/', $get, $match);
-            $loc = $match[1] ?? '';
-            
-            if (!$loc) {
-                $skipped[$idd] = true;
-                continue; 
-            }
-
-            $loc_u = parse_url($loc)['host'];
-            $is_bl = false;
-            foreach ($up as $blacklisted) {
-                if (str_contains($loc_u, $blacklisted)) {
-                    logx('warn', "Domain $blacklisted Skipping..");
+                
+                preg_match('/location\.href\s*=\s*["\']([^"\']+)["\']/', $get, $match);
+                $loc = $match[1] ?? '';
+                
+                if (!$loc) {
                     $skipped[$idd] = true;
-                    $is_bl = true;
-                    break; 
+                    continue; 
                 }
-            }
-            if ($is_bl) {
-                _sle(5);
-                continue; 
-            }
-            
-            logx('info', "Bypass: $loc", true, true);
-            $bakk = links($api, $loc);
-            #var_dump($bakk); #die;
-            
-            if (!$bakk) {
-                $skipped[$idd] = true; 
-                _sle(5);
-                break 2;
-            }
-            
-            styler("waiting for SL", fn() => _sle(70));
-            
-            $retVer = 0;
-            while (true) {
-                $ver = Net::C($bakk, 'GET', null, inf::$cookie, [], $loc, inf::$uagent);
-                if ($ver === 99) {
-                    $retVer++;
-                    if ($retVer >= 5) goto login;
-                    _sle(30);
-                    continue;
+    
+                $loc_u = parse_url($loc)['host'];
+                $is_bl = false;
+                foreach ($up as $blacklisted) {
+                    if (str_contains($loc_u, $blacklisted)) {
+                        logx('warn', "Domain $blacklisted Skipping..");
+                        $skipped[$idd] = true;
+                        $is_bl = true;
+                        break; 
+                    }
                 }
-                break;
-            }
-            
-            if (!empty($ver)) {
-                $m = scraper::_jP($ver, "/Swal\.fire\(\{.*?title\s*:\s*(['\"])(.*?)\\1.*?\}\)/s") ?? [];
-                if (isset($m[2][0])) {
-                    print(FGd['CYN'].maskEmail($mail).RSET." ");
-                    logg(true, $m[2][0]);
+                if ($is_bl) {
+                    _sle(5);
+                    continue; 
+                }
+                
+                logx('info', "Bypass: $loc", true, true);
+                $bakk = links($api, $loc);
+                #var_dump($bakk); #die;
+                
+                if (!$bakk) {
+                    $skipped[$idd] = true; 
+                    _sle(5);
                     break 2;
                 }
+                
+                styler("waiting for SL", fn() => _sle(70));
+                
+                $retVer = 0;
+                while (true) {
+                    $ver = Net::C($bakk, 'GET', null, inf::$cookie, [], $loc, inf::$uagent);
+                    if ($ver === 99) {
+                        $retVer++;
+                        if ($retVer >= 5) goto login;
+                        _sle(30);
+                        continue;
+                    }
+                    break;
+                }
+                
+                if (!empty($ver)) {
+                    $m = scraper::_jP($ver, "/Swal\.fire\(\{.*?title\s*:\s*(['\"])(.*?)\\1.*?\}\)/s") ?? [];
+                    if (isset($m[2][0])) {
+                        print(FGd['CYN'].maskEmail($mail).RSET." ");
+                        logg(true, $m[2][0]);
+                        break 2;
+                    }
+                }
+                
+                #break; 
+                break 2; 
+            }
+    
+            if (!$can_process) {
+                logx('info', "sl abis");
+                $SLDONE = true;
             }
             
-            #break; 
-            break 2; 
-        }
-
-        if (!$can_process) {
-            logx('info', "sl abis");
-            $SLDONE = true;
-        }
-        
-    } while (!$SLDONE);
-
-    if ($limit) {
-        if (!$can_withdraw) die;
-        $wd = Net::C("$host/withdraw", 'GET', null, inf::$cookie, [], "$host/faucet", inf::$uagent, false, false, $ip);
-        if (empty($wd) || ($wd === 99)) continue;
-        $jajan = _wd($wd);
-        if (!$jajan) {
-            logx('err', 'gak bisa wd kayaknya');
-            exit;
-        }
-        if ($jajan['payload']['amount'] > 10000) {
-            $cap = solve::exec($wd, $host, $api);
-            if (isset($cap['trouble'])) continue;
-            $po = $jajan['payload'];
-            $walletKey = isset($po['address']) ? 'address' : (isset($po['wallet']) ? 'wallet' : 'email');
-            if (empty($po[$walletKey])) $po[$walletKey] = $mail;
-            logg(true, '  tes ilmu: '. $jajan['info']['coin'], false);
-            logx('info', ' [ '.$po['wallet'].' ]');
-            $wd = Net::C($jajan['url'], 'POST', array_merge($po, $cap), inf::$cookie, [], "$host/faucet", inf::$uagent, false, false, $ip);
-            #_put('wd.html', $wd);
-            if (!empty($wd)) {
-                $m = scraper::_jP($wd, "/Swal\.fire\(\{.*?title\s*:\s*(['\"])(.*?)\\1.*?\}\)/s") ?? [];
-                if (isset($m[2][0])) {
-                    logx('info', $m[2][0], true, true);
-                    $pttr = '/<h3>([^<]+)<\/h3>\s*<p>Balance<\/p>/';
-                    die;
-                }
-            }
-        } else {
-            logx('err', 'gak cukup minimum wd');
-            exit;
-        }
+        } while (!$SLDONE);
     }
     
-    if (!$claim && $SLDONE) {
+    if (!$claim && $SLDONE && $ADDONE) {
         print(FGd['CYN'].maskEmail($mail).RSET." ");
         (logx('err', 'beres') ?: die);
     }
+    
     
 }
 
@@ -609,7 +597,7 @@ function _text($imgData, $host, $mail) {
         $counts = array_count_values($t_vote);
         arsort($counts); 
         $t_text = (string)key($counts); 
-        logx('ok', "OCR: $t_text (" . reset($counts) . "/" . count($t_vote) . ")");
+        #logx('ok', "OCR: $t_text (" . reset($counts) . "/" . count($t_vote) . ")");
         return $t_text;
     }
 
@@ -641,4 +629,53 @@ function _wd($html) {
         }
     }
     return false;
+}
+
+function parsePtcAds($html, $host) {
+    if (empty($html) || $html === 99) return ['total' => 0, 'local' => [], 'bctt' => [], 'owme' => [], 'external' => []];
+    
+    $xp = Scraper::dom($html);
+    if (!$xp) return ['total' => 0, 'local' => [], 'bctt' => [], 'owme' => [], 'external' => []];
+    
+    $result = ['local' => [], 'bctt' => [], 'owme' => [], 'external' => []];
+    $host = str_replace('www.', '', parse_url($host, PHP_URL_HOST) ?: $host);
+    $baseUrl = (parse_url($host, PHP_URL_SCHEME) ? $host : 'https://' . $host);
+    $baseUrl = rtrim($baseUrl, '/');
+    
+    foreach ($xp->query("//div[contains(@class,'ptc_cards')]") as $card) {
+        $btn = $xp->query(".//button/@onclick", $card);
+        if ($btn->length === 0) continue;
+        
+        preg_match("/(?:window\.location\s*=\s*|window\.open\s*\(\s*|location\.href=')'([^']+)'/", $btn->item(0)->value, $m);
+        if (empty($m[1])) continue;
+        
+        $url = $m[1];
+        
+        if (strpos($url, 'http') !== 0 && strpos($url, '//') !== 0) {
+            $url = (strpos($url, '/') === 0) ? $baseUrl . $url : $baseUrl . '/' . $url;
+        } elseif (strpos($url, '//') === 0) {
+            $url = 'https:' . $url;
+        }
+        
+        $timer = 5;
+        $spans = $xp->query(".//span", $card);
+        foreach ($spans as $span) {
+            $text = trim($span->textContent);
+            if (preg_match('/(\d+)\s*s/', $text, $tm)) {
+                $timer = (int)$tm[1];
+                break;
+            }
+        }
+        
+        $uHost = str_replace('www.', '', parse_url($url, PHP_URL_HOST) ?: '');
+        
+        if ($uHost === $host) $result['local'][] = [$url, $timer];
+        elseif (strpos($url, 'bitcotasks.com') !== false) $result['bctt'][] = [$url, $timer];
+        elseif (strpos($url, 'offerwall.me') !== false) $result['owme'][] = [$url, $timer];
+        else $result['external'][] = [$url, $timer];
+    }
+    
+    $result['total'] = count($result['local']) + count($result['bctt']) + count($result['owme']) + count($result['external']);
+    
+    return $result;
 }

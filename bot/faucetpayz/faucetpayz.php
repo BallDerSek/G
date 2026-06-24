@@ -30,7 +30,7 @@ $ip = '';
 
 $limit = false;
 $claim = true;
-$SLDONE = false;
+$SLDONE = true;
 $ADDONE = false;
 $skipped = [];
 $can_withdraw = true;
@@ -114,6 +114,7 @@ while (true) {
         $can_withdraw = false;
     }
     
+    $setF = 0; 
     if (!$limit && $claim) {
         $ret99 = 0; 
         while (true) {
@@ -138,14 +139,6 @@ while (true) {
             $cap = [];
             $f = scraper::payload($fau)[0] ?? [];
             #print_r($f); die;
-            if (empty($f)) {
-                if (stripos($fau, '/register')) continue 2;
-                
-                if (!$ADDONE) break;
-                
-                styler('Waiting for faucet', fn() => _sle(30));
-                continue;
-            }
             
             if (!empty($f['payload'])) {
                 $pa = $f['payload'];
@@ -158,6 +151,23 @@ while (true) {
                 }
                 
                 $po = array_merge($pa, $cap);
+            } else {
+                if (str_contains($fau, '/register')) continue 2;
+                
+                if (str_contains($fau, 'Daily limit reached, claim Shortlink Wall')) {
+                    $limit = true;
+                    logx('err', 'daily limit');
+                    break;
+                }
+                
+                if (!$SLDONE || !$ADDONE) {
+                    $setF = microtime(true);
+                    break;
+                }
+                
+                styler('Waiting for faucet', fn() => _sle(30));
+                continue;
+                
             }
             
             if (!empty($po)) {
@@ -198,74 +208,89 @@ while (true) {
     }
     
     $ads = Net::C("$host/surf", 'GET', null, inf::$cookie, [], "$host/dashboard", inf::$uagent, false, false, $ip);
-    #_put('ads.html', $ads);
+    #_put('ads.html', $ads); die;
     if (!empty($ads) && $ads !== 99) {
-        $_ad = [];
+        $ptcList = parsePtcAds($ads ,$host);
+        $ptcNumb = $ptcList['total'];
+        #print_r($ptcList); die;
         
-        $uvv = Scraper::_xP($ads, "//a[contains(@href, '/surf/') and not(contains(@class, 'd-none'))]/@href");
-        $tmr = Scraper::_xP($ads, "//a[not(contains(@class, 'd-none'))]//div[contains(@class, 'pill sec')]/text()[normalize-space()]");
-        $url_c = count($uvv);
-        $tmr_c = count($tmr);
-        for ($i = 0; $i < $url_c; $i++) {
-            $_ti = ($i < $tmr_c && trim($tmr[$i]) != '') ? trim($tmr[$i]) : '5s';
-            $_ad[] = [$uvv[$i], $_ti];
-        }
-        
-        #print_r($_ad); die;
-        if (!empty($_ad[0]) && !$ADDONE) {
+        if (!empty($ptcList['local'])) {
             
-            for ($rrv = 0; $rrv < 2; $rrv++) {
+            foreach ($ptcList['local'] as $ptc) {
+                [$ad_u, $ad_t] = $ptc;
                 $cla = null;
                 $view = null;
                 
-                $ad_u = $host.$_ad[0][0];
-                $ad_t = (int)$_ad[0][1];
-                
-                $view = Net::C($ad_u, 'GET', null, inf::$cookie, [], "$host/surf", inf::$uagent, false, false, $ip);
-                if ($view === 99) {
-                    $ret99++;
-                    if ($ret99 >= 5) continue 2;
-                    continue;
-                }
-                #_put('view.html', $view);
-                
+                $view = Net::C($ad_u, 'GET', null, inf::$cookie, [], "$host/ptc", inf::$uagent, false, false, $ip);
+                if ($view === 99) continue 2;
                 if (!empty($view) && $view !== 99) {
-                    $set = microtime(true);
-                    $uid = Scraper::find($view, 'uid', 'input', 'value', 'id')[0] ?? null;
-                    $idd = Scraper::_pP($view, 'let id')[0] ?? null;
-                    preg_match("/let count = (\d+)/", $view, $cnt);
-                    if (isset($cnt[1])) $ad_t = (int)$cnt[1];
-                    
-                    $go = ['uid' => $uid,'c' => $idd.rand(1, 9999)];
-                    Net::C("$host/surf", 'GET', $go, inf::$cookie, [], $ad_u, inf::$uagent);
-                    
                     $po = null;
-                    $cap = solve::exec($view, $host, $api);
-                    if (isset($cap['trouble'])) continue;
-                    $po = array_merge($go, $cap);
+                    $f = scraper::payload($view)[0] ?? [];
                     
-                    $end = microtime(true) - $set;
-                    $wait = (int)($ad_t - $end);
-                    if ($wait > 0) styler("waiting for ads: $wait", fn() => _sle($wait));
-                    
-                    $cla = json_decode(Net::X("$host/ajax/surf", 'POST', $po, inf::$cookie, [], $ad_u, inf::$uagent)?: '', 1);
-                    
-                    #if (str_contains($cla, 'get back tomorrow')) $ADDONE = true;
-                    
-                    if (!empty($cla)) {
-                        $stt = $cla['success'];
-                        $is_ok = $stt === 0 ? 'error' : 'success';
-                        $msg = $cla['message'];
+                    if (!empty($f)) {
+                        $pa = $f['payload'];
                         
-                        logm($mail);
-                        logg(1, $msg);
-                        break;
+                        $uid = Scraper::find($view, 'uid', 'input', 'value', 'id')[0] ?? null;
+                        $idd = Scraper::_pP($view, 'let id')[0] ?? null;
+                        preg_match("/let count = (\d+)/", $view, $cnt);
+                        if (isset($cnt[1])) $ad_t = (int)$cnt[1];
+                    
+                        $go = ['uid' => $uid,'c' => $idd.rand(1, 9999)];
+                        Net::C("$host/surf", 'GET', $go, inf::$cookie, [], $ad_u, inf::$uagent);
+                        
+                        $cap = solve::exec($view, $ad_u, $api, $pa);
+                        if (isset($cap['trouble'])) {
+                            _sle(60);
+                            continue;
+                        }
+                        $po = array_merge($go, $cap);
+                        
                     }
+                    
+                    if (!empty($po)) {
+                        styler("waiting for ads: $ad_t", fn() => _sle($ad_t));
+                        $cla = json_decode(Net::X("$host/ajax/surf", 'POST', $po, inf::$cookie, [], $ad_u, inf::$uagent)?: '', 1)['message'] ?? null;
+                        
+                        if (!empty($cla)) {
+                            Logger::M($mail);
+                            Logger::G(0, $cla);
+                            $endF = microtime(true);
+                            if ($setF > 0 && $claim) {
+                                $balik = $endF - $setF;
+                                if ($balik >= 4 * 60) continue 2;
+                            }
+                        }
+                        
+                        
+                        
+                    }
+                    
                 }
+                
             }
             
+        } else {
+            if (!empty($ptcList['bctt'])) {
+                foreach ($ptcList['bctt'] as $ptc) {
+                    [$ad_u, $ad_t] = $ptc;
+                    $bctt = new Bctt($host, $api, $mail);
+                    $ch = $bctt->exec($ad_u, $ad_t);
+                    if ($ch === 99) goto login;
+                    
+                    $endF = microtime(true);
+                    if ($setF > 0 && $claim) {
+                        $balik = $endF - $setF;
+                        if ($balik >= 4 * 60) continue 2;
+                    }
+                    
+                }
+                
+            }
+            
+            if ($ptcNumb <= 1) $ADDONE = true;
         }
-        if (empty($_ad)) $ADDONE = true;
+        
+        
     }
     
     if ($limit && $ADDONE) {
@@ -284,7 +309,11 @@ while (true) {
             }
         }
         
-        die;
+    }
+    
+    if (!$claim && $SLDONE && $ADDONE) {
+        print(FGd['CYN'].maskEmail($mail).RSET." ");
+        (logx('err', 'beres') ?: die);
     }
     
 }
@@ -294,3 +323,49 @@ while (true) {
 tes:
 
 
+
+
+
+function parsePtcAds($html, $host) {
+    if (empty($html) || $html === 99) return ['total' => 0, 'local' => [], 'bctt' => [], 'owme' => [], 'external' => []];
+    
+    $xp = Scraper::dom($html);
+    if (!$xp) return ['total' => 0, 'local' => [], 'bctt' => [], 'owme' => [], 'external' => []];
+    
+    $result = ['local' => [], 'bctt' => [], 'owme' => [], 'external' => []];
+    $host = str_replace('www.', '', parse_url($host, PHP_URL_HOST) ?: $host);
+    $baseUrl = rtrim((parse_url($host, PHP_URL_SCHEME) ? $host : 'https://' . $host), '/');
+    
+    $urls = Scraper::_xP($html, "//a[contains(@href, '/surf/') and not(contains(@class, 'd-none'))]/@href");
+    
+    $timers = Scraper::_xP($html, "//div[contains(@class, 'pill sec')]");
+    
+    foreach ($urls as $i => $href) {
+        if (strpos($href, 'http') !== 0 && strpos($href, '//') !== 0) {
+            $url = (strpos($href, '/') === 0) ? $baseUrl . $href : $baseUrl . '/' . $href;
+        } elseif (strpos($href, '//') === 0) {
+            $url = 'https:' . $href;
+        } else {
+            $url = $href;
+        }
+        
+        $timer = 5;
+        if (isset($timers[$i])) {
+            $text = trim($timers[$i]);
+            if (preg_match('/(\d+)\s*s/', $text, $tm)) {
+                $timer = (int)$tm[1];
+            }
+        }
+        
+        $uHost = str_replace('www.', '', parse_url($url, PHP_URL_HOST) ?: '');
+        
+        if ($uHost === $host) $result['local'][] = [$url, $timer];
+        elseif (strpos($url, 'bitcotasks.com') !== false) $result['bctt'][] = [$url, $timer];
+        elseif (strpos($url, 'offerwall.me') !== false) $result['owme'][] = [$url, $timer];
+        else $result['external'][] = [$url, $timer];
+    }
+    
+    $result['total'] = count($result['local']) + count($result['bctt']) + count($result['owme']) + count($result['external']);
+    
+    return $result;
+}

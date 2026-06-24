@@ -1,117 +1,20 @@
 <?php
 
-/*
-function cfSet($class, $res) {
-    if (!$res) return null;
-    
-    #print_r($res); die;
-
-    switch (strtolower($class)) {
-        case str_contains(strtolower($class), 'xevil'):
-            $decoded = json_decode(base64_decode($res), true);
-            return [
-                'token' => $decoded['cf_clearance'] ?? null,
-                'ua' => $decoded['user_agent'] ?? null,
-            ];
-
-        case str_contains(strtolower($class), 'gmxch'):
-        case str_contains(strtolower($class), 'glitch'):
-            return [
-                'token' => $res['cf_clearance'] ?? $res['clearance'] ?? null,
-                'ua'    => $res['user_agent'] ?? null,
-            ];
-
-        #case str_contains(strtolower($class), 'multibot'):
-        case str_contains(strtolower($class), 'tertuyul'):
-            $part = explode(':', $res, 2);
-            return [
-                'token' => $part[0] ?? null,
-                'ua' => $part[1] ?? null,
-            ];
-
-        default:
-            return null;
-    }
-}
-
-function execCF($api, $url, $cookie, $uagent, array $data = []) {
-    
-    if (!$api) (logx('err', 'undefined provider') ?: die);
-    
-    $param = array_filter([
-        'body' => !empty($data['html']) ? base64_encode($data['html']) : null,
-        'userAgent' => $uagent,
-        'proxy' => $GLOBALS['_CTX']['proxy']['src'] ?? null
-    ]);
-
-    #logx('info', 'param for solver');
-    #print_r($param);
-
-    $solver = config::getKeys($api, 'interstitial', 'acc');
-    $solve = $solver->access($url, 'interstitial', $param);
-    
-    if ($solve === 777 || (is_array($solve) && ($solve[1] ?? null) === 777)) {
-        logx('warn', "Internal Node Busy, fallback direct api", false);
-        _clr();
-        
-        if (isset(Api::ACC[get_class($api)]['interstitial'])) {
-            $solve = $api->access($url, 'interstitial', $param);
-            if ($solve === 71) {
-                return false;
-            }
-        }
-    }
-    
-    if (is_array($solve) && !empty($solve[1])) {
-        if ($solver instanceof Provider) $api->getInfo();
-
-        #logx('info', 'param from solver');
-        #print_r($solve); #die;
-
-        [$_cl, $_cf] = $solve;
-        $solution = cfSet($_cl, $_cf);
-        #print_r($solution);
-        return setCF($solution, $cookie, $url);
-        
-    }
-    return false;
-    
-}
-
-function setCF($r, $c, $host) {
-    #print_r($r);
-    if (is_array($r) && isset($r['token'])) {
-        
-        
-        $execPy = new execPython($c, $r['ua']);
-        $clearance = "cf_clearance={$r['token']}";
-        $execPy->cfCookie($clearance, $host);
-
-        $solution = [
-            inf::netHead(['cf_clearance' => $r['token']]),
-            $r['ua']
-        ];
-        return $solution;
-    }
-    
-    return false;
-}
-*/
-
-
-
 class Cloudflare {
     
     public static function parseResult($class, $res) {
         if (!$res) return null;
 
         $className = strtolower($class);
-
+        
+        #print_r($res); die;
+        
         if (str_contains($className, 'xevil')) {
             $decoded = json_decode(base64_decode($res), true);
+            #print_r($decoded); #die;
             return [
-                'token' => $decoded['cf_clearance'] ?? null,
-                'ua' => $decoded['user_agent'] ?? null,
+                'token' => $decoded['cf_clearence'] ?? null,
+                'ua' => $decoded["user_agent"] ?? null,
             ];
         }
 
@@ -123,7 +26,8 @@ class Cloudflare {
         }
 
         if (str_contains($className, 'tertuyul')) {
-            $part = explode(':', $res, 2);
+            $part = explode('::', $res, 2);
+            #print_r($part);
             return [
                 'token' => $part[0] ?? null,
                 'ua' => $part[1] ?? null,
@@ -159,6 +63,8 @@ class Cloudflare {
             
             [$_cl, $_cf] = $solve;
             $solution = self::parseResult($_cl, $_cf);
+            
+            #print_r($solution); #die;
             
             if ($solution && isset($solution['token'])) {
                 self::injectCookie($cookiePath, $solution['token'], $url);

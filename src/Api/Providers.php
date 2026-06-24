@@ -466,7 +466,7 @@ class gmxch extends Provider {
     }
     
     public function bct(array $data) {
-        return 777;
+        #return 777;
         
         $params = [
             "method" => "bitcotasks",

@@ -43,12 +43,14 @@ class Bctt {
             Net::X($cc_getG, 'POST', ['action' => 'start_view'], $this->cookieFile, [], $cc_getG, $this->userAgent);
             
             $cc_pre = Net::C($cc_getG, 'GET', null, $this->cookieFile, [], '', $this->userAgent);
-            #_put('ccpre.html', $cc_pre);
+            #_put('ccpre.html', $cc_pre); die;
             if (str_contains($cc_pre,'Forbidden')) return false;
             
             if ($cc_pre === 99) return 99;
             
             if (!empty($cc_pre) && $cc_pre !== 99) {
+                $tm = Scraper::_jP($cc_pre, '/var\s+duration\s*=\s*(\d+)/');
+                
                 $cap_u = scraper::_xP($cc_pre, "//script[contains(@src,'captcha2/')]/@src")[0] ?? null;
                 
                 preg_match("/window\.(?:open|location\.replace)\('([^']+)'\)/", $cc_pre, $m);
@@ -68,11 +70,11 @@ class Bctt {
                     'token' => Scraper::_pP($cc_pre,'token')[0] ?? null,
                     'sub_id' => Scraper::_pP($cc_pre,'sub_id')[0] ?? null,
                     'api_key' => Scraper::_pP($cc_pre,'api_key')[0] ?? null,
-                    'timer' => Scraper::_pP($cc_pre,'duration')[0] ?? $tmr,
+                    'timer' => !empty($tm[1]) ? (int)$tm[1][0] : $tmr,
                     'target_url' => $target_url,
                     'action' => $action
                 ];
-                #print_r($param);
+                #print_r($param); die;
                 if (in_array(null, $param, true)) {
                     return false;
                 }

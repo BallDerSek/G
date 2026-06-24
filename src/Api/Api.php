@@ -450,6 +450,7 @@ final class Api {
             }
         }
         
+        #print_r($params);
         return [$cfg['api'], $params];
         
     }
