@@ -66,6 +66,7 @@ while (true) {
         
         logx('err', "logging in ", false); 
         _sle(3); _clr();
+        @unlink(inf::$cookie);
         Net::X($host.$r, 'GET', null, inf::$cookie, $headersCF, '', inf::$uagent);
         $_0 = Net::X($host, 'GET', null, inf::$cookie, $headersCF, $host.$r, inf::$uagent);
         #_put('0.html', $_0); die;
@@ -111,6 +112,7 @@ while (true) {
             
             $ve = json_decode(Net::X($f['url'], 'POST', $body, inf::$cookie, $headers, $host.$r, inf::$uagent)?: '', 1);
             #print_r($ve); die;
+            /*
             if (!empty($ve) && isset($ve['msg'])) {
                 
                 $msg = strtolower(strip_tags($ve['msg']));
@@ -121,6 +123,7 @@ while (true) {
                 _clr();
                 
             }
+            */
         }
         
     } while (empty($dash));

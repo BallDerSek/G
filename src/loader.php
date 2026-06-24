@@ -103,8 +103,11 @@ function bootApp() {
     Proxy::load();
     check::Geo();
     KEYS::sync();
+    $inn = check::Inn();
     
     $k = Config::credential()['_authApi_'];
+    if (!$k) $k = $inn;
+    
     $a = Api::use('gmxch', $k);
     $GLOBALS['_CTX']['AUTH_API'] = $a;
     if (!defined('AUTH_KEY')) define('AUTH_KEY', $a->getInfo());

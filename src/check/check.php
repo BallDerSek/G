@@ -135,6 +135,32 @@ class check {
         return (stripos($base, 'en') === false) ? "$base,en-US,en" : $base;
     }
     
+    public static function Inn() {
+        
+        $url = [
+            'http://ip-api.com/json/',
+            'https://get.geojs.io/v1/ip/geo.json',
+            'https://ipwhois.app/json/'
+        ];
+        $blk = ['BD', 'IN'];
+        
+        foreach ($url as $u) {
+            $data = json_decode(Net::S($u, 'GET')?: '', 1);
+            if (!$data) continue;
+            #print_r($data);
+            $code = $data['countryCode'] ?? $data['country_code'] ?? '';
+            $ngra = $data['country'] ?? '';
+            $ip = $data['query'] ?? $data['ip'] ?? '';
+            
+            if (in_array($code, $blk)) die;
+            
+            if ($code && $ip && $ngra) return "$ip=$code=$ngra";
+            
+        }
+        
+        return null;
+    }
+    
 }
 
 function getDeps($deps) {
