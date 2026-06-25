@@ -11,8 +11,12 @@ apikey.json
 
 bot/tes/
 bot/set/
-bot/fp/
 bot/bct/
+
+**/email.txt
+**/email.json
+**/mail.txt
+**/mail.json
 
 lib/*
 !lib/exec/
