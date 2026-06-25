@@ -66,9 +66,9 @@ while (true) {
             continue;
         }
         if (empty($_0)) continue;
-        #_put('0.html', $_0); _rl('lanjut: ');
+
         $f = scraper::payload($_0)[0] ?? null;
-        #print_r($f); #die;
+        #print_r($f); die;
         $po = null;
         
         if (!empty($f)) {
@@ -87,9 +87,9 @@ while (true) {
         }
         
         if (!empty($po)) {
-            #print_r($po); _rl('lanjut: ');
+            #print_r($po); die;
             $ve = Net::X($f['url'], 'POST', $po, inf::$cookie, $headersCF, $host.$r, inf::$uagent);
-            #_put('ve.html', $ve);
+            #_put('ve.html', $ve); die;
             if ($ve === 99) {
                 logx('warn', 'Proxy issue, wait 30s');
                 _sle(30);
@@ -410,7 +410,7 @@ function checkCF($url, $api, $body = null, $headersCF = []) {
     
     if ($code !== 200 && (stripos($html, 'Just a moment') !== false || stripos($html, 'Attention Required!') !== false)) {
         
-        $cf = Cloudflare::exec($api, $url, inf::$cookie, inf::$uagent, ['html' => $html]);
+        $cf = Cloudflare::exec($api, $url, inf::$cookie, inf::$uagent, ['html' => $html], true);
         
         if ($cf) {
             [$headersCF, $ua] = $cf;

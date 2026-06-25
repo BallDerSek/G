@@ -1,9 +1,9 @@
 <?php
 if (!defined('ROOT')) { die; }
-
+_die();
 $api = onKeys();
 
-$acc = config::credential([], false, ['mail', 'pass', 'PROXY']);
+$acc = config::credential([], false, /*['mail', 'pass', 'PROXY']*/);
 $mail = $acc['mail'];
 $pass = $acc['pass'];
 putenv("PROXY=".$acc['PROXY']);
@@ -158,7 +158,7 @@ while (true) {
                 if (stripos($fau, '/register')) continue 2;
                 #_put('fau.html', $fau); die;
                 
-                if (!$SLDONE || $ADDONE) break;
+                if (!$SLDONE || !$ADDONE) break;
                 
                 styler('Waiting for faucet', fn() => _sle(10));
                 continue;
@@ -168,8 +168,8 @@ while (true) {
                 $po['recaptchav3'] = $po['g-recaptcha-response'];
                 $cla = Net::C($f['url'], 'POST', $po, inf::$cookie, [], "$host/faucet", inf::$uagent, false, false, $ip);
                 if (empty($cla) || ($cla === 99)) continue;
-                #_put('cla.html', $cla); #die;
                 
+                #_put('cla.html', $cla); die;
                 
                 $err_d = scraper::_xP($cla, "//div[contains(@class, 'alert-danger')]");
                 if (!empty($err_d[0])) {
@@ -195,7 +195,11 @@ while (true) {
     
     
     $ads = Net::X("$host/ptc", 'GET', null, inf::$cookie, [], "$host/dashboard", inf::$uagent, false, false, $ip);
+    _put('ads.html', $ads);
     
+    
+    
+    die;
     if (!empty($ads) && $ads !== 99) {
         $_ad = [];
         
@@ -278,3 +282,8 @@ while (true) {
 
 
 tes:
+
+
+
+
+

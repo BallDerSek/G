@@ -155,6 +155,7 @@ class sScraper {
         }
         return $out;
     }
+    
 } 
 
 function limit($id) {
@@ -174,11 +175,11 @@ function links($api, $url, $noapi = false) {
         $f_url = $_direct->links($api); 
         
         if ($f_url && is_string($f_url)) {
-            logx('ok', " SL Direct passed", true, true);
+            Logger::X('ok', " SL Direct passed", true, true);
             return $f_url;
         }
     } catch (Throwable $e) {
-        logx('err', " SL Direct failed: ".$e->getMessage());
+        Logger::X('err', " SL Direct failed: ".$e->getMessage());
     }
     
     if (!$api) return false;

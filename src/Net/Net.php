@@ -124,14 +124,14 @@ class Net {
         }
 
         if (empty($opt['url']) || !is_string($opt['url'])) {
-            logx('err', 'invalid url'); return null;
+            Logger::X('err', 'invalid url'); return null;
         }
 
         # HEADERS
         $opt['head'] = self::applyHead($opt);
 
         $ch = curl_init($opt['url']);
-        if (!$ch) { logx('err', 'init failed'); return null; }
+        if (!$ch) { Logger::X('err', 'init failed'); return null; }
 
         # PROXY
         if (empty($opt['no_proxy'])) {
@@ -220,7 +220,7 @@ class Net {
         try {
             $proxyFailCount = 0; 
             for ($attempt = 0; $attempt < 10; $attempt++) {
-                #logx('info', "ATTEMPT " . ($attempt+1) . $opt['url']);
+                #Logger::X('info', "ATTEMPT " . ($attempt+1) . $opt['url']);
                 $body = curl_exec($ch);
                 $info = curl_getinfo($ch);
                 $errno = curl_errno($ch);
@@ -235,7 +235,7 @@ var_dump($err);
                 
                 if ($body !== false) {
                     if (($info['http_code'] ?? 0) === 407) {
-                        logx('err', "Proxy Auth Failed (407)");
+                        Logger::X('err', "Proxy Auth Failed (407)");
                         return 99; 
                     }
                     if (!empty($opt['debug'])) {
@@ -252,14 +252,14 @@ var_dump($err);
                 }
                 
                 $isUsingProxy = !empty($GLOBALS['_CTX']['proxy']) && empty($opt['no_proxy']);
-                #logx('info', " => err ($errno):$err");
+                #Logger::X('info', " => err ($errno):$err");
                 if ($isUsingProxy) {
                     $proxyFatalErrors = [7, 52, 56, 97];
                     if (in_array($errno, $proxyFatalErrors, true)) {
                         $proxyFailCount++;
                         
                         if ($proxyFailCount >= 7) {
-                            logx('warn', "\rUnhealthy Proxy ($errno)");
+                            Logger::X('warn', "\rUnhealthy Proxy ($errno)");
                             return 99; 
                         }
                         
@@ -282,7 +282,7 @@ var_dump($err);
             throw new Exception("unstable connection");
         } catch (Throwable $e) {
             _clr();
-            logx('info', " \r {$e->getMessage()}", true, true);
+            Logger::X('info', " \r {$e->getMessage()}", true, true);
             return null;
         
         } finally { 

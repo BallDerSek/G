@@ -72,10 +72,10 @@ class xevil extends Provider {
         if ($r === null) return false;
         
         if (isset($r['request']) && strncmp($r['request'], '-0.00', 5) === 0) {
-            logx('err', 'xevil: ' . $r['request']);
+            Logger::X('err', 'xevil: ' . $r['request']);
             return false;
         }
-        logx('info', 'xevil: ' . ($r['request'] ?? 'unknown'));
+        Logger::X('info', 'xevil: ' . ($r['request'] ?? 'unknown'));
         return true;
     }
     
@@ -168,11 +168,11 @@ skibidixxxget:
         if ($r === null) return false;
         
         if (isset($r['error'])) {
-            logx('err', $r['error']);
+            Logger::X('err', $r['error']);
             return false;
         }
         
-        logx('info', 'waryono: ' . ($r['balance'] ?? 'unknown'));
+        Logger::X('info', 'waryono: ' . ($r['balance'] ?? 'unknown'));
         return true;
     }
     
@@ -272,11 +272,11 @@ class tertuyul extends Provider {
     if ($i === null) return false;
 
     if (!isset($i['balance'])) {
-        logx('err', $i['request'] ?? 'unknown');
+        Logger::X('err', $i['request'] ?? 'unknown');
         return false;
     }
 
-    logx('info', 'Tertuyul: ' . $i['balance']);
+    Logger::X('info', 'Tertuyul: ' . $i['balance']);
     return true;
     }
     
@@ -336,11 +336,11 @@ class multibot extends Provider {
         
         $balance = $r['balance'] ?? null;
         if ($balance !== null && strncmp((string) $balance, '-0.00', 5) !== 0) {
-            logx('info', 'multibot: ' . $balance);
+            Logger::X('info', 'multibot: ' . $balance);
             return true;
         }
         
-        logx('err', 'multibot: ' . ($r['request'] ?? 'unknown'));
+        Logger::X('err', 'multibot: ' . ($r['request'] ?? 'unknown'));
         return false;
     }
     
@@ -466,7 +466,7 @@ class gmxch extends Provider {
     }
     
     public function bct(array $data) {
-        #return 777;
+        return 777;
         
         $params = [
             "method" => "bitcotasks",
@@ -501,7 +501,7 @@ class gmxch extends Provider {
         
         if (!empty($i['status']) && isset($i['authorized'])) return (bool) $i['authorized'];
         
-        logx('info', 'gmxch: ' . ($i['message'] ?? 'unknown'));
+        Logger::X('info', 'gmxch: ' . ($i['message'] ?? 'unknown'));
         return false;
     }
     
@@ -596,10 +596,10 @@ class glitch extends Provider {
         if ($r === null) return false;
         
         if (isset($r['error'])) {
-            logx('err', $r['error']);
+            Logger::X('err', $r['error']);
             return false;
         }
-        logx('info', 'glitch: ' . ($r['balance'] ?? 'unknown'));
+        Logger::X('info', 'glitch: ' . ($r['balance'] ?? 'unknown'));
         return true;
     }
     
@@ -634,10 +634,10 @@ class abdulq extends Provider {
         if ($b === null) return false;
         
         if (isset($b['error'])) {
-            logx('err', $b['error']);
+            Logger::X('err', $b['error']);
             return false;
         }
-        logx('info', 'bas: ' . ($b['balance'] ?? 'unknown'));
+        Logger::X('info', 'bas: ' . ($b['balance'] ?? 'unknown'));
         return true;
     }
     
@@ -710,11 +710,11 @@ class solverify extends Provider {
         if ($r === null) goto info; 
 
         if (($r["errorId"] ?? 0) !== 0) {
-            logx("err", $r["errorDescription"]);
+            Logger::X("err", $r["errorDescription"]);
             return false;
         }
 
-        logx('info', "Solverify: ".$r["balance"]);
+        Logger::X('info', "Solverify: ".$r["balance"]);
         return true;
     }
 }
@@ -931,7 +931,7 @@ class capsolver extends Provider {
 
         if (($r["errorId"] ?? 0) !== 0) return false;
 
-        logx('info', "capsolver: ".$r["balance"]);
+        Logger::X('info', "capsolver: ".$r["balance"]);
         return true;
     }
 }
@@ -964,7 +964,7 @@ class nopecha { /* https://nopecha.com/ */
             if (isset($s["data"])) { return $s; }
             $err = $s["error"];
             if (in_array($err, ['11', '14'])) {
-                logx('info', $s["message"]);
+                Logger::X('info', $s["message"]);
                 continue;
             }
 
@@ -973,11 +973,11 @@ class nopecha { /* https://nopecha.com/ */
             }
         } while (time() - $start < 200);
         } catch (Throwable $e) {
-                logx('err', "{$e->getMessage()}");
+                Logger::X('err', "{$e->getMessage()}");
                 #continue;
             }
             
-        logx('err', "$t failed"); return false;
+        Logger::X('err', "$t failed"); return false;
     }
 
     private function payload($api, array $extra): array {
@@ -1033,10 +1033,10 @@ class nopecha { /* https://nopecha.com/ */
         $r = json_decode(Net::X($this->baseUrl . "/status", 'GET', null, null, ["Authorization: Basic " . $this->apiKey], '', null, true), true);
         print_r($r);
         if (isset($r["error"])) {
-            logx('err', $r["message"]);
+            Logger::X('err', $r["message"]);
             return false;
         }
-        logx('info', "nopecha: ".$r["credit"]);
+        Logger::X('info', "nopecha: ".$r["credit"]);
         return true;
     }
 

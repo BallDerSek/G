@@ -262,7 +262,7 @@ while (true) {
                 $m = scraper::_jP($cla, "/Swal\.fire\(\{.*?title\s*:\s*(['\"])(.*?)\\1.*?\}\)/s") ?? [];
                 if (isset($m[2][0])) {
                     print(FGd['CYN'].maskEmail($mail).RSET." ");
-                    logg(true, $m[2][0], false);
+                    logg(true, $m[2][0]);
                     
                     if (stripos($m[2][0], 'has been added')) {
                         $setF = microtime(true);
@@ -280,57 +280,68 @@ while (true) {
         $ptcList = parsePtcAds($ads ,$host);
         $ptcNumb = $ptcList['total'];
         
-        if (!empty($ptcList['local'])) {
+        if ($ptcNumb <= 1) {
+            $ADDONE = true;
+        } else {
             
-            foreach ($ptcList['local'] as $ptc) {
-                [$ad_u, $ad_t] = $ptc;
-                $cla = null;
-                $view = null;
-                
-                $view = Net::C($ad_u, 'GET', null, inf::$cookie, [], "$host/ptc", inf::$uagent, false, false, $ip);
-                if ($view === 99) continue 2;
-                
-                if (!empty($view) && $view !== 99) {
-                    $po = null;
-                    $f = scraper::payload($view)[0] ?? [];
+            if (!empty($ptcList['local']) && !$ADDONE) {
+                foreach ($ptcList['local'] as $ptc) {
+                    [$ad_u, $ad_t] = $ptc;
+                    $cla = null;
+                    $view = null;
                     
-                    if (!empty($f)) {
-                        $pa = $f['payload'];
-                        $cap = solve::exec($view, $ad_u, $api, $pa);
-                        if (isset($cap['trouble'])) {
-                            _sle(60);
-                            continue;
-                        }
-                        $po = array_merge($pa, $cap);
+                    $view = Net::C($ad_u, 'GET', null, inf::$cookie, [], "$host/ptc", inf::$uagent, false, false, $ip);
+                    #_put('view.html', $view);
+                    if ($view === 99) continue 2;
+                    if (!empty($view) && $view !== 99) {
+                        $po = null;
+                        $f = scraper::payload($view)[0] ?? [];
                         
-                    }
-                    
-                    if (!empty($po)) {
-                        styler("waiting for ads: $ad_t", fn() => _sle($ad_t));
-                        $cla = Net::X($f['url'], 'POST', $po, inf::$cookie, [], $ad_u, inf::$uagent, false, true, $ip);
-                        #_put('cla.html', $cla);
-                        if (empty($cla) || ($cla === 99)) continue;
-                        
-                        $m = scraper::_jP($cla, "/Swal\.fire\(\{.*?title\s*:\s*(['\"])(.*?)\\1.*?\}\)/s");
-                        if (isset($m[2][0])) {
-                            Logger::M($mail);
-                            Logger::G(0, $m[2][0]);
+                        if (!empty($f)) {
+                            $pa = $f['payload'];
                             
-                            $endF = microtime(true);
-                            if ($setF > 0 && $claim) {
-                                $balik = $endF - $setF;
-                                if ($balik >= 4 * 60) continue 2;
+                            $_ca = $pa['captcha'];
+                            if (($_ca === 'hcaptcha') || ($_ca === 'faucetcaptcha')) {
+                                $ADDONE = true;
+                                continue;
+                            }
+                            
+                            $cap = solve::exec($view, $ad_u, $api, $pa);
+                            if (isset($cap['trouble'])) {
+                                _sle(60);
+                                continue;
+                            }
+                            $po = array_merge($pa, $cap);
+                            
+                        }
+                        
+                        if (!empty($po)) {
+                            styler("waiting for ads: $ad_t", fn() => _sle($ad_t));
+                            $cla = Net::X($f['url'], 'POST', $po, inf::$cookie, [], $ad_u, inf::$uagent, false, true, $ip);
+                            #_put('cla.html', $cla); die;
+                            if (empty($cla) || ($cla === 99)) continue;
+                            
+                            $m = scraper::_jP($cla, "/Swal\.fire\(\{.*?title\s*:\s*(['\"])(.*?)\\1.*?\}\)/s");
+                            #print_r($m);
+                            if (isset($m[2][0])) {
+                                Logger::M($mail);
+                                Logger::G(0, $m[2][0]);
+                                
+                                $endF = microtime(true);
+                                if ($setF > 0 && $claim) {
+                                    $balik = $endF - $setF;
+                                    if ($balik >= 4 * 60) continue 2;
+                                }
+                                
                             }
                             
                         }
                         
+                        
                     }
                     
                 }
-                
             }
-            
-        } else {
             
             if (!empty($ptcList['bctt'])) {
                 foreach ($ptcList['bctt'] as $ptc) {
@@ -346,10 +357,8 @@ while (true) {
                     }
                     
                 }
-                
             }
             
-            if ($ptcNumb <= 1) $ADDONE = true;
         }
         
     }

@@ -32,12 +32,12 @@ $ip = null;
 $hhh = inf::netHead(['uf' => md5($login), 'ls' => LANGUAGE(), 'utt' => TIMEZONE()]);
 $headersCF = [];
 $skipped = [];
-$SLDONE = false;
+$ADDONE = false;
+$SLDONE = true;
 $claim = true;
-$curr_id = '';
 $curr = '';
+$curr_id = '';
 $habis = [];
-$ptcc = false;
 
 while (true) {
     $dash = null;
@@ -112,7 +112,7 @@ while (true) {
             
             $ve = json_decode(Net::X($f['url'], 'POST', $body, inf::$cookie, $headers, $host.$r, inf::$uagent)?: '', 1);
             #print_r($ve); die;
-            /*
+            
             if (!empty($ve) && isset($ve['msg'])) {
                 
                 $msg = strtolower(strip_tags($ve['msg']));
@@ -123,12 +123,12 @@ while (true) {
                 _clr();
                 
             }
-            */
+            
         }
         
     } while (empty($dash));
     #_put('dash.html', $dash);
-#goto ptc;
+
     $_fa = [];
     $xpath = Scraper::dom($dash);
     $links = $xpath->query("//li[.//span[text()='Faucet']]//ul[@class='pc-submenu']//a");
@@ -144,6 +144,7 @@ while (true) {
         }
     }
     
+    $setF = 0;
     foreach ($_fa as $data) {
         if (!$claim) break;
         $fa = $data['url'];
@@ -232,23 +233,23 @@ while (true) {
                     logg(false, $msg);
                     
                     if (stripos($msg, 'No Faucet EXP left') !== false) {
-                        $ptcc = true;
                         $curr_id = basename(parse_url($fa)['path']);
                         $curr = $_c;
-                        
+                        $setF = microtime(true);
                         break 2;
                     }
-                    if (preg_match('/sufficient|could not be processed/i', $msg)) {
+                    
+                    if (preg_match('/sufficient|could not be processed/i', $msg) || (stripos($msg, 'link your Cwallet') !== false)) {
                         $habis[$fa] = true;
                         break;
                     }
-                    if (preg_match('/SameIp Other|banned|flagged/i', $msg)) die;
-                    
                     if (stripos($msg, 'Shortlink')) {
                         if ($SLDONE) (logx('err', 'Gada SL lagi') ?: die);
                         $curr = $_c;
                         break 2;
                     }
+                    
+                    if (stripos($msg, 'nvalid Claim') !== false) break;
                     
                     styler("waiting for next claim", fn() => _sle(27));
                 } elseif (empty($cla)) $ret99++;
@@ -261,95 +262,38 @@ while (true) {
     }
 
     if (count($habis) === count($_fa)) {
-        $claim = false; goto ptc;
+        $claim = false;
+        /*
         print(FGd['CYN'].maskEmail($login).RSET." ");
         (logx('err', 'gak bisa claim') ?: die);
+        */
     }
-
-    ptc:
-    $ads99 = 0;
-    $bcttView = 0;
-    $bcttFail = 0;
-    $viewed = false;
-    $retptc = 0;
-    while ($ptcc || !$viewed) {
+    
+    if (!empty($curr_id)) Net::X($host . '/account/change_currency','GET',['method' => $curr_id],inf::$cookie,$hhh,$host.'/ptc',inf::$uagent);
+    $ads = Net::X($host.'/ptc', 'GET', null, inf::$cookie, $hhh, $host, inf::$uagent);
+    #_put('ads.html', $ads);
+    if (!empty($ads) && $ads !== 99) {
+        $ptcList = parsePtcAds($ads ,$host);
+        $ptcNumb = $ptcList['total'];
+        #print_r($ptcList); #die;
         
-        $retptc++;
-        if ($retptc >= 2) break;
-        
-        if (!empty($curr_id)) Net::X($host . '/account/change_currency','GET',['method' => $curr_id],inf::$cookie,[],$host.'/ptc',inf::$uagent);
-        $ads = Net::X($host.'/ptc', 'GET', null, inf::$cookie, $headersCF, $host, inf::$uagent);
-        
-        if ($ads99 >= 3) goto login;
-        if ($ads === 99 || empty($ads)) {
-            $ads99++;
-            continue;
-        }
-        
-        if (!empty($ads)) {
+        if ($ptcNumb == 0) {
+            $ADDONE = true;
+        } else {
+            #print_r($ptcList); #die;
             
-            $ptcList = parsePTC($ads);
-            #print_r($ptcList); die;
-            $size = (int) ceil(count($ptcList) / 2);
-            
-            foreach ($ptcList as $ptc) {
-                
-                
-                
-                if ($ptc['domain'] == 'bitcotasks.com') {
+            if (!empty($ptcList['local'])) {
+                foreach ($ptcList['local'] as $ptc) {
+                    #print_r($ptc);
+                    [$ad_u, $ad_t] = $ptc;
                     
-                    #$ch = bct($api, $ptc['url'], $ptc['timer']);
-                    $bctt = new Bctt($host, $api, $login);
-                    $ch = $bctt->exec($ptc['url'], $ptc['timer']);
-                    if ($ch === 99) goto login;
-                    
-                    if ($ch) {
-                        $ptcc = false;
-                        $bcttView++;
-                    } else {
-                        $bcttFail++;
-                        if ($bcttFail >= 10) break;
-                    }
-                    
-                    if ($bcttView >= $size) {
-                        $bctt->cleanup();
-                        $viewed = true;
-                        $ptcc = false;
-                        break;
-                    }
-                }
-                
-                if ($ptc['domain'] == 't.me') {
-                    styler("waiting for ads", fn() => _sle($ptc['timer']));
-                    $data = null;
-                    $f = scraper::payload($ads, 'submit_form')[0] ?? [];
-                    
-                    if ($f) {
-                        $he = '';
-                        $pa = $f['payload'];
-                        $sol = Solve::exec($ads, $host, $api, $pa);
-                        if (isset($sol['trouble'])) goto login;
-                        
-                        if (isset($sol['headers'])) {
-                            $data = array_merge($pa, $sol['solution']);
-                            $he = $sol['headers'];
-                        } else $data = array_merge($sol, $pa);
-                        
-                    }
-                    
-                    if (!empty($data)) postPTC($data, $host.'/ptc/verify/'.$ptc['adId'], [$he], true);
-                    
-                }
-                
-                if ($ptc['domain'] == 'claimlitoshi.top') {
-                    
-                    $view = Net::C($ptc['url'], 'GET', null, inf::$cookie, [], $host, inf::$uagent);
-                    
+                    $view = Net::C($ad_u, 'GET', null, inf::$cookie, [], $host, inf::$uagent);
                     if ($view === 99) goto login;
                     $data = null;
                     $f = scraper::payload($view)[0] ?? [];
+                    
                     if (!empty($f)) {
-                        styler("waiting for ads", fn() => _sle($ptc['timer']));
+                        styler("waiting for ads", fn() => _sle($ad_t));
                         $he = '';
                         $pa = $f['payload'];
                         $sol = Solve::exec($ads, $host, $api, $pa);
@@ -373,16 +317,63 @@ while (true) {
                         );
                     }
                     
+                    #die;
+                }
+                
+            }
+            
+            if (!empty($ptcList['external'])) {
+                #print_r($ptcList['external']);
+                foreach ($ptcList['external'] as $ptc) {
+                    #print_r($ptc);
+                    [$ad_u, $ad_t] = $ptc;
+                    styler("waiting for ads", fn() => _sle($ad_t));
+                    $data = null;
+                    $f = scraper::payload($ads, 'submit_form')[0] ?? [];
+                    
+                    if ($f) {
+                        $he = '';
+                        $pa = $f['payload'];
+                        $sol = Solve::exec($ads, $host, $api, $pa);
+                        if (isset($sol['trouble'])) goto login;
+                        
+                        if (isset($sol['headers'])) {
+                            $data = array_merge($pa, $sol['solution']);
+                            $he = $sol['headers'];
+                        } else $data = array_merge($sol, $pa);
+                        
+                    }
+                    
+                    if (!empty($data)) postPTC($data, $host.'/ptc/verify/'.$ad_u, [$he], true);
+                    
                 }
                 
                 
                 
             }
             
+            if (!empty($ptcList['bctt'])) {
+                #print_r($ptcList['bctt']);
+                foreach ($ptcList['bctt'] as $ptc) {
+                    [$ad_u, $ad_t] = $ptc;
+                    $bctt = new Bctt($host, $api, $login);
+                    $ch = $bctt->exec($ad_u, $ad_t);
+                    if ($ch === 99) goto login;
+                    
+                    $endF = microtime(true);
+                    if ($setF > 0 && $claim) {
+                        $balik = $endF - $setF;
+                        if ($balik >= 10 * 60) continue 2;
+                    }
+                    
+                }
+            }
+            
         }
+        
     }
     
-    if ($ptcc && !$viewed) (Logger::X('err', 'ptc habis kayaknya')?: die);;
+    if (!$claim && $ADDONE && $SLDONE) die;
     
 }
 
@@ -413,6 +404,74 @@ tes:
 
 
 
+function parsePtcAds($html, $host) {
+    if (empty($html) || $html === 99) return ['total' => 0, 'local' => [], 'bctt' => [], 'owme' => [], 'external' => []];
+    
+    $xp = Scraper::dom($html);
+    if (!$xp) return ['total' => 0, 'local' => [], 'bctt' => [], 'owme' => [], 'external' => []];
+    
+    $result = ['local' => [], 'bctt' => [], 'owme' => [], 'external' => []];
+    $host = str_replace('www.', '', parse_url($host, PHP_URL_HOST) ?: $host);
+    $baseUrl = rtrim((parse_url($host, PHP_URL_SCHEME) ? $host : 'https://' . $host), '/');
+    
+    $onclicks = Scraper::_xP($html, "//button[@onclick]/@onclick");
+    $values = Scraper::_xP($html, "//button[@onclick]/@value");
+    $timers = Scraper::_xP($html, "//span[contains(@class, 'bg-light-warning')]");
+    
+    foreach ($onclicks as $i => $onclick) {
+        $url = '';
+        $timer = 5;
+        $adId = '';
+        
+        // startview: URL dari value, timer dari parameter ke-2, adId dari parameter ke-3
+        if (preg_match("/startview\s*\(\s*this\.value\s*,\s*(\d+)\s*,\s*(\d+)/", $onclick, $m)) {
+            $url = $values[$i] ?? '';
+            $timer = (int)$m[1];
+            $adId = (int)$m[2];
+        }
+        // go_btn dengan URL langsung di parameter
+        elseif (preg_match("/go_btn\s*\(\s*'([^']+)'/", $onclick, $m)) {
+            $url = $m[1];
+        }
+        // go_btn dengan this.value
+        elseif (strpos($onclick, 'go_btn') !== false && strpos($onclick, 'this.value') !== false) {
+            $url = $values[$i] ?? '';
+        }
+        
+        if (empty($url)) continue;
+        
+        if (strpos($url, 'http') !== 0 && strpos($url, '//') !== 0) {
+            $url = (strpos($url, '/') === 0) ? $baseUrl . $url : $baseUrl . '/' . $url;
+        } elseif (strpos($url, '//') === 0) {
+            $url = 'https:' . $url;
+        }
+        
+        // Ambil timer dari badge kalau belum dapet
+        if ($timer === 5 && isset($timers[$i]) && preg_match('/(\d+)\s*S/i', $timers[$i], $tm)) {
+            $timer = (int)$tm[1];
+        }
+        
+        $uHost = str_replace('www.', '', parse_url($url, PHP_URL_HOST) ?: '');
+        
+        if ($uHost === $host) {
+            $result['local'][] = [$url, $timer];
+        }
+        elseif (strpos($url, 'bitcotasks.com') !== false) {
+            $result['bctt'][] = [$url, $timer];
+        }
+        elseif (strpos($url, 'offerwall.me') !== false) {
+            $result['owme'][] = [$url, $timer];
+        }
+        else {
+            // External: return [adId, timer]
+            $result['external'][] = [$adId, $timer];
+        }
+    }
+    
+    $result['total'] = count($result['local']) + count($result['bctt']) + count($result['owme']) + count($result['external']);
+    
+    return $result;
+}
 
 function getHead($html, $host) {
     $scJs = array_merge(Scraper::_sC($html)['external'], Scraper::_sC($html)['inline']);
@@ -421,66 +480,6 @@ function getHead($html, $host) {
     
     $uCap = array_merge(inf::$context, ['html' => $html, 'host' => $host]);
     return (new uCaptcha($uCap))->exec($param, true);
-}
-
-function parsePTC($html) {
-    $result = [];
-    $xpath = Scraper::dom($html);
-    $cards = $xpath->query("//div[contains(@class, 'col-md-6')]//div[contains(@class, 'card')]");
-    
-    foreach ($cards as $card) {
-        $button = $xpath->query(".//button", $card)->item(0);
-        if (!$button) continue;
-        
-        $onclick = $button->getAttribute('onclick');
-        $value = $button->getAttribute('value');
-        $title = trim($xpath->query(".//h5", $card)->item(0)->textContent ?? '');
-        $reward = trim($xpath->query(".//span[contains(@class, 'bg-light-primary')]", $card)->item(0)->textContent ?? '');
-        $timerText = trim($xpath->query(".//span[contains(@class, 'bg-light-warning')]", $card)->item(0)->textContent ?? '');
-        $timer = (int) filter_var($timerText, FILTER_SANITIZE_NUMBER_INT);
-        
-        $entry = [
-            'title' => $title,
-            'reward' => $reward,
-            'timer' => $timer,
-            'type' => null,
-            'url' => null,
-            'adId' => null,
-            'domain' => null
-        ];
-        
-        // startview
-        if (strpos($onclick, 'startview') !== false) {
-            if (preg_match('/startview\([^,]+,\s*(\d+),\s*(\d+)/', $onclick, $m)) {
-                $entry['type'] = 'telegram';
-                $entry['url'] = $value;
-                $entry['timer'] = (int)$m[1];
-                $entry['adId'] = (int)$m[2];
-                $entry['domain'] = parse_url($value, PHP_URL_HOST);
-            }
-        } 
-        // go_btn
-        elseif (strpos($onclick, 'go_btn') !== false) {
-            if (preg_match("/go_btn\('([^']+)'/", $onclick, $m)) {
-                $entry['url'] = $m[1];
-            } 
-            elseif (strpos($onclick, 'this.value') !== false && $value) {
-                $entry['url'] = $value;
-            }
-            
-            if ($entry['url']) {
-                $entry['type'] = 'direct';
-                $entry['domain'] = parse_url($entry['url'], PHP_URL_HOST);
-            }
-        }
-        
-        if ($entry['url'] && !isset($seen[$entry['url']])) {
-            $seen[$entry['url']] = true;
-            $result[] = $entry;
-        }
-    }
-    
-    return $result;
 }
 
 function postPTC($data, $url, $head, $un = false) {
@@ -496,5 +495,3 @@ function postPTC($data, $url, $head, $un = false) {
     return false;
     
 }
-
-

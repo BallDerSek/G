@@ -113,6 +113,7 @@ while (true) {
     } while (empty($dash));
     #_put('dash.html', $dash); 
     
+    $setF = 0;
     if (!$limit && $claim) {
         $ret99 = 0; 
         while (true) {
@@ -153,10 +154,13 @@ while (true) {
                 
                 
             } else {
-                if (stripos($fau, '/register')) continue 2;
+                if (str_contains($fau, '/register')) continue 2;
                 
                 
-                #if (!$SLDONE || $ADDONE) break;
+                if (!$SLDONE || !$ADDONE) {
+                    $setF = microtime(true);
+                    break;
+                }
                 
                 styler('Waiting for faucet', fn() => _sle(30));
                 continue;
@@ -171,14 +175,19 @@ while (true) {
                 
                 if (checkATB($atbfail, $cla)) continue;
                 $m = Scraper::_jP($cla, "/Swal\.fire\(\s*'[^']+'\s*,\s*'([^']+)'/") ?? null;
+                
                 if (isset($m[1][0])) {
-                    Logm($mail);
+                    print(FGd['CYN'].maskEmail($mail).RSET." ");
                     logg(0, $m[1][0]);
+                    
                     $atbforce = false;
                     $atbfail = 0;
                     
+                    if (stripos($m[1][0], 'has been added')) {
+                        $setF = microtime(true);
+                        break;
+                    }
                 }
-                
                 
                 
             }
@@ -187,57 +196,101 @@ while (true) {
         
     }
     
-    /*
-    $offwall = Net::C("$host/offerwall/offerzono", 'GET', null, inf::$cookie, $hhh, "$host/dashboard", inf::$uagent, false, false, $ip);
-    if (!empty($offwall) && $offwall !== 99) {
-        #_put('off.html', $offwall);
+    $ads = Net::C("$host/ptc", 'GET', null, inf::$cookie, $hhh, "$host/dashboard", inf::$uagent, false, false, $ip);
+    #_put('ads.html', $ads);
+    if (!empty($ads) && $ads !== 99) {
+        $ptcList = parsePtcAds($ads ,$host);
+        $ptcNumb = $ptcList['total'];
         
-        $zon_h = "https://offerzono.com";
-        $offz_if = Scraper::_xP($offwall, "//iframe/@src");
-        print_r($offz_if);
-        
-        $par = parse_url($offz_if[0])['query'];
-        
-        $_0 = Net::C($offz_if[0], 'GET', null, inf::$cookie, [], '', inf::$uagent);
-        _put('0.html', $_0);
-        
-        $f = Scraper::payload($_0)[0] ?? null;
-        print_r($f);
-        
-        
-        if (!empty($f) && !empty($f['payload'])) {
+        if ($ptcNumb <= 1) {
+            $ADDONE = true;
+        } else {
+            #print_r($ptcList);
             
-            $pa = $f['payload'];
-            $cap = solve::exec($_0, $offz_if[0], $api, $pa);
-            if (isset($cap['trouble'])) continue;
-            $po = array_merge($pa, $cap);
+            if (!empty($ptcList['local']) && !$ADDONE) {
+                foreach ($ptcList['local'] as $ptc) {
+                    
+                    $ADDONE = true;
+                    continue;
+                    
+                    [$ad_u, $ad_t] = $ptc;
+                    $cla = null;
+                    $view = null;
+                    
+                    $view = Net::C($ad_u, 'GET', null, inf::$cookie, [], "$host/ptc", inf::$uagent, false, false, $ip);
+                    #_put('view.html', $view);
+                    if ($view === 99) continue 2;
+                    if (!empty($view) && $view !== 99) {
+                        $po = null;
+                        $f = scraper::payload($view)[0] ?? [];
+                        
+                        if (!empty($f)) {
+                            $pa = $f['payload'];
+                            
+                            $cap = solve::exec($view, $ad_u, $api, $pa);
+                            if (isset($cap['trouble'])) {
+                                _sle(60);
+                                continue;
+                            }
+                            $po = array_merge($pa, $cap);
+                        }
+                        
+                        if (!empty($po)) {
+                            styler("waiting for ads: $ad_t", fn() => _sle($ad_t));
+                            $cla = Net::X($f['url'], 'POST', $po, inf::$cookie, $hhh, $ad_u, inf::$uagent, false, true, $ip);
+                            _put('cla.html', $cla); die;
+                            if (empty($cla) || ($cla === 99)) continue;
+                            
+                            
+                        }
+                        
+                        
+                    }
+                    
+                    
+                    
+                die;
+                }
+            }
             
+            if (!empty($ptcList['bctt'])) {
+                foreach ($ptcList['bctt'] as $ptc) {
+                    [$ad_u, $ad_t] = $ptc;
+                    $bctt = new Bctt($host, $api, $mail);
+                    $ch = $bctt->exec($ad_u, $ad_t);
+                    if ($ch === 99) goto login;
+                    
+                    $endF = microtime(true);
+                    if ($setF > 0 && $claim) {
+                        $balik = $endF - $setF;
+                        if ($balik >= 4 * 60) continue 2;
+                    }
+                    
+                }
+            }
             
-            $_1 = Net::C($f['url'], 'POST', $po, inf::$cookie, [], '', inf::$uagent);
-            _put('1.html', $_1);
-            
-            $offz_PTC = Net::C($zon_h.'/offerwall/ptc?'.$par, 'POST', ['amount' => 10], inf::$cookie, [], '', inf::$uagent);
-            _put('ptc.html', $offz_PTC);
-            
-            
-            
-            
-            
-            
+            /*
+            if (!empty($ptcList['zono'])) {
+                
+                foreach ($ptcList['zono'] as $ptc) {
+                    [$ad_u, $ad_t] = $ptc;
+                    
+                    zono($ad_u, $ad_t, $api, $host, $mail);
+                    
+                die;
+                }
+            }
+            */
             
             
         }
         
-        
-        
     }
-    */
     
-    
-    
-    
-    
-    
+    if (!$claim && $SLDONE && $ADDONE) {
+        print(FGd['CYN'].maskEmail($mail).RSET." ");
+        (logx('err', 'beres') ?: die);
+    }
     
 }
 
@@ -249,4 +302,67 @@ tes:
     
     
     
+function parsePtcAds($html, $host) {
+    if (empty($html) || $html === 99) return ['total' => 0, 'local' => [], 'bctt' => [], 'owme' => [], 'zono' => [], 'external' => []];
     
+    $xp = Scraper::dom($html);
+    if (!$xp) return ['total' => 0, 'local' => [], 'bctt' => [], 'owme' => [], 'zono' => [], 'external' => []];
+    
+    $result = ['local' => [], 'bctt' => [], 'owme' => [], 'zono' => [], 'external' => []];
+    $host = str_replace('www.', '', parse_url($host, PHP_URL_HOST) ?: $host);
+    $baseUrl = rtrim((parse_url($host, PHP_URL_SCHEME) ? $host : 'https://' . $host), '/');
+    
+    $cards = $xp->query("//div[contains(@class, 'card')][.//button[@onclick]]");
+    
+    foreach ($cards as $card) {
+        $btn = $xp->query(".//button/@onclick", $card);
+        if ($btn->length === 0) continue;
+        
+        $onclick = $btn->item(0)->value;
+        $url = '';
+        
+        if (preg_match("/go_btn\s*\(\s*'([^']+)'/", $onclick, $m)) {
+            $url = $m[1];
+        }
+
+        elseif (preg_match("/window\.location\s*=\s*'([^']+)'/", $onclick, $m)) {
+            $url = $m[1];
+        }
+        
+        if (empty($url)) continue;
+        
+        if (strpos($url, 'http') !== 0 && strpos($url, '//') !== 0) {
+            $url = (strpos($url, '/') === 0) ? $baseUrl . $url : $baseUrl . '/' . $url;
+        } elseif (strpos($url, '//') === 0) {
+            $url = 'https:' . $url;
+        }
+        
+        $timer = 5;
+        $timerEl = $xp->query(".//span[contains(text(), 'seconds')]", $card);
+        if ($timerEl->length > 0) {
+            $text = trim($timerEl->item(0)->textContent);
+            if (preg_match('/(\d+)\s*seconds?/', $text, $tm)) {
+                $timer = (int)$tm[1];
+            }
+        }
+        
+        $uHost = str_replace('www.', '', parse_url($url, PHP_URL_HOST) ?: '');
+        
+        if ($uHost === $host) {
+            $result['local'][] = [$url, $timer];
+        } elseif (strpos($url, 'bitcotasks.com') !== false) {
+            $result['bctt'][] = [$url, $timer];
+        } elseif (strpos($url, 'offerwall.me') !== false) {
+            $result['owme'][] = [$url, $timer];
+        } elseif (strpos($url, 'offerzono.com') !== false) {
+            $result['zono'][] = [$url, $timer];
+        } else {
+            $result['external'][] = [$url, $timer];
+        }
+    }
+    
+    $result['total'] = count($result['local']) + count($result['bctt']) + count($result['owme']) + count($result['zono']) + count($result['external']);
+    
+    return $result;
+}
+

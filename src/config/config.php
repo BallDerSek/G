@@ -58,12 +58,13 @@ trait WorkDir {
     }
 }
 
-class Configs {
+class Config {
     private static array $cred_cache = [];
     private static ?string $ua_static = null;
     
     public static function credential(array $defaults = [], $required = false, array|bool $ask = false): ArrayAccess {
-        $baseDir = dirname(debug_backtrace()[0]['file']);
+        $bot = empty($GLOBALS['_CTX']['current_bot']) ? '' : $GLOBALS['_CTX']['current_bot'];
+        $baseDir = CREDIR . ($bot ? "/$bot" : '');
         $filePath = rtrim($baseDir, '/') . '/credentials';
         return new class($filePath, $defaults, $required, $ask) implements ArrayAccess {
             
@@ -115,7 +116,7 @@ class Configs {
                     
                     if ($this->shouldAsk($key)) {
                         
-                        logx('warn', "found saved {$key} => {$current}, change?", true, true);
+                        Logger::X('warn', "found saved {$key} => {$current}, change?", true, true);
                         
                         $change = trim(_rl("[enter=keep, --reset=clear]: "));
                         
@@ -154,7 +155,7 @@ class Configs {
                 
                 if ($value === '' && !$this->required) {
                     $value = "__{$key}__";
-                    logx('err', "{$key} empty");
+                    Logger::X('err', "{$key} empty");
                 }
                 
                 $this->save($key, $value);
@@ -176,7 +177,7 @@ class Configs {
                 $isPlaceholder = ($value === "__{$key}__");
                 
                 if ($this->required && ($value === null || $value === '' || $isPlaceholder)) {
-                    logx('err', "{$key} is required!");
+                    Logger::X('err', "{$key} is required!");
                     die;
                 }
                 
@@ -184,7 +185,8 @@ class Configs {
             }
             
             private function save($key, $value): void {
-                
+                $dir = dirname($this->file);
+                if (!is_dir($dir)) mkdir($dir, 0755, true);
                 $lines = is_file($this->file) ? file($this->file, FILE_IGNORE_NEW_LINES) : [];
                 
                 $found = false;
@@ -197,7 +199,6 @@ class Configs {
                 }
                 
                 if (!$found) $lines[] = $key . '=' . $value;
-                
                 _put($this->file, implode(PHP_EOL, $lines) . PHP_EOL);
             }
             
@@ -212,13 +213,13 @@ class Configs {
     }
     
     public static function cookie($email = null) {
-        $trace = debug_backtrace();
-        $b_dir = dirname($trace[0]['file']);
+        $b_dir = CREDIR.'/'.$GLOBALS['_CTX']['current_bot'];
 
-        if (empty($email)) return $b_dir . '/cookie';
+        if (empty($email)) return $b_dir . '/cookies';
 
         $norm = preg_replace('/[^a-z0-9]+/', '_', strtolower($email));
         $c_dir = $b_dir . '/cookies';
+        
         if (!is_dir($c_dir)) mkdir($c_dir, 0755, true);
 
         return $c_dir . '/' . $norm . '_cookie';
@@ -274,8 +275,4 @@ class Configs {
         return $api;
     }
 
-}
-
-function AUTH_API() {
-    return $GLOBALS['_CTX']['AUTH_API'];
 }

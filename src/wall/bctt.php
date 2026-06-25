@@ -31,9 +31,8 @@ class Bctt {
         #var_dump($url);
         if (empty($url)) return false;
         
-        #logx('info', "[ bitcotasks.com {$tmr}s ] ", false, true);
+        #Logger::X('info', "[ bitcotasks.com {$tmr}s ] ", false, true);
         
-        $set = microtime(true);
         $cc_get = Net::C($url, 'GET', null, $this->cookieFile, [], '', $this->userAgent);
         $cc_getG = scraper::_jP($cc_get, "/window\.location\.href\s*=\s*['\"]([^'\"]+)['\"]/")[1][0] ?? null;
         
@@ -41,6 +40,7 @@ class Bctt {
         if (!empty($cc_getG)) {
             
             Net::X($cc_getG, 'POST', ['action' => 'start_view'], $this->cookieFile, [], $cc_getG, $this->userAgent);
+            $set = microtime(true);
             
             $cc_pre = Net::C($cc_getG, 'GET', null, $this->cookieFile, [], '', $this->userAgent);
             #_put('ccpre.html', $cc_pre); die;
@@ -183,11 +183,11 @@ class Bctt {
         if ($cc_end && ($cc_end['status'] ?? 0) == 200) {
             _clr();
             print(FGd['CYN'].maskEmail($this->email).RSET." ");
-            logx('info', "[ ".__CLASS__." ] ", false);
-            logx('ok', $msg, true, true);
+            Logger::X('info', "[ ".__CLASS__." ] ", false);
+            Logger::X('ok', $msg, true, true);
             return true;
         }
-        logx('err', $msg);
+        Logger::X('err', $msg);
         
         return false;
         

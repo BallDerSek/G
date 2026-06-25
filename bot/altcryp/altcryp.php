@@ -69,7 +69,7 @@ while (true) {
             continue;
         }
         if (empty($_0)) continue;
-        $_0 = checkCF($host, $api, $_0)['html'];
+        $_0 = checkCF($host, $api, $_0)['html'] ?? null;
         #_put('0.html', $_0);
         $f = scraper::payload($_0)[0] ?? null;
         $po = null;
@@ -299,10 +299,9 @@ function checkCF($url, $api, $body = null, $headersCF = []) {
     
     if ($code !== 200 && (stripos($html, 'Just a moment') !== false || stripos($html, 'Attention Required!') !== false)) {
         
-        $cf = execCF($api, $url, inf::$cookie, inf::$uagent);
+        $cf = Cloudflare::exec($api, $url, inf::$cookie, inf::$uagent, ['html' => $html]);
         
         if ($cf) {
-            #var_dump($cf);
             [$headersCF, $ua] = $cf;
             inf::setup($ua, inf::$cookie);
             
@@ -311,15 +310,13 @@ function checkCF($url, $api, $body = null, $headersCF = []) {
                     _sle(3);
                     $fix = Net::X($url, 'GET', null, inf::$cookie, $headersCF, $url, inf::$uagent, d: true);
                     
-                    #var_dump($fix);
                     if (!empty($fix) && isset($fix['http_code'])) {
                         $_c = $fix['http_code'];
                         $_b = $fix['body'];
                         
-                        if ($_c === 200 || (!stripos($_b, 'Just a moment') !== false || !stripos($_b, 'Attention Required!') !== false)) {
+                        if ($_c === 200 && stripos($_b, 'Just a moment') === false && stripos($_b, 'Attention Required!') === false) {
                             
                             config::credential()['ua'] = $ua;
-                            
                             return ['html' => $_b, 'head' => $headersCF];
                         }
                     }
@@ -332,5 +329,4 @@ function checkCF($url, $api, $body = null, $headersCF = []) {
     }
     
     return [];
-    
 }

@@ -20,7 +20,7 @@ final class uCaptcha {
 
     public function exec(array $ucap, $headersOnly = false) {
         if (!getDeps('nodejs')) {
-            logx('err', 'nodejs missing');
+            Logger::X('err', 'nodejs missing');
             exit;
         }
             

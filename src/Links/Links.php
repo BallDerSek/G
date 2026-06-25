@@ -177,7 +177,7 @@ class _shortlinks {
         $host = $this->host;
         
         if (!AUTH_KEY) throw new RuntimeException("unauthorized");
-        logx();
+        Logger::X();
 
         coinclix_init:
         $_code = null;
@@ -250,7 +250,7 @@ class _shortlinks {
 
             if (isset($st[0]) && $ver) {
                 $step = trim(preg_replace('/\s+/', ' ', $st[0]));
-                logx('info', "$step [ {$ver[0]} ]", false, true);
+                Logger::X('info', "$step [ {$ver[0]} ]", false, true);
 
                 $pis = scraper::find($html, 'pissoff', 'input', 'value', 'id');
                 $lpt = scraper::find($html, 'lpt', 'input', 'value', 'id');
@@ -262,7 +262,7 @@ class _shortlinks {
                 $po = _ccForm($api, $dom, $ver[0], $pis[0], $cnn[0], $_bg[0] ?? null, $_cp[0] ?? null);
                 $wait = (int)($lpt[0] ?? 0) - (int)(microtime(true) - $start);
                 if ($wait > 0) {
-                    logx('', "\r", false);
+                    Logger::X('', "\r", false);
                     _clr();
                     styler("waiting", fn() => _sle((int)ceil($wait)));
                 }
@@ -392,7 +392,7 @@ class _shortlinks {
             $current = scraper::_xP($html, "//span[@id='stepNum']") ?? [];
             if (!empty($current)) {
                 $_step = $current[0];
-                logx('info', "STEP " . $_step, true, true);
+                Logger::X('info', "STEP " . $_step, true, true);
                 break;
             }
             
@@ -481,7 +481,7 @@ class _shortlinks {
             $pa = json_encode($cc_p);
         } else {
             $_reload = true;
-            logx('err', 'failed fetching sl.js', true, true);
+            Logger::X('err', 'failed fetching sl.js', true, true);
             goto reload;
         }
         #print_r($pa);
@@ -491,12 +491,12 @@ class _shortlinks {
         } else {
             $cc_ur = "$pat/$cc_t";
         }
-        #logx('info', $cc_ur); #die;
+        #Logger::X('info', $cc_ur); #die;
         _sle(5);
         $cc_vr = json_decode(Net::X($cc_ur, 'POST', $pa, $cookie, headers($pat), $pat, $uagent, false, false, $ip, true), true);
         
         if (isset($cc_vr['status']) && $cc_vr['status'] === 200) {
-            #logx('ok', ($cc_vr['message']), false, true);
+            #Logger::X('ok', ($cc_vr['message']), false, true);
             _sle(1);
             $cc_u = rScraper::jPath($SLjs, '/src\s*=\s*[\'"`](\/cc\/[\w\d]+\.js\?onload=[\w\d]+&action=captcha)[\'"`]/')[1][0] ?? null;
             
@@ -514,10 +514,10 @@ class _shortlinks {
                         $img = Net::C("https://$jsUrl".$img_u[1][0], 'GET', null, $cookie, [], $pat, $uagent, false, false, $ip, true, true);
                     
                         if (!$aapi) {
-                            logx('info', "\noptions");
+                            Logger::X('info', "\noptions");
                             _put('captcha.png', $img);
                             foreach ($icons as $i => $icon) {
-                                logx('info', "  [$i] $icon");
+                                Logger::X('info', "  [$i] $icon");
                             }
                             $inputName = trim(readline("check captcha.png: "));
                             @unlink('captcha.png');
@@ -557,7 +557,7 @@ class _shortlinks {
                     $payload = submit($CCjs, $html, $cc_res);
                 } else {
                     $_reload = true;
-                    logx('err', 'failed fetching cc.js', true, true);
+                    Logger::X('err', 'failed fetching cc.js', true, true);
                     goto reload;
                 }
             } else {
@@ -577,7 +577,7 @@ class _shortlinks {
                 if (isset($cc_vr['message']) && str_contains($cc_vr['message'], 'as been block')) {
                     throw new RuntimeException($cc_vr['message']);
                 }
-                logx('err', ($cc_vr['message'] ?? 'Unknown error'));
+                Logger::X('err', ($cc_vr['message'] ?? 'Unknown error'));
             }
             goto bbypass;
                 

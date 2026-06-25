@@ -7,7 +7,7 @@ $r = '/?ref=gamamoch%40gmail.com';
 
 $mailPath = LIBDIR.'/email.txt';
 if (!is_file($mailPath)) {
-    logx('err', 'mail.txt not found');
+    logx('err', 'email.txt not found');
     die();
 }
 $emails = file($mailPath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);

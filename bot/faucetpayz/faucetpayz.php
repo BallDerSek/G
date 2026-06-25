@@ -171,7 +171,7 @@ while (true) {
             }
             
             if (!empty($po)) {
-                #print_r($po);
+                #print_r($po); die;
                 $cla = Net::C($host.'/faucet', 'POST', $po, inf::$cookie, [], "$host/faucet", inf::$uagent, ip: $ip);
                 if (empty($cla) || ($cla === 99)) continue;
                 

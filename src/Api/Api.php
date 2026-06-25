@@ -599,7 +599,7 @@ abstract class Provider {
         return $this->call($method, $params, $strict);
     }
 
-    final protected function call($method, array $params, bool $strict = false) {
+    final protected function calls($method, array $params, bool $strict = false) {
         for ($i = 0; $i < 3; $i++) {
             try {
                 return styler(static::class . "=>$method", function() use ($method, $params) {
@@ -609,8 +609,8 @@ abstract class Provider {
             } catch (Throwable $e) {
                 $code = $e->getMessage();
                 $type = Api::errType($code);
-                logx('info', 'Api [ '.static::class.' ] ', false, true);
-                logx('err', $code);
+                Logger::X('info', 'Api [ '.static::class.' ] ', false, true);
+                Logger::X('err', $code);
                 if ($strict) return false;
                 
                 if (in_array($type, ['ret','con','fail'], true)) {
@@ -627,12 +627,46 @@ abstract class Provider {
         if (static::class === 'gmxch') return 777;
         return false;
     }
+    
+    final protected function call($method, array $params, bool $strict = false) {
+    
+        $res = Retry::until(function($attempt) use ($method, $params, $strict) {
+    
+            try {
+                return styler(static::class . "=>$method", function() use ($method, $params) {
+                    $id = $this->get_api($method, $params);
+                    return $this->res_api($id);
+                });
+    
+            } catch (Throwable $e) {
+    
+                $code = $e->getMessage();
+                $type = Api::errType($code);
+    
+                Logger::X('info', 'Api [ '.static::class.' ] ', false, true);
+                Logger::X('err', $code);
+    
+                if ($strict) return false;
+    
+                if (in_array($type, ['ret','con','fail'], true)) return false;
+    
+                if (static::class === 'gmxch') return 777;
+    
+                return 77;
+            }
+    
+        }, 3, 3);    
+
+        if (static::class === 'gmxch' && $res === false) return 777;
+    
+        return $res;
+    }
 
     public function token($siteKey, $siteUrl, $type, array $extraParams = []) {
         try {
             [$method, $params] = Api::cfgTkn(static::class, $type, $siteKey, $siteUrl, $extraParams);
         } catch (Throwable $e) {
-            logx('warn', $e->getMessage());
+            Logger::X('warn', $e->getMessage());
             return 71;
         }
         return $this->run($method, $params);
@@ -645,7 +679,7 @@ abstract class Provider {
         try {
             [$m, $params] = Api::cfgB64(static::class, $type, $b64);
         } catch (Throwable $e) {
-            logx('warn', $e->getMessage());
+            Logger::X('warn', $e->getMessage());
             return 71; 
         }
         $res = $this->run($m, $params);
@@ -661,7 +695,7 @@ abstract class Provider {
             $cfg = Api::ACC[static::class][$type];
             foreach (($cfg['need'] ?? []) as $k) {
                 if (!isset($params[$k])) {
-                    logx('warn', "missing required arg: $k for $type");
+                    Logger::X('warn', "missing required arg: $k for $type");
                     return 73;
                 }
             }
@@ -670,7 +704,7 @@ abstract class Provider {
             return [static::class,$solved];
 
         } catch (Exception $e) {
-            logx('warn', $e->getMessage(), true, true);
+            Logger::X('warn', $e->getMessage(), true, true);
             return 71;
         }
     }
@@ -691,7 +725,7 @@ abstract class Provider {
         $pa['main'] = $data['main'];
         #print_r($pa); 
         $res = $this->run('antibot', $pa, true);
-        #logx('', $res);
+        #Logger::X('', $res);
         if ($res === 77) return 77;
         if ($res === 777) return 777;
         if ($res === null) return null;

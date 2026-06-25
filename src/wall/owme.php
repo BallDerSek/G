@@ -211,7 +211,7 @@ class Owme {
                                 continue;
                             }
                             $_ald = scraper::_xP($ver, "//div[contains(@class, 'alert-danger')]")[0] ?? 'gatau error apa';
-                            logx('err', $_als[0]);
+                            Logger::X('err', $_als[0]);
                         }
                     }
                 }
@@ -239,7 +239,7 @@ class Owme {
                 continue;
             }
             
-            #logx('info', "[ offerwall.me {$timer}s ] ", false, true);
+            #Logger::X('info', "[ offerwall.me {$timer}s ] ", false, true);
             
             styler("waiting for owme", fn() => _sle((int)$adData['params']['dur']));
             
@@ -264,7 +264,7 @@ class Owme {
                 }
             }
             
-            logx('err', "error gak jelas");
+            Logger::X('err', "error gak jelas");
             _sle(3);
         }
 
@@ -291,7 +291,7 @@ class Owme {
         ];
 
         if (in_array(null, $params, true)) {
-            #logx('err', "ada perubahan kayaknya");
+            #Logger::X('err', "ada perubahan kayaknya");
             #_put('owme_err.html', $body);
             return null;
         }
@@ -324,12 +324,12 @@ class Owme {
             if (isset($res['status']) && $res['status'] == 200) {
                 _clr(); 
                 print(FGd['CYN'].maskEmail($this->email).RSET." ");
-                logx('info', "[ ".__CLASS__." ] ", false);
-                logx('ok', $msg, true, true);
+                Logger::X('info', "[ ".__CLASS__." ] ", false);
+                Logger::X('ok', $msg, true, true);
                 
                 return true;
             } else {
-                logx('err', $msg);
+                Logger::X('err', $msg);
             }
         }
 

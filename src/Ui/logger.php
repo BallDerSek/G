@@ -13,6 +13,7 @@ function logm($mail) {
     return Logger::M($mail);
 }
 
+
 final class Logger {
     
     /* pattern die log err 

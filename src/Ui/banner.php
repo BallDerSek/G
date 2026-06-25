@@ -109,9 +109,9 @@ class Banner {
         $timezone = TIMEZONE();
 
         if (!$this->isTty) {
-            logx('INFO', "Bot: {$botName}");
-            logx('INFO', "IP: {$ip}");
-            logx('INFO', "Timezone: {$timezone}");
+            Logger::X('INFO', "Bot: {$botName}");
+            Logger::X('INFO', "IP: {$ip}");
+            Logger::X('INFO', "Timezone: {$timezone}");
             return;
         }
 
@@ -185,7 +185,7 @@ class Banner {
 
     public function taskPrint($level, $text, $line = 1) {
         if (!$this->isTty) {
-            logx($level, $text);
+            Logger::X($level, $text);
             return;
         }
 
@@ -216,7 +216,7 @@ class Banner {
 
         echo FGb['MAG'] . "║" . RSET;
 
-        logx(
+        Logger::X(
             $level,
             str_repeat(' ', $padLeft)
             . $text .

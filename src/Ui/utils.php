@@ -51,8 +51,8 @@ function _lib($type = null, $host = null, $mail = null) {    $host = $host ?? 'u
 
 
 function _die() {
-    logx('err', 'bloman bener');
-    logx('info', 'tunggu update', true, true);
+    Logger::X('err', 'bloman bener');
+    Logger::X('info', 'tunggu update', true, true);
     die;
 }
 

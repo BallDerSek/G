@@ -94,6 +94,64 @@ define("BG", [
     
 } )();
 
+{
+
+function AUTH_API() {
+    return $GLOBALS['_CTX']['AUTH_API'];
+}
+
+function getDeps($deps) {
+    if (empty($GLOBALS['_CTX']['deps'])) {
+        (logx('err', 'RUN SCRIPT NORMALLY!!!') ?: die);
+    }
+    if (is_string($deps)) $deps = [$deps];
+    foreach ($deps as $dep) {
+        if (empty($GLOBALS['_CTX']['deps'][$dep]) || !$GLOBALS['_CTX']['deps'][$dep]) {
+            return false;
+        }
+    }
+    return true;
+}
+
+function IP() {
+    return $GLOBALS['_CTX']['geo']['ip'] ?? '0.0.0.0';
+}
+
+function TIMEZONE() {
+    return $GLOBALS['_CTX']['geo']['timezone'] ?? 'Asia/Jakarta';
+}
+
+function COUNTRY() {
+    return $GLOBALS['_CTX']['geo']['country'] ?? '';
+}
+
+function COUNTRY_CODE() {
+    return $GLOBALS['_CTX']['geo']['country_code'] ?? 'ID';
+}
+
+function LANGUAGE() {
+    return $GLOBALS['_CTX']['geo']['language'] ?? 'en-US,en';
+}
+
+function checkATB(&$err, ?string $html) {
+    if ($html && (
+            stripos($html, 'nvalid Anti-Bot') !== false ||
+            stripos($html, 'Invalid AntiBot') !== false
+    )) {
+        $err++;
+        return true;
+    }
+
+    return false;
+}
+
+
+
+
+
+
+}
+
 function bootApp() {
     
     _cle();

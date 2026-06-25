@@ -13,7 +13,7 @@ $domain = parse_url($host, PHP_URL_HOST);
 $r = '/?r=31169&xpost=true';
 $ip = '156.67.104.252';
 $ip = '80.65.208.108';
-#$ip = null;
+$ip = null;
 
 (function ($login, $ip, $host) {
     Proxy::load();
@@ -34,13 +34,13 @@ $ip = '80.65.208.108';
 $hhh = inf::netHead(['uf' => md5($login), 'ls' => LANGUAGE(), 'utt' => TIMEZONE()]);
 $headersCF = [];
 $skipped = [];
-$SLDONE = false;
+$ADDONE = false;
+$SLDONE = true;
 $claim = true;
 $curr = '';
 $curr_id = '';
 $habis = [];
-$ptcc = false;
-#goto tes;
+
 while (true) {
     $dash = null;
     
@@ -135,7 +135,8 @@ while (true) {
             ];
         }
     }
-
+    
+    $setF = 0;
     foreach ($_fa as $data) {
         if (!$claim) break;
         $fa = $data['url'];
@@ -224,13 +225,13 @@ while (true) {
                     logx($is_ok ? 'ok' : 'err', "{$stt} ", false);
                     logg(false, $msg);
                     if (stripos($msg, 'No Faucet EXP left') !== false) {
-                        $ptcc = true;
                         $curr_id = basename(parse_url($fa)['path']);
                         $curr = $_c;
-                        
+                        $setF = microtime(true);
                         break 2;
                     }
-                    if (preg_match('/sufficient|could not be processed/i', $msg)) {
+                    
+                    if (preg_match('/sufficient|could not be processed/i', $msg) || (stripos($msg, 'link your Cwallet') !== false)) {
                         $habis[$fa] = true;
                         break;
                     }
@@ -241,15 +242,12 @@ while (true) {
                     }
                     
                     if (stripos($msg, 'nvalid Claim') !== false) break;
-                    if (stripos($msg, 'link your Cwallet') !== false) {
-                        
-                        $habis[$fa] = true;
-                        break;
-                    }
                     
                     styler("waiting for next claim", fn() => _sle(5));
                     
-                } elseif (empty($cla)) $ret99++;
+                } else {
+                    if (empty($cla)) continue 3;
+                }
             }
             
         }
@@ -257,68 +255,72 @@ while (true) {
     }
 
     if (count($habis) === count($_fa)) {
-        $claim = false; goto ptc;
+        $claim = false;
+        /*
         print(FGd['CYN'].maskEmail($login).RSET." ");
         (logx('err', 'gak bisa claim') ?: die);
+        */
     }
     
-    ptc:
-    $ads99 = 0;
-    $bcttView = 0;
-    $bcttFail = 0;
-    $viewed = false;
-    $retptc = 0;
-    while ($ptcc || !$viewed) {
+    if (!empty($curr_id)) Net::X($host . '/account/change_currency','GET',['method' => $curr_id],inf::$cookie,$hhh,$host.'/ptc',inf::$uagent);
+    $ads = Net::X($host.'/ptc', 'GET', null, inf::$cookie, $hhh, $host, inf::$uagent);
+    #_put('ads.html', $ads);
+    if (!empty($ads) && $ads !== 99) {
+        $ptcList = parsePtcAds($ads ,$host);
+        $ptcNumb = $ptcList['total'];
+        #print_r($ptcList); #die;
         
-        if ($retptc >= 3) break;
-        $retptc++;
-        
-        if (!empty($curr_id)) Net::X($host . '/account/change_currency','GET',['method' => $curr_id],inf::$cookie,$hhh,$host.'/ptc',inf::$uagent);
-        
-        $ads = Net::X($host.'/ptc', 'GET', null, inf::$cookie, $hhh, $host, inf::$uagent);
-        #_put('ads.html', $ads);
-        if ($ads99 >= 3) goto login;
-        if ($ads === 99 || empty($ads)) {
-            $ads99++;
-            continue;
-        }
-        
-        if (!empty($ads)) {
+        if ($ptcNumb == 0) {
+            $ADDONE = true;
+        } else {
+            #print_r($ptcList); #die;
             
-            $ptcList = parsePTC($ads);
-            #print_r($ptcList); die;
-            
-            $size = (int) ceil(count($ptcList) / 2);
-            foreach ($ptcList as $ptc) {
-                
-                
-                
-                if ($ptc['domain'] == 'bitcotasks.com') {
+            if (!empty($ptcList['local'])) {
+                foreach ($ptcList['local'] as $ptc) {
+                    #print_r($ptc);
+                    [$ad_u, $ad_t] = $ptc;
                     
-                    #$ch = bct($api, $ptc['url'], $ptc['timer']);
-                    $bctt = new Bctt($host, $api, $login);
-                    $ch = $bctt->exec($ptc['url'], $ptc['timer']);
-                    if ($ch === 99) goto login;
+                    $view = Net::C($ad_u, 'GET', null, inf::$cookie, [], $host, inf::$uagent);
+                    if ($view === 99) goto login;
+                    $data = null;
+                    $f = scraper::payload($view)[0] ?? [];
                     
-                    if ($ch) {
-                        $ptcc = false;
-                        $bcttView++;
-                    } else {
-                        $bcttFail++;
-                        if ($bcttFail >= 10) break;
+                    if (!empty($f)) {
+                        styler("waiting for ads", fn() => _sle($ad_t));
+                        $he = '';
+                        $pa = $f['payload'];
+                        $sol = Solve::exec($ads, $host, $api, $pa);
+                        if (isset($sol['trouble'])) goto login;
+                        
+                        if (isset($sol['headers'])) {
+                            $data = array_merge($pa, $sol['solution']);
+                            $he = $sol['headers'];
+                        } else {
+                            $data = array_merge($sol, $pa);
+                            $he = 'x-server-hash: '.getHead($ads, $host)['headers'];
+                        }
+                        
                     }
                     
-                    if ($bcttView >= $size) {
-                        $bctt->cleanup();
-                        $viewed = true;
-                        $ptcc = false;
-                        break;
+                    if (!empty($data)) {
+                        postPTC(
+                            SolveUtils::webkitID($data, $bo),
+                            $f['url'],
+                            [$he, "Content-Type: multipart/form-data; boundary=$bo"]
+                        );
                     }
                     
+                    #die;
                 }
                 
-                if ($ptc['domain'] == 't.me') {
-                    styler("waiting for ads", fn() => _sle($ptc['timer']));
+            }
+            
+            if (!empty($ptcList['external'])) {
+                #print_r($ptcList['external']);
+                foreach ($ptcList['external'] as $ptc) {
+                    #print_r($ptc);
+                    [$ad_u, $ad_t] = $ptc;
+                    styler("waiting for ads", fn() => _sle($ad_t));
                     $data = null;
                     $f = scraper::payload($ads, 'submit_form')[0] ?? [];
                     
@@ -335,38 +337,7 @@ while (true) {
                         
                     }
                     
-                    if (!empty($data)) postPTC($data, $host.'/ptc/verify/'.$ptc['adId'], [$he], true);
-                    
-                }
-                
-                if ($ptc['domain'] == 'chillfaucet.in') {
-                    
-                    $view = Net::C($ptc['url'], 'GET', null, inf::$cookie, [], $host, inf::$uagent);
-                    
-                    if ($view === 99) goto login;
-                    $data = null;
-                    $f = scraper::payload($view)[0] ?? [];
-                    if (!empty($f)) {
-                        styler("waiting for ads", fn() => _sle($ptc['timer']));
-                        $he = '';
-                        $pa = $f['payload'];
-                        $sol = Solve::exec($ads, $host, $api, $pa);
-                        if (isset($sol['trouble'])) goto login;
-                        
-                        if (isset($sol['headers'])) {
-                            $data = array_merge($pa, $sol['solution']);
-                            $he = $sol['headers'];
-                        } else $data = array_merge($sol, $pa);
-                        
-                    }
-                    
-                    if (!empty($data)) {
-                        postPTC(
-                            SolveUtils::webkitID($data, $bo),
-                            $f['url'],
-                            [$he, "Content-Type: multipart/form-data; boundary=$bo"]
-                        );
-                    }
+                    if (!empty($data)) postPTC($data, $host.'/ptc/verify/'.$ad_u, [$he], true);
                     
                 }
                 
@@ -374,11 +345,28 @@ while (true) {
                 
             }
             
+            if (!empty($ptcList['bctt'])) {
+                #print_r($ptcList['bctt']);
+                foreach ($ptcList['bctt'] as $ptc) {
+                    [$ad_u, $ad_t] = $ptc;
+                    $bctt = new Bctt($host, $api, $login);
+                    $ch = $bctt->exec($ad_u, $ad_t);
+                    if ($ch === 99) goto login;
+                    
+                    $endF = microtime(true);
+                    if ($setF > 0 && $claim) {
+                        $balik = $endF - $setF;
+                        if ($balik >= 10 * 60) continue 2;
+                    }
+                    
+                }
+            }
+            
         }
         
     }
     
-    if ($ptcc && !$viewed) die;
+    if (!$claim && $ADDONE && $SLDONE) die;
     
 }
 
@@ -387,8 +375,6 @@ while (true) {
 
 
 tes:
-$_0 = Net::X($host, 'GET', null, inf::$cookie, $hhh, $host.$r, inf::$uagent, ip: $ip);
-var_dump($_0);
 
 
 
@@ -397,6 +383,52 @@ var_dump($_0);
 
 
 
+function parsePtcAds($html, $host) {
+    if (empty($html) || $html === 99) return ['total' => 0, 'local' => [], 'bctt' => [], 'owme' => [], 'external' => []];
+    
+    $xp = Scraper::dom($html);
+    if (!$xp) return ['total' => 0, 'local' => [], 'bctt' => [], 'owme' => [], 'external' => []];
+    
+    $result = ['local' => [], 'bctt' => [], 'owme' => [], 'external' => []];
+    $host = str_replace('www.', '', parse_url($host, PHP_URL_HOST) ?: $host);
+    $baseUrl = rtrim((parse_url($host, PHP_URL_SCHEME) ? $host : 'https://' . $host), '/');
+    
+    $onclicks = Scraper::_xP($html, "//button[contains(@onclick, 'go_btn')]/@onclick");
+    
+    $timers = Scraper::_xP($html, "//span[contains(@class, 'badge-custom') and contains(text(), 'seconds')]");
+    
+    foreach ($onclicks as $i => $onclick) {
+        preg_match("/go_btn\s*\(\s*'([^']+)'/", $onclick, $m);
+        if (empty($m[1])) continue;
+        
+        $url = $m[1];
+        
+        if (strpos($url, 'http') !== 0 && strpos($url, '//') !== 0) {
+            $url = (strpos($url, '/') === 0) ? $baseUrl . $url : $baseUrl . '/' . $url;
+        } elseif (strpos($url, '//') === 0) {
+            $url = 'https:' . $url;
+        }
+        
+        $timer = 5;
+        if (isset($timers[$i])) {
+            $text = trim($timers[$i]);
+            if (preg_match('/(\d+)\s*seconds?/', $text, $tm)) {
+                $timer = (int)$tm[1];
+            }
+        }
+        
+        $uHost = str_replace('www.', '', parse_url($url, PHP_URL_HOST) ?: '');
+        
+        if ($uHost === $host) $result['local'][] = [$url, $timer];
+        elseif (strpos($url, 'bitcotasks.com') !== false) $result['bctt'][] = [$url, $timer];
+        elseif (strpos($url, 'offerwall.me') !== false) $result['owme'][] = [$url, $timer];
+        else $result['external'][] = [$url, $timer];
+    }
+    
+    $result['total'] = count($result['local']) + count($result['bctt']) + count($result['owme']) + count($result['external']);
+    
+    return $result;
+}
 
 
 function parsePTC($html) {
@@ -517,3 +549,4 @@ function checkCF($url, $api, $body = null, $headersCF = []) {
     
     return [];
 }
+

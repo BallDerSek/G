@@ -1,7 +1,27 @@
 <?php
 
 
-
+function zono($url, $tmr , $api, $host, $mail) {
+    
+    var_dump($url);
+    
+    $ck = config::cookie($host);
+    $ua = config::uagent('mobile');
+    $context = ['cookie' => $ck, 'uagent' => $ua];
+    
+    
+    $zono_h = "https://offerzono.com";
+    
+    $zn_get = Net::C($url, 'GET', null, $ck, [], $host, $ua);
+    _put('znget.html', $zn_get);
+    $f = Scraper::payload($zn_get);
+    print_r($f);
+    
+    
+    
+    
+    
+}
 
 
 function offerzono($html, $type = 'SL') {

@@ -1,6 +1,6 @@
 <?php
 if (!defined('ROOT')) { die; }
-
+_die();
 $api = onKeys();
 
 $acc = config::credential([], false, /*['mail', 'pass', 'PROXY']*/);
@@ -28,6 +28,7 @@ $ip = '';
     
 } ) ($mail, $ip, $host);
 
+$headersCF = [];
 $limit = false;
 $claim = true;
 $SLDONE = false;
@@ -36,7 +37,6 @@ $skipped = [];
 $can_withdraw = true;
 $atbforce = false;
 $atbfail = 0;
-$ALLDONE = false;
 
 while (true) {
     $dash = null;
@@ -62,8 +62,8 @@ while (true) {
         
         logx('err', "logging in", false); 
         _sle(3); _clr();
-        $_0 = Net::X("$host/login", 'GET', null, inf::$cookie, [], '', inf::$uagent, false, false, $ip);
-        
+        $_0 = Net::X("$host/login", 'GET', null, inf::$cookie, $headersCF, $host, inf::$uagent, false, false, $ip);
+        var_dump($_0); die;
         if ($_0 === 99) {
             logx('warn', 'Proxy issue, wait 30s');
             _sle(60);
@@ -138,23 +138,22 @@ while (true) {
             if (empty($fau)) continue;
             
             $f = scraper::payload($fau)[0] ?? [];
-            #print_r($f); #die;
-            
-            $set = microtime(true);
-            if (empty($f)) {
-                if (stripos($fau, '/register')) continue 2;
-                
-                if (str_contains($fau, 'Daily limit reached')) {
-                    $limit = true;
-                    break;
-                }
-                
-                continue;
-            }
+            #print_r($f); die;
             
             $po = null;
             if (!empty($f)) {
                 $pa = $f['payload'];
+                
+                check:
+                $cf = Net::C($f['url'], 'GET', null, inf::$cookie, $headersCF, "$host/dashboard", inf::$uagent, d: true);
+                $cff = checkCF($f['url'], $api, $cf, $headersCF);
+                if (empty($cff['html'])) {
+                    continue;
+                } else {
+                    $headersCF = $cff['head'];
+                    $html = $cff['html'];
+                }
+                
                 
                 if ($atbfail >= 3) $atbforce = true;
                 $cap = solve::exec($fau, $host, $api, $pa, $atbforce);
@@ -165,16 +164,29 @@ while (true) {
                 }
                 $po = array_merge($pa, $cap);
                 
+            } else {
+                if (empty($f)) {
+                    if (stripos($fau, '/register')) continue 2;
+                    
+                    if (str_contains($fau, 'Daily limit reached')) {
+                        $limit = true;
+                        break;
+                    }
+                    
+                    continue;
+                }
             }
             
             if (!empty($po)) {
-                
+                #print_r($po); die;
                 $cla = Net::X($f['url'], 'POST', $po, inf::$cookie, [], "$host/faucet", inf::$uagent, false, true, $ip);
-                #_put('cla.html', $cla); #die;
+                _put('cla.html', $cla); die;
                 if (empty($cla) || ($cla === 99)) continue;
                 
                 $suc_d = scraper::_xP($cla, "//div[contains(@class, 'alert-success')]");
                 $err_d = scraper::_xP($cla, "//div[contains(@class, 'alert-danger')]");
+                
+                if (checkATB($atbfail, $cla)) continue;
                 
                 if (!empty($err_d[0])) {
                     logm($mail);
@@ -183,8 +195,7 @@ while (true) {
                         $limit = true;
                         break;
                     }
-                    if (checkATB($atbfail, $err_d[0])) continue;
-
+                    
                 }
                 
                 if (!empty($suc_d[0])) {
@@ -205,7 +216,12 @@ while (true) {
     }
     
     $ads = Net::X("$host/ptc", 'GET', null, inf::$cookie, [], "$host/dashboard", inf::$uagent, false, false, $ip);
-    #_put('ads.html', $ads);
+    _put('ads.html', $ads);
+    
+    
+    
+    
+    die;
     if (!empty($ads) && $ads !== 99) {
         $_ad = [];
         $uvv = Scraper::_xP($ads, "//div[@id='window']//button[contains(@onclick, 'location.href')]/@onclick | //div[@id='iframe']//button[contains(@onclick, 'location.href')]/@onclick");
@@ -421,3 +437,47 @@ while (true) {
 
 tes:
 
+
+
+
+
+function checkCF($url, $api, $body = null, $headersCF = []) {
+    
+    $html = $body['body'] ?? null;
+    $code = $body['http_code'] ?? null;
+    
+    if (!$html || !$code) return [];
+    
+    if ($code !== 200 && (stripos($html, 'Just a moment') !== false || stripos($html, 'Attention Required!') !== false)) {
+        
+        $cf = Cloudflare::exec($api, $url, inf::$cookie, inf::$uagent, ['html' => $html], true);
+        
+        if ($cf) {
+            [$headersCF, $ua] = $cf;
+            inf::setup($ua, inf::$cookie);
+            
+            if (!empty($headersCF)) {
+                for ($try = 1; $try <= 3; $try++) {
+                    _sle(3);
+                    $fix = Net::X($url, 'GET', null, inf::$cookie, $headersCF, $url, inf::$uagent, d: true);
+                    
+                    if (!empty($fix) && isset($fix['http_code'])) {
+                        $_c = $fix['http_code'];
+                        $_b = $fix['body'];
+                        
+                        if ($_c === 200 && stripos($_b, 'Just a moment') === false && stripos($_b, 'Attention Required!') === false) {
+                            
+                            config::credential()['ua'] = $ua;
+                            return ['html' => $_b, 'head' => $headersCF];
+                        }
+                    }
+                    logx('info', "try-{$try} fail, reloading");
+                }
+            }
+        }
+    } else {
+        return ['html' => $html, 'head' => $headersCF];
+    }
+    
+    return [];
+}

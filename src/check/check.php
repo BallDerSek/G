@@ -1,6 +1,6 @@
 <?php
 
-class check {
+class Check {
     
     public static $deps = [];
     public static $geo = [];
@@ -56,7 +56,7 @@ class check {
         
         $missing = array_keys(array_filter(self::$deps, fn($v) => !$v));
         if ($missing) {
-            logx('err', "Missing dependencies:\n- " . implode("\n- ", $missing) . "\n");
+            Logger::X('err', "Missing dependencies:\n- " . implode("\n- ", $missing) . "\n");
         }
         $GLOBALS['_CTX']['deps'] = self::$deps;
     }
@@ -80,7 +80,7 @@ class check {
     public static function Geo() {
         $g = styler("checking nett", fn() => self::geoData(), 'underline');
         if (!is_array($g) || ($g === 99)) {
-            logx('err', "unstable network");
+            Logger::X('err', "unstable network");
             exit(99);
         }
 
@@ -161,38 +161,4 @@ class check {
         return null;
     }
     
-}
-
-function getDeps($deps) {
-    if (empty($GLOBALS['_CTX']['deps'])) {
-        logx('err', 'deps missing run script normally');
-        exit;
-    }
-    if (is_string($deps)) $deps = [$deps];
-    foreach ($deps as $dep) {
-        if (empty($GLOBALS['_CTX']['deps'][$dep]) || !$GLOBALS['_CTX']['deps'][$dep]) {
-            return false;
-        }
-    }
-    return true;
-}
-
-function IP() {
-    return $GLOBALS['_CTX']['geo']['ip'] ?? '0.0.0.0';
-}
-
-function TIMEZONE() {
-    return $GLOBALS['_CTX']['geo']['timezone'] ?? 'Asia/Jakarta';
-}
-
-function COUNTRY() {
-    return $GLOBALS['_CTX']['geo']['country'] ?? '';
-}
-
-function COUNTRY_CODE() {
-    return $GLOBALS['_CTX']['geo']['country_code'] ?? 'ID';
-}
-
-function LANGUAGE() {
-    return $GLOBALS['_CTX']['geo']['language'] ?? 'en-US,en';
 }

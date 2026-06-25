@@ -84,7 +84,7 @@ class KEYS {
 
         $idx = pickIndex($providers, function($providers, $idx) {
 
-            logx('', "SELECT PROVIDER\n");
+            Logger::X('', "SELECT PROVIDER\n");
 
             foreach ($providers as $i => $url) {
 
@@ -113,7 +113,7 @@ class KEYS {
             $apiKey = self::_ask($endpoint);
 
             if ($apiKey === '') {
-                logx('err', "rejected");
+                Logger::X('err', "rejected");
                 return self::CLI_env();
             }
             
@@ -130,11 +130,11 @@ class KEYS {
         $endpoint = self::maps((string)getenv('API'));
         $apiKey = trim((string)getenv('KEY'));
 
-        if ($endpoint === '' || $apiKey === '') (logx('err', 'API/KEY required') ?: die);
+        if ($endpoint === '' || $apiKey === '') (Logger::X('err', 'API/KEY required') ?: die);
 
         $solver = Api::use($endpoint, $apiKey);
 
-        if (!self::viewKeys($solver)) (logx('err', 'rejected') ?: die);
+        if (!self::viewKeys($solver)) (Logger::X('err', 'rejected') ?: die);
 
         return $solver;
     }
@@ -149,7 +149,7 @@ class KEYS {
         $solver = Api::use($endpoint, $apiKey);
 
         if (!self::viewKeys($solver)) {
-            logx('err', "rejected");
+            Logger::X('err', "rejected");
             _sle(1);
             return '';
         }
@@ -161,7 +161,7 @@ class KEYS {
 
         $GLOBALS['_CTX']['apikey'][$endpoint] = $apiKey;
 
-        logx('ok', "SAVED");
+        Logger::X('ok', "SAVED");
 
         return $apiKey;
     }
@@ -179,7 +179,7 @@ class KEYS {
                 return (bool)$ok;
             });
         } catch (Throwable $e) {
-            logx('err', $e->getMessage());
+            Logger::X('err', $e->getMessage());
             return false;
         }
     }
@@ -190,7 +190,7 @@ class KEYS {
 
         $idx = pickIndex($providers, function($providers, $idx) {
 
-            logx('warn', "UPDATE KEY\n", true, true);
+            Logger::X('warn', "UPDATE KEY\n", true, true);
 
             foreach ($providers as $i => $url) {
 
@@ -418,21 +418,21 @@ class BOTS {
         $result = self::exec($bot, null);
         
         if ($result['status'] !== 'success') {
-            logx('err', $result['message']);
+            Logger::X('err', $result['message']);
             _sle(2);
             return;
         }
         
         if ($result['action'] === 'run') {
             $GLOBALS['_CTX']['current_bot'] = $result['bot'];
-            logx('info', $result['message']);
+            Logger::X('info', $result['message']);
             _sle(1);
             _cle();
             require $result['bot_file'];
             exit;
         }
         
-        logx('ok', $result['message']);
+        Logger::X('ok', $result['message']);
         _sle(1);
         _cle();
     }
@@ -454,7 +454,7 @@ class Menu {
             
             self::$banner->task1('info', 'MENU');
             
-            logx('info', "\n [0 SETTINGS\n [1 RUN BOT\n [x EXIT", true, true);
+            Logger::X('info', "\n [0 SETTINGS\n [1 RUN BOT\n [x EXIT", true, true);
             
             $rlM = trim(_rl(' input [boot]: '));
             switch ($rlM) {
@@ -484,13 +484,13 @@ class Menu {
             self::$banner->task1('info', 'SETTINGS');
             self::$banner->task2('info', 'Manage configuration');
             
-            logx('warn', "\n API STATUS", true, true);
+            Logger::X('warn', "\n API STATUS", true, true);
             foreach ($GLOBALS['_CTX']['apikey'] as $p => $k) {
                 $status = empty($k) ? FGd['RED'] : FGo['GRN'];
                 printf("  %s %-20s\n", $status, $p.RSET);
             }
             
-            logx('info', "\n [0 USAGE INFO\n [1 UPDATE APIKEY\n [2 PROXY SETTINGS\n [3 HARD RESET (ALL BOTS)", true, true);
+            Logger::X('info', "\n [0 USAGE INFO\n [1 UPDATE APIKEY\n [2 PROXY SETTINGS\n [3 HARD RESET (ALL BOTS)", true, true);
             
             switch (trim(_rl(' input [back]: '))) {
                 case '0':
@@ -517,8 +517,8 @@ class Menu {
         self::$banner->task1('warn', 'HARD RESET ALL BOTS');
         self::$banner->task2('err', 'This will DELETE ALL COOKIES & SESSION DATA!');
         
-        logx('err', "   This will DELETE ALL COOKIES & SESSION DATA from ALL BOTS!");
-        logx('err', "   Action cannot be undone!");
+        Logger::X('err', "   This will DELETE ALL COOKIES & SESSION DATA from ALL BOTS!");
+        Logger::X('err', "   Action cannot be undone!");
         echo "\n";
         
         $confirm = strtolower(trim(_rl('   Type "yes" to confirm: ')));
@@ -567,13 +567,13 @@ class Menu {
             self::$banner->show();
             self::$banner->task1('info', 'SELECT BOT');
             
-            logx('err', "\n  dont forget check usage on settings");
-            logx('err', "  cookie handling is auto passed by email/credential");
-            logx('info', "  Tips:");
-            logx('info', "    [N]       - Run bot normally");
-            logx('info', "    N_cle     - Clean bot (delete all data except credentials)");
-            logx('info', "    N_cre     - Delete credentials only");
-            logx('info', "    N_hard    - Hard reset (delete cookies & session data)");
+            Logger::X('err', "\n  dont forget check usage on settings");
+            Logger::X('err', "  cookie handling is auto passed by email/credential");
+            Logger::X('info', "  Tips:");
+            Logger::X('info', "    [N]       - Run bot normally");
+            Logger::X('info', "    N_cle     - Clean bot (delete all data except credentials)");
+            Logger::X('info', "    N_cre     - Delete credentials only");
+            Logger::X('info', "    N_hard    - Hard reset (delete cookies & session data)");
             
             // ========== DISPLAY BOT LIST 2 KOLOM ==========
             $maxLen = 0;
@@ -625,7 +625,7 @@ class Menu {
                 self::$banner->task1('warn', 'HARD RESET CONFIRMATION');
                 self::$banner->task2('err', 'This will delete ALL saved SESSION & DATA!');
                 
-                logx('err', "    This will delete ALL COOKIES & SESSION DATA for this bot!");
+                Logger::X('err', "    This will delete ALL COOKIES & SESSION DATA for this bot!");
                 $confirm = strtolower(trim(_rl('    Type "yes" to confirm: ')));
                 if ($confirm !== 'yes') {
                     self::$banner->task2('info', 'Cancelled');
@@ -638,7 +638,7 @@ class Menu {
             
             if ($result['status'] === 'error') {
                 self::$banner->task2('err', 'ERROR: ' . $result['message']);
-                logx('err', $result['message']);
+                Logger::X('err', $result['message']);
                 _sle(2);
                 continue;
             }
@@ -660,18 +660,18 @@ class Menu {
         $sel = trim((string)getenv('BOT'));
         
         if (empty($sel)) {
-            logx('err', "BOT environment variable not set");
+            Logger::X('err', "BOT environment variable not set");
             die();
         }
         
         $result = BOTS::exec($sel, null);
         
         if ($result['status'] === 'error') {
-            logx('err', $result['message']);
+            Logger::X('err', $result['message']);
             die();
         }
         
-        logx('info', "Auto-running: {$result['bot']}");
+        Logger::X('info', "Auto-running: {$result['bot']}");
         KEYS::sync();
         
         $GLOBALS['_CTX']['current_bot'] = $result['bot'];
@@ -696,25 +696,25 @@ public static function proxy() {
             self::$banner->task2('err', 'DISABLED');
         }
         
-        logx('warn', "\n  FORMATS:", true, true);
-        logx('err', '    also support from environment variable');
-        logx('err', "    dont forget check usage on settings");
-        logx('', '    ssh://USER:PASS@HOST:22');
-        logx('', '    http://USER:PASS@HOST:8080');
-        logx('', '    socks5://USER:PASS@HOST:1080');
+        Logger::X('warn', "\n  FORMATS:", true, true);
+        Logger::X('err', '    also support from environment variable');
+        Logger::X('err', "    dont forget check usage on settings");
+        Logger::X('', '    ssh://USER:PASS@HOST:22');
+        Logger::X('', '    http://USER:PASS@HOST:8080');
+        Logger::X('', '    socks5://USER:PASS@HOST:1080');
         
         if (!empty($GLOBALS['_CTX']['proxy'])) {
             $p = $GLOBALS['_CTX']['proxy'];
             $alive = Proxy::_enable();
             $st = $alive ? FGd['GRN'] . 'ALIVE' : FGd['RED'] . 'DEAD';
-            logx('info', "\n  PROXY ACTIVE: {$p['host']}:{$p['port']} $st", true, true);
+            Logger::X('info', "\n  PROXY ACTIVE: {$p['host']}:{$p['port']} $st", true, true);
         } else {
-            logx('err', "\n  PROXY: OFF");
+            Logger::X('err', "\n  PROXY: OFF");
         }
         
-        logx('info', "  [1] ENABLE PROXY", true, true);
-        logx('info', "  [2] DISABLE PROXY", true, true);
-        logx('info', "  [3] RESTART/REFRESH", true, true);
+        Logger::X('info', "  [1] ENABLE PROXY", true, true);
+        Logger::X('info', "  [2] DISABLE PROXY", true, true);
+        Logger::X('info', "  [3] RESTART/REFRESH", true, true);
         
         switch (trim(_rl('    input [back]: '))) {
             case '1':
@@ -729,7 +729,7 @@ public static function proxy() {
             case '2':
                 Proxy::_unable();
                 self::$banner->task2('err', 'Disabled');
-                logx('err', "    disabled");
+                Logger::X('err', "    disabled");
                 _sle(1);
                 break;
             case '3':
@@ -742,7 +742,7 @@ public static function proxy() {
 }
 
     public static function usage() {
-        logx('warn', "\n   USAGE", true, true);
+        Logger::X('warn', "\n   USAGE", true, true);
         echo FGo['BLU'].BOLD."    CI / ENV OPTIONS\n".RSET;
         echo "    BOT='name'   : Run specific bot\n";
         echo "    PROXY='url'  : Use specific tunnel\n";
@@ -752,10 +752,10 @@ public static function proxy() {
         echo "    CI='1'       : ci ready auto run\n";
         echo "    AN='0'       : disable animation\n";
         echo "\n    eg:\n";
-        logx('info', "    BOT=feyorratop mail=xxx pass=xxx php run.php", true, true);
-        logx('info', "    BOT=botname API=tertuyul KEY=abc login=xxx  CI=1 PROXY=type://host:port php run.php", true, true);
-        logx('info', "    BOT=botname API=tertuyul KEY=321 CI=1 login=xxx php run.php", true, true);
-        logx('info', "    ENV=1 php run.php", true, true);
+        Logger::X('info', "    BOT=feyorratop mail=xxx pass=xxx php run.php", true, true);
+        Logger::X('info', "    BOT=botname API=tertuyul KEY=abc login=xxx  CI=1 PROXY=type://host:port php run.php", true, true);
+        Logger::X('info', "    BOT=botname API=tertuyul KEY=321 CI=1 login=xxx php run.php", true, true);
+        Logger::X('info', "    ENV=1 php run.php", true, true);
         _rl("\n   Enter to back...");
         #_cle();
     }
