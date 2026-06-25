@@ -9,8 +9,8 @@ function logx($in = "", $msg = "\n", $n = true, $b = false) {
     return Logger::X($in, $msg, $n, $b);
 }
 
-function logm($mail) {
-    return Logger::M($mail);
+function logm($mail, $mask) {
+    return Logger::M($mail, $mask);
 }
 
 
