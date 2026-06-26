@@ -287,7 +287,7 @@ function sendB($akun, $host, $app) {
                     Logger::M($acc['mail'], false);
                     Logger::X('info', $send, true, true);
                 }
-                _sle(3);
+                _sle(5);
                 
             }
             

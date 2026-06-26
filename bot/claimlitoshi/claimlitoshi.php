@@ -33,7 +33,7 @@ $hhh = inf::netHead(['uf' => md5($login), 'ls' => LANGUAGE(), 'utt' => TIMEZONE(
 $headersCF = [];
 $skipped = [];
 $ADDONE = false;
-$SLDONE = true;
+$SLDONE = false;
 $claim = true;
 $curr = '';
 $curr_id = '';
@@ -243,11 +243,13 @@ while (true) {
                         $habis[$fa] = true;
                         break;
                     }
+                    /*
                     if (stripos($msg, 'Shortlink')) {
                         if ($SLDONE) (logx('err', 'Gada SL lagi') ?: die);
                         $curr = $_c;
                         break 2;
                     }
+                    */
                     
                     if (stripos($msg, 'nvalid Claim') !== false) break;
                     
