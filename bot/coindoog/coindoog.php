@@ -239,11 +239,9 @@ while (true) {
             
             if (empty($sho)) { _sle(5); continue; }
             
-            $short = sScraper::extract($sho);
+            $short = Shortlinks::extract($sho);
             if (empty($short)) continue;
             
-            $short = sScraper::extract($sho);
-            if (empty($short)) continue;
             #print_r($short); #die;
             $success_in_page = false; 
             $found_one = false; 
@@ -251,7 +249,7 @@ while (true) {
             $up = ['earnow','shortano', 'shortino', 'fc-lc', 'coinclix'];
             
             foreach ($short as $links => [$idd, $lmt]) {
-                if (!limit($lmt) || isset($skipped[$idd])) continue; 
+                if (!Shortlinks::limit($lmt) || isset($skipped[$idd])) continue;
                 
                 $found_one = true;
                 $valid[$links] = [$idd, $lmt];
@@ -314,7 +312,7 @@ while (true) {
                         }
                         logx('info', "Bypass: $loc", true, true);
                         $start = microtime(true);
-                        $bakk = links($api, $loc);
+                        $bakk = Shortlinks::exec($api, $loc);
                     }
                 }
                 
@@ -379,7 +377,6 @@ while (true) {
         
         if ($success_in_page || $curr === "") break; 
     }
-    
     
 }
 

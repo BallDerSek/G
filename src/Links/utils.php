@@ -1,11 +1,13 @@
 <?php
 
-class sScraper {
+# LEGACY 
+
     /**
      * kalau kurang akurat bisa tambah nodenya
      * bawaannya udah max nested ambil limit nya.
      * klo emang ada yang gak keambil, bisa cek htmlDOM nya dan tambah query di method extract
      */
+class sScraper00 {
     
     private static function dom($html): DOMXPath {
         libxml_use_internal_errors(true);
@@ -158,7 +160,7 @@ class sScraper {
     
 } 
 
-function limit($id) {
+function limit00($id) {
     $parts = explode('/', $id);
     if (count($parts) < 2) return (int)$id > 0;
 
@@ -166,7 +168,7 @@ function limit($id) {
     return $current > 0;
 }
 
-function links($api, $url, $noapi = false) {
+function links00($api, $url, $noapi = false) {
     
     if ($noapi) $api = null;
     

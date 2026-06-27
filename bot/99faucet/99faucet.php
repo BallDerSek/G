@@ -79,6 +79,7 @@ while (true) {
             $pa = $f['payload'];
             $cre = ['uf' => md5($login), 'ls' => LANGUAGE(), 'utt' => TIMEZONE(), 'email' => $login];
             $cap = Solve::exec($_0, $host, $api, $pa);
+            
             if (isset($cap['trouble'])) {
                 $tro = $cap['trouble'];
                 logx('warn', "Solver trouble: $tro");
@@ -254,11 +255,9 @@ while (true) {
             
             if (empty($sho)) { _sle(5); continue; }
             
-            $short = sScraper::extract($sho);
+            $short = Shortlinks::extract($sho);
             if (empty($short)) continue;
             
-            $short = sScraper::extract($sho);
-            if (empty($short)) continue;
             #print_r($short); #die;
             $success_in_page = false; 
             $found_one = false; 
@@ -266,7 +265,7 @@ while (true) {
             $up = ['earnow','shortano', 'shortino', 'fc-lc', 'coinclix'];
             
             foreach ($short as $links => [$idd, $lmt]) {
-                if (!limit($lmt) || isset($skipped[$idd])) continue; 
+                if (!Shortlinks::limit($lmt) || isset($skipped[$idd])) continue;
                 
                 $found_one = true;
                 $valid[$links] = [$idd, $lmt];
@@ -329,7 +328,7 @@ while (true) {
                         }
                         logx('info', "Bypass: $loc", true, true);
                         $start = microtime(true);
-                        $bakk = links($api, $loc);
+                        $bakk = Shortlinks::exec($api, $loc);
                     }
                 }
                 
@@ -445,4 +444,16 @@ function checkCF($url, $api, $body = null, $headersCF = []) {
     }
     
     return [];
+}
+
+function _cp() {
+    $token = _rl('token: ');
+    $solution =  [
+        'g-recaptcha-response'    => $token,
+        'cf-turnstile-response'   => $token,
+        'h-captcha-response'      => $token,
+        'hcaptcha-response'       => $token,
+        'g-recaptcha-response-v3' => $token
+    ];
+    return $solution;
 }

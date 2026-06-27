@@ -332,7 +332,6 @@ while (true) {
         
     }
     
-    
     sl:
     $ret99 = 0; 
     do {
@@ -351,7 +350,7 @@ while (true) {
         $ret99 = 0; 
         if (empty($sho)) continue;
         
-        $short = sScraper::extract($sho);
+        $short = Shortlinks::extract($sho);
         #print_r($short);
         if (empty($short) || stripos($sho, '/register')) break;
         
@@ -360,7 +359,7 @@ while (true) {
         $can_process = false; 
         foreach ($short as $links => [$idd, $lmt]) {
             
-            if (!limit($lmt) || isset($skipped[$idd])) continue;
+            if (!Shortlinks::limit($lmt) || isset($skipped[$idd])) continue;
             
             $can_process = true;
             
@@ -401,7 +400,7 @@ while (true) {
             }
             
             logx('info', "Bypass: $loc", true, true);
-            $bakk = links($api, $loc);
+            $bakk = Shortlinks::exec($api, $loc);
             #var_dump($bakk);
             
             if (!$bakk) {

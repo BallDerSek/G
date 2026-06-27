@@ -61,7 +61,7 @@ while (true) {
             
             $b->task1('warn', "processing");
             $b->task2('info', "");
-            $bakk = links($api, $url);
+            $bakk = Shortlinks::exec($api, $url);
             
             if ($bakk) {
                 $b->task2('ok', "done");

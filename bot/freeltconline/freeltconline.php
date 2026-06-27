@@ -33,6 +33,7 @@ $limit = false;
 $claim = true;
 $SLDONE = false;
 $ADDONE = false;
+$ALLDONE = 0;
 $skipped = [];
 $can_withdraw = true;
 $atbforce = false;
@@ -288,8 +289,16 @@ while (true) {
     }
     
     if (!$claim && $SLDONE && $ADDONE) {
-        print(FGd['CYN'].maskEmail($mail).RSET." ");
+        
+        if ($ALLDONE <= 3) {
+            $ALLDONE++;
+            styler('cooldown', fn() => _sle(100));
+            continue;
+        }
+        
+        Logger::M($mail);
         (logx('err', 'beres') ?: die);
+        
     }
     
 }

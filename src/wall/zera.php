@@ -163,7 +163,7 @@ class Zera {
         return $ti;
     }
 
-    private function _solve($package) {
+    private function _solve00($package) {
         if (!empty($package['rels']) && isset($package['main'])) {
             if (count($package['rels']) > 0) {
                 $solver = config::getKeys($this->api, 'zercaptcha', 'b64');
@@ -182,6 +182,30 @@ class Zera {
         }
         return null;
     }
+
+    private function _solve($package) {
+        if (!empty($package['rels']) && isset($package['main'])) {
+            if (count($package['rels']) > 0) {
+                $solver = config::getKeys($this->api, 'zercaptcha', 'b64');
+                
+                if (!method_exists($solver, 'zer')) return null;
+                $solution = $solver->zer($package);
+                
+                if (isset($solution['fail'])) {
+                    if (!method_exists($this->api, 'zer')) return null;
+                    $solution = $this->api->zer($package);
+                }
+                
+                if (isset($solution['done'])) {
+                    return $solution['done'];
+                }
+                
+                return null;
+            }
+        }
+        return null;
+    }
+
 
     public function cleanup() {
         return @unlink($this->cookieFile);

@@ -1,9 +1,16 @@
 <?php
 
 class Shortlinks {
-
-    public static function extract($html): object {
-        return new class($html) {
+    
+    /**
+     * kalau kurang akurat bisa tambah nodenya
+     * bawaannya udah max nested ambil limit nya.
+     * klo emang ada yang gak keambil, bisa cek htmlDOM nya dan tambah query di method extract
+     */
+     
+    public static function extract($html): array {
+        
+        return (new class($html) {
 
             public array $data = [];
 
@@ -143,7 +150,8 @@ class Shortlinks {
 
                 return "";
             }
-        };
+        })->data;
+        
     }
 
     public static function limit($id) {
@@ -152,7 +160,7 @@ class Shortlinks {
         return (int) $parts[0] > 0;
     }
 
-    public static function exec($url, $api = null, $noapi = false) {
+    public static function exec00(?Provider $api = null, $url = '', $noapi = false) {
         if ($noapi) $api = null;
 
         try {
@@ -182,5 +190,41 @@ class Shortlinks {
 
         return ($res && $res !== 99) ? $res : false;
     }
+    
+    public static function exec(?Provider $api = null, $url = '', $noapi = false) {
+        if ($noapi) $api = null;
+    
+        try {
+            $_direct = new _shortlinks($url);
+            $f_url   = $_direct->links($api);
+    
+            if ($f_url && is_string($f_url)) {
+                Logger::X('ok', " SL Direct passed", true, true);
+                return $f_url;
+            }
+        } catch (Throwable $e) {
+            Logger::X('err', " SL Direct failed: " . $e->getMessage());
+        }
+    
+        if (!$api) return false;
+    
+        $solver = Config::getKeys($api, 'shortlink', 'tkn');
+    
+        if (stripos($url, 'coinclix')) return false;
+        if (!$solver || !method_exists($solver, 'shortLink')) return false;
+    
+        $res = $solver->shortLink($url);
+    
+        if (isset($res['fail']) && $solver !== $api) {
+            $res = method_exists($api, 'shortLink') ? $api->shortLink($url) : ['fail' => 1];
+        }
+    
+        if (isset($res['done'])) {
+            return $res['done'];
+        }
+    
+        return false;
+    }
+
     
 }

@@ -3,7 +3,7 @@
 if (!trait_exists('WorkDir')) {
     require_once SRCDIR . '/config/config.php';
 }
-class _shortlinks {
+final class _shortlinks {
     use WorkDir;
     private $url, $host, $path, $cookie, $uagent;
     private $proxied, $proxy, $oldProxy, $oldCtx;
@@ -597,7 +597,6 @@ class _shortlinks {
 
 
 
-
   
 {
 
@@ -611,7 +610,7 @@ function _ccCode($html) {
     return null;
 }
 
-function _ccForm($api, $dom, $ver, $pis, $cnn, $bg, $cp) {
+function _ccForm00($api, $dom, $ver, $pis, $cnn, $bg, $cp) {
 
     $cpobj = $cp ? json_decode(html_entity_decode($cp), true) : null;
     
@@ -643,6 +642,40 @@ function _ccForm($api, $dom, $ver, $pis, $cnn, $bg, $cp) {
     return _ccLoad($pis, $cnn, $token, $bg);
     
 }
+
+function _ccForm($api, $dom, $ver, $pis, $cnn, $bg, $cp) {
+
+    $cpobj = $cp ? json_decode(html_entity_decode($cp), true) : null;
+    
+    switch (strtoupper($ver)) {
+
+        case 'CC':
+            $token = bin2hex(random_bytes(15));
+            break;
+
+        case 'CT':
+            $token = solve::tkn($api, $dom, '0x4AAAAAAB5TRnwvGvH5b2kw', 'cft', ['action' => 'linkSubmit']);
+            break;
+
+        case 'HC':
+            $token = solve::tkn($api, $dom, '2a9619f4-43bc-4e64-afc8-7fbc48f2bf34', 'hc', ['invisible'=>1]);
+            break;
+
+        case 'PC':
+        case 'IC':
+            $token = solve::tkn($api, $dom, $cpobj, $ver.'c'); 
+            break;
+
+        default:
+            return null;
+    }
+
+    if (isset($token['fail'])) return null;
+
+    $token = $token['done'];
+    return _ccLoad($pis, $cnn, $token, $bg);
+}
+
 
 function _ccLoad($pis, $cnn, $response, $bg) {
     $rand = function($len){

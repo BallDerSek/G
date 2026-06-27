@@ -30,11 +30,13 @@ $ip = '';
 } ) ($mail, $ip, $host);
 
 $limit = false;
-$claim = true;
+$claim = false;
 $SLDONE = false;
 $ADDONE = false;
+$ALLDONE = 0;
 $skipped = [];
 $can_withdraw = true;
+
 while (true) {
     $dash = null;
     $ret = 0; 
@@ -122,7 +124,7 @@ while (true) {
         logx('info', "[ $_bal ]", true, true);
         $bal = ((int)$_bal);
         
-        if ($can_withdraw && ($bal >= 1000)) {
+        if ($can_withdraw && ($bal >= 5000)) {
             $po = null;
             $jjn = [];
             $wd = Net::C("$host/withdraw", 'GET', null, inf::$cookie, [], "$host/dashboard", inf::$uagent, false, false, $ip);
@@ -176,8 +178,8 @@ while (true) {
             $ret99 = 0; 
             if (empty($fau)) continue;
             
-            $f = scraper::payload($fau)[0] ?? [];
-            #print_r($f); #die;
+            $f = scraper::payload($fau, 'faucetClaimForm')[0] ?? [];
+            #print_r($f); die;
             
             $po = null;
             if (!empty($f)) {
@@ -185,15 +187,32 @@ while (true) {
                 $cap = [];
                 if (isset($pa['captcha'])) {
                     $_ca = $pa['captcha'];
-                    if (($_ca === 'hcaptcha') || ($_ca === 'faucetcaptcha')) {
+                    if (($_ca === 'hcaptcha')) {
                         /* comment ini kalo mau lanjut solve*/
                         $claim = false; break;
                     }
+                    
                     $cap = solve::exec($fau, $host, $api, $pa);
                     if (isset($cap['trouble'])) {
                         _sle(60);
                         continue;
                     }
+                    
+                    if  (($_ca === 'faucetcaptcha')) {
+                        $data_fc = json_decode(Net::C($host.'//api/api.php?action=challenge', 'GET', null, inf::$cookie, [], $host.'/faucet', inf::$uagent)?: '', 1);
+                        
+                        if (!empty($data_fc) && isset($data_fc['dom'])) {
+                            
+                            $fc_id = $data_fc['challenge_id'];
+                            $fc_dm = $data_fc['dom'];
+                            
+                            $cap = FaucetCaptcha::exec($fc_dm, $fc_id, $host.'/faucet', $mail);
+                            if (!$cap || ($cap === null)) continue;
+                            #var_dump($cap);
+                        } else continue;
+                        
+                    }
+                    
                 }
                 
                 $po = array_merge($pa, $cap);
@@ -223,11 +242,7 @@ while (true) {
                         $_Tfield = null;
                         if ($nodes->length > 0) $_Tfield = $nodes->item(0)->getAttribute('name');
                         
-                        if (!empty($_Tfield)) {
-                            $po[$_Tfield] = $t_text;
-                            
-                            #logx('info', " text-captcha: [ $_Tfield ]");
-                        }
+                        if (!empty($_Tfield)) $po[$_Tfield] = $t_text;
                     }
                 }
                 
@@ -252,6 +267,7 @@ while (true) {
             }
             
             if (!empty($po)) {
+                #print_r($po); die;
                 $cla = Net::C($f['url'], 'POST', $po, inf::$cookie, [], "$host/faucet", inf::$uagent, false, false, $ip);
                 if (empty($cla) || ($cla === 99)) continue;
                 #_put('cla.html', $cla); die;
@@ -266,6 +282,9 @@ while (true) {
                         break;
                     }
                 }
+                
+                $alert_d = scraper::_xP($cla, "//div[contains(@class, 'alert-danger')]");
+                if (!empty($alert_d)) logx('err', $alert_d[0]);
             }
             
         }
@@ -378,8 +397,9 @@ while (true) {
             if (empty($sho)) continue;
             
             $f = scraper::payload($sho)[0] ?? [];
-            $short = sScraper::extract($sho);
-            #print_r($short);
+            #$short = sScraper::extract($sho);
+            $short = Shortlinks::extract($sho);
+            #print_r($short); die;
             if (empty($short)) {
                 logx('info', "sl abis");
                 $SLDONE = true;
@@ -416,8 +436,8 @@ while (true) {
             $can_process = false; 
             foreach ($short as $links => [$idd, $lmt]) {
                 
-                if (!limit($lmt) || isset($skipped[$idd])) continue;
-                
+                if (!Shortlinks::limit($lmt) || isset($skipped[$idd])) continue;
+                #var_dump($links); die;
                 $can_process = true;
                 
                 $ud = $host.'/links/go/'.$idd;
@@ -457,7 +477,7 @@ while (true) {
                 }
                 
                 logx('info', "Bypass: $loc", true, true);
-                $bakk = links($api, $loc);
+                $bakk = Shortlinks::exec($api, $loc);
                 #var_dump($bakk); #die;
                 
                 if (!$bakk) {
@@ -502,10 +522,17 @@ while (true) {
     }
     
     if (!$claim && $SLDONE && $ADDONE) {
+        
+        if ($ALLDONE <= 3) {
+            $ALLDONE++;
+            styler('cooldown', fn() => _sle(100));
+            continue;
+        }
+        
         Logger::M($mail);
         (logx('err', 'beres') ?: die);
+        
     }
-    
     
 }
 
@@ -513,6 +540,54 @@ tes:
 
 
 
+function parsePtcAds($html, $host) {
+    if (empty($html) || $html === 99) return ['total' => 0, 'local' => [], 'bctt' => [], 'owme' => [], 'external' => []];
+    
+    $xp = Scraper::dom($html);
+    if (!$xp) return ['total' => 0, 'local' => [], 'bctt' => [], 'owme' => [], 'external' => []];
+    
+    $result = ['local' => [], 'bctt' => [], 'owme' => [], 'external' => []];
+    $host = str_replace('www.', '', parse_url($host, PHP_URL_HOST) ?: $host);
+    $baseUrl = (parse_url($host, PHP_URL_SCHEME) ? $host : 'https://' . $host);
+    $baseUrl = rtrim($baseUrl, '/');
+    
+    foreach ($xp->query("//div[contains(@class,'ptc_cards')]") as $card) {
+        $btn = $xp->query(".//button/@onclick", $card);
+        if ($btn->length === 0) continue;
+        
+        preg_match("/(?:window\.location\s*=\s*|window\.open\s*\(\s*|location\.href=')'([^']+)'/", $btn->item(0)->value, $m);
+        if (empty($m[1])) continue;
+        
+        $url = $m[1];
+        
+        if (strpos($url, 'http') !== 0 && strpos($url, '//') !== 0) {
+            $url = (strpos($url, '/') === 0) ? $baseUrl . $url : $baseUrl . '/' . $url;
+        } elseif (strpos($url, '//') === 0) {
+            $url = 'https:' . $url;
+        }
+        
+        $timer = 5;
+        $spans = $xp->query(".//span", $card);
+        foreach ($spans as $span) {
+            $text = trim($span->textContent);
+            if (preg_match('/(\d+)\s*s/', $text, $tm)) {
+                $timer = (int)$tm[1];
+                break;
+            }
+        }
+        
+        $uHost = str_replace('www.', '', parse_url($url, PHP_URL_HOST) ?: '');
+        
+        if ($uHost === $host) $result['local'][] = [$url, $timer];
+        elseif (strpos($url, 'bitcotasks.com') !== false) $result['bctt'][] = [$url, $timer];
+        elseif (strpos($url, 'offerwall.me') !== false) $result['owme'][] = [$url, $timer];
+        else $result['external'][] = [$url, $timer];
+    }
+    
+    $result['total'] = count($result['local']) + count($result['bctt']) + count($result['owme']) + count($result['external']);
+    
+    return $result;
+}
 
 function pre($in_put, $threshold = 128) {
     if (!getDeps('gd@php')) {
@@ -613,7 +688,6 @@ function _text($imgData, $host, $mail) {
     return null;
 }
 
-
 function _wd($html) {
     $res = Scraper::payload($html)[0] ?? null;
     if (!$res) return false;
@@ -640,51 +714,262 @@ function _wd($html) {
     return false;
 }
 
-function parsePtcAds($html, $host) {
-    if (empty($html) || $html === 99) return ['total' => 0, 'local' => [], 'bctt' => [], 'owme' => [], 'external' => []];
+
+
+class FaucetCaptcha {
+
+    public static function exec($dt, $id, $host, $email = '') {
     
-    $xp = Scraper::dom($html);
-    if (!$xp) return ['total' => 0, 'local' => [], 'bctt' => [], 'owme' => [], 'external' => []];
+        return styler("faucetcaptcha", function() use ($dt, $id, $host, $email) {
+            _sle(5);
+            $setP = microtime(true);
+            
+            $fp_token = $dt['headerFpToken'];
+            $fp_cnfig = json_decode($dt['configJson'], 1);
+            $fp_scttr = $dt['scatterHtml'];
+            
+            $ids = $fp_cnfig['scatterIds'];
+            $enc = $fp_cnfig['enc'];
     
-    $result = ['local' => [], 'bctt' => [], 'owme' => [], 'external' => []];
-    $host = str_replace('www.', '', parse_url($host, PHP_URL_HOST) ?: $host);
-    $baseUrl = (parse_url($host, PHP_URL_SCHEME) ? $host : 'https://' . $host);
-    $baseUrl = rtrim($baseUrl, '/');
-    
-    foreach ($xp->query("//div[contains(@class,'ptc_cards')]") as $card) {
-        $btn = $xp->query(".//button/@onclick", $card);
-        if ($btn->length === 0) continue;
+            $ikm = hash('sha256', implode('|', $ids), true);
+            $key = hash_hkdf('sha256', $ikm, 32, 'aes-gcm-key', 'fc-config-v2');
+            
+            $raw = base64_decode($enc);
+            $ivvv = substr($raw, 0, 12);
+            $tagg = substr($raw, -16);
+            $cphr = substr($raw, 12, -16);
+            
+            $config = json_decode(openssl_decrypt($cphr, 'aes-256-gcm', $key, OPENSSL_RAW_DATA, $ivvv, $tagg)?: '', 1);
+            #var_dump($config);
+            if (!$config) return null;
+            
+            $pow_mod = self::_dec($config['powVariantToken'], $config['nonce'], $config['challenge']);
+            
+            $pub_key = self::_sct($fp_scttr, $ids);
+            if (!$pub_key) return null;
+            
+            $hsh_sc = self::_schh($host);
+            
+            $pow_res = self::_pow($config['challenge'], $config['difficulty'], $pow_mod);
+            if (!$pow_res) return null;
+            
+            $endP = (int)((microtime(true) - $setP) * 1000);
+            
+            $sign_res = self::_sign($config['signEndpoint'], $id, $host, $email);
+            #var_dump($sign_res);
+            if (!$sign_res) return null;
+            
+            $solution = self::_verf($id, $host, $config, $pow_res, $pub_key, $fp_token, $sign_res, $endP, $hsh_sc);
+            #var_dump($solution);
+            if (!$solution) return null;
+            
+            $fc_fi = $config['payloadField'] ?? 'f_' . substr(md5($id), 0, 12);
+            return [
+                "captcha" => "faucetcaptcha",
+                "$fc_fi" => $solution['sol'],
+                'fc_token' => $solution['tkn'],
+                'fc_challenge_id' => $id
+            ];
+        });
         
-        preg_match("/(?:window\.location\s*=\s*|window\.open\s*\(\s*|location\.href=')'([^']+)'/", $btn->item(0)->value, $m);
-        if (empty($m[1])) continue;
+    }
+
+    private static function _dec($token, $nonce, $challenge) {
+        $ikm = hash('sha256', $nonce . '|' . $challenge, true);
+        $key = hash_hkdf('sha256', $ikm, 32, 'variant-enc', 'fc-pow-v1');
         
-        $url = $m[1];
+        $b64 = str_replace(['-', '_'], ['+', '/'], $token);
+        $pad = strlen($b64) % 4;
+        if ($pad) $b64 .= str_repeat('=', 4 - $pad);
         
-        if (strpos($url, 'http') !== 0 && strpos($url, '//') !== 0) {
-            $url = (strpos($url, '/') === 0) ? $baseUrl . $url : $baseUrl . '/' . $url;
-        } elseif (strpos($url, '//') === 0) {
-            $url = 'https:' . $url;
+        $raw = base64_decode($b64);
+        $iv   = substr($raw, 0, 12);
+        $tag  = substr($raw, -16);
+        $ct   = substr($raw, 12, -16);
+        
+        $pt = openssl_decrypt($ct, 'aes-256-gcm', $key, OPENSSL_RAW_DATA, $iv, $tag);
+        
+        $valid = ['sha256-prefix', 'sha256-suffix', 'double-hash', 'interleaved', 'xor-target', 'hmac-prefix'];
+        
+        if ($pt && in_array($pt, $valid)) {
+            return $pt;
         }
         
-        $timer = 5;
-        $spans = $xp->query(".//span", $card);
-        foreach ($spans as $span) {
-            $text = trim($span->textContent);
-            if (preg_match('/(\d+)\s*s/', $text, $tm)) {
-                $timer = (int)$tm[1];
-                break;
+        return 'sha256-prefix';
+    }
+
+    private static function _sct($html, $ids) {
+        
+        $p1 = null;
+        $com = Scraper::_jP($html, '/<!--[^>]*' . preg_quote($ids[0], '/') . ':([A-Za-z0-9+\/=]+):[^>]*-->/');
+        if (!empty($com[1][0])) $p1 = $com[1][0];
+        
+        $p2 = null;
+        $found = Scraper::find($html, $ids[1], 'span', 'data-' . $ids[1], 'id');
+        if ($found) $p2 = $found[0];
+        
+        $p3 = null;
+        $found = Scraper::find($html, $ids[2], 'input', 'value', 'id');
+        if ($found) {
+            $decoded = base64_decode($found[0]);
+            if ($decoded !== false) $p3 = $decoded;
+        }
+        
+        $p4 = null;
+        $sty = Scraper::_jP($html, '/--d\s*:\s*["\']?([^;"\'"]+)["\']?/');
+        if (!empty($sty[1][0])) $p4 = trim($sty[1][0]);
+        
+        if (!$p1 || !$p2 || !$p3 || !$p4) return null;
+        
+        return hash('sha256', "{$p1}{$p2}{$p3}{$p4}");
+    }
+
+    private static function _pow($challenge, $difficulty, $variant) {
+        $target = str_repeat('0', $difficulty);
+        $nonce = 0;
+        
+        while ($nonce < 1000000) {
+            $nonceStr = base_convert($nonce, 10, 36);
+            
+            $hash = match($variant) {
+                'sha256-prefix' => hash('sha256', $challenge . $nonceStr),
+                'sha256-suffix' => hash('sha256', $challenge . $nonceStr),
+                'double-hash' => hash('sha256', hash('sha256', $challenge . $nonceStr)),
+                'interleaved' => hash('sha256', $nonceStr . substr($challenge, 0, intdiv(strlen($challenge), 2)) . $nonceStr . substr($challenge, intdiv(strlen($challenge), 2))),
+                'xor-target' => hash('sha256', $challenge . $nonceStr),
+                'hmac-prefix' => hash_hmac('sha256', $nonceStr, $challenge),
+                default => hash('sha256', $challenge . $nonceStr),
+            };
+            
+            $match = match($variant) {
+                'sha256-suffix' => str_ends_with($hash, $target),
+                default => str_starts_with($hash, $target),
+            };
+            
+            if ($match) {
+                return [
+                    'nonce' => $nonceStr,
+                    'hash'  => $hash,
+                ];
             }
+            
+            $nonce++;
+            
         }
         
-        $uHost = str_replace('www.', '', parse_url($url, PHP_URL_HOST) ?: '');
+        return null;
+    }
+
+    private static function _schh($host) {
+        $hash = hash('sha256', Net::S($host.'/api/captcha.js'));
         
-        if ($uHost === $host) $result['local'][] = [$url, $timer];
-        elseif (strpos($url, 'bitcotasks.com') !== false) $result['bctt'][] = [$url, $timer];
-        elseif (strpos($url, 'offerwall.me') !== false) $result['owme'][] = [$url, $timer];
-        else $result['external'][] = [$url, $timer];
+        return $hash ?? 'f2b1f584738b12d25c2ba882e833a3cab4229ba066a21ac75a345ef17f9e8017';
+    }
+
+    private static function _sign($sgn_u, $id, $host, $email) {
+        $ua = inf::$uagent;
+        $base = $email . $ua;
+        $isMobile = (stripos($ua, 'Android') !== false || stripos($ua, 'iPhone') !== false);
+        
+        $_env = [
+            'webdriver' => false,
+            'outerSize' => false,
+            'noLanguages' => false,
+            'lowConcurrency' => false,
+            'lowColorDepth' => false,
+            'noFocusOnClick' => false,
+            'fakeGPU' => false,
+            'permissionAnomaly' => false,
+            'highPerfResolution' => false,
+            'automationLeaks' => false,
+            'missingChrome' => false,
+            'hiddenAtLoad' => false,
+            'isTouchDevice' => $isMobile,
+        ];
+        
+        $onCnv = substr(base64_encode(md5($base.'canvas') . md5($base.'canvas')), 0, 48);
+        $onDlt = $isMobile ? 0 : (abs(crc32($base.'mouse')) % 200) + 50;
+        $onBox = (abs(crc32($base.'time')) % 5000) + 5000;
+        
+        $_bhv = [
+            'mouseDelta' => $onDlt,
+            'keystrokeCount' => 0,
+            'keystrokeVarMs' => 0,
+            'timeToCheckbox' => $onBox,
+            'scrollEvents' => 0,
+            'focusBlurCount' => 3,
+            'canvasFp' => $onCnv,
+            'pathSamples' => 2,
+            'curvatureVar' => -1,
+            'accelVar' => -1,
+            'hiddenCount' => 4,
+            'resizeCount' => 0,
+            'hiddenAtLoad' => false,
+            'perfDrift' => 0.0003,
+            'touchCount' => $isMobile ? 12 : 0,
+            'movesBeforeClick' => 0,
+        ];
+        
+        $body = [
+            'challenge_id' => $id,
+            'envFacts' => $_env,
+            'bhv' => $_bhv,
+        ];
+        
+        $sign = json_decode(
+            Net::X($sgn_u, 'POST', $body, inf::$cookie,
+            ['X-FC-Sign: 1'],
+            $host, inf::$uagent, json: true)?: ''
+        , 1)['sig'] ?? null;
+        
+        if (!empty($sign)) {
+            return [
+                'sig' => $sign,
+                'envFacts' => $_env,
+                'bhv' => $_bhv,
+            ];
+        }
+        
+        return null;
+    }
+
+    private static function _verf($id, $host, $config, $pow_res, $pubKeyHash, $fpToken, $sign_res, $endP, $hsh_sc) {
+        
+        $ver_u = str_replace('action=sign', 'action=verify', $config['signEndpoint']);
+        
+        $payloadData = [
+            'nonce' => $config['nonce'],
+            'powNonce' => $pow_res['nonce'],
+            'solveMs' => $endP,
+            'envFacts' => $sign_res['envFacts'],
+            'pubKeyHash' => $pubKeyHash,
+            'ecSig' => $config['ecSig'] ?? '',
+            'bhv' => $sign_res['bhv'],
+            'telemetrySig' => $sign_res['sig'],
+            'scriptHash' => $hsh_sc,
+            'headerFpToken' => $fpToken,
+        ];
+        
+        $payload = base64_encode(json_encode($payloadData));
+        
+        $body = [
+            'challenge_id' => $id,
+            'payload' => $payload,
+            'honeypots' => new stdClass(),
+        ];
+        
+        $sol = json_decode(
+            Net::X($ver_u, 'POST', $body, inf::$cookie,
+            ['X-FC-Sign: 1'],
+            $host, inf::$uagent, json: true)?: ''
+        , 1);
+        #var_dump($sol);
+        if (!empty($sol['success']) || !empty($sol['token'])) {
+            return ['tkn' => $sol['token'], 'sol' => $payload];
+        }
+        
+        return null;
+        
     }
     
-    $result['total'] = count($result['local']) + count($result['bctt']) + count($result['owme']) + count($result['external']);
-    
-    return $result;
 }

@@ -266,14 +266,14 @@ while (true) {
             
             if (empty($sho)) { _sle(5); continue; }
             
-            $short = sScraper::extract($sho);
+            $short = Shortlinks::extract($sho);
             if (empty($short)) continue;
             #print_r($short); #die;
             $success_in_page = false; 
             $found_one = false; 
             
             foreach ($short as $links => [$idd, $lmt]) {
-                if (!limit($lmt) || isset($skipped[$idd])) continue; 
+                if (!Shortlinks::limit($lmt) || isset($skipped[$idd])) continue;
                 
                 $found_one = true;
                 $valid[$links] = [$idd, $lmt];
@@ -328,7 +328,7 @@ while (true) {
                 logx('info', "Bypassing SL: {$loc}", true, true);
                 
                 $start = microtime(true);
-                $bakk = links($api, $loc);
+                $bakk = Shortlinks::exec($api, $loc);
                 if (!$bakk) {
                     $skipped[$idd] = true; 
                     break; 

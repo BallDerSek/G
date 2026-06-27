@@ -89,7 +89,7 @@ class skibidixxx extends Provider {
 
     /** submit job ke API */
     protected function get_api($method, array $params) {
-skibidixxxget:
+        
         $s = json_decode(
             Net::S($this->baseUrl."/in.php", "POST", array_merge(["apikey" => $this->apiKey, "methods" => $method], $params), json: true) ?: ''
             , 1);
@@ -124,9 +124,7 @@ skibidixxxget:
     /** shortlink resolver */
     public function shortLink($link) {
         $params = ["url" => $link];
-        $short = $this->run('shortlink', $params, true);
-        if (!$short) return false;
-        return $short;
+        return $this->run('shortlink', $params, true);
     }
     
     public function rss($data, $url) {
@@ -141,19 +139,29 @@ skibidixxxget:
             'body' => $json,
             'type' => 'canvas'
         ];
-        
+    
         $sol = $this->run('bitcocaptcha', $params, true);
         
-        if (preg_match('/class:([^,]+), array:(\d+)/', $sol, $m)) {
-            $cls = $m[1];
-            $num = (int)$m[2];
-            
-            return $num;
+        if (isset($sol['fail'])) {
+            return $sol;
+        }
+        $ans = $sol['done'];
+        
+        /*
+        var_dump($sol);
+        var_dump($ans);
+        */
+        
+        if (!is_string($ans) || !preg_match('/class:([^,]+), array:(\d+)/', $ans, $m)) {
+            return ['fail' => 777];
         }
         
-        return false;
+        return [
+            'ans' => $m[1],
+            'idx' => (int) $m[2]
+        ];
     }
-    
+
     public function getInfo(): bool{
         $maxRetry = 3;
         $r = null;
@@ -220,34 +228,44 @@ class tertuyul extends Provider {
     }
 
     /** shortlink resolver */
+    
     public function shortLink($link) {
         $params = ["pageurl" => $link];
-        $short = $this->run('shortlink', $params, true);
-        if (!$short) return false;
-        return $short;
+        return $this->run('shortlink', $params, true);
     }
-    
+
     public function bct($param) {
         
         $_d['main'] = $param['main'];
-        foreach ($param['opsi'] as $_i => $_o) $_d[$_i] = $_o;
-
-        $res =  $this->run('bitcotask', $_d, true);
-        #var_dump($res);
-        if (!$res) return false;
-        
-        if (strpos($res, ':') !== false) {
-            $parts = explode(':', $res);
-            return end($parts);
+    
+        foreach ($param['opsi'] as $_i => $_o) {
+            $_d[$_i] = $_o;
         }
+    
+        $res = $this->run('bitcotask', $_d, true);
         
-        return $res;
+        if (isset($res['fail'])) {
+            return $res;
+        }
+    
+        $val = $res['done'];
+    
+        $ans = $val;
+        $idx = null;
+    
+        if (strpos($val, ':') !== false) {
+            [$ans, $idx] = explode(':', $val, 2);
+        }
+    
+        return [
+            'ans' => $ans,
+            'idx' => (int)$idx
+        ];
     }
     
     public function rss($data, $url) {
         
-        if (!$data) return null;
-        
+        if (!$data) return ['fail' => 1];
         $param = [
             'pageurl' => $url,
             'body' => $data['master_image_base64'],
@@ -259,25 +277,25 @@ class tertuyul extends Provider {
     
     /** info saldo */
     public function getInfo(): bool{
-    $maxRetry = 3;
-    $i = null;
-    for ($attempt = 1; $attempt <= $maxRetry; $attempt++) {
-        $i = json_decode(
-            Net::S($this->baseUrl . "/res.php","GET",["action" => "userinfo","key" => $this->apiKey,"json" => 1,])?: ''
-        , 1);
-
-        if ($i !== null) break;
+        $maxRetry = 3;
+        $i = null;
+        for ($attempt = 1; $attempt <= $maxRetry; $attempt++) {
+            $i = json_decode(
+                Net::S($this->baseUrl . "/res.php","GET",["action" => "userinfo","key" => $this->apiKey,"json" => 1,])?: ''
+            , 1);
+    
+            if ($i !== null) break;
+            }
+    
+        if ($i === null) return false;
+    
+        if (!isset($i['balance'])) {
+            Logger::X('err', $i['request'] ?? 'unknown');
+            return false;
         }
-
-    if ($i === null) return false;
-
-    if (!isset($i['balance'])) {
-        Logger::X('err', $i['request'] ?? 'unknown');
-        return false;
-    }
-
-    Logger::X('info', 'Tertuyul: ' . $i['balance']);
-    return true;
+    
+        Logger::X('info', 'Tertuyul: ' . $i['balance']);
+        return true;
     }
     
 }
@@ -398,90 +416,110 @@ class gmxch extends Provider {
     /** shortlink resolver */
     public function shortLink($link) {
         $params = ["url" => $link];
-        $short = $this->run('shortlink', $params, true);
-        if (!$short) return false;
-        return $short;
+        return $this->run('shortlink', $params, true);
     }
-    
+
     public function zer(array $data) {
-        #print_r($data);
+    
         $params = [
             "method" => "zercaptcha",
             "main" => $data['main'],
-            #"debug" => true,
             "options" => []
         ];
-        
+    
         $map = [];
         $i = 0;
-        
+    
         foreach ($data['rels'] as $rel => $b64) {
             $params['options'][] = $b64;
-            $map[$i] = $rel;
-            $i++;
+            $map[$i++] = $rel;
         }
-        
+    
         $res = $this->run('visual', $params);
-        
+    
+        if (isset($res['fail'])) {
+            return $res;
+        }
+    
+        $res = $res['done'];
+    
         if (is_numeric($res)) {
-            $index_jawaban = (int)$res;
-            
-            if (isset($map[$index_jawaban])) {
-                return $map[$index_jawaban]; 
+            $idx = (int)$res;
+    
+            if (isset($map[$idx])) {
+                return ['done' => $map[$idx]];
             }
         }
-        
-        return 777;
+    
+        return ['fail' => 777];
     }
-
+    
     public function atb(array $data) {
-        
+    
         $params = [
             "method" => "antibotlinks",
             "main" => $data['main'],
-            #"debug" => true,
             "options" => []
         ];
-        
+    
         $map = [];
         $i = 0;
-        
+    
         foreach ($data['rels'] as $rel => $b64) {
             $params['options'][] = $b64;
-            $map[$i] = $rel;
-            $i++;
+            $map[$i++] = $rel;
         }
-        
-        $res = json_decode($this->run('visual', $params), true);
-        if (!is_array($res)) return 777;
+    
+        $res = $this->run('visual', $params);
+    
+        if (isset($res['fail'])) {
+            return $res;
+        }
+    
+        $res = json_decode($res['done'], true);
+    
+        if (!is_array($res)) {
+            return ['fail' => 777];
+        }
+    
         $links = [];
+    
         foreach ($res as $val) {
             $val = trim($val);
+    
             if (isset($map[$val])) {
                 $links[] = $map[$val];
             }
         }
-        
-        return !empty($links) ? " " . implode(' ', $links) : false;
+    
+        return !empty($links)
+            ? ['done' => ' ' . implode(' ', $links)]
+            : ['fail' => 777];
     }
     
     public function bct(array $data) {
-        return 777;
+        return ['fail' => 777];
         
         $params = [
             "method" => "bitcotasks",
             "main" => $data['main'],
             "options" => []
         ];
-        
+    
         foreach ($data['opsi'] as $rel => $b64) {
             $params['options'][] = $b64;
         }
-        
+    
         $sol = $this->run('visual', $params, true);
-        if (!$sol) return 777;
-        
-        return $sol;
+    
+        if (isset($sol['fail'])) {
+            return $sol;
+        }
+    
+        return [
+            'ans' => null,
+            'idx' => $sol['done'] ?? null
+        ];
     }
     
     /** info saldo */
@@ -555,15 +593,21 @@ class glitch extends Provider {
     }
 
     /** shortlink resolver */
-    public function shortLink($link) {
+    public function shortLink00($link) {
         $params = ["url" => $link];
         $short = $this->run('shortlink', $params);
         if (!$short) return false;
         return $short;
     }
     
+    public function shortLink($link) {
+        $params = ["url" => $link]; 
+        return $this->run('shortlink', $params, true);
+    }
+
+    
     /** atb override */
-    public function atb(array $data) {
+    public function atb00(array $data) {
         
         $params = [
             "mode" => "freeantibot",
@@ -582,6 +626,32 @@ class glitch extends Provider {
         
         return $antibot;
     }
+    
+    public function atb(array $data) {
+        
+        $params = [
+            "mode" => "freeantibot",
+            "main" => $data['main'],
+            "sub" => []
+        ];
+        
+        foreach ($data['rels'] as $i => $b64) {
+            $params['sub'][$i + 1] = $b64;
+        }
+        
+        $res = $this->run('antibot', $params);
+        
+        if (isset($res['fail'])) return $res;
+        
+        $antibot = $res['done'];
+        
+        if (!str_starts_with($antibot, ' ')) {
+            $antibot = " $antibot";
+        }
+        
+        return ['done' => $antibot];
+    }
+
     
     /** info saldo */
     public function getInfo(): bool{

@@ -2,7 +2,7 @@
 
 class Cloudflare {
     
-    private static function solve($api, $url, $uagent, $data, $force = false) {
+    private static function solve00($api, $url, $uagent, $data, $force = false) {
         
         if (!$api) {
             return false;
@@ -42,6 +42,51 @@ class Cloudflare {
 
         return self::parseResult($class, $res);
     }
+    
+    private static function solve($api, $url, $uagent, $data, $force = false) {
+        
+        if (!$api) {
+            return false;
+        }
+    
+        $param = array_filter([
+            'body' => !empty($data['html']) ? base64_encode($data['html']) : null,
+            'userAgent' => $uagent,
+            'proxy' => $GLOBALS['_CTX']['proxy']['src'] ?? null
+        ]);
+    
+        if ($force) {
+            $solve = $api->access($url, 'interstitial', $param);
+        } else {
+            $solver = config::getKeys($api, 'interstitial', 'acc');
+            $solve = $solver ? $solver->access($url, 'interstitial', $param) : false;
+        }
+    
+        // Check fail dengan format baru
+        if (is_array($solve) && isset($solve['fail'])) {
+            if ($solve['fail'] === 777) {
+                // Fallback ke primary api
+                if (isset(Api::ACC[get_class($api)]['interstitial'])) {
+                    $solve = $api->access($url, 'interstitial', $param);
+                    
+                    if (isset($solve['fail']) && $solve['fail'] === 71) {
+                        return false;
+                    }
+                }
+            }
+        }
+    
+        // Validate success response
+        if (!is_array($solve) || !isset($solve['done'])) {
+            return false;
+        }
+    
+        $class = $solve['class'] ?? null;
+        $res = $solve['done'];
+    
+        return self::parseResult($class, $res);
+    }
+
     
     public static function parseResult($class, $res) {
         if (!$res) return null;
