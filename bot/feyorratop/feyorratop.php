@@ -30,7 +30,7 @@ $ip = '';
 } ) ($mail, $ip, $host);
 
 $limit = false;
-$claim = true;
+$claim = false;
 $SLDONE = false;
 $ADDONE = false;
 $ALLDONE = 0;
@@ -318,9 +318,9 @@ while (true) {
                             
                         if (isset($pa['captcha'])) {
                             $_ca = $pa['captcha'];
-                            if (($_ca === 'hcaptcha')) {
+                            if (($_ca === 'hcaptcha') || ($_ca === 'faucetcaptcha')) {
                                 # comment ini kalo mau lanjut solve
-                                $claim = false; break;
+                                $ADDONE = true; break;
                             }
                             
                             $cap = solve::exec($view, $host, $api, $pa);
