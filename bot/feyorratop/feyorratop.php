@@ -30,7 +30,7 @@ $ip = '';
 } ) ($mail, $ip, $host);
 
 $limit = false;
-$claim = false;
+$claim = true;
 $SLDONE = false;
 $ADDONE = false;
 $ALLDONE = 0;
@@ -295,7 +295,7 @@ while (true) {
     if (!empty($ads) && $ads !== 99) {
         $ptcList = parsePtcAds($ads ,$host);
         $ptcNumb = $ptcList['total'];
-        
+        #print_r($ptcList); die;
         if ($ptcNumb <= 1) {
             $ADDONE = true;
         } else {
@@ -316,18 +316,37 @@ while (true) {
                         if (!empty($f)) {
                             $pa = $f['payload'];
                             
+                        if (isset($pa['captcha'])) {
                             $_ca = $pa['captcha'];
-                            if (($_ca === 'hcaptcha') || ($_ca === 'faucetcaptcha')) {
-                                $ADDONE = true;
-                                continue;
+                            if (($_ca === 'hcaptcha')) {
+                                # comment ini kalo mau lanjut solve
+                                $claim = false; break;
                             }
                             
-                            $cap = solve::exec($view, $ad_u, $api, $pa);
+                            $cap = solve::exec($view, $host, $api, $pa);
                             if (isset($cap['trouble'])) {
                                 _sle(60);
                                 continue;
                             }
-                            $po = array_merge($pa, $cap);
+                            
+                            if  (($_ca === 'faucetcaptcha')) {
+                                $data_fc = json_decode(Net::C($host.'//api/api.php?action=challenge', 'GET', null, inf::$cookie, [], $ad_u, inf::$uagent)?: '', 1);
+                                
+                                if (!empty($data_fc) && isset($data_fc['dom'])) {
+                                    
+                                    $fc_id = $data_fc['challenge_id'];
+                                    $fc_dm = $data_fc['dom'];
+                                    
+                                    $cap = FaucetCaptcha::exec($fc_dm, $fc_id, $ad_u, $mail);
+                                    if (!$cap || ($cap === null)) continue;
+                                    #var_dump($cap);
+                                } else continue;
+                                
+                            }
+                            
+                        }
+                        
+                        $po = array_merge($pa, $cap);
                             
                         }
                         
@@ -360,6 +379,7 @@ while (true) {
             }
             
             if (!empty($ptcList['bctt'])) {
+                #print_r($ptcList['bctt']); die;
                 foreach ($ptcList['bctt'] as $ptc) {
                     [$ad_u, $ad_t] = $ptc;
                     $bctt = new Bctt($host, $api, $mail);
