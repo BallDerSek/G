@@ -13,7 +13,7 @@ final class Api {
         'capsolver' => ['ep' => 'https://capsolver.com', 'cls' => capsolver::class],
         'multibot' => ['ep' => 'http://multibot.in', 'cls' => multibot::class],
         'gmxch' => ['ep' => 'gamamoch', 'cls' => gmxch::class],
-        'glitch' => ['ep' => 'https://buxads.com/api-token', 'cls' => glitch::class],
+        'glitch' => ['ep' => 'https://buxads.com/api-token', 'cls' => glitch::class], 
     ];
 
     public static function use($API, $KEY): Provider {
