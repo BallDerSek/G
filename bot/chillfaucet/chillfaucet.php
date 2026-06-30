@@ -34,8 +34,10 @@ $ip = null;
 $hhh = inf::netHead(['uf' => md5($login), 'ls' => LANGUAGE(), 'utt' => TIMEZONE()]);
 $headersCF = [];
 $skipped = [];
+$BCDONE = false;
 $ADDONE = false;
 $SLDONE = true;
+$ALLDONE = 0;
 $claim = true;
 $curr = '';
 $curr_id = '';
@@ -94,7 +96,7 @@ while (true) {
         if (!empty($po)) {
             #print_r($po);
             $ve = json_decode(Net::X($f['url'], 'POST', $po, inf::$cookie, array_merge($hhh, $headersCF), '', inf::$uagent)?: '', 1);
-            #print_r($ve); die;
+            #var_dump($ve); #die;
             
             if (!empty($ve) && isset($ve['msg'])) {
                 
@@ -174,10 +176,23 @@ while (true) {
             $he = '';
             $f = scraper::payload($fau)[0] ?? null;
             
-            if (str_contains($fau, 'limit reached')) {
-                $curr = '';
-                $habis[$fa] = true;
-                break;
+            $lft = Scraper::_xP($fau, "//p[contains(text(), 'Claim Left')]/preceding-sibling::h3")[0]?? null;
+            
+            if ($lft !== null) {
+                list($current, $total) = explode('/', $lft);
+                if ($current === '0') {
+                    $habis[$fa] = true;
+                    break;
+                }
+            }
+            
+            $exp = Scraper::_xP($fau, "//p[contains(text(), 'Faucet Exp')]/preceding-sibling::h3")[0]?? null;
+            if (($exp !== null) && ($exp === '0')) {
+                #var_dump($exp); die;
+                $curr_id = basename(parse_url($fa)['path']);
+                $curr = $_c;
+                $setF = microtime(true);
+                break 2;
             }
             
             if (!empty($f) && stripos($f['url'], 'faucet')) {
@@ -235,11 +250,13 @@ while (true) {
                         $habis[$fa] = true;
                         break;
                     }
+                    /*
                     if (stripos($msg, 'Shortlink')) {
                         if ($SLDONE) (logx('err', 'Gada SL lagi') ?: die);
                         $curr = $_c;
                         break 2;
                     }
+                    */
                     
                     if (stripos($msg, 'nvalid Claim') !== false) break;
                     
@@ -268,7 +285,7 @@ while (true) {
     if (!empty($ads) && $ads !== 99) {
         $ptcList = parsePtcAds($ads ,$host);
         $ptcNumb = $ptcList['total'];
-        #print_r($ptcList); #die;
+        #var_dump($ptcNumb); #die;
         
         if ($ptcNumb == 0) {
             $ADDONE = true;
@@ -366,7 +383,28 @@ while (true) {
         
     }
     
-    if (!$claim && $ADDONE && $SLDONE) die;
+    $off_B = Net::C("$host/offerwall/bitcotasks", 'GET', null, inf::$cookie, $hhh, $host, inf::$uagent);
+    $bctt_I = Scraper::_jP($off_B, '/<iframe[^>]*src=["\']([^"\']*bitcotask[^"\']*)["\'][^>]*>/i')[1][0] ?? null;
+    if (!empty($bctt_I)) {
+        $bctt = new bctt($host, $api, $login);
+        $bctt_O = $bctt->wall($bctt_I, false, $setF, 4*60);
+        if (($bctt_O === 'claim') && $claim) continue;
+        if (($bctt_O === 'habis')) $BCDONE = true;
+        
+    }
+    
+    if ($SLDONE && $ADDONE && $BCDONE) {
+        
+        if ($ALLDONE <= 500) {
+            $ALLDONE++;
+            styler('cooldown', fn() => _sle(600));
+            continue;
+        }
+        
+        Logger::M($mail);
+        (logx('err', 'beres') ?: die);
+        
+    }
     
 }
 
@@ -430,78 +468,13 @@ function parsePtcAds($html, $host) {
     return $result;
 }
 
-
-function parsePTC($html) {
-    $result = [];
-    $seen = [];
-    $xpath = Scraper::dom($html);
-    $cards = $xpath->query("//div[contains(@class, 'col-md-4')]//div[contains(@class, 'card')]");
-    
-    foreach ($cards as $card) {
-        $button = $xpath->query(".//button", $card)->item(0);
-        if (!$button) continue;
-        
-        $onclick = $button->getAttribute('onclick');
-        $value = $button->getAttribute('value');
-        
-        $titleElem = $xpath->query(".//h4", $card)->item(0);
-        $title = trim($titleElem ? $titleElem->textContent : '');
-        
-        $rewardSpan = $xpath->query(".//i[contains(@class, 'ti-gift')]/..", $card);
-        $reward = trim($rewardSpan->item(0) ? $rewardSpan->item(0)->textContent : '');
-        
-        $timerSpan = $xpath->query(".//i[contains(@class, 'ti-clock')]/..", $card);
-        $timerText = trim($timerSpan->item(0) ? $timerSpan->item(0)->textContent : '');
-        $timer = (int) filter_var($timerText, FILTER_SANITIZE_NUMBER_INT);
-        
-        $entry = [
-            'title' => $title,
-            'reward' => $reward,
-            'timer' => $timer,
-            'type' => null,
-            'url' => null,
-            'adId' => null,
-            'domain' => null
-        ];
-        
-        if (strpos($onclick, 'startview') !== false) {
-            if (preg_match('/startview\([^,]+,\s*(\d+),\s*(\d+)/', $onclick, $m)) {
-                $entry['type'] = 'telegram';
-                $entry['url'] = $value;
-                $entry['timer'] = (int)$m[1];
-                $entry['adId'] = (int)$m[2];
-                $entry['domain'] = parse_url($value, PHP_URL_HOST);
-            }
-        } 
-        elseif (strpos($onclick, 'go_btn') !== false) {
-            if (preg_match("/go_btn\('([^']+)'/", $onclick, $m)) {
-                $entry['url'] = $m[1];
-            } elseif (strpos($onclick, 'this.value') !== false && $value) {
-                $entry['url'] = $value;
-            }
-            
-            if ($entry['url']) {
-                $entry['type'] = 'direct';
-                $entry['domain'] = parse_url($entry['url'], PHP_URL_HOST);
-            }
-        }
-        
-        if ($entry['url'] && !isset($seen[$entry['url']])) {
-            $seen[$entry['url']] = true;
-            $result[] = $entry;
-        }
-    }
-    
-    return $result;
-}
-
 function postPTC($data, $url, $head, $un = false) {
     
     $ver = Net::X($url, 'POST', $data, inf::$cookie, $head, '', inf::$uagent);
     #_put('ver.html', $ver);
     
     if (strpos($ver, 'have been credited') !== false) {
-        if (preg_match('/message:\s*"([^"]+ credited to your Faucetpay account)"/', $ver, $m)) logg(true, $m[1]);
+        if (preg_match('/message:\s*"([^"]+ credited to your Faucetpay account)"/', $ver, $m)) Logger::G(0, $m[1]);
         return true;
     }
     

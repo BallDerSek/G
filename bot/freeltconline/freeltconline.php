@@ -31,8 +31,8 @@ $ip = '';
 $hhh = inf::netHead(['uf' => md5($mail), 'ls' => LANGUAGE(), 'utt' => TIMEZONE()]);
 $limit = false;
 $claim = true;
-$SLDONE = false;
-$ADDONE = false;
+$SLDONE = true;
+$ADDONE = true;
 $ALLDONE = 0;
 $skipped = [];
 $can_withdraw = true;
@@ -178,7 +178,7 @@ while (true) {
                 $m = Scraper::_jP($cla, "/Swal\.fire\(\s*'[^']+'\s*,\s*'([^']+)'/") ?? null;
                 
                 if (isset($m[1][0])) {
-                    print(FGd['CYN'].maskEmail($mail).RSET." ");
+                    Logger::M($mail);
                     logg(0, $m[1][0]);
                     
                     $atbforce = false;
@@ -206,19 +206,19 @@ while (true) {
         if ($ptcNumb <= 1) {
             $ADDONE = true;
         } else {
-            #print_r($ptcList);
+            #print_r($ptcList['local']);
             
             if (!empty($ptcList['local']) && !$ADDONE) {
                 foreach ($ptcList['local'] as $ptc) {
-                    
+                    /*
                     $ADDONE = true;
                     continue;
-                    
+                    */
                     [$ad_u, $ad_t] = $ptc;
                     $cla = null;
                     $view = null;
                     
-                    $view = Net::C($ad_u, 'GET', null, inf::$cookie, [], "$host/ptc", inf::$uagent, false, false, $ip);
+                    $view = Net::C($ad_u, 'GET', null, inf::$cookie, $hhh, "$host/ptc", inf::$uagent, false, false, $ip);
                     #_put('view.html', $view);
                     if ($view === 99) continue 2;
                     if (!empty($view) && $view !== 99) {
@@ -239,10 +239,16 @@ while (true) {
                         if (!empty($po)) {
                             styler("waiting for ads: $ad_t", fn() => _sle($ad_t));
                             $cla = Net::X($f['url'], 'POST', $po, inf::$cookie, $hhh, $ad_u, inf::$uagent, false, true, $ip);
-                            _put('cla.html', $cla); die;
+                            #_put('cla.html', $cla); die;
                             if (empty($cla) || ($cla === 99)) continue;
                             
-                            
+                            $m = Scraper::_jP($cla, "/Swal\.fire\(\s*'[^']+'\s*,\s*'([^']+)'/") ?? null;
+                            #print_r($m);
+                            if (isset($m[1][0])) {
+                                Logger::M($mail);
+                                logg(0, $m[1][0]);
+                                
+                            }
                         }
                         
                         
@@ -255,6 +261,7 @@ while (true) {
             }
             
             if (!empty($ptcList['bctt'])) {
+                #print_r($ptcList);
                 foreach ($ptcList['bctt'] as $ptc) {
                     [$ad_u, $ad_t] = $ptc;
                     $bctt = new Bctt($host, $api, $mail);
@@ -308,6 +315,7 @@ while (true) {
 
 
 tes:
+    
     
     
     

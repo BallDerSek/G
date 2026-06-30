@@ -343,7 +343,8 @@ class Owme {
     }
 
     public function cleanup() {
-        return @unlink($this->cookieFile);
+        if (empty($this->workDir)) return;
+        return $this->rmdir($this->workDir);
     }
 
 }

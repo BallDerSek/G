@@ -112,7 +112,7 @@ foreach ($chunks as $cIdx => $batch) {
                 $domain = parse_url($info['host'])['host'];
                 
                 $userDisp = maskEmail($accs[$idx]['mail']);
-                Logger::M($mail);
+                Logger::M($accs[$idx]['mail']);
                 Logger::X('info', "$domain ", false, true);
                 
                 if (!empty($res)) {
@@ -145,7 +145,7 @@ foreach ($chunks as $cIdx => $batch) {
                         $processedUrls[$idx][] = $info['host'];
                     }
                     
-                }
+                } else Logger::X();
                 @unlink($info['cFile']);
             }
 

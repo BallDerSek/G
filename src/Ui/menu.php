@@ -130,11 +130,11 @@ class KEYS {
         $endpoint = self::maps((string)getenv('API'));
         $apiKey = trim((string)getenv('KEY'));
 
-        if ($endpoint === '' || $apiKey === '') (Logger::X('err', 'API/KEY required') ?: die);
+        if ($endpoint === '' || $apiKey === '') die(Logger::X('err', 'API/KEY required'));
 
         $solver = Api::use($endpoint, $apiKey);
 
-        if (!self::viewKeys($solver)) (Logger::X('err', 'rejected') ?: die);
+        if (!self::viewKeys($solver)) die(Logger::X('err', 'API/KEY rejected'));
 
         return $solver;
     }
@@ -659,17 +659,11 @@ class Menu {
     public static function autoRun() {
         $sel = trim((string)getenv('BOT'));
         
-        if (empty($sel)) {
-            Logger::X('err', "BOT environment variable not set");
-            die();
-        }
+        if (empty($sel)) die(Logger::X('err', "BOT environment variable not set"));
         
         $result = BOTS::exec($sel, null);
         
-        if ($result['status'] === 'error') {
-            Logger::X('err', $result['message']);
-            die();
-        }
+        if ($result['status'] === 'error') die(Logger::X('err', $result['message']));
         
         Logger::X('info', "Auto-running: {$result['bot']}");
         KEYS::sync();

@@ -155,6 +155,11 @@ class Scraper {
         return $match;
     }
     
+    public static function _var($html, $name) {
+        preg_match('/' . preg_quote($name, '/') . '\s*=\s*[\'"]([^\'"]+)[\'"]/', $html, $m);
+        return $m[1] ?? null;
+    }
+    
     # PROBLEMATIC PAYLOAD 
     public static function build($html, $js, $tokenData) {
         $jsContent = is_file($js) ? _get($js) : $js;
@@ -261,5 +266,6 @@ foreach ($inputs as $input) {
         return null;
         
     }
+    
     
 }

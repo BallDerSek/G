@@ -3,7 +3,7 @@ if (!defined('ROOT')) { die; }
 #_die();
 $api = onKeys();
 
-$acc = config::credential([], false, /*['login', 'PROXY']*/);
+$acc = config::credential([], false, ['login', 'PROXY']);
 $login = $acc['login'];
 putenv("PROXY=".$acc['PROXY']);
 
@@ -31,12 +31,10 @@ $ip = null;
 $headersCF = [];
 $skipped = [];
 $ADDONE = false;
+$BCDONE = false;
 $SLDONE = true;
 $ALLDONE = 0;
-$claim = true;
-$curr = '';
-$curr_id = '';
-$habis = [];
+$claim = false;
 
 while (true) {
     $dash = null;
@@ -101,27 +99,103 @@ while (true) {
     } while (empty($dash));
     #_put('dash.html', $dash);
     
-    $side = Net::X($host.'/offers', 'GET', null, inf::$cookie, $headersCF, $host.$r, inf::$uagent);
-    #_put('side.html', $side);
+    $_bal = Scraper::_xP($dash, "//div[contains(@class, 'card-body')][.//h6[contains(text(), 'Balance')]]//h5[contains(text(), 'Coins')]/text()")[0] ?? null;
+    if ($_bal) {
+        Logger::M($login);
+        Logger::X('info', "[ $_bal ]", true, true);
+        $bal = ((int)$_bal);
+        
+        if ($bal >= 40) {
+            $po = null;
+            $jjn = [];
+            $wd = $dash;
+            $jjn = _wd($wd);
+            
+            if (!empty($jjn['payload']) && !empty($jjn['url'])) {
+                $pa = $jjn['payload'];
+                
+                $cap = solve::exec($wd, $host, $api, $pa);
+                if (isset($cap['trouble'])) continue;
+                
+                $walletKey = isset($pa['address']) ? 'address' : (isset($pa['wallet']) ? 'wallet' : 'email');
+                if (empty($pa[$walletKey])) $pa[$walletKey] = $mail;
+                
+                $po = array_merge($pa, $cap);
+                
+                Logger::G(0, '  tes ilmu: '.$jjn['info']['coin'], false);
+                Logger::X('info', ' [ '.$po[$walletKey].' ]');
+                
+                $wdd = json_decode(Net::C($host.$jjn['url'], 'POST', $po, inf::$cookie, [], "$host/dashboard", inf::$uagent)?: '', 1)['message'] ?? null;
+                if (!empty($wdd)) {
+                    print(FGd['CYN'].maskEmail($mail).RSET." ");
+                    Logger::X('info', $wdd);
+                }
+            } else {
+                Logger::X('err', 'gak bisa wd kayaknya');
+            }
+        }
+        
+    }
     
+    $setF = microtime(true);
     $ads = Net::X("$host/ptc", 'GET', null, inf::$cookie, [], "$host/offers", inf::$uagent);
-    var_dump($ads);
+    #var_dump($ads);
     if (!empty($ads) && $ads !== 99) {
         $ptcList = parsePtcAds($ads ,$host);
         $ptcNumb = $ptcList['total'];
         #print_r($ptcList); #die;
-        var_dump($ptcNumb);
         
+        if ($ptcNumb == 0) {
+            $ADDONE = true;
+        } else {
+            
+            if (!empty($ptcList['local'])) {
+                
+            }
+            
+            if (!empty($ptcList['bctt'])) {
+                #print_r($ptcList['bctt']);
+                foreach ($ptcList['bctt'] as $ptc) {
+                    [$ad_u, $ad_t] = $ptc;
+                    $bctt = new Bctt($host, $api, $login);
+                    $ch = $bctt->exec($ad_u, $ad_t);
+                    if ($ch === 99) goto login;
+                    
+                    $endF = microtime(true);
+                    if ($setF > 0 && $claim) {
+                        $balik = $endF - $setF;
+                        if ($balik >= 10 * 60) continue 2;
+                    }
+                }
+            }
+            
+        }
+    }
+    
+    $off_B = Net::X("$host/offers", 'GET', null, inf::$cookie, [], "$host/offers", inf::$uagent);
+    $bctt_I = Scraper::_xP($off_B, "//a[contains(text(), 'Earn More') and contains(@href, 'bitcotasks.com')]/@href")[0] ?? null;
+    if (!empty($bctt_I)) {
+        $bctt = new bctt($host, $api, $login);
+        $bctt_O = $bctt->wall($bctt_I, false, $setF, 4*60);
+        if (($bctt_O === 'claim') && $claim) continue;
+        if (($bctt_O === 'habis')) $BCDONE = true;
+        
+    }
+    
+    if ($SLDONE && $ADDONE && $BCDONE) {
+        
+        if ($ALLDONE <= 500) {
+            $ALLDONE++;
+            styler('cooldown', fn() => _sle(600));
+            continue;
+        }
+        
+        Logger::M($mail);
+        (logx('err', 'beres') ?: die);
         
     }
     
     
-    
-    
-    
-    
-    
-die;
 }
 
 
@@ -172,4 +246,54 @@ function parsePtcAds($html, $host) {
     $result['total'] = count($result['local']) + count($result['bctt']) + count($result['owme']) + count($result['zono']) + count($result['external']);
     
     return $result;
+}
+
+function _wd($html) {
+    preg_match('/const currencies = (\{.*?\});/s', $html, $match);
+    if (empty($match[1])) return false;
+    
+    $currencies = json_decode($match[1], true);
+    if (empty($currencies)) return false;
+    
+    $balance = 0;
+    $xp = Scraper::dom($html);
+    if ($xp) {
+        $nodes = $xp->query("//h5[contains(text(), 'Coins')]");
+        if ($nodes->length > 0) {
+            $text = trim($nodes->item(0)->textContent);
+            if (preg_match('/([\d.]+)\s*Coins/', $text, $m)) {
+                $balance = (float)$m[1];
+            }
+        }
+    }
+    
+    $selectedCurrency = null;
+    foreach ($currencies as $key => $curr) {
+        if (isset($curr['balance_coin']) && $curr['balance_coin'] > 0) {
+            $selectedCurrency = $key;
+            break;
+        }
+    }
+    
+    if (!$selectedCurrency) return false;
+    
+    $currency = $currencies[$selectedCurrency];
+    
+    $payload = [
+        'amount' => $balance,
+        'currency' => $selectedCurrency
+    ];
+    
+    return [
+        'url' => '/withdraw/submit',
+        'method' => 'POST',
+        'payload' => $payload,
+        'info' => [
+            'coin' => $currency['name'],
+            'symbol' => $currency['symbol'],
+            'balance' => $balance,
+            'usd_price' => $currency['usd_price'],
+            'balance_coin' => $currency['balance_coin']
+        ]
+    ];
 }

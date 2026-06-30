@@ -32,8 +32,10 @@ $ip = null;
 $hhh = inf::netHead(['uf' => md5($login), 'ls' => LANGUAGE(), 'utt' => TIMEZONE()]);
 $headersCF = [];
 $skipped = [];
+$BCDONE = false;
 $ADDONE = false;
-$SLDONE = false;
+$SLDONE = true;
+$ALLDONE = 0;
 $claim = true;
 $curr = '';
 $curr_id = '';
@@ -50,7 +52,7 @@ while (true) {
 
         if ($l['ok']) {
             $dash = $l['html'];
-            logx('info', "logged in", false); 
+            logx('info', "Logger::Ged in", false); 
             _sle(3); _clr();
             #var_dump($dash); die;
             break;
@@ -64,7 +66,7 @@ while (true) {
             exit; 
         }
         
-        logx('err', "logging in ", false); 
+        logx('err', "Logger::Ging in ", false); 
         _sle(3); _clr();
         @unlink(inf::$cookie);
         Net::X($host.$r, 'GET', null, inf::$cookie, $headersCF, '', inf::$uagent);
@@ -188,6 +190,16 @@ while (true) {
                 break;
             }
             
+            $exp = Scraper::_xP($fau, "//p[contains(text(), 'Faucet Exp')]/following-sibling::h3")[0]?? null;
+            
+            if (($exp !== null) && ($exp === '0')) {
+                #var_dump($exp); die;
+                $curr_id = basename(parse_url($fa)['path']);
+                $curr = $_c;
+                $setF = microtime(true);
+                break 2;
+            }
+            
             if (!empty($f) && stripos($f['url'], 'faucet')) {
                 #print_r($f); die;
                 $pa = $f['payload'];
@@ -230,7 +242,7 @@ while (true) {
                     logm($login);
                     
                     logx($is_ok ? 'ok' : 'err', "{$stt} ", false);
-                    logg(false, $msg);
+                    Logger::G(false, $msg);
                     
                     if (stripos($msg, 'No Faucet EXP left') !== false) {
                         $curr_id = basename(parse_url($fa)['path']);
@@ -243,6 +255,7 @@ while (true) {
                         $habis[$fa] = true;
                         break;
                     }
+                    
                     /*
                     if (stripos($msg, 'Shortlink')) {
                         if ($SLDONE) (logx('err', 'Gada SL lagi') ?: die);
@@ -375,7 +388,28 @@ while (true) {
         
     }
     
-    if (!$claim && $ADDONE && $SLDONE) die;
+    $off_B = Net::C("$host/offerwall", 'GET', null, inf::$cookie, $hhh, $host, inf::$uagent);
+    $bctt_I = Scraper::_jP($off_B, "/redirectToAboutBlank\s*\(\s*'([^']*bitcotasks[^']*)'/i")[1][0] ?? null;
+    if (!empty($bctt_I)) {
+        $bctt = new bctt($host, $api, $login);
+        $bctt_O = $bctt->wall($bctt_I, false, $setF, 4*60);
+        if (($bctt_O === 'claim') && $claim) continue;
+        if (($bctt_O === 'habis')) $BCDONE = true;
+        
+    }
+    
+    if ($SLDONE && $ADDONE && $BCDONE) {
+        
+        if ($ALLDONE <= 500) {
+            $ALLDONE++;
+            styler('cooldown', fn() => _sle(600));
+            continue;
+        }
+        
+        Logger::M($mail);
+        (logx('err', 'beres') ?: die);
+        
+    }
     
 }
 
@@ -425,17 +459,14 @@ function parsePtcAds($html, $host) {
         $timer = 5;
         $adId = '';
         
-        // startview: URL dari value, timer dari parameter ke-2, adId dari parameter ke-3
         if (preg_match("/startview\s*\(\s*this\.value\s*,\s*(\d+)\s*,\s*(\d+)/", $onclick, $m)) {
             $url = $values[$i] ?? '';
             $timer = (int)$m[1];
             $adId = (int)$m[2];
         }
-        // go_btn dengan URL langsung di parameter
         elseif (preg_match("/go_btn\s*\(\s*'([^']+)'/", $onclick, $m)) {
             $url = $m[1];
         }
-        // go_btn dengan this.value
         elseif (strpos($onclick, 'go_btn') !== false && strpos($onclick, 'this.value') !== false) {
             $url = $values[$i] ?? '';
         }
@@ -448,7 +479,6 @@ function parsePtcAds($html, $host) {
             $url = 'https:' . $url;
         }
         
-        // Ambil timer dari badge kalau belum dapet
         if ($timer === 5 && isset($timers[$i]) && preg_match('/(\d+)\s*S/i', $timers[$i], $tm)) {
             $timer = (int)$tm[1];
         }
@@ -465,7 +495,6 @@ function parsePtcAds($html, $host) {
             $result['owme'][] = [$url, $timer];
         }
         else {
-            // External: return [adId, timer]
             $result['external'][] = [$adId, $timer];
         }
     }
@@ -490,7 +519,7 @@ function postPTC($data, $url, $head, $un = false) {
     #_put('ver.html', $ver);
     
     if (strpos($ver, 'have been credited') !== false) {
-        if (preg_match('/message:\s*"([^"]+ credited to your Faucetpay account)"/', $ver, $m)) logg(true, $m[1]);
+        if (preg_match('/message:\s*"([^"]+ credited to your Faucetpay account)"/', $ver, $m)) Logger::G(0, $m[1]);
         return true;
     }
     

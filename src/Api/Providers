@@ -1,5 +1,6 @@
 <?php
 
+#legacy
 
 class xevil extends Provider {
     
@@ -45,10 +46,12 @@ class xevil extends Provider {
         $_d['main'] = $param['main'];
         
         foreach ($param['opsi'] as $i => $r) {
-            $_d[$i] = $r;
+            $_d[$i + 1] = $r;
         }
         
-        $res =  $this->run('bitcotasks', $_d, true);
+        var_dump($_d);
+        
+        $res = $this->run('bicotasks', $_d, true);
         var_dump($res);
         
         die;

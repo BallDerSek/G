@@ -55,7 +55,7 @@ while ($num < 500) {
     $icons = array_merge($icons, $cc_ic);
 
     _put($dir.'/main.png', base64_decode($cc_im));
-
+#die;
     _put($dir.'/cc.json',json_encode([
         'main' => $cc_im,
         'opsi' => $cc_ic

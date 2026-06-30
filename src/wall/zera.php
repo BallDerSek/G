@@ -20,8 +20,8 @@ class Zera {
         $cleanHost  = trim(preg_replace('/[^a-zA-Z0-9]/', '_', $targetHost), '_');
         
         if (!$cookie) {
-            $workDir = $this->setupWorkDir('zer', $cleanHost, $mail, 300);
-            $this->cookieFile = $workDir . "/" . $this->userdir($mail) . ".tmp";
+            $this->workDir = $this->setupWorkDir('zer', $cleanHost, $mail, 300);
+            $this->cookieFile = $this->workDir . "/" . $this->userdir($mail) . ".tmp";
         } else {
             $this->cookieFile = $cookie;
         }
@@ -206,9 +206,9 @@ class Zera {
         return null;
     }
 
-
     public function cleanup() {
-        return @unlink($this->cookieFile);
+        if (empty($this->workDir)) return;
+        return $this->rmdir($this->workDir);
     }
     
 }

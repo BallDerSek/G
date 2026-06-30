@@ -197,6 +197,7 @@ function _getBal($akun, $host, $app, $coinsOnly = false) {
                 $filteredAkun[] = $acc;
             }
         } else {
+            #print_r($info);
             $saldo = (float)($info['statistics']['portfolio_value'] ?? 0);
             if ($saldo > 0) {
                 $acc['balance'] = $saldo;

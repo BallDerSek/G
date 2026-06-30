@@ -278,7 +278,7 @@ while (true) {
                 $m = scraper::_jP($cla, "/Swal\.fire\(\{.*?title\s*:\s*(['\"])(.*?)\\1.*?\}\)/s") ?? [];
                 if (isset($m[2][0])) {
                     print(FGd['CYN'].maskEmail($mail).RSET." ");
-                    logg(true, $m[2][0]);
+                    Logger::G(0, $m[2][0]);
                     
                     if (stripos($m[2][0], 'has been added')) {
                         $setF = microtime(true);
@@ -527,7 +527,7 @@ while (true) {
                     $m = scraper::_jP($ver, "/Swal\.fire\(\{.*?title\s*:\s*(['\"])(.*?)\\1.*?\}\)/s") ?? [];
                     if (isset($m[2][0])) {
                         print(FGd['CYN'].maskEmail($mail).RSET." ");
-                        logg(true, $m[2][0]);
+                        Logger::G(0, $m[2][0]);
                         break 2;
                     }
                 }
@@ -546,7 +546,7 @@ while (true) {
     
     if (!$claim && $SLDONE && $ADDONE) {
         
-        if ($ALLDONE <= 3) {
+        if ($ALLDONE <= 500) {
             $ALLDONE++;
             styler('cooldown', fn() => _sle(100));
             continue;

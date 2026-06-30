@@ -32,17 +32,18 @@ $sites = [
 while (true) {
 
     if (empty($sites)) {
-        logx('err', "\nALL SITES REACHED LIMIT", true, true);
-        exit;
+        die(Logger::X('err', "\nALL SITES REACHED LIMIT"));
     }
 
     foreach ($sites as $host => $key) {
-        $token = 'token';
+        
         $token = solve::tkn($api, $host, $key, 'rc2');
         
+        if (isset($token['fail'])) continue;
+        
+        $token = $token['done'];
         $domain = parse_url($host)['host'];
-        logx('info', 'SITE: ', false, false);
-        logx('info', $domain, true, true);
+        Logger::X('info', "SITE: $domain", false, false);
         
         $_coo = $cookieFile . '/' . $domain;
         if (!is_dir($_coo)) mkdir($_coo, 0755, true);
@@ -57,7 +58,7 @@ while (true) {
             }
             
             if ($rett0 >= 9) {
-                logx('err', 'broken proxy maybe');
+                Logger::X('err', 'broken proxy maybe');
                 die;
             }
             
@@ -88,19 +89,14 @@ while (true) {
             $page = $pages[$idx++] ?? null;
             $u_nam = basename(parse_url($_url)['path']);
             
-            /* debug 
-            $tmpDir = _lib($host); 
-            _put($tmpDir."/$u_nam.html", $page);
-            */
-            
             if (empty($page)) {
-                logx('warn', "  Skip $u_nam: Empty page response");
+                Logger::X('warn', "  Skip $u_nam: Empty page response");
                 continue;
             }
 
             $forms = scraper::payload($page);
             if (empty($forms)) {
-                logx('warn', "  Skip $u_nam: Form not found");
+                Logger::X('warn', "  Skip $u_nam: Form not found");
                 continue;
             }
 
@@ -126,8 +122,8 @@ while (true) {
                 $u_nam = $coin_map[$i] ?? 'unknown';
                 
                 if (empty($res_html)) {
-                    print(FGo['RED']."  ".str_pad($u_nam, 15) .RSET);
-                    logx('err', "  Empty response on blast", true, true);
+                    print(FGo['RED']."".str_pad($u_nam, 15) .RSET);
+                    Logger::X('err', "  Empty response on blast", true, true);
                     continue;
                 }
 
@@ -139,9 +135,9 @@ while (true) {
                     print(FGo['BLU']."  ".str_pad($u_nam, 15) .RSET);
                     
                     if (stripos($lowMsg, 'sent')) {
-                        logx('ok', " ".$msg, true, true);
+                        Logger::X('ok', " ".$msg, true, true);
                     } else {
-                        logx('warn', " ".$msg, true, true);
+                        Logger::X('warn', " ".$msg, true, true);
                         
                         if (stripos($msg, 'has been blacklisted')) die;
                         
@@ -157,7 +153,7 @@ while (true) {
             }
             
             if ($limitReached >= $totalCoins) {
-                logx('err', "\n  [!] ".strtoupper($domain)." IS FULLY LIMITED", true, true);
+                Logger::X('err', "\n  [!] ".strtoupper($domain)." IS FULLY LIMITED", true, true);
                 unset($sites[$host]); 
             }
         }

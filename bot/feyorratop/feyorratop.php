@@ -541,9 +541,19 @@ while (true) {
         } while (!$SLDONE);
     }
     
+    $off_B = Net::C("$host/offerwall/bitcotasks", 'GET', null, inf::$cookie, [], "$host/dashboard", inf::$uagent, false, false, $ip);
+    $bctt_I = Scraper::_jP($off_B, '/<iframe[^>]*src=["\']([^"\']*bitcotask[^"\']*)["\'][^>]*>/i')[1][0] ?? null;
+    
+    if (!empty($bctt_I)) {
+        $bctt = new bctt($host, $api, $mail);
+        $bctt_O = $bctt->wall($bctt_I, false, $setF, 4*60);
+        if (($bctt_O === 'claim') && $claim) continue;
+        
+    }
+    
     if (!$claim && $SLDONE && $ADDONE) {
         
-        if ($ALLDONE <= 3) {
+        if ($ALLDONE <= 500) {
             $ALLDONE++;
             styler('cooldown', fn() => _sle(100));
             continue;

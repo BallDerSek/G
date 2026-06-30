@@ -32,9 +32,11 @@ final class Logger {
         switch (strtoupper(trim($i))) {
             case 'ERR':
             case 'ERROR':
+            case 'DANGER':
                 $p = BOLD.FGb['RED'];  break;
                 
             case 'INFO':
+            case 'GOOD':
                 $p = $b.FGb['CYN']; break;
             
             case 'WARN':
@@ -43,6 +45,7 @@ final class Logger {
                 
             case 'OK':
             case 'SUC':
+            case 'GREAT':
             case 'SUCCESS':
                 $p = $b.FGb['GRN']; break;
             

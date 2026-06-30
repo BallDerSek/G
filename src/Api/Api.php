@@ -614,7 +614,7 @@ abstract class Provider {
                 $type = Api::errType($code);
 
                 Logger::X('info', "\rApi [ ".static::class.' ] ', false, true);
-                Logger::X('err', "\r{$e->getMessage()}", true, true);
+                Logger::X('err', "{$e->getMessage()}");
 
                 if ($strict) return ['fail' => 1];
 

@@ -20,15 +20,58 @@ class Bctt {
         $cleanHost  = trim(preg_replace('/[^a-zA-Z0-9]/', '_', $targetHost), '_');
         
         if (!$cookie) {
-            $workDir = $this->setupWorkDir('bct', $cleanHost, $mail, 500);
-            $this->cookieFile = $workDir . "/" . $this->userdir($mail) . ".tmp";
+            $this->workDir = $this->setupWorkDir('bct', $cleanHost, $mail);
+            $this->cookieFile = $this->workDir . "/" . $this->userdir($mail) . ".tmp";
         } else {
             $this->cookieFile = $cookie;
+            $this->workDir = '';
         }
     }
     
-    public function wall($url) {
-        if (empty($url)) return false;
+    private function camp($json, $type = 'SL') {
+        
+        if (($json === null) || ($json === false)) return null;
+        
+        if ($type == 'SL') {
+            var_dump($json);
+            
+            die;
+        } else {
+            
+            $result = ['ptcs' => [], 'prom' => []];
+            foreach ($json as $data) {
+                
+                $result['ptcs'][] = [
+                    'data' => [
+                        'hash' => $data['hash'],
+                        'sid' => $data['sid'],
+                        'key' => $data['key'],
+                        'type' => $data['ad_type'],
+                    ],
+                    'info' => [
+                        'title' => $data['title'],
+                        'timer' => $data['duration'],
+                        'reward' => $data['reward']
+                    ]
+                ];
+                
+                
+                
+                
+                
+            }
+            
+            $result['ptcs_'] = count($result['ptcs']);
+            $result['prom_'] = count($result['prom']);
+            
+            return $result;
+            
+        }
+        
+    }
+    
+    public function wall($url, $menu = false, $setF = null, $until = null) {
+        if (empty($url)) return $this->cleanup();
         
         $cc_get = Net::C($url, 'GET', null, $this->cookieFile, [], '', $this->userAgent);
         #_put('ccget.html', $cc_get); die;
@@ -36,9 +79,8 @@ class Bctt {
         $cc_getG = scraper::_jP($cc_get, "/window\.location\.href\s*=\s*['\"]([^'\"]+)['\"]/")[1][0] ?? null;
         if (!empty($cc_getG)) {
             $cc_pre = Net::C($cc_getG, 'GET', null, $this->cookieFile, [], '', $this->userAgent);
-            #_put('ccpre.html', $cc_pre);
             
-        } else{
+        } else {
             if (str_contains($cc_get, '/captcha2')) {
                 $cc_pre = $cc_get;
                 $cc_getG = $url;
@@ -53,7 +95,7 @@ class Bctt {
             if (!empty($cap_u)) {
                 $cc_js = Net::C($this->bct_h . $cap_u, 'GET', null, $this->cookieFile, [], $cc_getG, $this->userAgent);
                 #var_dump($cc_js); die;
-                if ($cc_js === 99) return 99;
+                if ($cc_js === 99) return $this->cleanup(99);
             }
             
         }
@@ -72,19 +114,12 @@ class Bctt {
             
             $cap_get = json_decode(Net::X($this->bct_h . $cc_ep, 'POST', $cc_p0, $this->cookieFile, [], $cc_getG, $this->userAgent, true) ?: '', true);
             
-            /*
-            _put('cc.html', $cc_pre);
-            _put('cc.json', json_encode($cap_get, JSON_PRETTY_PRINT));
-            _put('cc.js', $cc_js);
-            */
-            
-            if (!empty($cap_get['options']) && !empty($cap_get['pixel'])) $solution = Retry::untilArray(fn() => $this->_solve($cap_get), 3, 1);
+            if (!empty($cap_get['options']) && !empty($cap_get['pixel'])) $solution = $this->_solve($cap_get);
             
         }
         
         $cc_wall = null;
-        if ($fjs && $solution) {
-            if ($solution === 71) return 71;
+        if ($fjs && is_array($solution)) {
             
             $cc_p1 = $this->_buildPayload($fjs, null, $solution);
             
@@ -101,15 +136,12 @@ class Bctt {
         }
         
         $content = null;
-        if (!empty($cc_wall)) {
-            $content = Net::C($cc_wall, 'GET', null, $this->cookieFile, [], '', $this->userAgent);
-        }
+        if (!empty($cc_wall)) $content = Net::C($cc_wall, 'GET', null, $this->cookieFile, [], '', $this->userAgent);
         
         $_0 = $content ?? $cc_get ?? null;
         $_0u = $cc_wall ?? $url;
         
         if (!empty($_0)) {
-            _put('0.html', $_0);
             
             $param = [
                 'tkn' => Scraper::_pP($_0, 'token')[0] ?? null,
@@ -117,73 +149,141 @@ class Bctt {
                 'key' => Scraper::_pP($_0, 'apiKey')[0] ?? null
             ];
             
-            if (in_array(null, $param, true)) return false;
+            if (in_array(null, $param, true)) return $this->cleanup();
             
+            else {
+                $adsList = null;
+                $tkn = $param['tkn'];
+                
+                $po = [
+                    'type' => 'ptc',
+                    'token' => $tkn,
+                    'action' => 'switch_cat'
+                ];
+                
+                $_1 = json_decode(Net::X($url, 'POST', $po, $this->cookieFile, [], $_0u, $this->userAgent)?: '', 1)['items'] ?? null;
+                #var_dump($_1);
+                if (!empty($_1)) $adsList = $this->camp($_1, 'AD');
+                elseif (empty($_1)) return $this->cleanup('habis');
+                #var_dump($adsList);
+                if ($adsList && !$menu) {
+                    if (!empty($adsList['ptcs']) && $adsList['ptcs_'] !== 0) {
+                        
+                        foreach ($adsList['ptcs'] as $_ptc) {
+                            $info = $_ptc['info'];
+                            $data = $_ptc['data'];
+                            
+                            if ($setF > 0) {
+                                $endF = microtime(true);
+                                $balik = $endF - $setF;
+                                if ($balik >= $until) return $this->cleanup('claim');
+                            }
+                            
+                            $pa = array_merge($data, ['token' => $tkn, 'action' => 'init_transaction']);
+                            $_2 = json_decode(Net::X($url, 'POST', $pa, $this->cookieFile, [], $_0u, $this->userAgent)?: '', 1);
+                            
+                            if (isset($_2['status']) && $_2['status'] === 200) {
+                                
+                                $this->exec($_2['offer'], $info['timer'], true, $data); 
+                            }
+                        }
+                    }
+                    return $this->cleanup(true);
+                }
+                
+            }
             
-            print_r($param);
-            
-            
-            die;
         }
         
-        return false;
+        return $this->cleanup(false);
         
     }
     
-    public function exec($url, $tmr = 5, $wall = false) {
-        #var_dump($url);
-        if (empty($url)) return false;
+    public function exec($url, $tmr = 5, $wall = false, $data = null) {
         
-        #Logger::X('info', "[ bitcotasks.com {$tmr}s ] ", false, true);
+        #var_dump($url); #die;
+        if (empty($url)) return $this->cleanup(false);
         
-        $cc_get = Net::C($url, 'GET', null, $this->cookieFile, [], '', $this->userAgent);
+        $cc_get = Net::C($url, 'GET', null, $this->cookieFile, [], $url, $this->userAgent);
+        #_put('ccget.html', $cc_get); die;
+        
         $cc_getG = scraper::_jP($cc_get, "/window\.location\.href\s*=\s*['\"]([^'\"]+)['\"]/")[1][0] ?? null;
-        
         $param = null;
-        if (!empty($cc_getG)) {
+        $set = microtime(true);
+        if (!empty($cc_getG) && !str_contains($cc_get, '/captcha')) {
             
-            Net::X($cc_getG, 'POST', ['action' => 'start_view'], $this->cookieFile, [], $cc_getG, $this->userAgent);
-            $set = microtime(true);
+            $cc_pre = Net::C($cc_getG, 'GET', null, $this->cookieFile, [], $url, $this->userAgent);
             
-            $cc_pre = Net::C($cc_getG, 'GET', null, $this->cookieFile, [], '', $this->userAgent);
-            #_put('ccpre.html', $cc_pre); die;
-            if (str_contains($cc_pre,'Forbidden')) return false;
-            
-            if ($cc_pre === 99) return 99;
-            
-            if (!empty($cc_pre) && $cc_pre !== 99) {
-                #var_dump($cc_pre);
-                $tm = Scraper::_jP($cc_pre, '/var\s+duration\s*=\s*(\d+)/');
-                
-                $cap_u = scraper::_xP($cc_pre, "//script[contains(@src,'captcha2/')]/@src")[0] ?? null;
-                
-                preg_match("/window\.(?:open|location\.replace)\('([^']+)'\)/", $cc_pre, $m);
-                $target_url = $m[1] ?? null;
-                if (!$target_url && preg_match("/location\.replace\('([^']+)'\)/", $cc_pre, $m)) {
-                    $target_url = $m[1] ?? null;
-                }
-                
-                $action = null;
-                if (preg_match("/action:\s*'([^']+)'/", $cc_pre, $m) && $m[1] !== 'start_view') $action = $m[1];
-                elseif (preg_match("/'action':\s*'([^']+)'/", $cc_pre, $m) && $m[1] !== 'start_view') $action = $m[1];
-                elseif (preg_match("/action\s*=\s*['\"]([^'\"]+)['\"]/", $cc_pre, $m) && $m[1] !== 'start_view') $action = $m[1];
-                else $action = 'proccessLead';
-                
-                $param = [
-                    'hash' => Scraper::_pP($cc_pre,'hash')[0] ?? null,
-                    'token' => Scraper::_pP($cc_pre,'token')[0] ?? null,
-                    'sub_id' => Scraper::_pP($cc_pre,'sub_id')[0] ?? null,
-                    'api_key' => Scraper::_pP($cc_pre,'api_key')[0] ?? null,
-                    'timer' => !empty($tm[1]) ? (int)$tm[1][0] : $tmr,
-                    'target_url' => $target_url,
-                    'action' => $action
-                ];
-                #print_r($param); die;
-                if (in_array(null, $param, true)) return false;
-                
+        } else {
+            if (str_contains($cc_get, '/captcha2')) {
+                $cc_pre = $cc_get;
+                $cc_getG = $url;
             }
         }
         
+        if (!empty($cc_pre) && $cc_pre !== 99) {
+            #_put('ccpre.html', $cc_pre); die;
+            
+            Net::X($cc_getG, 'POST', ['action' => 'start_view'], $this->cookieFile, [], $cc_getG, $this->userAgent);
+            
+            if (str_contains($cc_pre, 'Forbidden')) return $this->cleanup(false);
+            
+            $tm = Scraper::_jP($cc_pre, '/var\s+duration\s*=\s*(\d+)/');
+            $cap_u = scraper::_xP($cc_pre, "//script[contains(@src,'captcha2/')]/@src")[0] ?? null;
+            
+            $target_url = null;
+            if (preg_match("/(?:window\.open|window\.location\.replace)\s*\(\s*['\"]([^'\"]+)['\"]/s", $cc_pre, $m)) {
+                $target_url = $m[1];
+                if (strpos($target_url, 'google.com/url') !== false) {
+                    parse_str(parse_url($target_url, PHP_URL_QUERY), $params);
+                    $target_url = $params['url'] ?? $target_url;
+                }
+            }
+            
+            $action = 'proccessLead';
+            if (preg_match("/action:\s*'([^']+)'/", $cc_pre, $m) && $m[1] !== 'start_view') {
+                $action = $m[1];
+            } elseif (preg_match("/'action':\s*'([^']+)'/", $cc_pre, $m) && $m[1] !== 'start_view') {
+                $action = $m[1];
+            }
+            
+            $hash = Scraper::_pP($cc_pre, 'hash')[0] ?? $data['hash'] ?? null;
+            $token = Scraper::_pP($cc_pre, 'token')[0] ?? $data['token'] ?? null;
+            $sub_id = Scraper::_pP($cc_pre, 'sub_id')[0] ?? $data['sid'] ?? null;
+            $api_key = Scraper::_pP($cc_pre, 'api_key')[0] ?? $data['key'] ?? null;
+            
+            if (empty($hash)) {
+                preg_match('/hash\s*=\s*[\'"]([^\'"]+)[\'"]/', $cc_pre, $m);
+                $hash = $m[1] ?? null;
+            }
+            if (empty($token)) {
+                preg_match('/token\s*=\s*[\'"]([^\'"]+)[\'"]/', $cc_pre, $m);
+                $token = $m[1] ?? null;
+            }
+            if (empty($sub_id)) {
+                preg_match('/sub_id\s*=\s*[\'"]([^\'"]+)[\'"]/', $cc_pre, $m);
+                $sub_id = $m[1] ?? null;
+            }
+            if (empty($api_key)) {
+                preg_match('/api_key\s*=\s*[\'"]([^\'"]+)[\'"]/', $cc_pre, $m);
+                $api_key = $m[1] ?? null;
+            }
+            
+            $param = [
+                'hash' => $hash,
+                'token' => $token,
+                'sub_id' => $sub_id,
+                'api_key' => $api_key,
+                'timer' => !empty($tm[1]) ? (int)$tm[1][0] : $tmr,
+                'target_url' => $target_url,
+                'action' => $action
+            ];
+            #print_r($param);
+            
+            if (in_array(null, $param, true)) return $this->cleanup(false);
+            
+        }
+
         if (!empty($param) && $cc_getG) {
             #var_dump($param);
             $cc_js = Net::C($this->bct_h . $cap_u, 'GET', null, $this->cookieFile, [], $cc_getG, $this->userAgent);
@@ -191,13 +291,12 @@ class Bctt {
             $fjs = null;
             $solution = null;
             if (!empty($cc_js) && $cc_js !== 99) {
-                #styler("waiting for bitcotask", fn() => _sle((int)$tmr));
+                #_put('cc.js', $cc_js);
                 preg_match('/fetch\("([^"]+captcha[^"]+\.js\?action=captcha)"/', $cc_js, $m);
                 $cc_ep = $m[1] ?? $cap_u;
                 
                 $fjs = $this->_get($cc_js);
                 
-
                 $cc_p0 = [
                     't' => round(microtime(true) * 1000),
                     'r' => mt_rand() / mt_getrandmax()
@@ -205,26 +304,20 @@ class Bctt {
                 
                 $cap_get = json_decode(Net::X($this->bct_h . $cc_ep, 'POST', $cc_p0, $this->cookieFile, [], $cc_getG, $this->userAgent, true) ?: '', true);
                 
-                /*
-                _put('cc.html', $cc_pre);
-                _put('cc.json', json_encode($cap_get, JSON_PRETTY_PRINT));
-                _put('cc.js', $cc_js);
-                */
-                
                 if (!empty($cap_get['options']) && !empty($cap_get['pixel'])) {
                     $solution = $this->_solve($cap_get);
-                    if (!$solution) return false;
                 }
             }
             
-            if ($fjs && $solution) {
+            if ($fjs && is_array($solution)) {
+                
                 $cc_p1 = $this->_buildPayload($fjs, $param, $solution);
                 $cap_tok = json_decode(Net::X($this->bct_h . $cc_p1['url'], 'POST', $cc_p1['payload'], $this->cookieFile, [], $cc_getG, $this->userAgent) ?: '', true)[$fjs['cc_ver']] ?? false;
                 if ($cap_tok) {
                     $end = microtime(true);
                     if (($wait = (int)$param['timer'] - ($end - $set)) >= 0) styler("waiting for bitcotask", fn() => _sle((int)ceil($wait)));
                     
-                    $ccp2 = [
+                    $cc_p2 = [
                         'hash' => $param['hash'],
                         'sub_id' => $param['sub_id'],
                         'key' => $param['api_key'],
@@ -233,13 +326,13 @@ class Bctt {
                         'action' => $param['action']
                     ];
                     
-                    return $this->_set($ccp2, $cc_getG, $wall);
+                    return $this->_set($cc_p2, $cc_getG, $wall);
                     
                 }
             }
         }
         
-        return false;
+        return $this->cleanup(false);
     }
     
     private function _get($js) {
@@ -283,8 +376,6 @@ class Bctt {
         Logger::M($this->email);
         $msg = strip_tags($cc_end['message'] ?? 'ora tau apa isinya');
         if ($cc_end && ($cc_end['status'] ?? 0) == 200) {
-            _clr();
-            Logger::M($this->email);
             Logger::X('info', "[ ".__CLASS__." ] ", false);
             Logger::X('ok', $msg, true, true);
             return true;
@@ -391,8 +482,10 @@ class Bctt {
         ];
     }
     
-    public function cleanup() {
-        return @unlink($this->cookieFile);
+    public function cleanup($flag = false) {
+        if (empty($this->workDir)) return;
+        $this->rmdir($this->workDir);
+        return $flag;
     }
     
 }
