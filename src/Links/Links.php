@@ -1,7 +1,7 @@
 <?php
 
 if (!trait_exists('WorkDir')) {
-    require_once SRCDIR . '/config/Workdir.php.php';
+    require_once SRCDIR . '/config/Workdir.php';
 }
 final class _shortlinks {
     use WorkDir;
