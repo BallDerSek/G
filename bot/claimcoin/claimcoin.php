@@ -186,7 +186,7 @@ while (true) {
             #print_r($f); die;
             
             $po = null;
-            if (!empty($f)) {
+            if (!empty($f['payload']) && !empty($f['url'])) {
                 $pa = $f['payload'];
                 if ($atbfail >= 3) $atbforce = true;
                 $cap = solve::exec($fau, $host, $api, $pa, $atbforce);

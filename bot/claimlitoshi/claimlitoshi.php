@@ -52,7 +52,7 @@ while (true) {
 
         if ($l['ok']) {
             $dash = $l['html'];
-            logx('info', "Logger::Ged in", false); 
+            logx('info', "Logged in", false); 
             _sle(3); _clr();
             #var_dump($dash); die;
             break;
@@ -66,7 +66,7 @@ while (true) {
             exit; 
         }
         
-        logx('err', "Logger::Ging in ", false); 
+        logx('err', "Logging in ", false); 
         _sle(3); _clr();
         @unlink(inf::$cookie);
         Net::X($host.$r, 'GET', null, inf::$cookie, $headersCF, '', inf::$uagent);
