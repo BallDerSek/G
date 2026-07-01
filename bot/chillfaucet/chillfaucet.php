@@ -104,7 +104,7 @@ while (true) {
                 $stt = $ve['status'];
                 logx($stt, $msg, false, true);
                 
-                if (str_contains($msg,' banned') || str_contains($msg, 'blocked')) die;
+                if (str_contains($msg,' banned') || str_contains($msg, 'blocked') || str_contains($msg, 'not allowed')) die;
                 _clr();
                 
             }
