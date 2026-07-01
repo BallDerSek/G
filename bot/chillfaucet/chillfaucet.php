@@ -363,17 +363,17 @@ while (true) {
             }
             
             if (!empty($ptcList['bctt'])) {
-                #print_r($ptcList['bctt']);
+                #print_r($ptcList['bctt']); die;
                 foreach ($ptcList['bctt'] as $ptc) {
                     [$ad_u, $ad_t] = $ptc;
                     $bctt = new Bctt($host, $api, $login);
                     $ch = $bctt->exec($ad_u, $ad_t);
                     if ($ch === 99) goto login;
-                    
+                    if ($ch === 'forbidden') break;
                     $endF = microtime(true);
                     if ($setF > 0 && $claim) {
                         $balik = $endF - $setF;
-                        if ($balik >= 10 * 60) continue 2;
+                        if ($balik >= 4 * 60) continue 2;
                     }
                     
                 }

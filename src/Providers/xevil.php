@@ -27,7 +27,7 @@ class xevil extends Provider {
         do {
             _sle(5);
             $r = Net::S($this->baseUrl."/res.php", "GET", ["key" => $this->apiKey.'|SOFTID7745286578', "id"  => $jobId, "action"=> 'get']) ?: '';
-                
+var_dump($r);
             if (str_starts_with($r, 'OK|')) return explode('|', $r, 2)[1];
             
             if (empty($r) || Api::errType($r) === 'ret') continue;
@@ -41,11 +41,21 @@ class xevil extends Provider {
     
     public function bctt($param, $j) {
         
-        $_d['main'] = $param['main'];
         
-        foreach ($param['opsi'] as $i => $r) {
-            $_d[$i + 1] = $r;
+        foreach ($j['options'] as $i => $r) {
+            $_w = $r['width'];
+            $_h = $r['height'];
+            $_p = $r['pixels'];
+            
+            $_d[$i + 1] = "{$_w}w" . "{$_h}h" . $_p;
+            
         }
+        $_d['main'] = $j['pixel'];
+        
+        /*
+        $_d['main'] = $param['main'];
+        foreach ($param['opsi'] as $i => $r) $_d[$i + 1] = $r;
+        */
         
         var_dump($_d);
         

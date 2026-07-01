@@ -8,10 +8,10 @@
 if (!defined('ROOT')) define('ROOT', realpath(__DIR__ . '/../'));
 if (!defined('RUNNER')) define('RUNNER', '31.9.2'); 
 if (!defined('LIBDIR')) define('LIBDIR', ROOT . '/lib'); 
-if (!defined('SRCDIR')) define('SRCDIR', ROOT . '/src');
-if (!defined('UPDDIR')) define('UPDDIR', ROOT . '/upd');
-if (!defined('BOTDIR')) define('BOTDIR', ROOT . '/bot');
 if (!defined('CREDIR')) define('CREDIR', ROOT . '/cre');
+if (!defined('SRCDIR')) define('SRCDIR', ROOT . '/src');
+if (!defined('BOTDIR')) define('BOTDIR', ROOT . '/bot');
+if (!defined('UPDDIR')) define('UPDDIR', ROOT . '/upd');
 
 define("ANN", "\033["); 
 define("FG256", ANN."38;5;"); define("BG256", ANN."48;5;");
@@ -56,10 +56,10 @@ define("BG", [
 ]);
 
 (function() {
-    if (!is_dir(LIBDIR)) mkdir(LIBDIR, 0777, true);
-    if (!is_dir(SRCDIR)) mkdir(SRCDIR, 0777, true);
-    if (!is_dir(BOTDIR)) mkdir(BOTDIR, 0777, true);
-    if (!is_dir(CREDIR)) mkdir(CREDIR, 0777, true);
+    if (!is_dir(LIBDIR)) @mkdir(LIBDIR, 0777, true);
+    if (!is_dir(SRCDIR)) @mkdir(SRCDIR, 0777, true);
+    if (!is_dir(BOTDIR)) @mkdir(BOTDIR, 0777, true);
+    if (!is_dir(CREDIR)) @mkdir(CREDIR, 0777, true);
 } )();
 
 (function() {

@@ -298,7 +298,7 @@ while (true) {
                     $bctt = new Bctt($host, $api, $mail);
                     $ch = $bctt->exec($ad_u, $ad_t);
                     if ($ch === 99) goto login;
-                    
+                    if ($ch === 'forbidden') break;
                     $endF = microtime(true);
                     if ($setF > 0 && $claim) {
                         $balik = $endF - $setF;
