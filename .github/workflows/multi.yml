@@ -3,7 +3,7 @@ name: Multi Runner
 on:
   workflow_dispatch:
     inputs:
-      bot: { default: shortlink, required: true }
+      bot: { default: claimlitoshi, required: true }
       accounts: { default: '["0"]', required: true }
       pass: { required: false }
       api:
