@@ -179,6 +179,10 @@ class Config {
         return self::$ua_static;
     }
 
+    public static function resetUA() {
+        self::$ua_static = null;
+    }
+
     private static function genUA() {
         $rand = mt_rand(1, 100);
 

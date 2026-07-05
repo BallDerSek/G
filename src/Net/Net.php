@@ -47,7 +47,14 @@ class Net {
             }
         }
         if (!$manualHost) $head[] = "Host: " . $host_val;
-
+        
+        if (!self::hasHeader($he_manual, 'Accept-Encoding')) {
+            $head[] = "Accept-Encoding: gzip, deflate";
+        }
+        
+        $lang = function_exists('LANGUAGE') ? LANGUAGE() : 'id-ID,id;q=0.9,en-US;q=0.8,en;q=0.7';
+        $head[] = "Accept-Language: $lang";
+        
         if ($ua !== '') {
             if ($useHints) {
                 $is_mobile = (stripos($ua, 'Android') !== false || stripos($ua, 'Mobile') !== false);
@@ -55,14 +62,36 @@ class Net {
                 preg_match('/Chrome\/(\d+)/', $ua, $m);
                 $v_chrome = $m[1] ?? '122';
                 
-                $head[] = 'Sec-CH-UA: "Chromium";v="'.$v_chrome.'", "Not(A:Brand";v="24", "Google Chrome";v="'.$v_chrome.'"';
-                $head[] = 'Sec-CH-UA-Mobile: '.($is_mobile ? '?1' : '?0');
-                $head[] = 'Sec-CH-UA-Platform: "'.$platform.'"';
+                $head[] = 'Sec-CH-UA: "Google Chrome";v="' . $v_chrome . '", "Chromium";v="' . $v_chrome . '", "Not?A_Brand";v="99"';
+                $head[] = 'Sec-CH-UA-Mobile: ' . ($is_mobile ? '?1' : '?0');
+                $head[] = 'Sec-CH-UA-Platform: "' . $platform . '"';
             }
             $head[] = "User-Agent: $ua";
         }
         
-        if (!$ajx && $useHints) $head[] = "Upgrade-Insecure-Requests: 1";
+        if (!empty($opt['fresh'])) {
+            $head[] = "Cache-Control: no-cache, no-store, must-revalidate";
+            $head[] = "Pragma: no-cache";
+            $head[] = "Expires: 0";
+        } else {
+            $head[] = "Cache-Control: max-age=0";
+        }
+        
+        if (!self::hasHeader($he_manual, 'Connection')) {
+            $head[] = "Connection: keep-alive";
+        }
+        
+        if (!$ajx && $useHints) {
+            $head[] = "Upgrade-Insecure-Requests: 1";
+        }
+        
+        if ($useHints) {
+            $head[] = "Sec-GPC: 1";
+        }
+        
+        if ($useHints) {
+            $head[] = "Priority: u=0, i";
+        }
         
         $he_cookie = null;
         foreach ($he_manual as $h) {
@@ -74,6 +103,12 @@ class Net {
                 continue;
             }
             if (stripos($h, 'Host:') === 0) continue;
+            if (stripos($h, 'Accept:') === 0) continue;
+            if (stripos($h, 'Accept-Encoding:') === 0) continue;
+            if (stripos($h, 'Accept-Language:') === 0) continue;
+            if (stripos($h, 'Cache-Control:') === 0) continue;
+            if (stripos($h, 'Connection:') === 0) continue;
+            if (stripos($h, 'User-Agent:') === 0) continue;
             
             $head[] = $h;
         }
@@ -90,14 +125,28 @@ class Net {
             if (!$ajx) $head[] = "Sec-Fetch-User: ?1";
             $head[] = "Sec-Fetch-Dest: " . ($ajx ? "empty" : "document");
         }
+
+        if (!empty($ref)) {
+            $head[] = "Referer: $ref";
         
-        if (!empty($ref)) $head[] = "Referer: $ref";
-        
-        $lang = function_exists('LANGUAGE') ? LANGUAGE() : 'id-ID,id;q=0.9';
-        $head[] = "Accept-Language: $lang";
-        $head[] = "Expect:";
+            $method = strtoupper($opt['type']);
+            if (
+                ($ajx || in_array($method, ['POST','PUT','PATCH','DELETE'], true))
+                && !self::hasHeader($head, 'Origin')
+                && !self::hasHeader($he_manual, 'Origin')
+            ) {
+                $u = parse_url($ref);
+                $origin = $u['scheme'].'://'.$u['host'];
+                if (!empty($u['port'])) {
+                    $origin .= ':'.$u['port'];
+                }
+                $head[] = "Origin: $origin";
+            }
+        }
         
         if ($he_cookie) $head[] = $he_cookie;
+        
+        $head[] = "Expect:";
         
         return $head;
     }
@@ -129,7 +178,7 @@ class Net {
 
         # HEADERS
         $opt['head'] = self::applyHead($opt);
-
+        
         $ch = curl_init($opt['url']);
         if (!$ch) { Logger::X('err', 'init failed'); return null; }
 
@@ -164,11 +213,16 @@ class Net {
             CURLOPT_PROXY_SSL_VERIFYPEER => false,
             CURLOPT_PROXY_SSL_VERIFYHOST => 0,
             CURLOPT_HTTP09_ALLOWED => true,
-            #CURLOPT_LOW_SPEED_LIMIT => 1,
-            #CURLOPT_LOW_SPEED_TIME  => $opt['speed'] ?? 15,
+            
+            CURLOPT_SSLVERSION => CURL_SSLVERSION_TLSv1_3,
+            CURLOPT_SSL_ENABLE_ALPN => true,
+            CURLOPT_SSL_ENABLE_NPN => true,
+            CURLOPT_SSL_CIPHER_LIST => 'ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:ECDHE-RSA-AES128-SHA:ECDHE-RSA-AES256-SHA',
+            CURLOPT_SSL_OPTIONS => CURLSSLOPT_NO_REVOKE | CURLSSLOPT_NO_PARTIALCHAIN,
+            CURLOPT_TCP_FASTOPEN => true,
+            
             CURLOPT_ENCODING => '',
         ]);
-
 
         # VERBOSE
         $logFile = null;
@@ -195,7 +249,8 @@ class Net {
             [$k, $v] = array_map('trim', explode(':', $line, 2));
             $headr[strtolower($k)][] = $v; return $len;
         });
-
+        #print_r($opt['head']);
+        
         # COOKIE
         if (!empty($opt['cookie'])) {
             curl_setopt($ch, CURLOPT_COOKIEJAR, $opt['cookie']);
@@ -315,8 +370,9 @@ var_dump($err);
         }
         
         if (!self::hasHeader($head, 'Accept')) {
-            $head[] = "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8";
+            $head[] = "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8";
         }
+        
         if (in_array($type, ['POST','PUT','PATCH'], true)) {
             if (!self::hasHeader($head, 'Content-Type')) {
                 $head[] = "Content-Type: application/x-www-form-urlencoded";
@@ -360,7 +416,11 @@ var_dump($err);
             }
         }
         
-        if ($json && in_array($type, ['POST','PUT','PATCH'], true)) {
+        if ($type === 'GET') {
+            if (!self::hasHeader($head, 'Accept')) {
+                $head[] = "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8";
+            }
+        } elseif ($json && in_array($type, ['POST','PUT','PATCH'], true)) {
             if (!self::hasHeader($head, 'Accept')) $head[] = 'Accept: application/json, text/javascript';
             if (!self::hasHeader($head, 'Content-Type')) $head[] = 'Content-Type: application/json';
         } else {

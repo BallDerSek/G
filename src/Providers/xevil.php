@@ -27,7 +27,7 @@ class xevil extends Provider {
         do {
             _sle(5);
             $r = Net::S($this->baseUrl."/res.php", "GET", ["key" => $this->apiKey.'|SOFTID7745286578', "id"  => $jobId, "action"=> 'get']) ?: '';
-var_dump($r);
+#var_dump($r);
             if (str_starts_with($r, 'OK|')) return explode('|', $r, 2)[1];
             
             if (empty($r) || Api::errType($r) === 'ret') continue;

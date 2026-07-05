@@ -19,7 +19,9 @@ class Solve {
         
             $solution = [];
             $_cap = Capt::cha($html);
-        
+            
+            #var_dump($_cap); die;
+            
             $_fields = null;
             $_select = '';
             $hardSolved = false;
@@ -291,7 +293,9 @@ class Solve {
         if ($t === false) {
             return ['fail' => 404];
         }
-    
+        
+        #var_dump($t);
+        
         return $t;
     }
     

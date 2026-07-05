@@ -260,6 +260,8 @@ while (true) {
                     $setF = microtime(true);
                     break;
                 }
+                /*
+                */
                 
                 styler('Waiting for faucet', fn() => _sle(30));
                 continue;
@@ -300,7 +302,7 @@ while (true) {
             $ADDONE = true;
         } else {
             
-            if (!empty($ptcList['local']) && !$ADDONE) {
+            if (!empty($ptcList['local'])) {
                 foreach ($ptcList['local'] as $ptc) {
                     [$ad_u, $ad_t] = $ptc;
                     $cla = null;
@@ -320,7 +322,7 @@ while (true) {
                             $_ca = $pa['captcha'];
                             if (($_ca === 'hcaptcha') || ($_ca === 'faucetcaptcha')) {
                                 # comment ini kalo mau lanjut solve
-                                $ADDONE = true; break;
+                                #break;
                             }
                             
                             $cap = solve::exec($view, $host, $api, $pa);

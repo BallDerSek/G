@@ -618,6 +618,8 @@ abstract class Provider {
 
                 if ($strict) return ['fail' => 1];
 
+                if (static::class === 'gmxch' && in_array($code, ['INTERNAL_SERVER_ERROR', 'SERVICE_BUSY'], true)) return ['fail' => 777];
+                
                 if (in_array($type, ['ret','con','fail'], true)) {
                     _sle(3);
                     continue;

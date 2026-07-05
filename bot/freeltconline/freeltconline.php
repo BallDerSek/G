@@ -1,6 +1,6 @@
 <?php
 if (!defined('ROOT')) { die; }
-
+#_die();
 $api = onKeys();
 
 $acc = config::credential([], false, ['mail', 'pass', 'PROXY']);
@@ -32,7 +32,7 @@ $hhh = inf::netHead(['uf' => md5($mail), 'ls' => LANGUAGE(), 'utt' => TIMEZONE()
 $limit = false;
 $claim = true;
 $SLDONE = true;
-$ADDONE = true;
+$ADDONE = false;
 $ALLDONE = 0;
 $skipped = [];
 $can_withdraw = true;
@@ -80,12 +80,20 @@ while (true) {
             $pa = $f['payload'];
             $cre = ['uf' => md5($mail), 'ls' => LANGUAGE(), 'utt' => TIMEZONE(), 'email' => $mail, 'password' => $pass];
             $cap = Solve::exec($_0, $host, $api, $pa);
-            
             if (isset($cap['trouble'])) {
                 _sle(10);
                 continue;
             }
-            $po = array_merge($pa, $cap, $cre);
+            
+            if (isset($cap['headers'])) {
+                $extra = array_diff_key($cap, ['solution' => 1, 'headers' => 1]);
+                $po = array_merge($pa, $extra, $cap['solution'], $cre);
+                $he = $cap['headers'];
+            } else {
+                $po = array_merge($pa, $cap);
+                $he = '';
+            }
+            
         }
         
         if (!empty($po)) {
@@ -113,6 +121,59 @@ while (true) {
         
     } while (empty($dash));
     #_put('dash.html', $dash); 
+    
+    if ($dash && str_contains($dash, 'confirm your email')) {
+        $can_withdraw = false;
+    }
+    
+    $_bal = Scraper::_xP($dash, "//div[contains(@class, 'mini-stats-wid')]//p[contains(text(), 'Balance')]/following-sibling::h4/text()")[0] ?? '';
+    if ($_bal) {
+        Logger::M($mail);
+        logx('info', "[ $_bal ]", true, true);
+        $bal = ((int)$_bal);
+        
+        if ($can_withdraw && ($bal >= 5000)) {
+            $po = null;
+            $jjn = [];
+            $wd = $dash;
+            $jjn = _wd($wd);
+            
+            if (!empty($jjn['payload']) && !empty($jjn['url'])) {
+                $pa = $jjn['payload'];
+                
+                $cap = solve::exec($wd, $host, $api, $pa);
+                if (isset($cap['trouble'])) $can_withdraw = false;
+                
+                $walletKey = isset($pa['address']) ? 'address' : (isset($pa['wallet']) ? 'wallet' : 'email');
+                if (empty($pa[$walletKey])) $pa[$walletKey] = $mail;
+                
+                if (isset($cap['headers'])) {
+                    $extra = array_diff_key($cap, ['solution' => 1, 'headers' => 1]);
+                    $po = array_merge($pa, $extra, $cap['solution']);
+                    $he = $cap['headers'];
+                } else {
+                    $po = array_merge($pa, $cap);
+                    $he = '';
+                }
+                
+                Logger::G(true, '  tes ilmu: '.$jjn['info']['coin'], false);
+                Logger::X('info', ' [ '.$po[$walletKey].' ]');
+                
+                $wdd = Net::C($jjn['url'], 'POST', $po, inf::$cookie, [], "$host/withdraw", inf::$uagent, false, false, $ip);
+                
+                $m = Scraper::_jP($wdd, "/Swal\.fire\(\s*'[^']+'\s*,\s*'([^']+)'/") ?? null;
+                if (isset($m[1][0])) {
+                    Logger::M($mail);
+                    Logger::X('info', $m[1][0]);
+                }
+                
+                
+            } else logx('err', 'gak bisa wd kayaknya');
+            
+            
+        }
+        
+    }
     
     $setF = 0;
     if (!$limit && $claim) {
@@ -149,19 +210,25 @@ while (true) {
                     _sle(60);
                     continue;
                 }
-                $po = array_merge($pa, $cap);
                 
-                
-                
+                if (isset($cap['headers'])) {
+                    $extra = array_diff_key($cap, ['solution' => 1, 'headers' => 1]);
+                    $po = array_merge($pa, $extra, $cap['solution']);
+                    $he = $cap['headers'];
+                } else {
+                    $po = array_merge($pa, $cap);
+                    $he = '';
+                }
                 
             } else {
                 if (str_contains($fau, '/register')) continue 2;
                 
-                
+                /*
                 if (!$SLDONE || !$ADDONE) {
                     $setF = microtime(true);
                     break;
                 }
+                */
                 
                 styler('Waiting for faucet', fn() => _sle(30));
                 continue;
@@ -172,19 +239,19 @@ while (true) {
                 
                 $cla = Net::C($f['url'], 'POST', $po, inf::$cookie, $hhh, "$host/faucet", inf::$uagent, ip: $ip);
                 if (empty($cla) || ($cla === 99)) continue;
-                #_put('cla.html', $cla); #die;
+                #_put('cla.html', $cla); die;
                 
                 if (checkATB($atbfail, $cla)) continue;
-                $m = Scraper::_jP($cla, "/Swal\.fire\(\s*'[^']+'\s*,\s*'([^']+)'/") ?? null;
+                $m = Scraper::_jP($cla, "/Swal\.fire\(\s*'[^']+'\s*,\s*'([^']+)'/")[1][0] ?? null;
                 
-                if (isset($m[1][0])) {
+                if (isset($m)) {
                     Logger::M($mail);
-                    logg(0, $m[1][0]);
+                    logg(0, $m);
                     
                     $atbforce = false;
                     $atbfail = 0;
                     
-                    if (stripos($m[1][0], 'has been added')) {
+                    if (stripos($m, 'has been added')) {
                         $setF = microtime(true);
                         break;
                     }
@@ -233,7 +300,14 @@ while (true) {
                                 _sle(60);
                                 continue;
                             }
-                            $po = array_merge($pa, $cap);
+                            if (isset($cap['headers'])) {
+                                $extra = array_diff_key($cap, ['solution' => 1, 'headers' => 1]);
+                                $po = array_merge($pa, $extra, $cap['solution']);
+                                $he = $cap['headers'];
+                            } else {
+                                $po = array_merge($pa, $cap);
+                                $he = '';
+                            }
                         }
                         
                         if (!empty($po)) {
@@ -254,9 +328,6 @@ while (true) {
                         
                     }
                     
-                    
-                    
-                die;
                 }
             }
             
@@ -315,10 +386,10 @@ while (true) {
 
 
 tes:
-    
-    
-    
-    
+
+
+
+
 function parsePtcAds($html, $host) {
     if (empty($html) || $html === 99) return ['total' => 0, 'local' => [], 'bctt' => [], 'owme' => [], 'zono' => [], 'external' => []];
     
@@ -383,3 +454,37 @@ function parsePtcAds($html, $host) {
     return $result;
 }
 
+function _wd($html) {
+    $res = Scraper::payload($html)[1] ?? null;
+    if (!$res) return false;
+    
+    $methods = Scraper::_xP($html, "//input[@name='method']/@value");
+    
+    $stocks = Scraper::_xP($html, "//div[contains(@class, 'progress-bar')]/@aria-valuenow");
+    
+    $names = Scraper::_xP($html, "//div[contains(@class, 'card-radio')]//span");
+    
+    foreach ($names as $i => $name) {
+        if (stripos($name, 'BTC') !== false || stripos($name, 'Bitcoin') !== false) {
+            continue;
+        }
+        
+        $stock = (float)($stocks[$i] ?? 0);
+        
+        if ($stock >= 5) {
+            $res['payload']['method'] = $methods[$i] ?? null;
+            if (!$res['payload']['method']) continue;
+            
+            $res['info'] = [
+                'coin' => trim($name),
+                'stock' => $stock . '%',
+                'balance' => $res['payload']['amount'] ?? 0,
+                'wallet' => $res['payload']['wallet'] ?? ''
+            ];
+            
+            return $res;
+        }
+    }
+    
+    return false;
+}

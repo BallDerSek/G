@@ -156,9 +156,8 @@ while (true) {
             sendB($jsonList, $host, $app);
             break;
             
-            
         default:
-            return false;
+            continue 2;
         
     }
     
