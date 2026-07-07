@@ -134,10 +134,10 @@ class gmxch extends Provider {
     }
     
     public function bct(array $data) {
-        return ['fail' => 777];
+        #return ['fail' => 777];
         
         $params = [
-            "method" => "bitcotasks",
+            "method" => "SL-iconcaptcha",
             "main" => $data['main'],
             "options" => []
         ];
@@ -146,18 +146,27 @@ class gmxch extends Provider {
             $params['options'][] = $b64;
         }
     
-        $sol = $this->run('visual', $params, true);
-    
+        $sol = $this->run('visual', $params);
+        
         if (isset($sol['fail'])) {
             return $sol;
         }
-    
+        
+        $ans = $sol['done'];
+        
+        $data = [];
+        foreach (explode(', ', $ans) as $item) {
+            [$key, $value] = explode(': ', $item);
+            $data[$key] = $value;
+        }
+        
         return [
-            'ans' => null,
-            'idx' => $sol['done'] ?? null
+            'ans' => $data['class'] ?? null,
+            'idx' => isset($data['index']) ? (int)$data['index'] : null,
         ];
+        
     }
-    
+
     /** info saldo */
     public function getInfo(): bool{
         $maxRetry = 3;

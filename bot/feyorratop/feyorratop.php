@@ -341,7 +341,10 @@ while (true) {
                                     
                                     $cap = FaucetCaptcha::exec($fc_dm, $fc_id, $ad_u, $mail);
                                     if (!$cap || ($cap === null)) continue;
-                                    #var_dump($cap);
+                                    if ($cap === 404) {
+                                        styler("FaucetCaptcha getting problem", fn() => _sle(100));
+                                        break;
+                                    }
                                 } else continue;
                                 
                             }
@@ -793,7 +796,7 @@ class FaucetCaptcha {
             
             $solution = self::_verf($id, $host, $config, $pow_res, $pub_key, $fp_token, $sign_res, $endP, $hsh_sc);
             #var_dump($solution);
-            if (!$solution) return null;
+            if (!$solution || $solution === 404) return 404;
             
             $fc_fi = $config['payloadField'] ?? 'f_' . substr(md5($id), 0, 12);
             return [
@@ -995,11 +998,11 @@ class FaucetCaptcha {
             ['X-FC-Sign: 1'],
             $host, inf::$uagent, json: true)?: ''
         , 1);
-        #var_dump($sol);
+        
         if (!empty($sol['success']) || !empty($sol['token'])) {
             return ['tkn' => $sol['token'], 'sol' => $payload];
         }
-        
+        if (!empty($sol['message']) && str_contains($sol['message'], 'verification failed')) return 404;
         return null;
         
     }

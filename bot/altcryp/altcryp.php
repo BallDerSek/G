@@ -31,7 +31,7 @@ $ip = null;
 $headersCF = [];
 $skipped = [];
 $SLDONE = false;
-$claim = false;
+$claim = true;
 $curr = '';
 $habis = [];
 $needSL = false;
@@ -130,7 +130,6 @@ while (true) {
             $fauu = null;
             $fauu = Net::C($fa, 'GET', null, inf::$cookie, $headersCF, $host, inf::$uagent, d: true);
             
-            #_put('fauu.html', $fauu); #die;
             if ($fauu === 99) {
                 $ret99++;
                 logx('warn', 'Proxy issue, wait 30s');
@@ -148,6 +147,8 @@ while (true) {
             } else {
                 $fau = $fauu['body'] ?? null;
             }
+            
+            #_put('fauu.html', $fauu); die;
             
             if (!empty($fau)) {
                 #_put('fau.html', $fau);

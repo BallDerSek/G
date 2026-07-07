@@ -23,7 +23,7 @@ $cookieFile = config::cookie($login);
 $ip = '162.213.248.69';
 $r = '/?r=gamamoch@gmail.com';
 
-$FAST_CLAIM = true; # <-- change true if u want to use single token for all sites, false to use single token per sites.
+$FAST_CLAIM = false; # <-- change true if u want to use single token for all sites, false to use single token per sites.
 
 $sites = [
     'https://beefaucet.org' => '6LfwaSgTAAAAAJJNz6oAdimVHmIe3s4fHj4D0at4',

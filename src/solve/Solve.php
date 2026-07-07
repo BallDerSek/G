@@ -258,7 +258,9 @@ class Solve {
         $t = Retry::until(function() use ($solver, $api, $key, $host, $type, $Params) {
     
             $t = $solver->token($key, $host, $type, $Params);
-    
+            
+            #var_dump($t); die;
+            
             if (isset($t['fail']) && $t['fail'] === 777) {
     
                 if (!isset(Api::TKN[get_class($api)][$type])) {
@@ -299,14 +301,14 @@ class Solve {
         return $t;
     }
     
-    public static function img($api, $host, $type, $img) {
+    public static function img($api, $host, $type, $img, array $extra = []) {
     
         $solver = config::getKeys($api, $type, 'b64');
     
-        $res = Retry::until(function() use ($solver, $api, $img, $type) {
+        $res = Retry::until(function() use ($solver, $api, $img, $type, $extra) {
     
             $res = isset(Api::B64[get_class($solver)][$type])
-                ? $solver->base64($img, $type)
+                ? $solver->base64($img, $type, $extra)
                 : ['fail' => 777];
     
             if (isset($res['fail']) && $res['fail'] === 777) {
@@ -315,7 +317,7 @@ class Solve {
                     return ['trouble' => 'reload'];
                 }
     
-                $res = $api->base64($img, $type);
+                $res = $api->base64($img, $type, $extra);
     
                 if (isset($res['fail']) && $res['fail'] === 71) {
                     return ['trouble' => 'reload'];

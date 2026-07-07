@@ -228,89 +228,133 @@ final class Api {
     }
 
     public const B64 = [
-
+    
         tertuyul::class => [
             'bitcotask' => true,
             'antibot' => true,
-            'ocr' => ['t' => 'universal', 'field' => 'body'],
-            'least' => ['t' => 'iconfinder', 'field' => 'body'],
-            'rs_upside' => ['t' => 'upside', 'field' => 'body'],
-            'upside' => ['t' => 'upside', 'field' => 'body'],
-            'vie_upside' => ['t' => 'upside', 'field' => 'body'],
-            'fa_icon' => ['t' => 'hunter', 'field' => 'body'],
-            'icon_up' => ['t' => 'iconflip', 'field' => 'body'],
-            'rs_icon' => ['t' => 'rscaptcha', 'field' => 'body'],
+    
+            'ocr' => ['api' => 'universal', 'img' => 'body'],
+            'least' => ['api' => 'iconfinder', 'img' => 'body'],
+            'rs_upside' => ['api' => 'upside', 'img' => 'body'],
+            'upside' => ['api' => 'upside', 'img' => 'body'],
+            'vie_upside' => ['api' => 'upside', 'img' => 'body'],
+            'fa_icon' => ['api' => 'hunter', 'img' => 'body'],
+            'icon_up' => ['api' => 'iconflip', 'img' => 'body'],
+            'rs_icon' => ['api' => 'rscaptcha', 'img' => 'body'],
         ],
-
+    
         glitch::class => [
             'antibot' => true,
-            'ocr' => ['t' => 'textcaptcha', 'field' => 'image_base64'],
-            'rs_upside' => ['t' => 'rsv2', 'field' => 'image_base64'],
-            'rs_icon' => ['t' => 'rsv2', 'field' => 'image_base64'],
+            'ocr' => ['api' => 'textcaptcha', 'img' => 'image_base64'],
+            'rs_upside' => ['api' => 'rsv2', 'img' => 'image_base64'],
+            'rs_icon' => ['api' => 'rsv2', 'img' => 'image_base64'],
         ],
-
+    
         xevil::class => [
             'antibot' => true,
-            'ocr' => ['t' => 'base64', 'field' => 'body'],
-            'upside' => ['t' => 'viefaucet', 'field' => 'body'],
-            'rs_upside' => ['t' => 'viefaucet', 'field' => 'body'],
-            'vie_upside' => ['t' => 'viefaucet', 'field' => 'body'],
-            'icon_up' => ['t' => 'iconupfinder', 'field' => 'body'],
-            'rs_icon' => ['t' => 'rscaptcha', 'field' => 'body'],
+            'ocr' => ['api' => 'base64', 'img' => 'body'],
+            'upside' => ['api' => 'viefaucet', 'img' => 'body'],
+            'rs_upside'  => ['api' => 'viefaucet', 'img' => 'body'],
+            'vie_upside' => ['api' => 'viefaucet', 'img' => 'body'],
+            'icon_up' => ['api' => 'iconupfinder', 'img' => 'body'],
+            'rs_icon' => ['api' => 'rscaptcha', 'img' => 'body'],
         ],
-
+    
         multibot::class => [
             'antibot' => true,
-            'ocr' => ['t' => 'universal', 'field' => 'body'],
-            'least' => ['t' => 'iconfinder', 'field' => 'body'],
-            'rs_upside' => ['t' => 'upside', 'field' => 'body'],
-            'upside' => ['t' => 'upside', 'field' => 'body'],
-            'vie_upside' => ['t' => 'upside', 'field' => 'body'],
-            'fa_icon' => ['t' => 'cls',  'field' => 'body', 'extra' => ['type' => 'Bitcotasks']],
-            'icon_up' => ['t' => 'rscaptcha', 'field' => 'body'],
-            'rs_icon' => ['t' => 'rscaptcha', 'field' => 'body'],
+            'ocr' => ['api' => 'universal', 'img' => 'body'],
+            'least' => ['api' => 'iconfinder', 'img' => 'body'],
+            'rs_upside'  => ['api' => 'upside', 'img' => 'body'],
+            'upside' => ['api' => 'upside', 'img' => 'body'],
+            'vie_upside' => ['api' => 'upside', 'img' => 'body'],
+            'icon_up' => ['api' => 'rscaptcha', 'img' => 'body'],
+            'rs_icon' => ['api' => 'rscaptcha', 'img' => 'body'],
         ],
-
+    
         skibidixxx::class => [
             'antibot' => true,
-            'fa_icon' => ['t' => 'bitcocaptcha', 'field' => 'base64_str'],
-            'fa3_icon' => ['t' => 'bitcocaptcha_v2', 'field' => 'base64_str'],
-            'earnow' => ['t' => 'shortearnow', 'field' => 'base64_str'],
-            'rs_upside' => ['t' => 'upsidedown_2', 'field' => 'base64_str'],
-            'rs_icon' => ['t' => 'rsicon', 'field' => 'base64_str'],
-            'ocr' => ['t' => 'image-to-text','field' => 'base64_str'],
-            'least' => ['t' => 'least-icons', 'field' => 'base64_str'],
-            'upside' => ['t' => 'upsidedown_1', 'field' => 'base64_str'],
-            'vie_upside' => ['t' => 'upsidedown_3', 'field' => 'base64_str'],
+            'fa_icon' => ['api' => 'bitcocaptcha', 'img' => 'base64_str'],
+            'rs_upside'  => ['api' => 'upsidedown_2', 'img' => 'base64_str'],
+            'rs_icon' => ['api' => 'rsicon', 'img' => 'base64_str'],
+            'ocr' => ['api' => 'image-to-text','img' => 'base64_str'],
+            'least' => ['api' => 'least-icons',  'img' => 'base64_str'],
+            'upside' => ['api' => 'upsidedown_1', 'img' => 'base64_str'],
+            'vie_upside' => ['api' => 'upsidedown_3', 'img' => 'base64_str'],
         ],
-
+    
         capsolver::class => [
-            'ocr' => ['t' => 'ImageToTextTask', 'field' => 'body'],
+            'ocr' => [
+                'api' => 'ImageToTextTask',
+                'img' => 'body',
+            ],
         ],
-
+    
         gmxch::class => [
             'bitcotask' => true,
             'antibot' => true,
             'zercaptcha' => true,
+            
+            'fa_icon' => [
+                'api' => 'visual',
+                'img' => 'main',
+                'defaults' => [
+                    'method' => 'SL-iconcaptcha',
+                ],
+                'map' => [
+                    'opt' => 'options',
+                ],
+            ],
+            
+            'onlyfans' => [
+                'api' => 'visual',
+                'img' => 'main',
+                'defaults' => [
+                    'method' => 'onlyfans',
+                ],
+                
+            ],
+            
         ],
-
+    
         solverify::class => [
-            'ocr' => ['t' => 'ocr', 'field' => 'body'],
+            'ocr' => [
+                'api' => 'ocr',
+                'img' => 'body',
+            ],
         ],
-
+    
     ];
     
-    public static function cfgB64($c, $t, $b64): array {
+    public static function cfgB64($c, $t, $b64, array $extra = []): array {
+    
         $cfg = self::B64[$c][$t] ?? null;
-        
-        if (!$cfg && in_array($t, ['math', '4num'])) $cfg = self::B64[$c]['ocr'] ?? null;
-        
-        if (!is_array($cfg) || empty($cfg['t']) || empty($cfg['field'])) throw new Exception("invalid method, change providers");
-        
-        $extra = $cfg['extra'] ?? []; 
-        if (!is_array($extra)) $extra = [];
-        
-        return [$cfg['t'], array_merge([$cfg['field'] => $b64], $extra)];
+    
+        if (!$cfg && in_array($t, ['math', '4num'])) {
+            $cfg = self::B64[$c]['ocr'] ?? null;
+        }
+    
+        if (!is_array($cfg) || empty($cfg['api']) || empty($cfg['img'])) {
+            throw new Exception("invalid method, change providers");
+        }
+    
+        foreach (($cfg['need'] ?? []) as $k) {
+            if (!array_key_exists($k, $extra)) {
+                throw new Exception("missing arg: $k");
+            }
+        }
+    
+        $params = array_merge([$cfg['img'] => $b64], $cfg['defaults'] ?? [], $extra);
+    
+        if (!empty($cfg['map'])) {
+            foreach ($cfg['map'] as $from => $to) {
+                if (array_key_exists($from, $params)) {
+                    $params[$to] = $params[$from];
+                    unset($params[$from]);
+                }
+            }
+        }
+    
+        return [$cfg['api'], $params];
     }
 
     public const ACC = [
@@ -655,26 +699,27 @@ abstract class Provider {
         return $this->run($method, $params);
     }
 
-    public function base64($img, $type = 'ocr') {
-
+    public function base64($img, $type = 'ocr', array $extra = []) {
+        
         $raw = is_file($img) ? _get($img) : $img;
-        $isBase64 = (!is_file($img) && preg_match('%^[a-zA-Z0-9/+]*={0,2}$%', trim($raw)));
-
-        $b64 = $isBase64 ? trim($raw) : base64_encode($raw);
-
+        
+        $is_base64 = (base64_encode(base64_decode($raw, true)) === $raw);
+    
+        if ($is_base64) {
+            if (strpos($raw, ',') !== false) $raw = explode(',', $raw, 2)[1];
+            $b64 = $raw;
+        } else $b64 = base64_encode($raw);
+    
         try {
-            [$method, $params] = Api::cfgB64(
-                static::class,
-                $type,
-                $b64
-            );
-
+            [$method, $params] = Api::cfgB64(static::class, $type, $b64, $extra);
         } catch (Throwable $e) {
             Logger::X('warn', "\r{$e->getMessage()}", true, true);
             return ['fail' => 71];
         }
+        
         return $this->run($method, $params);
     }
+
 
     public function access($siteUrl, $type, array $extraParams = []) {
 
@@ -741,138 +786,3 @@ abstract class Provider {
     abstract protected function res_api($jobId);
 }
 
-
-
-
-
-
-
-
-
-abstract class Providers {
-    # legacy
-    protected $apiKey;
-    #protected $baseUrl;
-
-    public function __construct($apiKey) {
-        $this->apiKey = $apiKey;
-    }
-
-    final public function run($method, array $params, bool $strict = false) {
-        return $this->call($method, $params, $strict);
-    }
-
-    final protected function call($method, array $params, bool $strict = false) {
-        for ($i = 0; $i < 3; $i++) {
-            try {
-                return styler(static::class . "=>$method", function() use ($method, $params) {
-                    $id = $this->get_api($method, $params);
-                    return $this->res_api($id);
-                });
-            } catch (Throwable $e) {
-                $code = $e->getMessage();
-                $type = Api::errType($code);
-                Logger::X('info', 'Api [ '.static::class.' ] ', false, true);
-                Logger::X('err', $code);
-                if ($strict) return false;
-                
-                if (in_array($type, ['ret','con','fail'], true)) {
-                    _sle(3);
-                    continue;
-                }
-                
-                if (static::class === 'gmxch') return 777;
-                
-                return 77;
-            }
-        }
-        
-        if (static::class === 'gmxch') return 777;
-        return false;
-    }
-    
-    public function token($siteKey, $siteUrl, $type, array $extraParams = []) {
-        try {
-            [$method, $params] = Api::cfgTkn(static::class, $type, $siteKey, $siteUrl, $extraParams);
-        } catch (Throwable $e) {
-            Logger::X('warn', $e->getMessage());
-            return 71;
-        }
-        return $this->run($method, $params);
-    }
-
-    public function base64($img, $type = 'ocr') {
-        $raw = is_file($img) ? _get($img) : $img;
-        $isBase64 = (!is_file($img) && preg_match('%^[a-zA-Z0-9/+]*={0,2}$%', trim($raw)));
-        $b64 = $isBase64 ? trim($raw) : base64_encode($raw);
-        try {
-            [$m, $params] = Api::cfgB64(static::class, $type, $b64);
-        } catch (Throwable $e) {
-            Logger::X('warn', $e->getMessage());
-            return 71; 
-        }
-        $res = $this->run($m, $params);
-        if (!$res) return 77;
-        
-        return $res;
-    }
-
-    public function access($siteUrl, $type, array $extraParams = []) {
-        try {
-            [$method, $params] = Api::cfgAcc(static::class, $type, $siteUrl, $extraParams);
-            
-            $cfg = Api::ACC[static::class][$type];
-            foreach (($cfg['need'] ?? []) as $k) {
-                if (!isset($params[$k])) {
-                    Logger::X('warn', "missing required arg: $k for $type");
-                    return 73;
-                }
-            }
-            #print_r($params); die;
-            $solved = $this->run($method, $params);
-            return [static::class,$solved];
-
-        } catch (Exception $e) {
-            Logger::X('warn', $e->getMessage(), true, true);
-            return 71;
-        }
-    }
-    
-    public function atb(array $data) {
-        $pa = []; 
-        $map = []; 
-        $i = 0;
-        
-        foreach ($data['rels'] as $rel => $b64) {
-            #_put($rel.'.png', base64_decode($b64));
-            $pa[(string)$rel] = $b64;
-            $map[(string)$rel] = $rel;
-            $map[(string)$i] = $rel; 
-            $i++;
-        }
-        
-        $pa['main'] = $data['main'];
-        #print_r($pa); 
-        $res = $this->run('antibot', $pa, true);
-        #Logger::X('', $res);
-        if ($res === 77) return 77;
-        if ($res === 777) return 777;
-        if ($res === null) return null;
-        
-        $in = explode(',', $res);
-        $links = [];
-        foreach ($in as $val) {
-            $val = trim($val);
-            if (isset($map[$val])) {
-                $links[] = $map[$val];
-            }
-        }
-
-        return !empty($links) ? " " . implode(' ', $links) : false;
-
-    }
-
-    abstract protected function get_api($method, array $params);
-    
-    abstract protected function res_api($jobId);
-}

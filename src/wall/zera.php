@@ -32,7 +32,7 @@ class Zera {
         
         start:
         $zer = Net::C($zer_u, 'GET', null, $this->cookieFile, [], "", $this->userAgent);
-        
+        #_put('zer.html', $zer); #die;
         if (empty($zer) || $zer === 99) return false;
         
         while (true) {
@@ -50,9 +50,9 @@ class Zera {
             
             $zer_s = null;
             
-            if (stripos($zer, 'solve captcha')) {
+            if (stripos($zer, 'solve captcha') !== false) {
                 $zerC_p = $this->_parseImages($zer, $zer_u, 'scid=');
-                
+                #var_dump($zerC_p);
                 if (!is_array($zerC_p)) {
                     $retZer++;
                     continue;
@@ -70,6 +70,7 @@ class Zera {
                 $ti = $this->_parseTimer($zer_v);
                 
                 $zerC_p = $this->_parseImages($zer_v, $zer_u, 'id=');
+                #var_dump($zerC_p);
                 if ($zerC_p === 'main_reload') {
                     $retZer++;
                     goto start;

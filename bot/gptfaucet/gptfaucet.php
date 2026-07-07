@@ -118,7 +118,7 @@ while (true) {
                 if (isset($cap['trouble'])) continue;
                 
                 $walletKey = isset($pa['address']) ? 'address' : (isset($pa['wallet']) ? 'wallet' : 'email');
-                if (empty($pa[$walletKey])) $pa[$walletKey] = $mail;
+                if (empty($pa[$walletKey])) $pa[$walletKey] = $login;
                 
                 $po = array_merge($pa, $cap);
                 
@@ -127,7 +127,7 @@ while (true) {
                 
                 $wdd = json_decode(Net::C($host.$jjn['url'], 'POST', $po, inf::$cookie, [], "$host/dashboard", inf::$uagent)?: '', 1)['message'] ?? null;
                 if (!empty($wdd)) {
-                    print(FGd['CYN'].maskEmail($mail).RSET." ");
+                    print(FGd['CYN'].maskEmail($login).RSET." ");
                     Logger::X('info', $wdd);
                 }
             } else {
@@ -191,7 +191,7 @@ while (true) {
             continue;
         }
         
-        Logger::M($mail);
+        Logger::M($login);
         (logx('err', 'beres') ?: die);
         
     }

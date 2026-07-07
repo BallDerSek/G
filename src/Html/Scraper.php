@@ -14,10 +14,7 @@ class Scraper {
 
         $key = self::_init($html);
 
-        // Hit cache → return langsung, tanpa parse ulang
-        if (isset(self::$cache[$key]['xp'])) {
-            return self::$cache[$key]['xp'];
-        }
+        if (isset(self::$cache[$key]['xp'])) return self::$cache[$key]['xp'];
 
         libxml_use_internal_errors(true);
         $dom = new DOMDocument();
@@ -37,7 +34,6 @@ class Scraper {
 
         $xp = new DOMXPath($dom);
 
-        // Simpan ke cache
         self::$cache[$key]['xp'] = $xp;
 
         return $xp;
@@ -54,7 +50,7 @@ class Scraper {
 
     # PAYLOAD
     public static function payload($html, $id = null): array {
-        $xp = self::dom($html);   // ← cache hit kalau HTML sama
+        $xp = self::dom($html);
         if (!$xp) return [];
         $query = $id ? "//form[@id=" . self::xlit($id) . "]" : "//form";
         $forms = $xp->query($query);
@@ -110,8 +106,7 @@ class Scraper {
     public static function _xP($html, $query, $context = null): array {
 
         if ($html instanceof DOMXPath) $xpath = $html;
-        else $xpath = self::dom($html);    // ← cache hit
-
+        else $xpath = self::dom($html);
         if (!$xpath) return [];
 
         $nodes = $context ? $xpath->query($query, $context) : $xpath->query($query);
@@ -175,54 +170,104 @@ class Scraper {
 
     # PROBLEMATIC PAYLOAD
     public static function build($html, $js, $tokenData) {
+    
         $jsContent = is_file($js) ? _get($js) : $js;
         $response = is_array($tokenData) ? $tokenData : json_decode($tokenData, true);
-
-        $pattern = '/getElementById\s*$\s*["\']([^"\']+)["\']\s*$\s*\.value\s*=\s*(?:e\.token|response\.([a-zA-Z0-9_]+))/';
-        $mappedInputs = [];
-
-        if (preg_match_all($pattern, $jsContent, $matches)) {
-            foreach ($matches[1] as $idx => $inputName) {
-                $jsonKey = $matches[2][$idx] ?? null;
-                if ($jsonKey && isset($response[$jsonKey])) {
-                    $mappedInputs[$inputName] = $response[$jsonKey];
-                } elseif (is_string($tokenData)) {
-                    $mappedInputs[$inputName] = $tokenData;
-                }
-            }
-        }
-
-        preg_match('/document\.querySelector$"([^"]+)"$\.innerHTML\s*=\s*`/', $jsContent, $cMatch);
-        $captchaTag = $cMatch[1] ?? null;
-
+    
+        if (!is_array($response)) $response = [];
+    
         $xp = self::dom($html);
         if (!$xp) return [];
-        $forms = $xp->query('//form');
+    
         $payload = [];
-
-        foreach ($forms as $form) {
-            $isTarget = true;
-            if ($captchaTag) {
-                $isTarget = $xp->query(".//*[contains(@id, '$captchaTag')] | .//$captchaTag", $form)->length > 0;
-            }
-
-            if ($isTarget) {
-                foreach ($xp->query('.//input[@name]', $form) as $input) {
-                    if ($input->getAttribute('type') !== 'submit') {
-                        $payload[$input->getAttribute('name')] = $input->getAttribute('value');
-                    }
-                }
-                foreach ($mappedInputs as $name => $value) {
-                    $payload[$name] = $value;
-                }
-                break;
+    
+        foreach ($xp->query('//input[@name]') as $input) {
+            if ($input->getAttribute('type') !== 'submit') $payload[$input->getAttribute('name')] = $input->getAttribute('value');
+        }
+    
+        preg_match_all(
+            '/<input[^>]+name=["\']([^"\']+)["\'][^>]*>/i',
+            $jsContent,
+            $inputs,
+            PREG_SET_ORDER
+        );
+    
+        foreach ($inputs as $input) {
+            $name = $input[1];
+            if (!isset($payload[$name])) {
+                if (preg_match('/value=["\']([^"\']*)["\']/i', $input[0], $v)) $payload[$name] = html_entity_decode($v[1]);
+                else $payload[$name] = '';
             }
         }
-
-        foreach ($mappedInputs as $name => $value) {
-            if (!isset($payload[$name])) $payload[$name] = $value;
+    
+        $idMap = [];
+    
+        preg_match_all(
+            '/(?:const|let|var)\s+([a-zA-Z0-9_$]+)\s*=\s*document\.getElementById\(\s*["\']([^"\']+)["\']\s*\)/',
+            $jsContent,
+            $vars,
+            PREG_SET_ORDER
+        );
+    
+        foreach ($vars as $v) $idMap[$v[1]] = $v[2];
+        $maps = [];
+    
+        preg_match_all(
+            '/document\.getElementById\(\s*["\']([^"\']+)["\']\s*\)\.value\s*=\s*response\.([a-zA-Z0-9_]+)/',
+            $jsContent,
+            $direct,
+            PREG_SET_ORDER
+        );
+    
+        foreach ($direct as $m) $maps[] = ['id' => $m[1], 'key' => $m[2]];
+    
+        preg_match_all(
+            '/([a-zA-Z0-9_$]+)\.value\s*=\s*response\.([a-zA-Z0-9_]+)/',
+            $jsContent,
+            $variable,
+            PREG_SET_ORDER
+        );
+    
+        foreach ($variable as $m) if (isset($idMap[$m[1]])) $maps[] = ['id' => $idMap[$m[1]], 'key' => $m[2]];
+    
+        foreach ($maps as $m) {
+            $id  = $m['id'];
+            $key = $m['key'];
+            $name = null;
+    
+            foreach ($xp->query("//*[@id=".self::xlit($id)."]") as $el) {
+                if ($el->hasAttribute('name')) {
+                    $name = $el->getAttribute('name');
+                    break;
+                }
+            }
+    
+            if (!$name) {
+                if (preg_match(
+                    '/<input[^>]+id=["\']'.preg_quote($id,'/').'["\'][^>]*name=["\']([^"\']+)["\']/i',
+                    $jsContent,
+                    $im
+                )) {
+                    $name = $im[1];
+                }
+            }
+    
+            if ($name && isset($response[$key])) $payload[$name] = $response[$key];
+    
         }
-
+    
+        preg_match_all(
+            '/getElementById\(\s*["\']([^"\']+)["\']\s*\)\.value\s*=\s*e\.token/',
+            $jsContent,
+            $tokenMaps,
+            PREG_SET_ORDER
+        );
+    
+        foreach ($tokenMaps as $m) {
+            $id = $m[1];
+            foreach ($xp->query("//*[@id=".self::xlit($id)."]") as $el) if ($el->hasAttribute('name')) $payload[$el->getAttribute('name')] = $tokenData;
+        }
+    
         return $payload;
     }
 
