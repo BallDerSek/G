@@ -387,6 +387,7 @@ function onfCap($html, $host, $reff, $api) {
     }
     
     if (!empty($img)) {
+        if (!AUTH_KEY) die(Logger::X('err', 'unauthorized apikey'));
         $solution = Solve::img($api, $host, 'onlyfans', $img);
         if (isset($solution['trouble'])) return ['trouble' => 'reload'];
         
