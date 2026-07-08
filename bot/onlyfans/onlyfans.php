@@ -1,6 +1,6 @@
 <?php
 if (!defined('ROOT')) { die; }
-_die();
+#_die();
 $api = onKeys();
 
 $acc = config::credential([], false, /*['login', 'PROXY']*/);
@@ -28,7 +28,7 @@ $ip = null;
     $b->task2('ok', "site: $host");
     
 } ) ($login, $ip, $host);
-#goto tes;
+
 $headersCF = [];
 $skipped = [];
 $SLDONE = false;
@@ -156,7 +156,7 @@ while (true) {
                 $f = scraper::payload($fau, 'fauform')[0]?? null;
                 
                 if (!empty($f)) {
-                    print_r($f);
+                    #print_r($f);
                     
                     $pa = $f['payload'];
                     
@@ -175,9 +175,9 @@ while (true) {
                 }
                 
                 if (!empty($po)) {
-                    print_r($po);
+                    #print_r($po);
                     $cla = Net::X($f['url'], 'POST', $po, inf::$cookie, $headersCF, $host, inf::$uagent);
-                    _put('cla.html', $cla);
+                    #_put('cla.html', $cla);
                     $_suc = scraper::_jP($cla, "/Toast\.fire\(\s*\{.*?icon:\s*'([^']+)'.*?html:\s*'([^']+)'/s");
                     
                     if (!empty($_suc[1][0])) {
@@ -206,18 +206,151 @@ while (true) {
                     
                 }
                 
-                _rl('lanjut: ');
-                
             }
             
         }
-    die;
+    
     }
     
+    if (count($habis) === count($_fa)) {
+        print(FGd['CYN'].maskEmail($login).RSET." ");
+        (logx('err', 'gak bisa claim') ?: die);
+    }
     
+    $_sl = Scraper::_xP($dash, "//ul[@id='links']//a/@href");
+    foreach ($_sl as $sl) {
+        if ($SLDONE) break;
+        $_c = basename($sl);
+        if (!empty($curr) && (trim(strtoupper($_c)) !== trim(strtoupper($curr)))) continue;
+        
+        $ret99 = 0;
+        do {
+            $sho = null;
+            $sho = Net::X($sl, 'GET', null, inf::$cookie, [], '', inf::$uagent);
+            #_put('sho.html', $sho); die;
+            
+            if ($sho === 99) {
+                $ret99++;
+                logx('warn', 'Proxy issue, wait 30s');
+                if ($ret99 >= 7) goto login;
+                _sle(30);
+                continue;
+            }
+            $ret99 = 0; 
+            
+            if (empty($sho)) { _sle(5); continue; }
+            
+            $short = Shortlinks::extract($sho);
+            if (empty($short)) continue;
+            
+            #print_r($short); #die;
+            $success_in_page = false; 
+            $found_one = false; 
+            
+            $up = ['earnow','shortano', 'shortino', 'fc-lc', 'coinclix'];
+            foreach ($short as $links => [$idd, $lmt]) {
+                if (!Shortlinks::limit($lmt) || isset($skipped[$idd])) continue;
+                
+                $found_one = true;
+                $loc = onfSL($idd, $sl, $_c);
+                
+                if (!$loc) {
+                    $skipped[$idd] = true; 
+                    continue 2;
+                }
+                
+                $loc_u = parse_url($loc['url'])['host'] ?? '';
+                $is_bl = false;
+                foreach ($up as $blacklisted) {
+                    if (str_contains($loc_u, $blacklisted)) {
+                        logx('warn', "Domain Blacklist [$blacklisted] Skipping..");
+                        $skipped[$idd] = true;
+                        $is_bl = true;
+                        break; 
+                    }
+                }
+                if ($is_bl) break; 
+                
+                logx('info', "Bypassing SL: {$loc['url']}", true, true);
+                $start = microtime(true);
+                $bakk = Shortlinks::exec($api, $loc['url']);
+                
+                if (!$bakk) {
+                    $skipped[$idd] = true; 
+                    break; 
+                }
+                
+                $wait = 130 - (int)(microtime(true) - $start);
+                if ($wait > 0) styler("waiting for SL", fn() => _sle((int)ceil($wait)));
+                
+                $ver = null;
+                $retVer = 0;
+                while (true) {
+                    $ver = Net::X($bakk, 'GET', null, inf::$cookie, [], $loc['url'], inf::$uagent);
+                    if ($ver === 99) {
+                        $retVer++;
+                        if ($retVer >= 5) goto login;
+                        _sle(30);
+                        continue;
+                    }
+                    break;
+                }
+                
+                if (!empty($ver)) {
+                    #_put('ver.html', $ver);
+                    
+                    $po = null;
+                    $f = Scraper::payload($ver, 'claimForm')[0] ?? null;
+                    
+                    if (!empty($f)) {
+                        $pa = $f['payload'];
+                        
+                        $cap = Solve::exec($ver, $host, $api);
+                        $po = array_merge($pa, $cap);
+                        
+                    }
+                    
+                    if (!empty($po)) {
+                        
+                        $cla = Net::X($f['url'], 'POST', $po, inf::$cookie, $headersCF, $host, inf::$uagent);
+                        
+                        $_suc = scraper::_jP($cla, "/Toast\.fire\(\s*\{.*?icon:\s*'([^']+)'.*?html:\s*'([^']+)'/s");
+                        if (!empty($_suc[1][0])) {
+                            $stt = $_suc[1][0];
+                            $msg = $_suc[2][0];
+                            $is_ok = (stripos($stt, 'success') !== false);
+                            
+                            Logger::M($login);
+                            Logger::X($is_ok ? 'ok' : 'err', "{$stt} ", false);
+                            Logger::G(false, $msg);
+                            if (preg_match('/sufficient|could not be processed/i', $msg)) {
+                                $currentIndex = array_search($sl, $_sl);
+                                if ($currentIndex !== false && isset($_sl[$currentIndex + 1])) {
+                                    $curr = basename($_sl[$currentIndex + 1]);
+                                } else $curr = '';
+                                break 2; 
+                            } elseif (stripos($cla, 'has been sent to your')) $success_in_page = true;
+                            
+                            break 2;
+                        }
+                        
+                    }
+                    
+                }
+                
+            }
+            if (!$found_one) {
+                logx('err', 'SL habis atau sisa blacklist.');
+                $SLDONE = true;
+                break; 
+            }
+            
+        } while (!$success_in_page);
+        
+        
+        if ($success_in_page || $curr === "") break; 
+    }
     
-    
-die;
 }
 
 
@@ -232,7 +365,9 @@ tes:
 
 
 
+
 function onfCap($html, $host, $reff, $api) {
+    #_sle(3);
     $setCAP = microtime(true);
     $img = null;
     $x_cap = ['ins' => 'ASC', 'cnt' => 3];
@@ -256,9 +391,7 @@ function onfCap($html, $host, $reff, $api) {
         if (isset($solution['trouble'])) return ['trouble' => 'reload'];
         
         usort($solution, function($a, $b) use ($x_cap) {
-            return ($x_cap['ins'] === 'ASC') 
-                ? ($a['area'] <=> $b['area']) 
-                : ($b['area'] <=> $a['area']);
+            return ($x_cap['ins'] === 'ASC') ? ($a['area'] <=> $b['area']) : ($b['area'] <=> $a['area']);
         });
         
         $clk = array_slice($solution, 0, $x_cap['cnt']);
@@ -300,7 +433,6 @@ function onfCap($html, $host, $reff, $api) {
 
 function onfFPS($ua, array $mouse, int $waktu) {
     $isMobile = (strpos($ua, 'Mobile') !== false || strpos($ua, 'Android') !== false || strpos($ua, 'iPhone') !== false);
-
     $gl = $isMobile ? 'ANGLE (ARM, Mali-G57, OpenGL ES 3.2)' : 'ANGLE (NVIDIA, NVIDIA GeForce RTX 3060, OpenGL 4.5)';
 
     $raw = [
@@ -322,7 +454,9 @@ function onfFPS($ua, array $mouse, int $waktu) {
         'chr' => $raw['chr'],
         'ua'  => $raw['ua']
     ];
-    $hardwareHash = djb2(json_encode($hwDetails, JSON_UNESCAPED_SLASHES));
+    
+    $jsonString = json_encode($hwDetails, JSON_UNESCAPED_SLASHES); 
+    $hardwareHash = djb2($jsonString); 
 
     $payload = [
         'solve_time_ms' => $waktu,
@@ -335,14 +469,16 @@ function onfFPS($ua, array $mouse, int $waktu) {
     return base64_encode(json_encode($payload, JSON_UNESCAPED_SLASHES));
 }
 
-
 function djb2($str) {
     $hash = 5381;
-    for ($i = 0; $i < strlen($str); $i++) {
-        $hash = (($hash * 33) ^ ord($str[$i]));
-        $hash = $hash & 0xFFFFFFFF;
-    }
-    return dechex($hash);
+    #$len = strlen($str);
+    
+    #for ($i = $len - 1; $i >= 0; $i--) $hash = ((($hash * 33) & 0xFFFFFFFF) ^ ord($str[$i])) & 0xFFFFFFFF;
+    for ($i = (strlen($str) - 1); $i >= 0; $i--) $hash = ((($hash * 33) & 0xFFFFFFFF) ^ ord($str[$i])) & 0xFFFFFFFF;
+    
+    $sign = sprintf('%u', $hash & 0xFFFFFFFF);
+    
+    return base_convert($sign, 10, 16);
 }
 
 
@@ -350,6 +486,37 @@ function djb2($str) {
 
 
 
+
+
+
+
+function onfSL($linkId, $reff, $curr) {
+
+    $token = json_decode(Net::X("https://onlyfaucet.com/links/get_csrf_token", 'GET', [], inf::$cookie, [], $reff, inf::$uagent, true)?: '', 1)['csrf_hash'] ?? null;
+    
+    if ($token) {
+        $payload = [
+            'link_id' => $linkId,
+            'cur' => strtoupper($curr),
+            'csrf_token_name' => $token
+        ];
+        
+        $short = json_decode(
+                Net::X("https://onlyfaucet.com/links/verify_go",
+                       'POST',
+                       solveUtils::webkitID($payload, $bon),
+                       inf::$cookie, 
+                       ["Content-Type: multipart/form-data; boundary=$bon"],
+                       $reff,
+                       inf::$uagent)
+                ?: '', 1)['url'] ?? null;
+        
+        if ($short) return ['url' => $short, 'tkn' => $token];
+        
+    }
+    
+    return ['trouble' => 'reload'];
+}
 
 function checkCF($url, $api, $body = null, $headersCF = []) {
     

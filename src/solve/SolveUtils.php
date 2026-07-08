@@ -333,7 +333,7 @@ JS;
         return $res;
     }
     
-    public static function Pow($salt, $di = 4, $de = ':', $max = 2000000) {
+    public static function Pow($salt, $di = 4, $de = '', $max = 2000000) {
         $prefix = str_repeat('0', $di);
         $nonce = 0;
         

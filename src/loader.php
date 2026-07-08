@@ -101,15 +101,9 @@ function AUTH_API() {
 }
 
 function getDeps($deps) {
-    if (empty($GLOBALS['_CTX']['deps'])) {
-        (logx('err', 'RUN SCRIPT NORMALLY!!!') ?: die);
-    }
+    if (empty($GLOBALS['_CTX']['deps'])) die(Logger::X('err', 'RUN SCRIPT NORMALLY!!!'));
     if (is_string($deps)) $deps = [$deps];
-    foreach ($deps as $dep) {
-        if (empty($GLOBALS['_CTX']['deps'][$dep]) || !$GLOBALS['_CTX']['deps'][$dep]) {
-            return false;
-        }
-    }
+    foreach ($deps as $dep) if (empty($GLOBALS['_CTX']['deps'][$dep]) || !$GLOBALS['_CTX']['deps'][$dep]) return false;
     return true;
 }
 
@@ -133,22 +127,14 @@ function LANGUAGE() {
     return $GLOBALS['_CTX']['geo']['language'] ?? 'en-US,en';
 }
 
-function checkATB(&$err, ?string $html) {
-    if ($html && (
-            stripos($html, 'nvalid Anti-Bot') !== false ||
-            stripos($html, 'Invalid AntiBot') !== false
-    )) {
+function checkATB(&$err, $html) {
+    if ($html && (stripos($html, 'nvalid Anti-Bot') !== false || stripos($html, 'Invalid AntiBot') !== false)) {
         $err++;
         return true;
     }
 
     return false;
 }
-
-
-
-
-
 
 }
 

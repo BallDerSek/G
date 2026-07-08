@@ -673,67 +673,67 @@ class Menu {
         exit;
     }
 
-public static function proxy() {
-    while (true) {
-        // Tampilkan banner dengan status proxy
-        self::$banner->show();
-        self::$banner->task1('info', 'PROXY SETTINGS');
-        
-        // Cek status proxy (tanpa ANSI codes)
-        if (!empty($GLOBALS['_CTX']['proxy'])) {
-            $p = $GLOBALS['_CTX']['proxy'];
-            $alive = Proxy::_enable();
-            $st = $alive ? 'ALIVE' : 'DEAD';
-            $level = $alive ? 'ok' : 'warn';
-            self::$banner->task2($level, "{$p['host']}:{$p['port']} | $st");
-        } else {
-            self::$banner->task2('err', 'DISABLED');
-        }
-        
-        Logger::X('warn', "\n  FORMATS:", true, true);
-        Logger::X('err', '    also support from environment variable');
-        Logger::X('err', "    dont forget check usage on settings");
-        Logger::X('', '    ssh://USER:PASS@HOST:22');
-        Logger::X('', '    http://USER:PASS@HOST:8080');
-        Logger::X('', '    socks5://USER:PASS@HOST:1080');
-        
-        if (!empty($GLOBALS['_CTX']['proxy'])) {
-            $p = $GLOBALS['_CTX']['proxy'];
-            $alive = Proxy::_enable();
-            $st = $alive ? FGd['GRN'] . 'ALIVE' : FGd['RED'] . 'DEAD';
-            Logger::X('info', "\n  PROXY ACTIVE: {$p['host']}:{$p['port']} $st", true, true);
-        } else {
-            Logger::X('err', "\n  PROXY: OFF");
-        }
-        
-        Logger::X('info', "  [1] ENABLE PROXY", true, true);
-        Logger::X('info', "  [2] DISABLE PROXY", true, true);
-        Logger::X('info', "  [3] RESTART/REFRESH", true, true);
-        
-        switch (trim(_rl('    input [back]: '))) {
-            case '1':
-                $raw = trim(_rl('    url: '));
-                if ($raw === '') continue 2;
-                putenv("PROXY=$raw");
-                $_ENV['PROXY'] = $raw;
-                self::$banner->task2('info', 'Connecting...');
-                styler("connecting", fn() => Proxy::Load());
-                _sle(1);
-                break;
-            case '2':
-                Proxy::_unable();
-                self::$banner->task2('err', 'Disabled');
-                Logger::X('err', "    disabled");
-                _sle(1);
-                break;
-            case '3':
-                bootApp();
-                return true;
-            default:
-                return false;
+    public static function proxy() {
+        while (true) {
+            // Tampilkan banner dengan status proxy
+            self::$banner->show();
+            self::$banner->task1('info', 'PROXY SETTINGS');
+            
+            // Cek status proxy (tanpa ANSI codes)
+            if (!empty($GLOBALS['_CTX']['proxy'])) {
+                $p = $GLOBALS['_CTX']['proxy'];
+                $alive = Proxy::_enable();
+                $st = $alive ? 'ALIVE' : 'DEAD';
+                $level = $alive ? 'ok' : 'warn';
+                self::$banner->task2($level, "{$p['host']}:{$p['port']} | $st");
+            } else {
+                self::$banner->task2('err', 'DISABLED');
+            }
+            
+            Logger::X('warn', "\n  FORMATS:", true, true);
+            Logger::X('err', '    also support from environment variable');
+            Logger::X('err', "    dont forget check usage on settings");
+            Logger::X('', '    ssh://USER:PASS@HOST:22');
+            Logger::X('', '    http://USER:PASS@HOST:8080');
+            Logger::X('', '    socks5://USER:PASS@HOST:1080');
+            
+            if (!empty($GLOBALS['_CTX']['proxy'])) {
+                $p = $GLOBALS['_CTX']['proxy'];
+                $alive = Proxy::_enable();
+                $st = $alive ? FGd['GRN'] . 'ALIVE' : FGd['RED'] . 'DEAD';
+                Logger::X('info', "\n  PROXY ACTIVE: {$p['host']}:{$p['port']} $st", true, true);
+            } else {
+                Logger::X('err', "\n  PROXY: OFF");
+            }
+            
+            Logger::X('info', "  [1] ENABLE PROXY", true, true);
+            Logger::X('info', "  [2] DISABLE PROXY", true, true);
+            Logger::X('info', "  [3] RESTART/REFRESH", true, true);
+            
+            switch (trim(_rl('    input [back]: '))) {
+                case '1':
+                    $raw = trim(_rl('    url: '));
+                    if ($raw === '') continue 2;
+                    putenv("PROXY=$raw");
+                    $_ENV['PROXY'] = $raw;
+                    self::$banner->task2('info', 'Connecting...');
+                    styler("connecting", fn() => Proxy::Load());
+                    _sle(1);
+                    break;
+                case '2':
+                    Proxy::_unable();
+                    self::$banner->task2('err', 'Disabled');
+                    Logger::X('err', "    disabled");
+                    _sle(1);
+                    break;
+                case '3':
+                    bootApp();
+                    return true;
+                default:
+                    return false;
+            }
         }
     }
-}
 
     public static function usage() {
         Logger::X('warn', "\n   USAGE", true, true);

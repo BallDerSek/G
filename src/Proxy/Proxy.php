@@ -68,4 +68,9 @@ class Proxy {
         unset($GLOBALS['_CTX'][self::$ctx_key], $GLOBALS['_CTX']['proxy_http_local']);
         putenv("PROXY=");
     }
+    
+    public static function _enable() {
+        return !empty($GLOBALS['_CTX'][self::$ctx_key]);
+    }
+
 }

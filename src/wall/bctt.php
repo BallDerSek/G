@@ -388,7 +388,7 @@ class Bctt {
         
         return [
             'pow' => array_merge(
-                SolveUtils::Pow($pow_c, $pow_d),
+                SolveUtils::Pow($pow_c, $pow_d, ':'),
                 ['ch' => $pow_c, 'di' => $pow_d]
             ),
             'cap' => $solution['idx']
