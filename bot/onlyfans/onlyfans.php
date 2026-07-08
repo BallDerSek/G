@@ -3,7 +3,7 @@ if (!defined('ROOT')) { die; }
 #_die();
 $api = onKeys();
 
-$acc = config::credential([], false, /*['login', 'PROXY']*/);
+$acc = config::credential([], false, ['login', 'PROXY']);
 $login = $acc['login'];
 putenv("PROXY=".$acc['PROXY']);
 
@@ -471,13 +471,8 @@ function onfFPS($ua, array $mouse, int $waktu) {
 
 function djb2($str) {
     $hash = 5381;
-    #$len = strlen($str);
-    
-    #for ($i = $len - 1; $i >= 0; $i--) $hash = ((($hash * 33) & 0xFFFFFFFF) ^ ord($str[$i])) & 0xFFFFFFFF;
     for ($i = (strlen($str) - 1); $i >= 0; $i--) $hash = ((($hash * 33) & 0xFFFFFFFF) ^ ord($str[$i])) & 0xFFFFFFFF;
-    
     $sign = sprintf('%u', $hash & 0xFFFFFFFF);
-    
     return base_convert($sign, 10, 16);
 }
 
