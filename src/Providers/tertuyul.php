@@ -52,24 +52,18 @@ class tertuyul extends Provider {
         
         $_d['main'] = $param['main'];
     
-        foreach ($param['opsi'] as $_i => $_o) {
-            $_d[$_i] = $_o;
-        }
+        foreach ($param['opsi'] as $_i => $_o) $_d[$_i] = $_o;
     
         $res = $this->run('bitcotask', $_d, true);
         
-        if (isset($res['fail'])) {
-            return $res;
-        }
+        if (isset($res['fail'])) return $res;
     
         $val = $res['done'];
     
         $ans = $val;
         $idx = null;
     
-        if (strpos($val, ':') !== false) {
-            [$ans, $idx] = explode(':', $val, 2);
-        }
+        if (strpos($val, ':') !== false) [$ans, $idx] = explode(':', $val, 2);
     
         return [
             'ans' => $ans,

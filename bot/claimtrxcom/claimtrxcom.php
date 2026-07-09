@@ -1,9 +1,9 @@
 <?php
 if (!defined('ROOT')) { die; }
-
+_die();
 $api = onKeys();
 
-$acc = config::credential([], false, ['mail', 'pass', 'PROXY']);
+$acc = config::credential([], false, /*['mail', 'pass', 'PROXY']*/);
 $mail = $acc['mail'];
 $pass = $acc['pass'];
 putenv("PROXY=".$acc['PROXY']);
@@ -30,7 +30,7 @@ $ip = '';
 } ) ($mail, $ip, $host);
 
 $limit = false;
-$claim = false;
+$claim = true;
 $SLDONE = false;
 $ADDONE = false;
 $ALLDONE = 0;
@@ -166,7 +166,7 @@ while (true) {
         while (true) {
             $fau = Net::C("$host/faucet", 'GET', null, inf::$cookie, [], "$host/dashboard", inf::$uagent, false, false, $ip);
             
-            #_put('fau.html', $fau); die;
+            _put('fau.html', $fau); #die;
             
             if ($fau === 99) {
                 $ret99++;
@@ -204,7 +204,7 @@ while (true) {
                     if  (($_ca === 'faucetcaptcha')) {
                         _sle(5);
                         $data_fc = json_decode(Net::C($host.'//api/api.php?action=challenge', 'GET', null, inf::$cookie, [], $host.'/faucet', inf::$uagent)?: '', 1);
-                        var_dump($data_fc); #die;
+                        #var_dump($data_fc); #die;
                         if (!empty($data_fc) && isset($data_fc['dom'])) {
                             
                             $fc_id = $data_fc['challenge_id'];
@@ -569,8 +569,6 @@ while (true) {
 
 
 tes:
-    
-
 
 
 
@@ -705,66 +703,72 @@ function _wd($html) {
 
 
 
-
 class FaucetCaptcha {
 
     public static function exec($dt, $id, $host, $email = '') {
-        return styler("faucetcaptcha", function() use ($dt, $id, $host, $email) {
-            _sle(5);
-            $setP = microtime(true);
-            
-            $fp_token = $dt['headerFpToken'] ?? '';
-            $fp_cnfig = json_decode($dt['configJson'] ?? '{}', true);
-            
-            $ids = $fp_cnfig['scatterIds'] ?? [];
-            $enc = $fp_cnfig['enc'] ?? '';
-            if (empty($ids) || empty($enc)) return null;
-    
-            // 1. Dekripsi Konfigurasi Utama (V2/V3)
-            $ikm = hash('sha256', implode('|', $ids), true);
-            $key = hash_hkdf('sha256', $ikm, 32, 'aes-gcm-key', 'fc-config-v2');
-            
-            $raw = base64_decode($enc);
-            $ivvv = substr($raw, 0, 12);
-            $tagg = substr($raw, -16);
-            $cphr = substr($raw, 12, -16);
-            
-            $config = json_decode(openssl_decrypt($cphr, 'aes-256-gcm', $key, OPENSSL_RAW_DATA, $ivvv, $tagg) ?: '', true);
-            if (!$config) return null;
-            
-            $pub_key = $config['pubKeyDer'] ?? null;
-            if (!$pub_key) return null;
-            
-            $pow_mod = self::_dec($config['powVariantToken'], $config['nonce'], $config['challenge']);
-            
-            $pow_res = self::_pow($config['challenge'], $config['difficulty'], $pow_mod);
-            if (!$pow_res) return null;
-            
-            $hsh_sc = self::_sct();
-            
-            $endP = (int)((microtime(true) - $setP) * 1000);
-            
-            $sign_res = self::_sign($config['signEndpoint'], $id, $host, $email);
-            if (!$sign_res) return null;
-            
-            $honeypots = [];
-            if (!empty($config['honeypots']) && is_array($config['honeypots'])) {
-                foreach ($config['honeypots'] as $field_name) {
-                    $honeypots[$field_name] = '';
-                }
+        _sle(5); 
+        $setP = microtime(true);
+        
+        $fp_token = $dt['headerFpToken'] ?? '';
+        $fp_cnfig = json_decode($dt['configJson'] ?? '{}', true);
+        
+        $ids = $fp_cnfig['scatterIds'] ?? [];
+        $enc = $fp_cnfig['enc'] ?? '';
+        if (empty($ids) || empty($enc)) return null;
+
+        // 1. Dekripsi Konfigurasi Utama
+        $ikm = hash('sha256', implode('|', $ids), true);
+        $key = hash_hkdf('sha256', $ikm, 32, 'aes-gcm-key', 'fc-config-v2');
+        
+        $raw = base64_decode($enc);
+        $ivvv = substr($raw, 0, 12);
+        $tagg = substr($raw, -16);
+        $cphr = substr($raw, 12, -16);
+        
+        $config = json_decode(openssl_decrypt($cphr, 'aes-256-gcm', $key, OPENSSL_RAW_DATA, $ivvv, $tagg) ?: '', true);
+        if (!$config) return null;
+        
+        $pub_key = $config['pubKeyDer'] ?? null;
+        if (!$pub_key) return null;
+        
+        $pow_mod = self::_dec($config['powVariantToken'], $config['nonce'], $config['challenge']);
+        
+        $pow_res = self::_pow($config['challenge'], $config['difficulty'], $pow_mod);
+        if (!$pow_res) return null;
+        
+        // FIX: Ambil hash asli dari file JS
+        $hsh_sc = self::_sct($host);
+        
+        // FIX: Simulasi waktu manusia & Cast ke int biar gak error di PHP 8.1+
+        $elapsed = (microtime(true) - $setP) * 1000;
+        if ($elapsed < 6000) {
+            usleep((int)((6000 - $elapsed) * 1000));
+        }
+        // Cast ke int eksplisit
+        $endP = (int)((microtime(true) - $setP) * 1000);
+        
+        $sign_url = $config['signEndpoint'] ?? $host . '/api.php?action=sign';
+        $sign_res = self::_sign($sign_url, $id, $host, $email);
+        if (!$sign_res) return null;
+        
+        $honeypots = [];
+        if (!empty($config['honeypots']) && is_array($config['honeypots'])) {
+            foreach ($config['honeypots'] as $field_name) {
+                $honeypots[$field_name] = '';
             }
-            
-            $solution = self::_verf($id, $host, $config, $pow_res, $pub_key, $fp_token, $sign_res, $endP, $hsh_sc, $honeypots);
-            if (!$solution) return null;
-            
-            $fc_fi = $config['payloadField'] ?? 'f_' . substr(md5($id), 0, 12);
-            return [
-                "captcha" => "faucetcaptcha",
-                "$fc_fi" => $solution['sol'],
-                'fc_token' => $solution['tkn'],
-                'fc_challenge_id' => $id
-            ];
-        });
+        }
+        
+        $ver_url = str_replace('action=sign', 'action=verify', $config['signEndpoint'] ?? $host . '/api.php?action=sign');
+        $solution = self::_verf($ver_url, $id, $host, $config, $pow_res, $pub_key, $fp_token, $sign_res, $endP, $hsh_sc, $honeypots);
+        if (!$solution) return null;
+        
+        $fc_fi = $config['payloadField'] ?? 'f_' . substr(md5($id), 0, 12);
+        return [
+            "captcha" => "faucetcaptcha",
+            "$fc_fi" => $solution['sol'],
+            'fc_token' => $solution['tkn'],
+            'fc_challenge_id' => $id
+        ];
     }
 
     private static function _dec($token, $nonce, $challenge) {
@@ -776,6 +780,8 @@ class FaucetCaptcha {
         if ($pad) $b64 .= str_repeat('=', 4 - $pad);
         
         $raw = base64_decode($b64);
+        if (!$raw || strlen($raw) < 28) return 'sha256-prefix';
+
         $iv   = substr($raw, 0, 12);
         $tag  = substr($raw, -16);
         $ct   = substr($raw, 12, -16);
@@ -793,7 +799,7 @@ class FaucetCaptcha {
         $target = str_repeat('0', $difficulty);
         $nonce = 0;
         
-        while ($nonce < 1000000) {
+        while ($nonce < 5000000) {
             $nonceStr = base_convert($nonce, 10, 36);
             
             $hash = match($variant) {
@@ -822,8 +828,12 @@ class FaucetCaptcha {
         return null;
     }
 
-    private static function _sct() {
-        return hash('sha256', uniqid('fc-', true) . microtime());
+    private static function _sct($host) {
+        $js_content = Net::X($host . '/api/captcha.js', 'GET', null, inf::$cookie, [], $host, inf::$uagent);
+        if ($js_content) {
+            return hash('sha256', $js_content);
+        }
+        return '';
     }
 
     private static function _sign($sgn_u, $id, $host, $email) {
@@ -847,15 +857,13 @@ class FaucetCaptcha {
             'isTouchDevice' => $isMobile,
         ];
         
-        $onCnv = substr(base64_encode(md5($base.'canvas') . md5($base.'canvas')), 0, 48);
-        $onDlt = $isMobile ? 0 : (abs(crc32($base.'mouse')) % 200) + 50;
-        $onBox = (abs(crc32($base.'time')) % 3000) + 3500; // Total waktu render di atas 3.5 detik
+        $onCnv = substr(hash('sha256', $base . 'canvas'), 0, 48);
         
         $_bhv = [
-            'mouseDelta' => $onDlt,
+            'mouseDelta' => rand(500, 2000),
             'keystrokeCount' => 0,
             'keystrokeVarMs' => 0,
-            'timeToCheckbox' => $onBox,
+            'timeToCheckbox' => 0,
             'scrollEvents' => 0,
             'focusBlurCount' => 3,
             'canvasFp' => $onCnv,
@@ -867,7 +875,7 @@ class FaucetCaptcha {
             'hiddenAtLoad' => false,
             'perfDrift' => 0.0003,
             'touchCount' => $isMobile ? 12 : 0,
-            'movesBeforeClick' => $isMobile ? 0 : 4, // Diubah ke >3 gerakan untuk lolos filter waktu V3.0
+            'movesBeforeClick' => $isMobile ? 0 : 4,
         ];
         
         $body = [
@@ -876,12 +884,10 @@ class FaucetCaptcha {
             'bhv' => $_bhv,
         ];
         
-        // Eksekusi HTTP Request POST menggunakan library internal Net::X
-        $sign = json_decode(
-            Net::X($sgn_u, 'POST', $body, inf::$cookie, ['X-FC-Sign: 1'], $host, inf::$uagent, json: true) ?: '', 
-            1
-        )['sig'] ?? null;
-        
+        $res = Net::X($sgn_u, 'POST', $body, inf::$cookie, ['X-FC-Sign: 1'], $host, $ua, true);
+        $sign = json_decode($res ?: '', true)['sig'] ?? null;
+        var_dump($res);
+        var_dump($sgn_u);
         if (!empty($sign)) {
             return [
                 'sig' => $sign,
@@ -892,15 +898,13 @@ class FaucetCaptcha {
         return null;
     }
 
-    private static function _verf($id, $host, $config, $pow_res, $pubKeyHash, $fpToken, $sign_res, $endP, $hsh_sc, $honeypots) {
-        $ver_u = str_replace('action=sign', 'action=verify', $config['signEndpoint']);
-        
+    private static function _verf($ver_u, $id, $host, $config, $pow_res, $pubKeyHash, $fpToken, $sign_res, $endP, $hsh_sc, $honeypots) {
         $payloadData = [
             'nonce' => $config['nonce'],
             'powNonce' => $pow_res['nonce'],
             'solveMs' => $endP,
             'envFacts' => $sign_res['envFacts'],
-            'pubKeyHash' => $pubKeyHash,
+            'pubKeyHash' => hash('sha256', $pubKeyHash),
             'ecSig' => $config['ecSig'] ?? '',
             'bhv' => $sign_res['bhv'],
             'telemetrySig' => $sign_res['sig'],
@@ -916,10 +920,7 @@ class FaucetCaptcha {
             'honeypots' => $honeypots,
         ];
         
-        $sol = json_decode(
-            Net::X($ver_u, 'POST', $body, inf::$cookie, ['X-FC-Sign: 1'], $host, inf::$uagent, json: true) ?: '', 
-            1
-        );
+        $sol = json_decode(Net::X($ver_u, 'POST', $body, inf::$cookie, [], $host, inf::$uagent, true) ?: '', true);
         
         if (!empty($sol['success']) || !empty($sol['token'])) {
             return ['tkn' => $sol['token'], 'sol' => $payload];

@@ -1,19 +1,5 @@
 <?php
 
-
-function logg($clock = true, $msg = '', $n = true, $check = false) {
-    return Logger::G($clock, $msg, $n);
-}
-
-function logx($in = "", $msg = "\n", $n = true, $b = false) {
-    return Logger::X($in, $msg, $n, $b);
-}
-
-function logm($mail, $mask = true) {
-    return Logger::M($mail, $mask);
-}
-
-
 final class Logger {
     
     /* pattern die log err 

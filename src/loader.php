@@ -1,159 +1,40 @@
 <?php
-/**
- * initialize src
- * => load all mods
- * => setting up definition 
- */
 
-if (!defined('ROOT')) define('ROOT', realpath(__DIR__ . '/../'));
-if (!defined('RUNNER')) define('RUNNER', '31.9.2'); 
-if (!defined('LIBDIR')) define('LIBDIR', ROOT . '/lib'); 
-if (!defined('CREDIR')) define('CREDIR', ROOT . '/cre');
-if (!defined('SRCDIR')) define('SRCDIR', ROOT . '/src');
-if (!defined('BOTDIR')) define('BOTDIR', ROOT . '/bot');
-if (!defined('UPDDIR')) define('UPDDIR', ROOT . '/upd');
-
-define("ANN", "\033["); 
-define("FG256", ANN."38;5;"); define("BG256", ANN."48;5;");
-
-define("RSET", ANN."0m"); define("BOLD", ANN."1m");
-define("DIMM", ANN."2m"); define("ITAL", ANN."3m");
-define("UNDR", ANN."4m"); define("BLNK", ANN."5m");
-define("RPID", ANN."6m"); define("RVRS", ANN."7m");
-define("HDDN", ANN."8m"); define("STRK", ANN."9m"); 
-
-
-#foreround colours origin 
-define("FGo", [
-  "BLK" => ANN."30m", "RED" => ANN."31m",
-  "GRN" => ANN."32m", "YLW" => ANN."33m",
-  "BLU" => ANN."34m", "MAG" => ANN."35m",
-  "CYN" => ANN."36m", "WHT" => ANN."37m",
-]);
-
-#foreround colours bright 
-define("FGb", [
-  "BLK" => ANN."90m", "RED" => ANN."91m",
-  "GRN" => ANN."92m", "YLW" => ANN."93m",
-  "BLU" => ANN."94m", "MAG" => ANN."95m",
-  "CYN" => ANN."96m", "WHT" => ANN."97m",
-]);
-
-#foreround colours dark 
-define("FGd", [
-  "BLK" => DIMM.FGo["BLK"], "RED" => DIMM.FGo["RED"],
-  "GRN" => DIMM.FGo["GRN"], "YLW" => DIMM.FGo["YLW"],
-  "BLU" => DIMM.FGo["BLU"], "MAG" => DIMM.FGo["MAG"],
-  "CYN" => DIMM.FGo["CYN"], "WHT" => DIMM.FGo["WHT"],
-]);
-
-#background colours 
-define("BG", [
-  "BLK" => ANN."40m", "RED" => ANN."41m",
-  "GRN" => ANN."42m", "YLW" => ANN."43m",
-  "BLU" => ANN."44m", "MAG" => ANN."45m",
-  "CYN" => ANN."46m", "WHT" => ANN."47m",
-]);
-
-(function() {
-    if (!is_dir(LIBDIR)) @mkdir(LIBDIR, 0777, true);
-    if (!is_dir(SRCDIR)) @mkdir(SRCDIR, 0777, true);
-    if (!is_dir(BOTDIR)) @mkdir(BOTDIR, 0777, true);
-    if (!is_dir(CREDIR)) @mkdir(CREDIR, 0777, true);
-} )();
-
-(function() {
+if (!defined('ROOT')) {
     
-    $src = SRCDIR;
-    
-    $items = scandir($src);
-    $modules = [];
-    foreach ($items as $item) {
-        if ($item[0] === '.' || $item === 'loader.php') continue;
-        if (is_dir($src . '/' . $item)) $modules[] = $item;
+    define('ROOT', realpath(__DIR__.'/../'));
+    if (!defined('RUNNER')) define('RUNNER', '31.9.2'); 
+    if (!defined('LIBDIR')) {
+        define('LIBDIR', ROOT.'/lib');
+        is_dir(LIBDIR) || @mkdir(LIBDIR, 0777, true);
+    }
+    if (!defined('CREDIR')) {
+        define('CREDIR', ROOT.'/cre');
+        is_dir(CREDIR) || @mkdir(CREDIR, 0777, true);
+    }
+    if (!defined('SRCDIR')) {
+        define('SRCDIR', ROOT.'/src');
+        is_dir(SRCDIR) || @mkdir(SRCDIR, 0777, true);
+    }
+    if (!defined('BOTDIR')) {
+        define('BOTDIR', ROOT.'/bot');
+        is_dir(BOTDIR) || @mkdir(BOTDIR, 0777, true);
     }
 
-    foreach ($modules as $m) {
-        $utils = "$src/$m/utils.php";
-        if (file_exists($utils)) require_once $utils;
-    }
-
-    foreach ($modules as $m) {
-        $it = new RecursiveDirectoryIterator("$src/$m");
-        $fs = [];
-
-        foreach (new RecursiveIteratorIterator($it) as $f) {
-            if ($f->isFile() && $f->getExtension() === 'php') {
-                if ($f->getFilename() === 'utils.php') continue;
-                $fs[] = $f->getRealPath();
+    require_once SRCDIR.'/Ansi.php';
+    require_once SRCDIR.'/Func.php';
+    
+    $dirs = glob(SRCDIR.'/*',GLOB_ONLYDIR);
+    spl_autoload_register(function ($class) use ($dirs) {
+        
+        foreach ($dirs as $dir) {
+            $file = $dir.DIRECTORY_SEPARATOR."{$class}.php";
+            if (is_file($file)) {
+                require_once $file;
+                return;
             }
         }
-        sort($fs);
-        foreach ($fs as $path) require_once $path;
-    }
-    
-} )();
+        
+    });
 
-{
-
-function AUTH_API() {
-    return $GLOBALS['_CTX']['AUTH_API'];
-}
-
-function getDeps($deps) {
-    if (empty($GLOBALS['_CTX']['deps'])) die(Logger::X('err', 'RUN SCRIPT NORMALLY!!!'));
-    if (is_string($deps)) $deps = [$deps];
-    foreach ($deps as $dep) if (empty($GLOBALS['_CTX']['deps'][$dep]) || !$GLOBALS['_CTX']['deps'][$dep]) return false;
-    return true;
-}
-
-function IP() {
-    return $GLOBALS['_CTX']['geo']['ip'] ?? '0.0.0.0';
-}
-
-function TIMEZONE() {
-    return $GLOBALS['_CTX']['geo']['timezone'] ?? 'Asia/Jakarta';
-}
-
-function COUNTRY() {
-    return $GLOBALS['_CTX']['geo']['country'] ?? '';
-}
-
-function COUNTRY_CODE() {
-    return $GLOBALS['_CTX']['geo']['country_code'] ?? 'ID';
-}
-
-function LANGUAGE() {
-    return $GLOBALS['_CTX']['geo']['language'] ?? 'en-US,en';
-}
-
-function checkATB(&$err, $html) {
-    if ($html && (stripos($html, 'nvalid Anti-Bot') !== false || stripos($html, 'Invalid AntiBot') !== false)) {
-        $err++;
-        return true;
-    }
-
-    return false;
-}
-
-}
-
-function bootApp() {
-    
-    _cle();
-    
-    check::Env();
-    check::Dep();
-    Proxy::load();
-    check::Geo();
-    KEYS::sync();
-    $inn = check::Inn();
-    
-    $k = Config::credential()['_authApi_'];
-    if (!$k) $k = $inn;
-    
-    $a = Api::use('gmxch', $k);
-    $GLOBALS['_CTX']['AUTH_API'] = $a;
-    if (!defined('AUTH_KEY')) define('AUTH_KEY', $a->getInfo());
-    
 }

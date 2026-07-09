@@ -93,6 +93,7 @@ while (true) {
             _sle(3);
             #print_r($po); die;
             $ve = Net::X($f['url'], 'POST', $po, inf::$cookie, $headersCF, $host.$r, inf::$uagent);
+            #_put('ve.html', $ve); die;
         }
         
         
@@ -104,7 +105,7 @@ while (true) {
         if (!$claim) break;
         $_c = basename(parse_url($fa)['path']);
         
-        print(FGd['CYN']." ".ITAL.UNDR.'processing'.RSET."  ");
+        print(FGd['CYN']." ".ITAL.'processing  ');
         logx('err', strtoupper($_c));
         
         if (!empty($curr) && stripos($_c, $curr) === false) continue; 
@@ -201,7 +202,7 @@ while (true) {
                         }
                         if (stripos($msg, 'flagged')) die;
                         
-                        
+                        styler("waiting for next claim", fn() => _sle(8));
                     }
                     
                 }

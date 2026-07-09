@@ -11,9 +11,7 @@ if (!defined('ROOT')) {
         'apikey' => [],
     ];
     
-    startingLib:
     bootApp();
-    
     while (!(!hasTty() || getenv('BOT')) && Menu::main()); (!hasTty() || getenv('BOT')) && Menu::autoRun();
     
 }

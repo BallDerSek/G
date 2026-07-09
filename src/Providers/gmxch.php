@@ -73,18 +73,15 @@ class gmxch extends Provider {
     
         $res = $this->run('visual', $params);
     
-        if (isset($res['fail'])) {
-            return $res;
-        }
+        if (isset($res['fail'])) return $res;
     
         $res = $res['done'];
     
         if (is_numeric($res)) {
             $idx = (int)$res;
     
-            if (isset($map[$idx])) {
-                return ['done' => $map[$idx]];
-            }
+            if (isset($map[$idx])) return ['done' => $map[$idx]];
+            
         }
     
         return ['fail' => 777];
@@ -108,29 +105,22 @@ class gmxch extends Provider {
     
         $res = $this->run('visual', $params);
     
-        if (isset($res['fail'])) {
-            return $res;
-        }
+        if (isset($res['fail'])) return $res;
     
         $res = json_decode($res['done'], true);
     
-        if (!is_array($res)) {
-            return ['fail' => 777];
-        }
+        if (!is_array($res)) return ['fail' => 777];
     
         $links = [];
     
         foreach ($res as $val) {
             $val = trim($val);
     
-            if (isset($map[$val])) {
-                $links[] = $map[$val];
-            }
+            if (isset($map[$val])) $links[] = $map[$val];
+            
         }
     
-        return !empty($links)
-            ? ['done' => ' ' . implode(' ', $links)]
-            : ['fail' => 777];
+        return !empty($links) ? ['done' => ' ' . implode(' ', $links)] : ['fail' => 777];
     }
     
     public function bct(array $data) {
@@ -142,15 +132,11 @@ class gmxch extends Provider {
             "options" => []
         ];
     
-        foreach ($data['opsi'] as $rel => $b64) {
-            $params['options'][] = $b64;
-        }
+        foreach ($data['opsi'] as $rel => $b64) $params['options'][] = $b64;
     
         $sol = $this->run('visual', $params);
         
-        if (isset($sol['fail'])) {
-            return $sol;
-        }
+        if (isset($sol['fail'])) return $sol;
         
         $ans = $sol['done'];
         

@@ -23,7 +23,7 @@ $cookieFile = config::cookie($login);
 $ip = '162.213.248.69';
 $r = '/?r=gamamoch@gmail.com';
 
-$FAST_CLAIM = false; # <-- change true if u want to use single token for all sites, false to use single token per sites.
+$FAST_CLAIM = true; # <-- change true if u want to use single token for all sites, false to use single token per sites.
 
 $sites = [
     'https://beefaucet.org' => '6LfwaSgTAAAAAJJNz6oAdimVHmIe3s4fHj4D0at4',
@@ -37,8 +37,6 @@ while (true) {
         die(Logger::X('err', "ALL SITES REACHED LIMIT"));
     }
     
-    $rc_U = 'https://beefaucet.org';
-    $rc_K = $sites[$rc_U];
     if ($api instanceof Provider) $api->getInfo();
     
     $parsed_sites = [];
@@ -79,7 +77,7 @@ while (true) {
     }
     
     if ($FAST_CLAIM) {
-        $token = _tK($rc_U, $rc_K, $api);
+        $token = _tK('https://beefaucet.org', '6LfwaSgTAAAAAJJNz6oAdimVHmIe3s4fHj4D0at4', $api);
         if (empty($token) || $token === null) continue;
     }
     
@@ -188,8 +186,8 @@ while (true) {
             }
         }
     }
-    
     if (!empty($sites)) styler("waiting", fn() => _sle(30));
+    
 }
 
 function _tK($rc_U, $rc_K, $api) {

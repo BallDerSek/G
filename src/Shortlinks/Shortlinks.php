@@ -59,10 +59,10 @@ class Shortlinks {
                     if (isset($seen[$id])) continue;
                     $seen[$id] = true;
 
-                    $container     = $this->_getCont($n, $xp);
+                    $container = $this->_getCont($n, $xp);
                     $containerText = $this->_getNodes($xp, $container);
-                    $limit         = $this->_getLimit($containerText);
-                    $name          = $this->_getName($xp, $container);
+                    $limit = $this->_getLimit($containerText);
+                    $name = $this->_getName($xp, $container);
 
                     $key = $name !== '' ? $name : "go_{$id}";
                     $key = strtolower($key);
@@ -178,13 +178,9 @@ class Shortlinks {
     
         $res = $solver->shortLink($url);
     
-        if (isset($res['fail']) && $solver !== $api) {
-            $res = method_exists($api, 'shortLink') ? $api->shortLink($url) : ['fail' => 1];
-        }
+        if (isset($res['fail']) && $solver !== $api) $res = method_exists($api, 'shortLink') ? $api->shortLink($url) : ['fail' => 1];
     
-        if (isset($res['done'])) {
-            return $res['done'];
-        }
+        if (isset($res['done'])) return $res['done'];
     
         return false;
     }

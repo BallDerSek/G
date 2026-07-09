@@ -1,8 +1,9 @@
 <?php
-
+/*
 if (!trait_exists('WorkDir')) {
     require_once SRCDIR . '/config/Workdir.php';
 }
+*/
 
 final class Links {
     use WorkDir;

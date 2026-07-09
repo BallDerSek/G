@@ -61,19 +61,10 @@ class skibidixxx extends Provider {
     
         $sol = $this->run('bitcocaptcha', $params, true);
         
-        if (isset($sol['fail'])) {
-            return $sol;
-        }
+        if (isset($sol['fail'])) return $sol;
         $ans = $sol['done'];
         
-        /*
-        var_dump($sol);
-        var_dump($ans);
-        */
-        
-        if (!is_string($ans) || !preg_match('/class:([^,]+), array:(\d+)/', $ans, $m)) {
-            return ['fail' => 777];
-        }
+        if (!is_string($ans) || !preg_match('/class:([^,]+), array:(\d+)/', $ans, $m)) return ['fail' => 777];
         
         return [
             'ans' => $m[1],

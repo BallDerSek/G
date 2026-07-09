@@ -1,10 +1,5 @@
 <?php
 
-
-function styler($text, callable $task, $rndr = null) {
-    return Animator::exec($text, $task, $rndr);
-}
-
 final class Animator {
     
     private const RENDERERS = [
