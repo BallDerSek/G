@@ -97,11 +97,9 @@ class Menu {
         
         $result = BOTS::hardResetAll($includeCred);
         
-        #self::$banner->show();
         self::$banner->task1('ok', 'HARD RESET COMPLETED!');
         self::$banner->task2('info', "Deleted: {$result['deleted']} items");
         
-        // Tampilkan detail
         if (!empty($result['details'])) {
             foreach ($result['details'] as $bot => $files) {
                 echo "    " . FGb['GRN'] . $bot . RSET . ":\n";
@@ -137,7 +135,6 @@ class Menu {
             Logger::X('info', "    N_cre     - Delete credentials only");
             Logger::X('info', "    N_hard    - Hard reset (delete cookies & session data)");
             
-            // ========== DISPLAY BOT LIST 2 KOLOM ==========
             $maxLen = 0;
             foreach ($bots as $bot) {
                 $maxLen = max($maxLen, strlen($bot));
@@ -172,7 +169,6 @@ class Menu {
                 echo $line . "\n";
             }
             echo "\n";
-            // =============================================================
             
             $input = trim(_rl('  input [back]: '));
             if ($input === '' || $input === 'back') {
@@ -237,11 +233,9 @@ class Menu {
 
     public static function proxy() {
         while (true) {
-            // Tampilkan banner dengan status proxy
             self::$banner->show();
             self::$banner->task1('info', 'PROXY SETTINGS');
             
-            // Cek status proxy (tanpa ANSI codes)
             if (!empty($GLOBALS['_CTX']['proxy'])) {
                 $p = $GLOBALS['_CTX']['proxy'];
                 $alive = Proxy::_enable();

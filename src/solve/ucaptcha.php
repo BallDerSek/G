@@ -475,7 +475,7 @@ final class uCaptcha {
                 }
             }
     
-            if (!$hasKey) $js = solveUtils::dumpJs($js);
+            if (!$hasKey) $js = SolveUtils::dumpJs($js);
     
             $api = Scraper::_jP($js, "/litoshi_api_key\s*=\s*['\"]([^'\"]+)['\"]/")[1][0] ?? null;
             $sec = Scraper::_jP($js, "/litoshi_secret_key\s*=\s*['\"]([^'\"]+)['\"]/")[1][0] ?? null;

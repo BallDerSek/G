@@ -9,9 +9,9 @@ class Scraper {
     }
 
     public static function dom($html): ?DOMXPath {
+
         if (!$html) return null;
         if ($html instanceof DOMXPath) return $html;
-
         $key = self::_init($html);
 
         if (isset(self::$cache[$key]['xp'])) return self::$cache[$key]['xp'];
@@ -19,27 +19,17 @@ class Scraper {
         libxml_use_internal_errors(true);
         $dom = new DOMDocument();
 
-        if (stripos($html, '<meta charset') === false && stripos($html, '<head>') !== false) {
-            $html = str_ireplace('<head>', '<head><meta charset="UTF-8">', $html);
-        } elseif (stripos($html, '<meta charset') === false) {
-            $html = '<meta charset="UTF-8">' . $html;
-        }
+        if (stripos($html, '<meta charset') === false && stripos($html, '<head>') !== false) $html = str_ireplace('<head>', '<head><meta charset="UTF-8">', $html);
+        elseif (stripos($html, '<meta charset') === false) $html = '<meta charset="UTF-8">' . $html;
 
-        $dom->loadHTML(
-            $html,
-            LIBXML_NOWARNING | LIBXML_NOERROR | LIBXML_NONET
-        );
-
+        $dom->loadHTML($html, LIBXML_NOWARNING | LIBXML_NOERROR | LIBXML_NONET);
         libxml_clear_errors();
-
         $xp = new DOMXPath($dom);
-
         self::$cache[$key]['xp'] = $xp;
-
         return $xp;
     }
 
-    public static function clearCache(): void {
+    public static function clearCache() {
         self::$cache = [];
     }
 
@@ -127,9 +117,7 @@ class Scraper {
             if ($id !== null && !preg_match('/^[a-z][\w-]*$/i', $id)) return null;
         }
 
-        $q = $attr
-            ? "//{$tag}[@{$key}=" . self::xlit($name) . "]/@{$attr}"
-            : "//{$tag}[@{$key}=" . self::xlit($name) . "]";
+        $q = $attr ? "//{$tag}[@{$key}=" . self::xlit($name) . "]/@{$attr}" : "//{$tag}[@{$key}=" . self::xlit($name) . "]";
 
         return self::_xP($html, $q) ?: null;
     }
@@ -170,27 +158,19 @@ class Scraper {
 
     # PROBLEMATIC PAYLOAD
     public static function build($html, $js, $tokenData) {
-    
         $jsContent = is_file($js) ? _get($js) : $js;
         $response = is_array($tokenData) ? $tokenData : json_decode($tokenData, true);
-    
         if (!is_array($response)) $response = [];
     
         $xp = self::dom($html);
         if (!$xp) return [];
     
         $payload = [];
-    
         foreach ($xp->query('//input[@name]') as $input) {
             if ($input->getAttribute('type') !== 'submit') $payload[$input->getAttribute('name')] = $input->getAttribute('value');
         }
     
-        preg_match_all(
-            '/<input[^>]+name=["\']([^"\']+)["\'][^>]*>/i',
-            $jsContent,
-            $inputs,
-            PREG_SET_ORDER
-        );
+        preg_match_all('/<input[^>]+name=["\']([^"\']+)["\'][^>]*>/i', $jsContent, $inputs, PREG_SET_ORDER);
     
         foreach ($inputs as $input) {
             $name = $input[1];
@@ -202,31 +182,16 @@ class Scraper {
     
         $idMap = [];
     
-        preg_match_all(
-            '/(?:const|let|var)\s+([a-zA-Z0-9_$]+)\s*=\s*document\.getElementById\(\s*["\']([^"\']+)["\']\s*\)/',
-            $jsContent,
-            $vars,
-            PREG_SET_ORDER
-        );
+        preg_match_all('/(?:const|let|var)\s+([a-zA-Z0-9_$]+)\s*=\s*document\.getElementById\(\s*["\']([^"\']+)["\']\s*\)/', $jsContent, $vars, PREG_SET_ORDER);
     
         foreach ($vars as $v) $idMap[$v[1]] = $v[2];
         $maps = [];
     
-        preg_match_all(
-            '/document\.getElementById\(\s*["\']([^"\']+)["\']\s*\)\.value\s*=\s*response\.([a-zA-Z0-9_]+)/',
-            $jsContent,
-            $direct,
-            PREG_SET_ORDER
-        );
+        preg_match_all('/document\.getElementById\(\s*["\']([^"\']+)["\']\s*\)\.value\s*=\s*response\.([a-zA-Z0-9_]+)/', $jsContent, $direct, PREG_SET_ORDER);
     
         foreach ($direct as $m) $maps[] = ['id' => $m[1], 'key' => $m[2]];
     
-        preg_match_all(
-            '/([a-zA-Z0-9_$]+)\.value\s*=\s*response\.([a-zA-Z0-9_]+)/',
-            $jsContent,
-            $variable,
-            PREG_SET_ORDER
-        );
+        preg_match_all('/([a-zA-Z0-9_$]+)\.value\s*=\s*response\.([a-zA-Z0-9_]+)/', $jsContent, $variable, PREG_SET_ORDER);
     
         foreach ($variable as $m) if (isset($idMap[$m[1]])) $maps[] = ['id' => $idMap[$m[1]], 'key' => $m[2]];
     
@@ -242,26 +207,13 @@ class Scraper {
                 }
             }
     
-            if (!$name) {
-                if (preg_match(
-                    '/<input[^>]+id=["\']'.preg_quote($id,'/').'["\'][^>]*name=["\']([^"\']+)["\']/i',
-                    $jsContent,
-                    $im
-                )) {
-                    $name = $im[1];
-                }
-            }
+            if (!$name) if (preg_match('/<input[^>]+id=["\']'.preg_quote($id,'/').'["\'][^>]*name=["\']([^"\']+)["\']/i', $jsContent, $im)) $name = $im[1];
     
             if ($name && isset($response[$key])) $payload[$name] = $response[$key];
     
         }
     
-        preg_match_all(
-            '/getElementById\(\s*["\']([^"\']+)["\']\s*\)\.value\s*=\s*e\.token/',
-            $jsContent,
-            $tokenMaps,
-            PREG_SET_ORDER
-        );
+        preg_match_all('/getElementById\(\s*["\']([^"\']+)["\']\s*\)\.value\s*=\s*e\.token/', $jsContent, $tokenMaps, PREG_SET_ORDER);
     
         foreach ($tokenMaps as $m) {
             $id = $m[1];

@@ -6,9 +6,7 @@ class Mux {
         
         if ($opt['type'] === 'GET' && !empty($opt['data']) && is_array($opt['data'])) {
             $qs = http_build_query($opt['data']);
-            if ($qs !== '') {
-                $opt['url'] .= (str_contains($opt['url'], '?') ? '&' : '?') . $qs;
-            }
+            if ($qs !== '') $opt['url'] .= (str_contains($opt['url'], '?') ? '&' : '?') . $qs;
         }
 
         if (empty($opt['url'])) return null;

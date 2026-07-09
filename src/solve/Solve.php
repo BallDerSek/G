@@ -10,7 +10,7 @@ class Solve {
     }
 
     private static function init($context = null) {
-        return $context ?? (inf::$context ?? []);
+        return $context ?? (Inf::$context ?? []);
     }
     
     public static function exec($html, $host, ?Provider $api, $pa = null, $force = false, $context = null) {
@@ -251,7 +251,7 @@ class Solve {
     
     public static function tkn($api, $host, $key, $type, array $data = [], $ctx = []) {
     
-        $solver = config::getKeys($api, $type);
+        $solver = Config::getKeys($api, $type);
     
         $Params = array_merge($data, ['userAgent' => $ctx['uagent'] ?? '']);
     
@@ -303,7 +303,7 @@ class Solve {
     
     public static function img($api, $host, $type, $img, array $extra = []) {
     
-        $solver = config::getKeys($api, $type, 'b64');
+        $solver = Config::getKeys($api, $type, 'b64');
     
         $res = Retry::until(function() use ($solver, $api, $img, $type, $extra) {
     

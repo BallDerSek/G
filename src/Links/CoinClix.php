@@ -3,7 +3,7 @@
 class CoinClix {
     
     public static function _ccCode($html) {
-        $nodes = scraper::_xP($html, "//div[contains(@class,'accordion-body')]");
+        $nodes = Scraper::_xP($html, "//div[contains(@class,'accordion-body')]");
         foreach ($nodes as $txt) {
             if (preg_match('/enter\s+this\s+key\s*-\s*([A-Za-z0-9]{5})/i', $txt, $m)) {
                 return $m;
@@ -23,17 +23,17 @@ class CoinClix {
                 break;
     
             case 'CT':
-                $token = solve::tkn($api, $dom, '0x4AAAAAAB5TRnwvGvH5b2kw', 'cft', ['action' => 'linkSubmit'])['done'] ?? null;
+                $token = Solve::tkn($api, $dom, '0x4AAAAAAB5TRnwvGvH5b2kw', 'cft', ['action' => 'linkSubmit'])['done'] ?? null;
                 break;
     
             case 'HC':
-                $token = solve::tkn($api, $dom, '2a9619f4-43bc-4e64-afc8-7fbc48f2bf34', 'hc', ['invisible'=>1])['done'] ?? null;
+                $token = Solve::tkn($api, $dom, '2a9619f4-43bc-4e64-afc8-7fbc48f2bf34', 'hc', ['invisible'=>1])['done'] ?? null;
                 #$token = _rl('token:');
                 break;
     
             case 'PC':
             case 'IC':
-                $token = solve::tkn($api, $dom, $cpobj, $ver.'c')['done'] ?? null;
+                $token = Solve::tkn($api, $dom, $cpobj, $ver.'c')['done'] ?? null;
                 break;
     
             default:

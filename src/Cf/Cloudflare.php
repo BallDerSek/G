@@ -17,19 +17,15 @@ class Cloudflare {
         if ($force) {
             $solve = $api->access($url, 'interstitial', $param);
         } else {
-            $solver = config::getKeys($api, 'interstitial', 'acc');
+            $solver = Config::getKeys($api, 'interstitial', 'acc');
             $solve = $solver ? $solver->access($url, 'interstitial', $param) : false;
         }
     
         if (is_array($solve) && isset($solve['fail'])) {
             if ($solve['fail'] === 777) {
-                // Fallback ke primary api
                 if (isset(Api::ACC[get_class($api)]['interstitial'])) {
                     $solve = $api->access($url, 'interstitial', $param);
-                    
-                    if (isset($solve['fail']) && $solve['fail'] === 71) {
-                        return false;
-                    }
+                    if (isset($solve['fail']) && $solve['fail'] === 71) return false;
                 }
             }
         }
@@ -86,7 +82,7 @@ class Cloudflare {
         self::injectCookie($cookiePath, $solution['token'], $url);
 
         return [
-            inf::netHead(['cf_clearance' => $solution['token']]),
+            Inf::netHead(['cf_clearance' => $solution['token']]),
             $solution['ua']
         ];
     }

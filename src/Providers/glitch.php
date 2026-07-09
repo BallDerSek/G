@@ -46,40 +46,10 @@ class glitch extends Provider {
 
         throw new Exception("ERROR_TIMEOUT");
     }
-
-    /** shortlink resolver */
-    public function shortLink00($link) {
-        $params = ["url" => $link];
-        $short = $this->run('shortlink', $params);
-        if (!$short) return false;
-        return $short;
-    }
     
     public function shortLink($link) {
         $params = ["url" => $link]; 
         return $this->run('shortlink', $params, true);
-    }
-
-    
-    /** atb override */
-    public function atb00(array $data) {
-        
-        $params = [
-            "mode" => "freeantibot",
-            "main" => $data['main'],
-            "sub" => []
-        ];
-        
-        foreach ($data['rels'] as $i => $b64) {
-            $params['sub'][$i + 1] = $b64;
-        }
-        $antibot = $this->run('antibot', $params);
-        #var_dump($antibot);
-        if (!str_starts_with($antibot, ' ')) {
-            return " $antibot";
-        }
-        
-        return $antibot;
     }
     
     public function atb(array $data) {
@@ -106,7 +76,6 @@ class glitch extends Provider {
         
         return ['done' => $antibot];
     }
-
     
     /** info saldo */
     public function getInfo(): bool{

@@ -9,14 +9,10 @@ class Net {
             curl_setopt($ch, CURLOPT_PROXY, $p['host']);
             curl_setopt($ch, CURLOPT_PROXYPORT, $p['port']);
             curl_setopt($ch, CURLOPT_PROXYTYPE, $p['type']);
-            if (!empty($p['auth'])) {
-                curl_setopt($ch, CURLOPT_PROXYUSERPWD, $p['auth']);
-            }
+            if (!empty($p['auth'])) curl_setopt($ch, CURLOPT_PROXYUSERPWD, $p['auth']);
             $i = stripos($url, 'https://') === 0;
             
-            if ($p['type'] === CURLPROXY_HTTP || (defined('CURLPROXY_HTTPS') && $p['type'] === CURLPROXY_HTTPS)) {
-                curl_setopt($ch, CURLOPT_HTTPPROXYTUNNEL, $i);
-            }
+            if ($p['type'] === CURLPROXY_HTTP || (defined('CURLPROXY_HTTPS') && $p['type'] === CURLPROXY_HTTPS)) curl_setopt($ch, CURLOPT_HTTPPROXYTUNNEL, $i);
         }
     }
     
@@ -48,9 +44,7 @@ class Net {
         }
         if (!$manualHost) $head[] = "Host: " . $host_val;
         
-        if (!self::hasHeader($he_manual, 'Accept-Encoding')) {
-            $head[] = "Accept-Encoding: gzip, deflate";
-        }
+        if (!self::hasHeader($he_manual, 'Accept-Encoding')) $head[] = "Accept-Encoding: gzip, deflate";
         
         $lang = function_exists('LANGUAGE') ? LANGUAGE() : 'id-ID,id;q=0.9,en-US;q=0.8,en;q=0.7';
         $head[] = "Accept-Language: $lang";
@@ -73,25 +67,15 @@ class Net {
             $head[] = "Cache-Control: no-cache, no-store, must-revalidate";
             $head[] = "Pragma: no-cache";
             $head[] = "Expires: 0";
-        } else {
-            $head[] = "Cache-Control: max-age=0";
-        }
+        } else $head[] = "Cache-Control: max-age=0";
         
-        if (!self::hasHeader($he_manual, 'Connection')) {
-            $head[] = "Connection: keep-alive";
-        }
+        if (!self::hasHeader($he_manual, 'Connection')) $head[] = "Connection: keep-alive";
         
-        if (!$ajx && $useHints) {
-            $head[] = "Upgrade-Insecure-Requests: 1";
-        }
+        if (!$ajx && $useHints) $head[] = "Upgrade-Insecure-Requests: 1";
         
-        if ($useHints) {
-            $head[] = "Sec-GPC: 1";
-        }
+        if ($useHints) $head[] = "Sec-GPC: 1";
         
-        if ($useHints) {
-            $head[] = "Priority: u=0, i";
-        }
+        if ($useHints) $head[] = "Priority: u=0, i";
         
         $he_cookie = null;
         foreach ($he_manual as $h) {
@@ -130,16 +114,10 @@ class Net {
             $head[] = "Referer: $ref";
         
             $method = strtoupper($opt['type']);
-            if (
-                ($ajx || in_array($method, ['POST','PUT','PATCH','DELETE'], true))
-                && !self::hasHeader($head, 'Origin')
-                && !self::hasHeader($he_manual, 'Origin')
-            ) {
+            if (($ajx || in_array($method, ['POST','PUT','PATCH','DELETE'], true)) && !self::hasHeader($head, 'Origin') && !self::hasHeader($he_manual, 'Origin')) {
                 $u = parse_url($ref);
                 $origin = $u['scheme'].'://'.$u['host'];
-                if (!empty($u['port'])) {
-                    $origin .= ':'.$u['port'];
-                }
+                if (!empty($u['port'])) $origin .= ':'.$u['port'];
                 $head[] = "Origin: $origin";
             }
         }
@@ -153,11 +131,7 @@ class Net {
     
     public static function hasHeader(array $he, $name) {
         $name = strtolower($name) . ':';
-        foreach ($he as $header) {
-            if (stripos(strtolower($header), $name) === 0) {
-                return true;
-            }
-        }
+        foreach ($he as $header) if (stripos(strtolower($header), $name) === 0) return true;
         return false;
     }
 
@@ -167,9 +141,7 @@ class Net {
         $type = strtoupper($opt['type']);
         if ($type === 'GET' && !empty($opt['data']) && is_array($opt['data'])) {
             $qs = http_build_query($opt['data']);
-            if ($qs !== '') {
-                $opt['url'] .= (str_contains($opt['url'], '?') ? '&' : '?') . $qs;
-            }
+            if ($qs !== '') $opt['url'] .= (str_contains($opt['url'], '?') ? '&' : '?') . $qs;
         }
 
         if (empty($opt['url']) || !is_string($opt['url'])) {
@@ -183,18 +155,13 @@ class Net {
         if (!$ch) { Logger::X('err', 'init failed'); return null; }
 
         # PROXY
-        if (empty($opt['no_proxy'])) {
-            self::applyProxy($ch, $opt['url']);
-        } else {
-            curl_setopt($ch, CURLOPT_PROXY, '');
-        }
+        if (empty($opt['no_proxy'])) self::applyProxy($ch, $opt['url']);
+        else curl_setopt($ch, CURLOPT_PROXY, '');
 
         # HTTP VERSION
         $insecure = $in;
         $httpVer = CURL_HTTP_VERSION_1_1;
-        if (!empty($opt['http2']) && !$insecure) {
-            $httpVer = CURL_HTTP_VERSION_2TLS;
-        }
+        if (!empty($opt['http2']) && !$insecure) $httpVer = CURL_HTTP_VERSION_2TLS;
 
         # INIT
         curl_setopt_array($ch, [
@@ -234,12 +201,8 @@ class Net {
         }
         
         # DNS
-        if (!empty($opt['connect'])) {
-            curl_setopt($ch, CURLOPT_CONNECT_TO, $opt['connect']);
-        }
-        if (!empty($opt['resolve'])) {
-            curl_setopt($ch, CURLOPT_RESOLVE, $opt['resolve']);
-        }
+        if (!empty($opt['connect'])) curl_setopt($ch, CURLOPT_CONNECT_TO, $opt['connect']);
+        if (!empty($opt['resolve'])) curl_setopt($ch, CURLOPT_RESOLVE, $opt['resolve']);
 
         # HEADERS
         $headr = [];
@@ -262,15 +225,14 @@ class Net {
         if ($type === 'HEAD') {
             curl_setopt($ch, CURLOPT_NOBODY, true);
         } elseif ($type !== 'GET') {
-            if ($type === 'POST') {
-                curl_setopt($ch, CURLOPT_POST, true);
-            } else {
-                curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $type);
-            } 
+            if ($type === 'POST') curl_setopt($ch, CURLOPT_POST, true);
+            else curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $type);
+            
             if (isset($opt['data'])) {
                 $payload = is_array($opt['data']) ? (!empty($opt['isJson']) ? json_encode($opt['data']) : http_build_query($opt['data'])) : $opt['data'];
                 curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
             }
+            
         } 
 
         try {
@@ -329,9 +291,7 @@ var_dump($err);
                 }
                 
                 $retryCodes = [7, 52, 28, 35, 92, 56];
-                if (!in_array($errno, $retryCodes, true) || $attempt === 9) {
-                    throw new Exception("Net($errno): $err");
-                }
+                if (!in_array($errno, $retryCodes, true) || $attempt === 9) throw new Exception("Net($errno): $err");
                 
                 _sle(1);
             } 

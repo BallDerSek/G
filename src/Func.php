@@ -222,23 +222,21 @@ function bootApp() {
 
     _cle();
 
-    check::Env();
-    check::Dep();
+    Check::Env();
+    Check::Dep();
     Proxy::load();
-    check::Geo();
+    Check::Geo();
 
     KEYS::sync();
 
     $inn = check::Inn();
 
     $k = Config::credential()['_authApi_'];
-    if (!$k)
-        $k = $inn;
+    if (!$k) $k = $inn;
 
     $a = Api::use('gmxch', $k);
 
     $GLOBALS['_CTX']['AUTH_API'] = $a;
 
-    if (!defined('AUTH_KEY'))
-        define('AUTH_KEY', $a->getInfo());
+    if (!defined('AUTH_KEY')) define('AUTH_KEY', $a->getInfo());
 }

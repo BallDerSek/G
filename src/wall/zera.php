@@ -167,7 +167,7 @@ class Zera {
     private function _solve00($package) {
         if (!empty($package['rels']) && isset($package['main'])) {
             if (count($package['rels']) > 0) {
-                $solver = config::getKeys($this->api, 'zercaptcha', 'b64');
+                $solver = Config::getKeys($this->api, 'zercaptcha', 'b64');
                 
                 if (!method_exists($solver, 'zer')) return null;
                 $solution = $solver->zer($package);
@@ -187,7 +187,7 @@ class Zera {
     private function _solve($package) {
         if (!empty($package['rels']) && isset($package['main'])) {
             if (count($package['rels']) > 0) {
-                $solver = config::getKeys($this->api, 'zercaptcha', 'b64');
+                $solver = Config::getKeys($this->api, 'zercaptcha', 'b64');
                 
                 if (!method_exists($solver, 'zer')) return null;
                 $solution = $solver->zer($package);

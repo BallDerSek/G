@@ -28,7 +28,7 @@ final class Links {
         $this->cookie = $this->workDir . '/session.tmp';
         
         $this->url = $url;
-        $this->uagent = config::uagent("desktop");
+        $this->uagent = Config::uagent("desktop");
         $this->proxied = false; 
         $this->proxy = "http://gamamoch-rotate:playernoob@p.webshare.io:3128";
     }
@@ -97,7 +97,7 @@ final class Links {
             goto low_start;
         }
 
-        $p = scraper::payload($html)[0]['payload'] ?? null;
+        $p = Scraper::payload($html)[0]['payload'] ?? null;
         if (!$p) {
             $this->enableProxy();
             goto low_start;
@@ -136,7 +136,7 @@ final class Links {
         }
         
         $token = null;
-        $fo = scraper::payload($html);
+        $fo = Scraper::payload($html);
         if ($fo) {
             foreach ($fo as $f) {
                 $pa = $f['payload'] ?? [];
@@ -220,7 +220,7 @@ final class Links {
                     continue;
                 }
 
-                $next = scraper::_xP($_1['message'] ?? '', "//a/@href") ?? null;
+                $next = Scraper::_xP($_1['message'] ?? '', "//a/@href") ?? null;
                 
                 if (isset($next[0])) {
                     $html = Net::C($dom . $next[0], 'GET', null, $cookie, [], $dom, $uagent);
@@ -243,22 +243,22 @@ final class Links {
         $code = null; 
         $errorCount = 0;
         while (true) {
-            $matches = scraper::_jP($html, '/<code class="link_code">([A-Za-z0-9]+)<\/code>/i')[1][0] ?? null;
+            $matches = Scraper::_jP($html, '/<code class="link_code">([A-Za-z0-9]+)<\/code>/i')[1][0] ?? null;
             if (!empty($code)) break; 
 
-            $st = scraper::_xP($html, "//*[@id='linkResHeader']//h4") ?? [];
-            $ver = scraper::find($html, 'linkVer', 'input', 'value', 'id')[0] ?? null;;
+            $st = Scraper::_xP($html, "//*[@id='linkResHeader']//h4") ?? [];
+            $ver = Scraper::find($html, 'linkVer', 'input', 'value', 'id')[0] ?? null;;
 
             if (isset($st[0]) && $ver) {
                 $step = trim(preg_replace('/\s+/', ' ', $st[0]));
                 Logger::X('info', "\r$step [ {$ver} ]", true, true);
                 $start = microtime(true);
 
-                $pis = scraper::find($html, 'pissoff', 'input', 'value', 'id')[0] ?? null;
-                $lpt = scraper::find($html, 'lpt', 'input', 'value', 'id')[0] ?? 0;
-                $cnn = scraper::_xP($html, "//*[contains(@class,'cnnc')]/@id")[0] ?? null;
-                $_bg = scraper::find($html, 'cpres2', 'input', 'value', 'id')[0] ?? null;
-                $_cp = scraper::find($html, 'cpobj', 'input', 'value', 'id')[0] ?? null;
+                $pis = Scraper::find($html, 'pissoff', 'input', 'value', 'id')[0] ?? null;
+                $lpt = Scraper::find($html, 'lpt', 'input', 'value', 'id')[0] ?? 0;
+                $cnn = Scraper::_xP($html, "//*[contains(@class,'cnnc')]/@id")[0] ?? null;
+                $_bg = Scraper::find($html, 'cpres2', 'input', 'value', 'id')[0] ?? null;
+                $_cp = Scraper::find($html, 'cpobj', 'input', 'value', 'id')[0] ?? null;
                 
                 $po = CoinClix::_ccForm($api, $dom, $ver, $pis, $cnn, $_bg, $_cp);
                 $wait = (int)($lpt) - (int)(microtime(true) - $start);
@@ -280,13 +280,13 @@ final class Links {
                 }
                 #print_r($_v1);
                 
-                $matches = scraper::_jP($_v1['message'] ?? '', '/<code class="link_code">([A-Za-z0-9]+)<\/code>/i') ?? [];
+                $matches = Scraper::_jP($_v1['message'] ?? '', '/<code class="link_code">([A-Za-z0-9]+)<\/code>/i') ?? [];
                 if (!empty($matches[1][0])) {
                     $code = $matches[1][0];
                     break;
                 }
                 
-                $next_url = scraper::_jP($_v1['message'] ?? '', '/window\.location\.href\s*=\s*"([^"]+)"/') ?? [];
+                $next_url = Scraper::_jP($_v1['message'] ?? '', '/window\.location\.href\s*=\s*"([^"]+)"/') ?? [];
                 $_n = $next_url[1][0] ?? '';
                 
                 if ($_n !== '') {
@@ -294,7 +294,7 @@ final class Links {
                     $html = Net::C($_n, 'GET', null, $cookie, [], '', $uagent);
                     $lastreload = $_n;
 
-                    $m_a = scraper::_jP($html, '/<a href="([^"]+)"/i');
+                    $m_a = Scraper::_jP($html, '/<a href="([^"]+)"/i');
                     if (!empty($m_a[1][0])) {
                         $html = Net::C($m_a[1][0], 'GET', null, $cookie, [], '', $uagent);
                         $lastreload = $m_a[1][0];
@@ -320,7 +320,7 @@ final class Links {
         $ver_fin = json_decode(Net::X("https://$host/members/shortener/linkprocess/", 'POST', ['linkVerify' => $code], $cookie, [], $this->url, $uagent)?: '', true);
         $msg = $ver_fin['message'] ?? '';
         if (str_contains($msg, 'Invalid verification code')) throw new RuntimeException('invalid code');
-        $match = scraper::_jP($msg, '/href="([^"]+)"/') ?? [];
+        $match = Scraper::_jP($msg, '/href="([^"]+)"/') ?? [];
         if (isset($match[1][0])) return $match[1][0];
         
         throw new RuntimeException($msg ?: 'invalid session');
@@ -348,7 +348,7 @@ final class Links {
         $_0 = Net::C($this->url, 'GET', null, $cookie, [], $this->url, $uagent, false, false, $ip, true, true);
         #_put('00.html', $_0); die;
             
-        $_t = scraper::_xP($_0, "//title");
+        $_t = Scraper::_xP($_0, "//title");
         $t  = isset($_t[0]) ? strtolower(trim($_t[0])) : '';
         $blocked_titles = [
             'traffic block',
@@ -361,7 +361,7 @@ final class Links {
                 throw new RuntimeException("blocked: $t");
             }
         }
-        $n_0 = scraper::_pP($_0, "location.href")[1][0];
+        $n_0 = Scraper::_pP($_0, "location.href")[1][0];
         $html = $_0;
         $pat = '';
             
@@ -372,7 +372,7 @@ final class Links {
         while (true) {
             $loc = null;
             foreach (['location.href', 'location.replace'] as $key) {
-                $m_l = scraper::_pP($html, $key);
+                $m_l = Scraper::_pP($html, $key);
                 if (!empty($m_l[1][0])) {
                     $loc = stripcslashes($m_l[1][0]);
                     break;
@@ -381,14 +381,14 @@ final class Links {
             
             $con = null;
             foreach (["//meta[@http-equiv='refresh']/@content", "//noscript/meta[@http-equiv='refresh']/@content"] as $xpath) {
-                $m_c = scraper::_xP($html, $xpath);
+                $m_c = Scraper::_xP($html, $xpath);
                 if (!empty($m_c)) {
                     $con = preg_replace('/^0;URL=/i', '', $m_c[0]);
                     break;
                 }
             }
             
-            $current = scraper::_xP($html, "//span[@id='stepNum']") ?? [];
+            $current = Scraper::_xP($html, "//span[@id='stepNum']") ?? [];
             if (!empty($current)) {
                 $_step = $current[0];
                 Logger::X('info', "STEP " . $_step, true, true);
@@ -439,7 +439,7 @@ final class Links {
         $h = headers("https://$jsUrl", '', $jsUrl);
         
         $SLjs = '';
-        $sl_u = scraper::_xP($html, "//script[contains(@src,'sl/')]/@src")[0];
+        $sl_u = Scraper::_xP($html, "//script[contains(@src,'sl/')]/@src")[0];
         $sl_ur = "https://{$jsUrl}{$sl_u}";
         $SLjs = Net::C($sl_ur, 'GET', null, $cookie, [], $pat, $uagent, false, false, $ip, true, true); 
         
@@ -502,7 +502,7 @@ final class Links {
             if (!empty($cc_u)) {
                 $CCjs = Net::C("https://{$jsUrl}$cc_u", 'GET', null, $cookie, [], "https://$jsUrl");
                 if (strlen($CCjs) > 100) {
-                    $img_u = scraper::_pP($CCjs, "src") ?? [];
+                    $img_u = Scraper::_pP($CCjs, "src") ?? [];
                     $icon = rScraper::jPath($CCjs, '/captchaData\s*=\s*\{"options":\s*(\[.*?\])\}/s') ?? [];
                     $xhrs = rScraper::jPath($CCjs, '/xhr\.send\(\s*"([^"]+)"\s*\+\s*(.*?)\)/') ?? [];
                     $xhr = rScraper::jPath($CCjs, '/xhr\.open\("POST",\s*"([^"]+)"/') ?? [];

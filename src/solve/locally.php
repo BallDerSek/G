@@ -63,9 +63,9 @@ class locally {
     }
 
     public static function eCaptcha($host, $ctx) {
-        $cookie = inf::$cookie;
-        $ua = inf::$uagent;
-        $ip = inf::$ip;
+        $cookie = Inf::$cookie;
+        $ua = Inf::$uagent;
+        $ip = Inf::$ip;
 
         return styler("SOLVING eCaptcha", function() use ($host, $ctx) {
             $ck = $ctx['cookie'];

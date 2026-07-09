@@ -205,12 +205,12 @@ class Owme {
                             _clr(); 
                             print(FGd['CYN'].maskEmail($this->email).RSET." ");
                             
-                            $_als = scraper::_xP($ver, "//div[contains(@class, 'alert-success')]");
+                            $_als = Scraper::_xP($ver, "//div[contains(@class, 'alert-success')]");
                             if (!empty($_als[0])) {
                                 logg(false, $_als[0]);
                                 continue;
                             }
-                            $_ald = scraper::_xP($ver, "//div[contains(@class, 'alert-danger')]")[0] ?? 'gatau error apa';
+                            $_ald = Scraper::_xP($ver, "//div[contains(@class, 'alert-danger')]")[0] ?? 'gatau error apa';
                             Logger::X('err', $_als[0]);
                         }
                     }
