@@ -3,7 +3,8 @@
 if (!defined('ROOT')) {
     
     define('ROOT', realpath(__DIR__.'/../'));
-    if (!defined('RUNNER')) define('RUNNER', '31.9.2'); 
+    if (!defined('RUNNER')) define('RUNNER', '31.9.2');
+    
     if (!defined('LIBDIR')) {
         define('LIBDIR', ROOT.'/lib');
         is_dir(LIBDIR) || @mkdir(LIBDIR, 0777, true);

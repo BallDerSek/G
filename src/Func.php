@@ -1,14 +1,14 @@
 <?php
 
 # Context
-function AUTH_API() {
-    return $GLOBALS['_CTX']['AUTH_API'];
-}
 function getDeps($deps) {
     if (empty($GLOBALS['_CTX']['deps'])) die(Logger::X('err', 'RUN SCRIPT NORMALLY!!!'));
     if (is_string($deps)) $deps = [$deps];
     foreach ($deps as $dep) if (empty($GLOBALS['_CTX']['deps'][$dep]) || !$GLOBALS['_CTX']['deps'][$dep]) return false;
     return true;
+}
+function AUTH_API() {
+    return $GLOBALS['_CTX']['AUTH_API'];
 }
 function IP() {
     return $GLOBALS['_CTX']['geo']['ip'] ?? '0.0.0.0';

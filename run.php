@@ -3,7 +3,7 @@
 if (!defined('ROOT')) {
     
     define('main_menu', true);
-    require_once __DIR__ . '/src/loader.php';
+    require_once __DIR__ . '/src/Loader.php';
     
     $GLOBALS['_CTX'] ??= [
         'geo' => [],
