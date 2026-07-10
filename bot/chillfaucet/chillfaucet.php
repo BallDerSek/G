@@ -90,7 +90,14 @@ while (true) {
                 _sle(10);
                 continue;
             }
-            $po = array_merge($pa, $cap, $cre);
+            if (isset($cap['headers'])) {
+                $extra = array_diff_key($cap, ['solution' => 1, 'headers' => 1]);
+                $po = array_merge($pa, $extra, $cap['solution'], $cre);
+                $he = $cap['headers'];
+            } else {
+                $po = array_merge($pa, $cap);
+                $he = '';
+            }
         }
         
         if (!empty($po)) {
@@ -203,7 +210,14 @@ while (true) {
                     _sle(10);
                     continue;
                 }
-                $po = array_merge($pa, $cap, $crr);
+                if (isset($cap['headers'])) {
+                    $extra = array_diff_key($cap, ['solution' => 1, 'headers' => 1]);
+                    $po = array_merge($pa, $extra, $cap['solution'], $crr);
+                    $he = $cap['headers'];
+                } else {
+                    $po = array_merge($pa, $cap, $crr);
+                    $he = '';
+                }
                 
             } else {
                 
@@ -248,8 +262,9 @@ while (true) {
                     
                     if (preg_match('/sufficient|could not be processed/i', $msg) || (stripos($msg, 'link your Cwallet') !== false)) {
                         $habis[$fa] = true;
-                        break;
+                        continue 2;
                     }
+                    
                     /*
                     if (stripos($msg, 'Shortlink')) {
                         if ($SLDONE) (logx('err', 'Gada SL lagi') ?: die);
@@ -347,10 +362,14 @@ while (true) {
                         $sol = Solve::exec($ads, $host, $api, $pa);
                         if (isset($sol['trouble'])) goto login;
                         
-                        if (isset($sol['headers'])) {
-                            $data = array_merge($pa, $sol['solution']);
-                            $he = $sol['headers'];
-                        } else $data = array_merge($sol, $pa);
+                        if (isset($cap['headers'])) {
+                            $extra = array_diff_key($cap, ['solution' => 1, 'headers' => 1]);
+                            $data = array_merge($pa, $extra, $cap['solution']);
+                            $he = $cap['headers'];
+                        } else {
+                            $data = array_merge($pa, $cap);
+                            $he = '';
+                        }
                         
                     }
                     
@@ -369,7 +388,6 @@ while (true) {
                     $bctt = new Bctt($host, $api, $login);
                     $ch = $bctt->exec($ad_u, $ad_t);
                     if ($ch === 99) goto login;
-                    if ($ch === 'forbidden') break;
                     $endF = microtime(true);
                     if ($setF > 0 && $claim) {
                         $balik = $endF - $setF;

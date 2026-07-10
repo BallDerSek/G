@@ -10,7 +10,7 @@ class Solve {
     }
 
     private static function init($context = null) {
-        return $context ?? (inf::$context ?? []);
+        return $context ?? (Inf::$context ?? []);
     }
     
     public static function exec($html, $host, ?Provider $api, $pa = null, $force = false, $context = null) {
@@ -19,7 +19,9 @@ class Solve {
         
             $solution = [];
             $_cap = Capt::cha($html);
-        
+            
+            #var_dump($_cap); die;
+            
             $_fields = null;
             $_select = '';
             $hardSolved = false;
@@ -249,14 +251,16 @@ class Solve {
     
     public static function tkn($api, $host, $key, $type, array $data = [], $ctx = []) {
     
-        $solver = config::getKeys($api, $type);
+        $solver = Config::getKeys($api, $type);
     
         $Params = array_merge($data, ['userAgent' => $ctx['uagent'] ?? '']);
     
         $t = Retry::until(function() use ($solver, $api, $key, $host, $type, $Params) {
     
             $t = $solver->token($key, $host, $type, $Params);
-    
+            
+            #var_dump($t); die;
+            
             if (isset($t['fail']) && $t['fail'] === 777) {
     
                 if (!isset(Api::TKN[get_class($api)][$type])) {
@@ -291,18 +295,20 @@ class Solve {
         if ($t === false) {
             return ['fail' => 404];
         }
-    
+        
+        #var_dump($t);
+        
         return $t;
     }
     
-    public static function img($api, $host, $type, $img) {
+    public static function img($api, $host, $type, $img, array $extra = []) {
     
-        $solver = config::getKeys($api, $type, 'b64');
+        $solver = Config::getKeys($api, $type, 'b64');
     
-        $res = Retry::until(function() use ($solver, $api, $img, $type) {
+        $res = Retry::until(function() use ($solver, $api, $img, $type, $extra) {
     
             $res = isset(Api::B64[get_class($solver)][$type])
-                ? $solver->base64($img, $type)
+                ? $solver->base64($img, $type, $extra)
                 : ['fail' => 777];
     
             if (isset($res['fail']) && $res['fail'] === 777) {
@@ -311,7 +317,7 @@ class Solve {
                     return ['trouble' => 'reload'];
                 }
     
-                $res = $api->base64($img, $type);
+                $res = $api->base64($img, $type, $extra);
     
                 if (isset($res['fail']) && $res['fail'] === 71) {
                     return ['trouble' => 'reload'];

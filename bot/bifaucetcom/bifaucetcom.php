@@ -121,7 +121,7 @@ while (true) {
         Logger::X('info', "[ $_bal ]", true, true);
         $bal = ((int)$_bal);
         
-        if ($can_withdraw && ($bal >= 5000)) {
+        if ($can_withdraw && ($bal >= 10000)) {
             $po = null;
             $jjn = [];
             $wd = Net::C("$host/withdraw", 'GET', null, inf::$cookie, [], "$host/dashboard", inf::$uagent, false, false, $ip);

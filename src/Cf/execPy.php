@@ -1,6 +1,6 @@
 <?php
 
-final class execPython {
+final class execPy {
     private string $python = 'python3';
     private string $scriptPath;
     private ?string $cookie;
@@ -121,4 +121,5 @@ final class execPython {
         _put($this->cookie, implode("\n", $filtered) . "\n");
         return true;
     }
+    
 }

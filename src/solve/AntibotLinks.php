@@ -49,48 +49,29 @@ final class AntibotLinks {
         return implode(' ', $solution);
     }
 
-    private static function solveImage00($api, $force, $data) {
+    private static function solveImage($api, $force, $data) {
+    
         if (!isset(Api::B64[get_class($api)]['antibot'])) {
             Logger::X('err', 'provider not support atb');
             return 77;
         }
-
-        if (empty($data['main'])) return 77;
-
+    
+        if (empty($data['main'])) {
+            return 77;
+        }
+    
         if ($force) {
             $atb = $api->atb($data);
         } else {
-            $solver = config::getKeys($api, 'antibot', 'b64');
+            $solver = Config::getKeys($api, 'antibot', 'b64');
             $atb = $solver->atb($data);
         }
-
-        return in_array($atb, [null, 77, false], true) ? 77 : $atb;
-    }
     
-private static function solveImage($api, $force, $data) {
-
-    if (!isset(Api::B64[get_class($api)]['antibot'])) {
-        Logger::X('err', 'provider not support atb');
-        return 77;
-    }
-
-    if (empty($data['main'])) {
-        return 77;
-    }
-
-    if ($force) {
-        $atb = $api->atb($data);
-    } else {
-        $solver = config::getKeys($api, 'antibot', 'b64');
-        $atb = $solver->atb($data);
-    }
-
-    if (isset($atb['fail'])) {
-        return 77;
-    }
-
-    return $atb['done'];
-}
+        if (isset($atb['fail'])) {
+            return 77;
+        }
     
+        return $atb['done'];
+    }
     
 }

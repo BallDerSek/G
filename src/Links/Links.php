@@ -1,10 +1,11 @@
 <?php
-
+/*
 if (!trait_exists('WorkDir')) {
     require_once SRCDIR . '/config/Workdir.php';
 }
+*/
 
-final class _shortlinks {
+final class Links {
     use WorkDir;
     private $url, $host, $path, $cookie, $uagent;
     private $proxied, $proxy, $oldProxy, $oldCtx;
@@ -27,12 +28,12 @@ final class _shortlinks {
         $this->cookie = $this->workDir . '/session.tmp';
         
         $this->url = $url;
-        $this->uagent = config::uagent("desktop");
+        $this->uagent = Config::uagent("desktop");
         $this->proxied = false; 
         $this->proxy = "http://gamamoch-rotate:playernoob@p.webshare.io:3128";
     }
 
-    public function links($api) {
+    public function exec($api) {
         $rules = [
             'coinclix' => ['coinclix.co'],
             'clk' => ['lnbz.la','tpi.li','oii.la','aii.sh'],
@@ -96,7 +97,7 @@ final class _shortlinks {
             goto low_start;
         }
 
-        $p = scraper::payload($html)[0]['payload'] ?? null;
+        $p = Scraper::payload($html)[0]['payload'] ?? null;
         if (!$p) {
             $this->enableProxy();
             goto low_start;
@@ -135,7 +136,7 @@ final class _shortlinks {
         }
         
         $token = null;
-        $fo = scraper::payload($html);
+        $fo = Scraper::payload($html);
         if ($fo) {
             foreach ($fo as $f) {
                 $pa = $f['payload'] ?? [];
@@ -171,164 +172,6 @@ final class _shortlinks {
         throw new RuntimeException("totally failed");
     }
 
-    private function coinclixx($api) {
-        #throw new RuntimeException("maintenance");
-        $cookie = $this->cookie;
-        $uagent = $this->uagent;
-        $host = $this->host;
-        
-        if (!AUTH_KEY) throw new RuntimeException("unauthorized");
-        Logger::X();
-
-        coinclix_init:
-        $_code = null;
-        $initTry = 0;
-        while (!$_code) {
-            if ($initTry++ > 5) throw new RuntimeException("failed init");
-            $_0 = Net::C($this->url, 'GET', null, $cookie, [], '', $uagent);
-            if (!empty($_0) && $_0 !== 99) {
-                if (stripos($_0, ' disable your proxy')) {
-                    if (!$this->proxied) {
-                        putenv("PROXY=" . ($this->oldProxy ?? $this->proxy));
-                        Proxy::Load();
-                        $this->proxied = true;
-                        goto coinclix_init;
-                    }
-                    throw new RuntimeException("blocked");
-                }
-                $res_code = _ccCode($_0);
-                if (isset($res_code[1])) $_code = $res_code[1];
-            }
-            if (!$_code) _sle(2);
-        }
-
-        $_dome = ['vitalityvista.net', 'geekgrove.net'];
-        $dom = '';
-        $html = null; 
-        foreach ($_dome as $_domain) {
-            $dom = "https://" . $_domain;
-            $retryCount = 0; 
-            
-            while (true) {
-                $retryCount++;
-                if ($retryCount >= 7) break;
-
-                $_1 = json_decode(Net::C($dom.'/link/process', 'POST', ['linkInit' => $_code], $cookie, [], $dom, $uagent), true);
-                
-                if ($_1 === 99 || empty($_1)) {
-                    _sle(30); 
-                    continue;
-                }
-
-                $next = scraper::_xP($_1['message'] ?? '', "//a/@href") ?? null;
-                
-                if (isset($next[0])) {
-                    $html = Net::C($dom . $next[0], 'GET', null, $cookie, [], $dom, $uagent);
-                    
-                    if (empty($html) || ($html === 99)) {
-                        _sle(30); 
-                        continue;
-                    }
-                    
-                    $lastreload = $dom . $next[0];
-                    break 2; 
-                } else {
-                    break;
-                }
-            }
-        }
-        
-        if (!$html) throw new RuntimeException("unstable net");
-        
-        $code = null; 
-        $errorCount = 0;
-        while (true) {
-            $matches = scraper::_jP($html, '/<code class="link_code">([A-Za-z0-9]+)<\/code>/i')[1][0] ?? null;
-            if (!empty($code)) break; 
-
-            $st = scraper::_xP($html, "//*[@id='linkResHeader']//h4") ?? [];
-            $ver = scraper::find($html, 'linkVer', 'input', 'value', 'id') ?? null;
-
-            if (isset($st[0]) && $ver) {
-                $step = trim(preg_replace('/\s+/', ' ', $st[0]));
-                Logger::X('info', "$step [ {$ver[0]} ]", false, true);
-
-                $pis = scraper::find($html, 'pissoff', 'input', 'value', 'id');
-                $lpt = scraper::find($html, 'lpt', 'input', 'value', 'id');
-                $cnn = scraper::_xP($html, "//*[contains(@class,'cnnc')]/@id");
-                $_bg = scraper::find($html, 'cpres2', 'input', 'value', 'id');
-                $_cp = scraper::find($html, 'cpobj', 'input', 'value', 'id');
-                
-                $start = microtime(true);
-                $po = _ccForm($api, $dom, $ver[0], $pis[0], $cnn[0], $_bg[0] ?? null, $_cp[0] ?? null);
-                $wait = (int)($lpt[0] ?? 0) - (int)(microtime(true) - $start);
-                if ($wait > 0) {
-                    Logger::X('', "\r", false);
-                    _clr();
-                    styler("waiting", fn() => _sle((int)ceil($wait)));
-                }
-                
-                $retTry = 0;
-                $maxTry = 3;
-                while (true) {
-                    $retTry++;
-                    if ($retTry >= $maxTry) throw new RuntimeException('totally failed');
-                    $_v1 = json_decode(Net::C($dom.'/link/process', 'POST', $po, $cookie, [], $dom, $uagent)?: '', true);
-                    if (empty($_v1) || ($_v1 === 99)) {
-                        _sle(30); 
-                        continue;
-                    }
-                    break; 
-                }
-                #print_r($_v1);
-                
-                $matches = scraper::_jP($_v1['message'] ?? '', '/<code class="link_code">([A-Za-z0-9]+)<\/code>/i') ?? [];
-                if (!empty($matches[1][0])) {
-                    $code = $matches[1][0];
-                    break;
-                }
-                
-                $next_url = scraper::_jP($_v1['message'] ?? '', '/window\.location\.href\s*=\s*"([^"]+)"/') ?? [];
-                $_n = $next_url[1][0] ?? '';
-                
-                if ($_n !== '') {
-                    if (!preg_match('/^https?:\/\//', $_n)) $_n = $dom.$_n;
-                    $html = Net::C($_n, 'GET', null, $cookie, [], '', $uagent);
-                    $lastreload = $_n;
-
-                    $m_a = scraper::_jP($html, '/<a href="([^"]+)"/i');
-                    if (!empty($m_a[1][0])) {
-                        $html = Net::C($m_a[1][0], 'GET', null, $cookie, [], '', $uagent);
-                        $lastreload = $m_a[1][0];
-                    }
-                    $errorCount = 0; 
-                } else {
-                    $errorCount++;
-                    if ($errorCount >= 5) throw new RuntimeException("stuck");
-                    _sle(3);
-                    $html = Net::C($lastreload, 'GET', null, $cookie, [], $lastreload, $uagent);
-                }
-                
-            } else {
-                $errorCount++;
-                if ($errorCount >= 5) throw new RuntimeException("totally failed");
-                _sle(3);
-                $html = Net::C($lastreload, 'GET', null, $cookie, [], $lastreload, $uagent);
-            }
-        }
-        
-        if (!$code) throw new RuntimeException("no code found");
-        
-        $ver_fin = json_decode(Net::X("https://$host/members/shortener/linkprocess/", 'POST', ['linkVerify' => $code], $cookie, [], $this->url, $uagent)?: '', true);
-        $msg = $ver_fin['message'] ?? '';
-        if (str_contains($msg, 'Invalid verification code')) throw new RuntimeException('invalid code');
-        $match = scraper::_jP($msg, '/href="([^"]+)"/') ?? [];
-        if (isset($match[1][0])) return $match[1][0];
-        
-        throw new RuntimeException($msg ?: 'invalid session');
-    
-    }
-
     private function coinclix($api) {
         #throw new RuntimeException("maintenance");
         $cookie = $this->cookie;
@@ -336,7 +179,6 @@ final class _shortlinks {
         $host = $this->host;
         
         if (!AUTH_KEY) throw new RuntimeException("unauthorized");
-        Logger::X();
 
         coinclix_init:
         $_code = null;
@@ -378,7 +220,7 @@ final class _shortlinks {
                     continue;
                 }
 
-                $next = scraper::_xP($_1['message'] ?? '', "//a/@href") ?? null;
+                $next = Scraper::_xP($_1['message'] ?? '', "//a/@href") ?? null;
                 
                 if (isset($next[0])) {
                     $html = Net::C($dom . $next[0], 'GET', null, $cookie, [], $dom, $uagent);
@@ -401,28 +243,26 @@ final class _shortlinks {
         $code = null; 
         $errorCount = 0;
         while (true) {
-            $matches = scraper::_jP($html, '/<code class="link_code">([A-Za-z0-9]+)<\/code>/i')[1][0] ?? null;
+            $matches = Scraper::_jP($html, '/<code class="link_code">([A-Za-z0-9]+)<\/code>/i')[1][0] ?? null;
             if (!empty($code)) break; 
 
-            $st = scraper::_xP($html, "//*[@id='linkResHeader']//h4") ?? [];
-            $ver = scraper::find($html, 'linkVer', 'input', 'value', 'id')[0] ?? null;;
+            $st = Scraper::_xP($html, "//*[@id='linkResHeader']//h4") ?? [];
+            $ver = Scraper::find($html, 'linkVer', 'input', 'value', 'id')[0] ?? null;;
 
             if (isset($st[0]) && $ver) {
                 $step = trim(preg_replace('/\s+/', ' ', $st[0]));
-                Logger::X('info', "$step [ {$ver[0]} ]", false, true);
-
-                $pis = scraper::find($html, 'pissoff', 'input', 'value', 'id')[0] ?? null;
-                $lpt = scraper::find($html, 'lpt', 'input', 'value', 'id')[0] ?? 0;
-                $cnn = scraper::_xP($html, "//*[contains(@class,'cnnc')]/@id")[0] ?? null;
-                $_bg = scraper::find($html, 'cpres2', 'input', 'value', 'id')[0] ?? null;
-                $_cp = scraper::find($html, 'cpobj', 'input', 'value', 'id')[0] ?? null;
-                
+                Logger::X('info', "\r$step [ {$ver} ]", true, true);
                 $start = microtime(true);
+
+                $pis = Scraper::find($html, 'pissoff', 'input', 'value', 'id')[0] ?? null;
+                $lpt = Scraper::find($html, 'lpt', 'input', 'value', 'id')[0] ?? 0;
+                $cnn = Scraper::_xP($html, "//*[contains(@class,'cnnc')]/@id")[0] ?? null;
+                $_bg = Scraper::find($html, 'cpres2', 'input', 'value', 'id')[0] ?? null;
+                $_cp = Scraper::find($html, 'cpobj', 'input', 'value', 'id')[0] ?? null;
+                
                 $po = CoinClix::_ccForm($api, $dom, $ver, $pis, $cnn, $_bg, $_cp);
                 $wait = (int)($lpt) - (int)(microtime(true) - $start);
                 if ($wait > 0) {
-                    Logger::X('', "\r", false);
-                    _clr();
                     styler("waiting", fn() => _sle((int)ceil($wait)));
                 }
                 
@@ -440,13 +280,13 @@ final class _shortlinks {
                 }
                 #print_r($_v1);
                 
-                $matches = scraper::_jP($_v1['message'] ?? '', '/<code class="link_code">([A-Za-z0-9]+)<\/code>/i') ?? [];
+                $matches = Scraper::_jP($_v1['message'] ?? '', '/<code class="link_code">([A-Za-z0-9]+)<\/code>/i') ?? [];
                 if (!empty($matches[1][0])) {
                     $code = $matches[1][0];
                     break;
                 }
                 
-                $next_url = scraper::_jP($_v1['message'] ?? '', '/window\.location\.href\s*=\s*"([^"]+)"/') ?? [];
+                $next_url = Scraper::_jP($_v1['message'] ?? '', '/window\.location\.href\s*=\s*"([^"]+)"/') ?? [];
                 $_n = $next_url[1][0] ?? '';
                 
                 if ($_n !== '') {
@@ -454,7 +294,7 @@ final class _shortlinks {
                     $html = Net::C($_n, 'GET', null, $cookie, [], '', $uagent);
                     $lastreload = $_n;
 
-                    $m_a = scraper::_jP($html, '/<a href="([^"]+)"/i');
+                    $m_a = Scraper::_jP($html, '/<a href="([^"]+)"/i');
                     if (!empty($m_a[1][0])) {
                         $html = Net::C($m_a[1][0], 'GET', null, $cookie, [], '', $uagent);
                         $lastreload = $m_a[1][0];
@@ -480,7 +320,7 @@ final class _shortlinks {
         $ver_fin = json_decode(Net::X("https://$host/members/shortener/linkprocess/", 'POST', ['linkVerify' => $code], $cookie, [], $this->url, $uagent)?: '', true);
         $msg = $ver_fin['message'] ?? '';
         if (str_contains($msg, 'Invalid verification code')) throw new RuntimeException('invalid code');
-        $match = scraper::_jP($msg, '/href="([^"]+)"/') ?? [];
+        $match = Scraper::_jP($msg, '/href="([^"]+)"/') ?? [];
         if (isset($match[1][0])) return $match[1][0];
         
         throw new RuntimeException($msg ?: 'invalid session');
@@ -508,7 +348,7 @@ final class _shortlinks {
         $_0 = Net::C($this->url, 'GET', null, $cookie, [], $this->url, $uagent, false, false, $ip, true, true);
         #_put('00.html', $_0); die;
             
-        $_t = scraper::_xP($_0, "//title");
+        $_t = Scraper::_xP($_0, "//title");
         $t  = isset($_t[0]) ? strtolower(trim($_t[0])) : '';
         $blocked_titles = [
             'traffic block',
@@ -521,7 +361,7 @@ final class _shortlinks {
                 throw new RuntimeException("blocked: $t");
             }
         }
-        $n_0 = scraper::_pP($_0, "location.href")[1][0];
+        $n_0 = Scraper::_pP($_0, "location.href")[1][0];
         $html = $_0;
         $pat = '';
             
@@ -532,7 +372,7 @@ final class _shortlinks {
         while (true) {
             $loc = null;
             foreach (['location.href', 'location.replace'] as $key) {
-                $m_l = scraper::_pP($html, $key);
+                $m_l = Scraper::_pP($html, $key);
                 if (!empty($m_l[1][0])) {
                     $loc = stripcslashes($m_l[1][0]);
                     break;
@@ -541,14 +381,14 @@ final class _shortlinks {
             
             $con = null;
             foreach (["//meta[@http-equiv='refresh']/@content", "//noscript/meta[@http-equiv='refresh']/@content"] as $xpath) {
-                $m_c = scraper::_xP($html, $xpath);
+                $m_c = Scraper::_xP($html, $xpath);
                 if (!empty($m_c)) {
                     $con = preg_replace('/^0;URL=/i', '', $m_c[0]);
                     break;
                 }
             }
             
-            $current = scraper::_xP($html, "//span[@id='stepNum']") ?? [];
+            $current = Scraper::_xP($html, "//span[@id='stepNum']") ?? [];
             if (!empty($current)) {
                 $_step = $current[0];
                 Logger::X('info', "STEP " . $_step, true, true);
@@ -599,7 +439,7 @@ final class _shortlinks {
         $h = headers("https://$jsUrl", '', $jsUrl);
         
         $SLjs = '';
-        $sl_u = scraper::_xP($html, "//script[contains(@src,'sl/')]/@src")[0];
+        $sl_u = Scraper::_xP($html, "//script[contains(@src,'sl/')]/@src")[0];
         $sl_ur = "https://{$jsUrl}{$sl_u}";
         $SLjs = Net::C($sl_ur, 'GET', null, $cookie, [], $pat, $uagent, false, false, $ip, true, true); 
         
@@ -662,7 +502,7 @@ final class _shortlinks {
             if (!empty($cc_u)) {
                 $CCjs = Net::C("https://{$jsUrl}$cc_u", 'GET', null, $cookie, [], "https://$jsUrl");
                 if (strlen($CCjs) > 100) {
-                    $img_u = scraper::_pP($CCjs, "src") ?? [];
+                    $img_u = Scraper::_pP($CCjs, "src") ?? [];
                     $icon = rScraper::jPath($CCjs, '/captchaData\s*=\s*\{"options":\s*(\[.*?\])\}/s') ?? [];
                     $xhrs = rScraper::jPath($CCjs, '/xhr\.send\(\s*"([^"]+)"\s*\+\s*(.*?)\)/') ?? [];
                     $xhr = rScraper::jPath($CCjs, '/xhr\.open\("POST",\s*"([^"]+)"/') ?? [];
@@ -753,208 +593,4 @@ final class _shortlinks {
 
 
 
-class CoinClix {
-    
-    public static function _ccCode($html) {
-        $nodes = scraper::_xP($html, "//div[contains(@class,'accordion-body')]");
-        foreach ($nodes as $txt) {
-            if (preg_match('/enter\s+this\s+key\s*-\s*([A-Za-z0-9]{5})/i', $txt, $m)) {
-                return $m;
-            }
-        }
-        return null;
-    }
-    
-    public static function _ccForm($api, $dom, $ver, $pis, $cnn, $bg, $cp) {
-    
-        $cpobj = $cp ? json_decode(html_entity_decode($cp), true) : null;
-        
-        switch (strtoupper($ver)) {
-    
-            case 'CC':
-                $token = bin2hex(random_bytes(15));
-                break;
-    
-            case 'CT':
-                $token = solve::tkn($api, $dom, '0x4AAAAAAB5TRnwvGvH5b2kw', 'cft', ['action' => 'linkSubmit']);
-                break;
-    
-            case 'HC':
-                $token = solve::tkn($api, $dom, '2a9619f4-43bc-4e64-afc8-7fbc48f2bf34', 'hc', ['invisible'=>1]);
-                break;
-    
-            case 'PC':
-            case 'IC':
-                $token = solve::tkn($api, $dom, $cpobj, $ver.'c'); 
-                break;
-    
-            default:
-                return null;
-        }
-    
-        if (isset($token['fail'])) return null;
-    
-        $token = $token['done'];
-        return self::_ccLoad($pis, $cnn, $token, $bg);
-    }
-    
-    public static function _ccLoad($pis, $cnn, $response, $bg) {
-        $rand = function($len){
-            $chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-            $out = '';
-            for($i = 0; $i<$len; $i++){
-                $out .= $chars[random_int(0,strlen($chars)-1)];
-            }
-            return $out;
-        };
-    
-        $linkCont = random_int(12345,54321);
-        $ttl = $rand(15);
-        $t = time();
-        $g = $t+587814;
-        $v47 = $t-835069;
-    
-        $n = hash_hmac('sha256', "bEhInD".$pis."YoU", (string)$v47);
-    
-        $key = $cnn."<|>".(987656789-$linkCont)."lIl1l";
-    
-        $i = hash_hmac('sha256', '"' . $response . '"', $key);
-    
-        $payload = [
-            'linkCont' => $linkCont,
-            'response' => $response,
-            'n' => $n,
-            'i' => $i,
-            'g' => $g,
-            'ttl' => $ttl
-        ];
-    
-        if ($bg !== null && $bg !== '') {
-            $payload['bg'] = $bg;
-        }
-    
-        return $payload;
-    }
 
-}
-
-/*
-{
-
-function _ccCode($html) {
-    $nodes = scraper::_xP($html, "//div[contains(@class,'accordion-body')]");
-    foreach ($nodes as $txt) {
-        if (preg_match('/enter\s+this\s+key\s*-\s*([A-Za-z0-9]{5})/i', $txt, $m)) {
-            return $m;
-        }
-    }
-    return null;
-}
-
-function _ccForm00($api, $dom, $ver, $pis, $cnn, $bg, $cp) {
-
-    $cpobj = $cp ? json_decode(html_entity_decode($cp), true) : null;
-    
-    switch (strtoupper($ver)) {
-
-        case 'CC':
-            $token = bin2hex(random_bytes(15));
-            break;
-
-        case 'CT':
-            $token = solve::tkn($api, $dom, '0x4AAAAAAB5TRnwvGvH5b2kw', 'cft', ['action' => 'linkSubmit']);
-            break;
-
-        case 'HC':
-            #$token = _rl('hcaptcha: ');
-            $token = solve::tkn($api, $dom, '2a9619f4-43bc-4e64-afc8-7fbc48f2bf34', 'hc', ['invisible'=>1]);
-            break;
-
-        case 'PC':
-        case 'IC':
-            $token = solve::tkn($api, $dom, $cpobj, $ver.'c'); 
-            break;
-
-        default:
-            return null;
-    }
-
-    if ($token === 471) return null;
-    return _ccLoad($pis, $cnn, $token, $bg);
-    
-}
-
-function _ccForm($api, $dom, $ver, $pis, $cnn, $bg, $cp) {
-
-    $cpobj = $cp ? json_decode(html_entity_decode($cp), true) : null;
-    
-    switch (strtoupper($ver)) {
-
-        case 'CC':
-            $token = bin2hex(random_bytes(15));
-            break;
-
-        case 'CT':
-            $token = solve::tkn($api, $dom, '0x4AAAAAAB5TRnwvGvH5b2kw', 'cft', ['action' => 'linkSubmit']);
-            break;
-
-        case 'HC':
-            $token = solve::tkn($api, $dom, '2a9619f4-43bc-4e64-afc8-7fbc48f2bf34', 'hc', ['invisible'=>1]);
-            break;
-
-        case 'PC':
-        case 'IC':
-            $token = solve::tkn($api, $dom, $cpobj, $ver.'c'); 
-            break;
-
-        default:
-            return null;
-    }
-
-    if (isset($token['fail'])) return null;
-
-    $token = $token['done'];
-    return _ccLoad($pis, $cnn, $token, $bg);
-}
-
-
-function _ccLoad($pis, $cnn, $response, $bg) {
-    $rand = function($len){
-        $chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-        $out = '';
-        for($i = 0; $i<$len; $i++){
-            $out .= $chars[random_int(0,strlen($chars)-1)];
-        }
-        return $out;
-    };
-
-    $linkCont = random_int(12345,54321);
-    $ttl = $rand(15);
-    $t = time();
-    $g = $t+587814;
-    $v47 = $t-835069;
-
-    $n = hash_hmac('sha256', "bEhInD".$pis."YoU", (string)$v47);
-
-    $key = $cnn."<|>".(987656789-$linkCont)."lIl1l";
-
-    $i = hash_hmac('sha256', '"' . $response . '"', $key);
-
-    $payload = [
-        'linkCont' => $linkCont,
-        'response' => $response,
-        'n' => $n,
-        'i' => $i,
-        'g' => $g,
-        'ttl' => $ttl
-    ];
-
-    if ($bg !== null && $bg !== '') {
-        $payload['bg'] = $bg;
-    }
-
-    return $payload;
-}
-
-}
-*/

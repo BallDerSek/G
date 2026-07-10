@@ -65,7 +65,7 @@ class Bctt {
             
             $cc_get = Net::C($url, 'GET', null, $this->cookieFile, [], '', $this->userAgent);
             
-            $cc_getG = scraper::_jP($cc_get, "/window\.location\.href\s*=\s*['\"]([^'\"]+)['\"]/")[1][0] ?? null;
+            $cc_getG = Scraper::_jP($cc_get, "/window\.location\.href\s*=\s*['\"]([^'\"]+)['\"]/")[1][0] ?? null;
             if (!empty($cc_getG)) {
                 $cc_pre = Net::C($cc_getG, 'GET', null, $this->cookieFile, [], '', $this->userAgent);
             } else {
@@ -77,7 +77,7 @@ class Bctt {
             
             $cc_js = null;
             if (!empty($cc_pre) && $cc_pre !== 99) {
-                $cap_u = scraper::_xP($cc_pre, "//script[contains(@src,'captcha2/')]/@src")[0] ?? null;
+                $cap_u = Scraper::_xP($cc_pre, "//script[contains(@src,'captcha2/')]/@src")[0] ?? null;
                 
                 if (!empty($cap_u)) {
                     $cc_js = Net::C($this->bct_h . $cap_u, 'GET', null, $this->cookieFile, [], $cc_getG, $this->userAgent);
@@ -191,7 +191,7 @@ class Bctt {
         
         $cc_get = Net::C($url, 'GET', null, $this->cookieFile, [], $url, $this->userAgent);
         
-        $cc_getG = scraper::_jP($cc_get, "/window\.location\.href\s*=\s*['\"]([^'\"]+)['\"]/")[1][0] ?? null;
+        $cc_getG = Scraper::_jP($cc_get, "/window\.location\.href\s*=\s*['\"]([^'\"]+)['\"]/")[1][0] ?? null;
         $param = null;
         $set = microtime(true);
         
@@ -210,7 +210,7 @@ class Bctt {
             if (str_contains($cc_pre, 'Forbidden')) return 'forbidden';
             
             $tm = Scraper::_jP($cc_pre, '/var\s+duration\s*=\s*(\d+)/');
-            $cap_u = scraper::_xP($cc_pre, "//script[contains(@src,'captcha2/')]/@src")[0] ?? null;
+            $cap_u = Scraper::_xP($cc_pre, "//script[contains(@src,'captcha2/')]/@src")[0] ?? null;
             
             $target_url = null;
             if (preg_match("/(?:window\.open|window\.location\.replace)\s*\(\s*['\"]([^'\"]+)['\"]/s", $cc_pre, $m)) {
@@ -316,7 +316,7 @@ class Bctt {
     private function _get($js) {
         $result = [];
         
-        $m = scraper::_jP($js, '/var payload = "([^"]+)"/')[1] ?? null;
+        $m = Scraper::_jP($js, '/var payload = "([^"]+)"/')[1] ?? null;
         if (!empty($m[0])) {
             parse_str($m[0], $parsed);
             foreach ($parsed as $key => $value) {
@@ -374,7 +374,7 @@ class Bctt {
         
         $solution = null;
         
-        $solver = config::getKeys($this->api, 'bitcotask', 'b64');
+        $solver = Config::getKeys($this->api, 'bitcotask', 'b64');
         if (method_exists($solver, 'bct')) {
             $solution = $solver->bct($captcha, $data);
             
@@ -388,7 +388,7 @@ class Bctt {
         
         return [
             'pow' => array_merge(
-                SolveUtils::Pow($pow_c, $pow_d),
+                SolveUtils::Pow($pow_c, $pow_d, ':'),
                 ['ch' => $pow_c, 'di' => $pow_d]
             ),
             'cap' => $solution['idx']

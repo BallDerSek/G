@@ -61,19 +61,10 @@ class skibidixxx extends Provider {
     
         $sol = $this->run('bitcocaptcha', $params, true);
         
-        if (isset($sol['fail'])) {
-            return $sol;
-        }
+        if (isset($sol['fail'])) return $sol;
         $ans = $sol['done'];
         
-        /*
-        var_dump($sol);
-        var_dump($ans);
-        */
-        
-        if (!is_string($ans) || !preg_match('/class:([^,]+), array:(\d+)/', $ans, $m)) {
-            return ['fail' => 777];
-        }
+        if (!is_string($ans) || !preg_match('/class:([^,]+), array:(\d+)/', $ans, $m)) return ['fail' => 777];
         
         return [
             'ans' => $m[1],
@@ -104,44 +95,3 @@ class skibidixxx extends Provider {
     }
     
 }
-
-/*
-class abdulq extends Provider {
-    
-    
-    
-    protected $baseUrl = "https://bypassallshortlinks.space";
-    
-    protected function get_api($method, array $params) {
-        
-    }
-    
-    protected function res_api($method, array $params) {
-        
-    }
-    
-    
-    
-    public function getInfo(): bool{
-        $maxRetry = 3;
-        $b = null;
-        for ($attempt = 1; $attempt <= $maxRetry; $attempt++) {
-            $b = json_decode(Net::S($this->baseUrl.'/api.php', 'POST', ['action' => 'balance', 'api_key' => $this->apiKey])?: '', 1);
-            var_dump($b);
-            if ($b !== null) break;
-        }
-        
-        if ($b === null) return false;
-        
-        if (isset($b['error'])) {
-            Logger::X('err', $b['error']);
-            return false;
-        }
-        Logger::X('info', 'bas: ' . ($b['balance'] ?? 'unknown'));
-        return true;
-    }
-    
-}
-*/
-
-

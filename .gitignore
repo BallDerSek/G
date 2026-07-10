@@ -1,12 +1,13 @@
-
 /cre/
 **/credentials
 **/cookie*
 **/cookies/
+
 *.key
 *.pem
 *.tmp
 *.png
+
 apikey.json
 
 bot/tes/
@@ -20,3 +21,4 @@ bot/bct/
 
 lib/*
 !lib/exec/
+!lib/exec/**

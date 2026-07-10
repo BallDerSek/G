@@ -73,8 +73,6 @@ while (true) {
             $b->task2('err', "fail");
         }
         
-        
-        
         _sle(2);
     }
 }

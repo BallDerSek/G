@@ -1,6 +1,6 @@
 <?php
 if (!defined('ROOT')) { die; }
-#_die();
+_die();
 $api = onKeys();
 
 $acc = config::credential([], false, ['mail', 'pass', 'PROXY']);
@@ -17,7 +17,8 @@ $ip = '';
     Proxy::load();
     Check::Geo();
     $cookieFile = config::cookie($mail);
-    $userAgent = config::uagent('mobile');
+    $c = config::credential(['ua' => fn() => config::uagent('mobile')]);
+    $userAgent = $c['ua'];
     
     inf::setup($userAgent, $cookieFile, $ip, false, $mail);
     
@@ -28,6 +29,7 @@ $ip = '';
     
 } ) ($mail, $ip, $host);
 
+$headersCF = [];
 $limit = false;
 $claim = true;
 $SLDONE = true;
@@ -44,7 +46,7 @@ while (true) {
     
     do {
         $ret++;
-        $l = inf::check("$host/dashboard", [], '/register');
+        $l = inf::check("$host/dashboard", $headersCF, '/register');
         #var_dump($l); _rl('lanjut:  ');
         
         if ($l['ok']) {
@@ -62,17 +64,17 @@ while (true) {
         
         logx('err', "logging in", false); 
         _sle(3); _clr();
-        $_0 = Net::C("$host/login", 'GET', null, inf::$cookie, [], '', inf::$uagent, false, false, $ip);
-        
+        $_0 = Net::C("$host/login", 'GET', null, inf::$cookie, $headersCF, '', inf::$uagent, ip: $ip, d: true);
         if ($_0 === 99) {
             logx('warn', 'Proxy issue, wait 30s');
             _sle(60);
             continue;
         }
         if (empty($_0)) continue;
-
+        $_0 = checkCF($host.'/login', $api, $_0, $headersCF)['html'] ?? null;
+        #_put('0.html', $_0); #die;
         $f = scraper::payload($_0)[0] ?? null;
-        #_put('0.html', $_0);
+        
         $po = null;
         if (!empty($f)) {
             #print_r($f); die;
@@ -94,7 +96,7 @@ while (true) {
         
         if (!empty($po)) {
             #print_r($po); die;
-            $ve = Net::X($f['url'], 'POST', $po, inf::$cookie, [], "$host/login", inf::$uagent, ip: $ip);
+            $ve = Net::X($f['url'], 'POST', $po, inf::$cookie, $headersCF, "$host/login", inf::$uagent, ip: $ip);
             
             #_put('ve.html', $ve); #die;
             if ($ve === 99) {
@@ -392,7 +394,46 @@ function parsePtcAds($html, $host) {
     return $result;
 }
 
-
+function checkCF($url, $api, $body = null, $headersCF = []) {
+    
+    $html = $body['body'] ?? null;
+    $code = $body['http_code'] ?? null;
+    
+    if (!$html || !$code) return [];
+    
+    if ($code !== 200 && (stripos($html, 'Just a moment') !== false || stripos($html, 'Attention Required!') !== false)) {
+        
+        $cf = Cloudflare::exec($api, $url, inf::$cookie, inf::$uagent, ['html' => $html]);
+        
+        if ($cf) {
+            [$headersCF, $ua] = $cf;
+            inf::setup($ua, inf::$cookie);
+            
+            if (!empty($headersCF)) {
+                for ($try = 1; $try <= 3; $try++) {
+                    _sle(3);
+                    $fix = Net::X($url, 'GET', null, inf::$cookie, $headersCF, $url, inf::$uagent, d: true);
+                    
+                    if (!empty($fix) && isset($fix['http_code'])) {
+                        $_c = $fix['http_code'];
+                        $_b = $fix['body'];
+                        
+                        if ($_c === 200 && stripos($_b, 'Just a moment') === false && stripos($_b, 'Attention Required!') === false) {
+                            
+                            config::credential()['ua'] = $ua;
+                            return ['html' => $_b, 'head' => $headersCF];
+                        }
+                    }
+                    logx('info', "try-{$try} fail, reloading");
+                }
+            }
+        }
+    } else {
+        return ['html' => $html, 'head' => $headersCF];
+    }
+    
+    return [];
+}
 
 function _wd($html) {
     $res = Scraper::payload($html)[1] ?? null;

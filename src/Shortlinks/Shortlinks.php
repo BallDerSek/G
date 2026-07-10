@@ -2,12 +2,6 @@
 
 class Shortlinks {
     
-    /**
-     * kalau kurang akurat bisa tambah nodenya
-     * bawaannya udah max nested ambil limit nya.
-     * klo emang ada yang gak keambil, bisa cek htmlDOM nya dan tambah query di method extract
-     */
-     
     public static function extract($html): array {
         
         return (new class($html) {
@@ -65,10 +59,10 @@ class Shortlinks {
                     if (isset($seen[$id])) continue;
                     $seen[$id] = true;
 
-                    $container     = $this->_getCont($n, $xp);
+                    $container = $this->_getCont($n, $xp);
                     $containerText = $this->_getNodes($xp, $container);
-                    $limit         = $this->_getLimit($containerText);
-                    $name          = $this->_getName($xp, $container);
+                    $limit = $this->_getLimit($containerText);
+                    $name = $this->_getName($xp, $container);
 
                     $key = $name !== '' ? $name : "go_{$id}";
                     $key = strtolower($key);
@@ -160,43 +154,12 @@ class Shortlinks {
         return (int) $parts[0] > 0;
     }
 
-    public static function exec00(?Provider $api = null, $url = '', $noapi = false) {
-        if ($noapi) $api = null;
-
-        try {
-            $_direct = new _shortlinks($url);
-            $f_url   = $_direct->links($api);
-
-            if ($f_url && is_string($f_url)) {
-                Logger::X('ok', " SL Direct passed", true, true);
-                return $f_url;
-            }
-        } catch (Throwable $e) {
-            Logger::X('err', " SL Direct failed: " . $e->getMessage());
-        }
-
-        if (!$api) return false;
-
-        $solver = Config::getKeys($api, 'shortlink', 'tkn');
-
-        if (stripos($url, 'coinclix')) return false;
-        if (!$solver || !method_exists($solver, 'shortLink')) return false;
-
-        $res = $solver->shortLink($url);
-
-        if (($res === 777 || $res === false) && $solver !== $api) {
-            $res = method_exists($api, 'shortLink') ? $api->shortLink($url) : false;
-        }
-
-        return ($res && $res !== 99) ? $res : false;
-    }
-    
     public static function exec(?Provider $api = null, $url = '', $noapi = false) {
         if ($noapi) $api = null;
     
         try {
-            $_direct = new _shortlinks($url);
-            $f_url   = $_direct->links($api);
+            $_direct = new Links($url);
+            $f_url   = $_direct->exec($api);
     
             if ($f_url && is_string($f_url)) {
                 Logger::X('ok', " SL Direct passed", true, true);
@@ -215,16 +178,11 @@ class Shortlinks {
     
         $res = $solver->shortLink($url);
     
-        if (isset($res['fail']) && $solver !== $api) {
-            $res = method_exists($api, 'shortLink') ? $api->shortLink($url) : ['fail' => 1];
-        }
+        if (isset($res['fail']) && $solver !== $api) $res = method_exists($api, 'shortLink') ? $api->shortLink($url) : ['fail' => 1];
     
-        if (isset($res['done'])) {
-            return $res['done'];
-        }
+        if (isset($res['done'])) return $res['done'];
     
         return false;
     }
 
-    
 }

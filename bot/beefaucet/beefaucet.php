@@ -20,9 +20,10 @@ $cookieFile = config::cookie($login);
     
 } ) ($login);
 
-
 $ip = '162.213.248.69';
 $r = '/?r=gamamoch@gmail.com';
+
+$FAST_CLAIM = true; # <-- change true if u want to use single token for all sites, false to use single token per sites.
 
 $sites = [
     'https://beefaucet.org' => '6LfwaSgTAAAAAJJNz6oAdimVHmIe3s4fHj4D0at4',
@@ -32,38 +33,67 @@ $sites = [
 while (true) {
 
     if (empty($sites)) {
-        die(Logger::X('err', "\nALL SITES REACHED LIMIT"));
+        @unlink(CREDIR.'/'.$GLOBALS['_CTX']['current_bot']);
+        die(Logger::X('err', "ALL SITES REACHED LIMIT"));
     }
-
+    
+    if ($api instanceof Provider) $api->getInfo();
+    
+    $parsed_sites = [];
     foreach ($sites as $host => $key) {
-        
-        $token = solve::tkn($api, $host, $key, 'rc2');
-        
-        if (isset($token['fail'])) continue;
-        
-        $token = $token['done'];
         $domain = parse_url($host)['host'];
-        Logger::X('info', "SITE: $domain", false, false);
         
         $_coo = $cookieFile . '/' . $domain;
         if (!is_dir($_coo)) mkdir($_coo, 0755, true);
         
         $rett0 = 0;
+        $parsed_urls = null;
+        
         while (true) {
             $rett0++;
-            $_0 = Net::X($host, 'GET', null, $_coo . '/main', [], '', $userAgent, ip: $ip, ins: true);
+            $_0 = Net::C($host, 'GET', null, $_coo . '/main', [], '', $userAgent, ip: $ip, ins: true);
+            
             if (!empty($_0) && $_0 !== 99) {
                 $_u = scraper::_xP($_0, "//div[contains(@class, 'dropdown-menu')]//a/@href");
-                break;
+                
+                if (!empty($_u) && is_array($_u) && count($_u) > 0) {
+                    $parsed_urls = $_u;
+                    break;
+                }
             }
             
             if ($rett0 >= 9) {
-                Logger::X('err', 'broken proxy maybe');
-                die;
+                unset($sites[$host]);
+                continue 2;
             }
-            
         }
-
+        
+        $parsed_sites[$host] = [
+            'key' => $key,
+            'domain' => $domain,
+            'urls' => $parsed_urls,
+            'cookie' => $_coo
+        ];
+    }
+    
+    if ($FAST_CLAIM) {
+        $token = _tK('https://beefaucet.org', '6LfwaSgTAAAAAJJNz6oAdimVHmIe3s4fHj4D0at4', $api);
+        if (empty($token) || $token === null) continue;
+    }
+    
+    foreach ($parsed_sites as $host => $data) {
+        $domain = $data['domain'];
+        $_u = $data['urls'];
+        $_coo = $data['cookie'];
+        
+        if (!$FAST_CLAIM) {
+            $token = _tK($host, $data['key'], $api);
+            if (empty($token) || $token === null) {
+                unset($sites[$host]);
+                continue;
+            }
+        }
+        
         $prep_queue = [];
         foreach ($_u as $f_u) {
             $u_nam = basename(parse_url($f_u)['path']);
@@ -132,12 +162,12 @@ while (true) {
                     $msg = trim(str_replace('×', '', $_suc[0]));
                     $lowMsg = strtolower($msg);
                     
-                    print(FGo['BLU']."  ".str_pad($u_nam, 15) .RSET);
+                    print(FGo['BLU'].str_pad($u_nam, 16) .RSET);
                     
                     if (stripos($lowMsg, 'sent')) {
                         Logger::X('ok', " ".$msg, true, true);
                     } else {
-                        Logger::X('warn', " ".$msg, true, true);
+                        Logger::X('err', " ".$msg, true, true);
                         
                         if (stripos($msg, 'has been blacklisted')) die;
                         
@@ -148,9 +178,7 @@ while (true) {
                 }
             }
             
-            foreach ($prep_queue as $args) {
-                @unlink($args[3]);
-            }
+            foreach ($prep_queue as $args) @unlink($args[3]);
             
             if ($limitReached >= $totalCoins) {
                 Logger::X('err', "\n  [!] ".strtoupper($domain)." IS FULLY LIMITED", true, true);
@@ -158,8 +186,10 @@ while (true) {
             }
         }
     }
+    if (!empty($sites)) styler("waiting", fn() => _sle(30));
     
-    if (!empty($sites)) {
-        styler("waiting", fn() => _sle(30));
-    }
+}
+
+function _tK($rc_U, $rc_K, $api) {
+    return solve::tkn($api, $rc_U, $rc_K, 'rc2')['done'] ?? null;
 }

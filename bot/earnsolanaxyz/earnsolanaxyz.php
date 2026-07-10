@@ -16,8 +16,9 @@ $ip = '';
 (function ($mail, $ip, $host) {
     Proxy::load();
     Check::Geo();
-    $cookieFile = config::cookie($mail);
-    $userAgent = config::uagent('mobile');
+    $cookieFile = config::cookie($login);
+    $c = config::credential(['ua' => fn() => config::uagent('desktop')]);
+    $userAgent = $c['ua'];
     
     inf::setup($userAgent, $cookieFile, $ip, false, $mail);
     
@@ -44,7 +45,7 @@ while (true) {
     
     do {
         $ret++;
-        $l = inf::check("$host/dashboard", [], '/register');
+        $l = inf::check("$host/dashboard", $headersCF, '/register');
         #var_dump($l); _rl('lanjut:  ');
         
         if ($l['ok']) {
@@ -76,7 +77,18 @@ while (true) {
         $po = null;
         
         if (!empty($f)) {
-            #print_r($f); die;
+            print_r($f); die;
+            
+                $cf = Net::C($f['url'], 'GET', null, inf::$cookie, $headersCF, "$host/login", inf::$uagent, d: true);
+                $cff = checkCF($f['url'], $api, $cf, $headersCF);
+                var_dump($cff);
+                if (empty($cff['html'])) {
+                    continue;
+                } else {
+                    $headersCF = $cff['head'];
+                    $html = $cff['html'];
+                }
+            
             $pa = $f['payload'];
             $cre = ['email' => $mail, 'password' => $pass];
             
@@ -95,7 +107,7 @@ while (true) {
         
         if (!empty($po)) {
             #print_r($po);
-            $ve = Net::X($f['url'], 'POST', $po, inf::$cookie, [], "$host/login", inf::$uagent, ip: $ip);
+            $ve = Net::X($f['url'], 'POST', $po, inf::$cookie, $headersCF, "$host/login", inf::$uagent, ip: $ip);
             
             #_put('ve.html', $ve); #die;
             if ($ve === 99) {
@@ -120,7 +132,7 @@ while (true) {
     if (!$limit && $claim) {
         $ret99 = 0; 
         while (true) {
-            $fau = Net::X("$host/faucet", 'GET', null, inf::$cookie, [], "$host/dashboard", inf::$uagent, false, false, $ip);
+            $fau = Net::X("$host/faucet", 'GET', null, inf::$cookie, $headersCF, "$host/dashboard", inf::$uagent, false, false, $ip);
             
             #_put('fau.html', $fau); die;
             
@@ -145,7 +157,7 @@ while (true) {
                 $pa = $f['payload'];
                 
                 check:
-                $cf = Net::C($f['url'], 'GET', null, inf::$cookie, $headersCF, "$host/dashboard", inf::$uagent, d: true);
+                $cf = Net::C($f['url'], 'GET', null, inf::$cookie, $headersCF, "$host/faucet", inf::$uagent, d: true);
                 $cff = checkCF($f['url'], $api, $cf, $headersCF);
                 if (empty($cff['html'])) {
                     continue;
@@ -153,7 +165,6 @@ while (true) {
                     $headersCF = $cff['head'];
                     $html = $cff['html'];
                 }
-                
                 
                 if ($atbfail >= 3) $atbforce = true;
                 $cap = solve::exec($fau, $host, $api, $pa, $atbforce);
@@ -179,7 +190,7 @@ while (true) {
             
             if (!empty($po)) {
                 #print_r($po); die;
-                $cla = Net::X($f['url'], 'POST', $po, inf::$cookie, [], "$host/faucet", inf::$uagent, false, true, $ip);
+                $cla = Net::X($f['url'], 'POST', $po, inf::$cookie, $headersCF, "$host/faucet", inf::$uagent, false, true, $ip);
                 _put('cla.html', $cla); die;
                 if (empty($cla) || ($cla === 99)) continue;
                 
@@ -215,7 +226,7 @@ while (true) {
         
     }
     
-    $ads = Net::X("$host/ptc", 'GET', null, inf::$cookie, [], "$host/dashboard", inf::$uagent, false, false, $ip);
+    $ads = Net::X("$host/ptc", 'GET', null, inf::$cookie, $headersCF, "$host/dashboard", inf::$uagent, false, false, $ip);
     _put('ads.html', $ads);
     
     
@@ -293,7 +304,7 @@ while (true) {
     sl:
     $ret99 = 0;
     do {
-        $sho = Net::C("$host/links", 'GET', null, inf::$cookie, [], "$host/dashboard", inf::$uagent, false, false, $ip);
+        $sho = Net::C("$host/links", 'GET', null, inf::$cookie, $headersCF, "$host/dashboard", inf::$uagent, false, false, $ip);
         #_put('sl.html', $sho);
         if ($sho === 99) {
             $ret99++;
@@ -450,7 +461,7 @@ function checkCF($url, $api, $body = null, $headersCF = []) {
     
     if ($code !== 200 && (stripos($html, 'Just a moment') !== false || stripos($html, 'Attention Required!') !== false)) {
         
-        $cf = Cloudflare::exec($api, $url, inf::$cookie, inf::$uagent, ['html' => $html], true);
+        $cf = Cloudflare::exec($api, $url, inf::$cookie, inf::$uagent, ['html' => $html]);
         
         if ($cf) {
             [$headersCF, $ua] = $cf;
