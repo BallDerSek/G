@@ -20,14 +20,16 @@ class feyorratop {
     private bool $claim = true;
     private bool $SLDONE = false;
     private bool $ADDONE = false;
+    private bool $BCDONE = false;
     private array $skipped = [];
+    private array $headersCF = [];
     private bool $can_withdraw = true;
     
     public function __construct() {
         $this->api = onKeys();
         $this->domain = parse_url($this->host, PHP_URL_HOST);
         
-        $this->acc = Config::credential([], false, /*['mail', 'pass', 'PROXY']*/);
+        $this->acc = Config::credential([], false, ['mail', 'pass', 'PROXY']);
         putenv("PROXY=" . $this->acc['PROXY']);
         
         Proxy::load();
@@ -120,7 +122,7 @@ class feyorratop {
                 $this->logger('', "balance", "$_bal");
                 $bal = ((int)$_bal);
                 
-                if ($this->can_withdraw && ($bal >= 5000)) {
+                if ($this->can_withdraw && ($bal >= 2000)) {
                     $po = null;
                     $jjn = [];
                     $wd = Net::C("{$this->host}/withdraw", 'GET', null, Inf::$cookie, [], "{$this->host}/dashboard", Inf::$uagent, ip: $this->ip);
@@ -129,21 +131,24 @@ class feyorratop {
                     if (!empty($jjn['payload']) && !empty($jjn['url'])) {
                         $pa = $jjn['payload'];
                         $cap = Solve::exec($dash, $this->host, $this->api, $pa);
+                        if (isset($cap['trouble'])) $this->can_withdraw = false;
                         
                         $walletKey = isset($pa['address']) ? 'address' : (isset($pa['wallet']) ? 'wallet' : 'email');
                         if (empty($pa[$walletKey])) $pa[$walletKey] = $this->mail;
                         
                         $po = array_merge($pa, $cap);
-                        var_dump($po); die;
+                        
                         $this->logger('', "", "tes ilmu: ".$jjn['info']['coin']);
                         $wdd = Net::C($jjn['url'], 'POST', $po, Inf::$cookie, [], "{$this->host}/withdraw", Inf::$uagent, ip: $this->$ip);
-                        
-                        
+                        $mwd = Scraper::_jP($wdd, "/Swal\.fire\(\{.*?title\s*:\s*(['\"])(.*?)\\1.*?\}\)/s");
+                        if (isset($mwd[2][0])) {
+                            $msg = $mwd[2][0];
+                            $this->logger('ok', 'withdraw', $msg);
+                        }
                         
                     } else logx('err', 'gak bisa wd kayaknya');
                     
                 }
-                
                 
             }
             
@@ -237,7 +242,7 @@ class feyorratop {
                         $cla = Net::C($f['url'], 'POST', $po, Inf::$cookie, [], "{$this->host}/faucet", Inf::$uagent, ip: $this->ip);
                         if (empty($cla) || ($cla === 99)) continue;
                         
-                        $mf = scraper::_jP($cla, "/Swal\.fire\(\{.*?title\s*:\s*(['\"])(.*?)\\1.*?\}\)/s");
+                        $mf = Scraper::_jP($cla, "/Swal\.fire\(\{.*?title\s*:\s*(['\"])(.*?)\\1.*?\}\)/s");
                         if (!empty($mf[2][0])) {
                             $msg = $mf[2][0];
                             
@@ -307,7 +312,7 @@ class feyorratop {
                                 #print_r($po); die;
                                 $cla = Net::X($f['url'], 'POST', $po, Inf::$cookie, [], $ad_u, Inf::$uagent, ip: $this->ip);
                                 
-                                $ma = scraper::_jP($cla, "/Swal\.fire\(\{.*?title\s*:\s*(['\"])(.*?)\\1.*?\}\)/s")[2][0] ?? null;
+                                $ma = Scraper::_jP($cla, "/Swal\.fire\(\{.*?title\s*:\s*(['\"])(.*?)\\1.*?\}\)/s")[2][0] ?? null;
                                 
                                 if (!empty($ma)) {
                                     
@@ -348,13 +353,13 @@ class feyorratop {
                 
             }
             
-            
             if (!$this->SLDONE) {
                 $ret99 = 0;
+                $up = ['earnow','shortano', 'shortino', 'fc-lc'];
                 
                 do {
                     $ret99++;
-                    $sho = Net::C("{$this->host}/links", 'GET', null, Inf::$cookie, [], "$this->host/dashboard", Inf::$uagent, ip: $ip);
+                    $sho = Net::C("{$this->host}/links", 'GET', null, Inf::$cookie, [], "{$this->host}/dashboard", Inf::$uagent, ip: $this->ip);
                     if ($sho === 99) {
                         if ($ret99 >= 5) goto login;
                         continue;
@@ -363,23 +368,133 @@ class feyorratop {
                     
                     $short = Shortlinks::extract($sho);
                     if (empty($short)) continue;
-                    print_r($short); die;
+                    #print_r($short); die;
                     
+                    $f = Scraper::payload($sho)[0] ?? [];
                     
+                    if (!empty($f)) {
+                        $po = $f['payload'];
+                        
+                        if (str_contains($sho, 'Write what you see in the picture')) {
+                            $t_text = null;
+                            $_cu = null;
+                            foreach (Scraper::_pP($sho, 'src') as $_u) {
+                                if (str_contains($_u, '/images/captcha')) {
+                                    $_cu = trim($_u);
+                                    break;
+                                }
+                            }
+                            if ($_cu) {
+                                $img = Net::C($_cu, 'GET', null, Inf::$cookie, [], "{$this->host}/links", Inf::$uagent);
+                                $t_text = _text($img, $host, $mail);
+                            }
+                            if ($t_text) {
+                                foreach ($po as $key => $val) {
+                                    if ($val === '' || $val === null) {
+                                        $po[$key] = $t_text;
+                                    }
+                                }
+                            }
+                        }
+                    } 
                     
+                    $can_process = false; 
+                    foreach ($short as $links => [$idd, $lmt]) {
+                        if (!Shortlinks::limit($lmt) || isset($skipped[$idd])) continue;
+                        $can_process = true;
+                        
+                        $ud = $this->host.'/links/go/'.$idd;
+                        $loc = $this->parseShortL($ud, "{$this->host}/links", $po);
+                        
+                        if (!$loc) {
+                            $skipped[$idd] = true; 
+                            continue;
+                        }
+                        
+                        $loc_u = parse_url($loc)['host'];
+                        $is_bl = false;
+                        foreach ($up as $blacklisted) {
+                            if (str_contains($loc_u, $blacklisted)) {
+                                logx('warn', "Domain $blacklisted Skipping..");
+                                $skipped[$idd] = true;
+                                $is_bl = true;
+                                break; 
+                            }
+                        }
+                        if ($is_bl) continue;
+                        
+                        $start = microtime(true);
+                        $bakk = Shortlinks::exec($this->api, $loc);
+                        $wait = 130 - (int)(microtime(true) - $start);
+                        
+                        if (!$bakk) {
+                            $skipped[$idd] = true; 
+                            continue;
+                        }
+                        
+                        if ($wait > 0) styler("waiting {$wait}.s for SL", fn() => _sle((int)ceil($wait)));
+                        
+                        $retVer = 0;
+                        while ($retVer <= 3) {
+                            $retVer++;
+                            $ver = Net::C($bakk, 'GET', null, Inf::$cookie, [], $loc, Inf::$uagent);
+                            
+                            if (!empty($ver) && $ver !== 99) {
+                                $msh = Scraper::_jP($ver, "/Swal\.fire\(\{.*?title\s*:\s*(['\"])(.*?)\\1.*?\}\)/s");
+                                
+                                if (!empty($msh[2][0])) {
+                                    
+                                    $msg = $msh[2][0];
+                                    $this->logger('ok', 'sho', $msg);
+                                    
+                                }
+                                
+                                break 2;
+                                
+                            }
+                        }
+                        
+                    }
                     
+                    if (!$can_process) {
+                        $this->logger('err', 'sho', 'SL habis atau sisa blacklist');
+                        $this->SLDONE = true;
+                    }
                     
-                    
-                    die;
-                } while (!$SLDONE);
+                } while (!$this->SLDONE);
                 
             }
             
+            $off_B = Net::C("{$this->host}/offerwall/bitcotasks", 'GET', null, Inf::$cookie, [], "{$this->host}/dashboard", Inf::$uagent, ip: $this->ip);
+            $bctt_u = Scraper::_jP($off_B, '/<iframe[^>]*src=["\']([^"\']*bitcotask[^"\']*)["\'][^>]*>/i')[1][0] ?? null;
             
-        die;
+            if (!empty($bctt_u)) {
+                $bctt = new bctt($this->host, $this->api, $this->mail);
+                $bcttwl = $bctt->wall($bctt_u);
+                if (($bcttwl === 'claim') && $this->claim) $bcttwl->cleanup();
+                if (($bcttwl === 'habis')) $this->BCDONE = true;
+                
+            }
+            
+            if ($this->SLDONE && $this->ADDONE && !$this->claim && $this->BCDONE) styler('cooldown', fn() => _sle(600));
+            
         }
         
+    }
+    
+    private function parseShortL($ud, $sl, $po = null) {
         
+        $getLok = 0;
+        while ($getLok <= 3) {
+            $getLok++;
+            $lok = Net::X($ud, 'POST', $po, Inf::$cookie, $this->headersCF, $sl, Inf::$uagent);
+            if (!empty($lok) && $lok !== 99) {
+                return Scraper::_pP($lok, 'location.href')[0] ?? null;
+                
+            }
+        }
+        
+        return null;
         
     }
     

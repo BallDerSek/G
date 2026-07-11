@@ -168,6 +168,8 @@ class gptfaucet {
                 
             }
             
+        }
+        
             $off_B = Net::X("{$this->host}/offers", 'GET', null, Inf::$cookie, $this->headersCF, "{$this->host}/offers", Inf::$uagent);
             $bctt_u = Scraper::_xP($off_B, "//a[contains(text(), 'Earn More') and contains(@href, 'bitcotasks.com')]/@href")[0] ?? null;
             
@@ -180,9 +182,6 @@ class gptfaucet {
             }
             
             if ($this->SLDONE && $this->ADDONE && $this->BCDONE) styler('cooldown', fn() => _sle(600));
-            
-        }
-        
         
         
         

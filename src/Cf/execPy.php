@@ -13,24 +13,19 @@ final class execPy {
         $this->uagent = $ua;
         $this->lockFile = sys_get_temp_dir() . '/seledroid_global.lock';
         
-        if (($py = realpath(LIBDIR . '/exec/execPy.py')) === false) {
-            logx('err', "execPy file not found");
-            exit;
-        }
+        if (($py = realpath(LIBDIR . '/exec/execPy.py')) === false) die(Logger::X('err', "execPy: file not found"));
+        
         $this->scriptPath = $py;
-        $proxy = $GLOBALS['_CTX']['proxy']['src'] ?? null;
-        if (!empty($proxy) && getDeps('gost')) {
-            #logx('info', "Seledroid: Proxy mode");
-        } else {
-            #logx('info', "Seledroid: Direct mode");
-        }
+        
     }
 
     public function run($type, $url = null, $act = null): array|string|null {
-        if (!getDeps('seledroid@py')) {
-            logx('err', 'seledroid@py missing');
-            exit;
-        }
+        if (!getDeps('seledroid@py')) seledroid@py missingdie(Logger::X('err', "seledroid@py missing"));
+        
+        
+        
+        
+        
         
         $m = strtolower($type);
         if (!in_array($m, ['turnstile', 'inter', 'recaptcha3', 'check', 'ua'], true)) return null;
@@ -38,15 +33,13 @@ final class execPy {
 
         $sync = ($this->cookie !== null && $this->uagent !== null);
         $out = $this->exec($m, $url, $sync, $act);
-        #var_dump($out) && die;
+        var_dump($out); die;
 
         if (empty(trim($out))) return null;
-        $trim = trim($out);
-        if ($m === 'ua') return $trim;
 
         $json = json_decode($trim, true);
         if (!is_array($json) || isset($json['error'])) {
-            if (isset($json['error'])) logx('err', "Py: " . $json['error']);
+            if (isset($json['error'])) Logger::X('err', "execPy: " . $json['error']);
             return null;
         }
 
