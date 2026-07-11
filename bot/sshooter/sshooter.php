@@ -351,4 +351,5 @@ class sshooter {
     
 }
 
-new sshooter()->exec();
+$BOTEXEC = new sshooter();
+$BOTEXEC->exec();

@@ -477,4 +477,4 @@ class onlyfans {
     
 }
 
-new onlyfans()->exec();
+(new onlyfans())->exec();

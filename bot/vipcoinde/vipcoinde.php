@@ -90,4 +90,5 @@ class vipcoinde {
     
 }
 
-new vipcoinde()->exec();
+$BOTEXEC = new vipcoinde();
+$BOTEXEC->exec();

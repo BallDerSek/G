@@ -351,4 +351,6 @@ class 99faucet {
     
 }
 
-new 99faucet()->exec();
+
+$BOTEXEC = new 99faucet();
+$BOTEXEC->exec();

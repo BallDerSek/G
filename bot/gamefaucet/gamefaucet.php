@@ -351,4 +351,5 @@ class gamefaucet {
     
 }
 
-new gamefaucet()->exec();
+$BOTEXEC = new gamefaucet();
+$BOTEXEC->exec();

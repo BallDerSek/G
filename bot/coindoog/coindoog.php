@@ -351,4 +351,5 @@ class coindoog {
     
 }
 
-new coindoog()->exec();
+$BOTEXEC = new coindoog();
+$BOTEXEC->exec();

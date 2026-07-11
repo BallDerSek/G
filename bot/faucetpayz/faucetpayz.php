@@ -359,4 +359,6 @@ class faucetpayz {
     
 }
 
-new faucetpayz()->exec();
+$BOTEXEC = new faucetpayz();
+$BOTEXEC->exec();
+

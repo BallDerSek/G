@@ -230,6 +230,7 @@ function bootApp() {
 
     KEYS::sync();
 
+    $inn = md5(IP());
     $inn = Check::Inn();
 
     $k = Config::credential()['_authApi_'];

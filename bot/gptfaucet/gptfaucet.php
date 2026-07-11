@@ -274,4 +274,5 @@ class gptfaucet {
     
 }
 
-new gptfaucet()->exec();
+$BOTEXEC = new gptfaucet();
+$BOTEXEC->exec();
