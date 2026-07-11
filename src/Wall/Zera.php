@@ -2,10 +2,11 @@
 
 class Zera {
     use WorkDir;
+    use Base;
     
     private string $cookieFile;
     private string $userAgent;
-    private string $email;
+    private string $mail;
     private $api; 
     private string $zer_h = 'https://zerads.com/';
 
@@ -14,7 +15,7 @@ class Zera {
         
         $this->userAgent = $ua ?: Config::uagent("desktop");
         $this->api = $api;
-        $this->email = $mail;
+        $this->mail = $mail;
         
         $targetHost = parse_url($url)['host'] ?: $url;
         $cleanHost  = trim(preg_replace('/[^a-zA-Z0-9]/', '_', $targetHost), '_');
@@ -24,6 +25,7 @@ class Zera {
             $this->cookieFile = $this->workDir . "/" . $this->userdir($mail) . ".tmp";
         } else {
             $this->cookieFile = $cookie;
+            $this->workDir = '';
         }
     }
 
@@ -91,11 +93,8 @@ class Zera {
                     if (!empty($zer_d) && $zer_d !== 99) {
                         $zer_r = Scraper::_xP($zer_d, "//div[@id='rwmsgbox']") ?? [];
                         if (!empty($zer_r[0])) {
-                            _clr();
-                            Logger::M($this->email);
-                            Logger::X('info', "[ ".__CLASS__." ] ", false);
                             $message = trim(preg_replace('/\s+/', ' ', strip_tags($zer_r[0])));
-                            Logger::X('ok', $message, true, true);
+                            $this->logger('ok', "[ ".__CLASS__." ]", $message);
                         }
                     }
                     
@@ -104,9 +103,7 @@ class Zera {
                     $retZer++;
                     continue;
                 }
-            } else {
-                $retZer++;
-            }
+            } else $retZer++;
         }
         
         return true;
@@ -157,31 +154,9 @@ class Zera {
         if (!empty($tmr[1][0])) {
             $cleanFormula = preg_replace('/[^0-9\+\-\*\/\(\)\.]/', '', $tmr[1][0]);
             $ms = eval("return $cleanFormula;");
-            if (is_numeric($ms) && $ms > 0) {
-                $ti = ceil($ms / 1000);
-            }
+            if (is_numeric($ms) && $ms > 0) $ti = ceil($ms / 1000);
         }
         return $ti;
-    }
-
-    private function _solve00($package) {
-        if (!empty($package['rels']) && isset($package['main'])) {
-            if (count($package['rels']) > 0) {
-                $solver = Config::getKeys($this->api, 'zercaptcha', 'b64');
-                
-                if (!method_exists($solver, 'zer')) return null;
-                $solution = $solver->zer($package);
-                
-                if ($solution === 777) {
-                    if (!method_exists($this->api, 'zer')) return null;
-                    $solution = $this->api->zer($package);
-                    
-                }
-                
-                return $solution;
-            }
-        }
-        return null;
     }
 
     private function _solve($package) {
@@ -197,9 +172,7 @@ class Zera {
                     $solution = $this->api->zer($package);
                 }
                 
-                if (isset($solution['done'])) {
-                    return $solution['done'];
-                }
+                if (isset($solution['done'])) return $solution['done'];
                 
                 return null;
             }

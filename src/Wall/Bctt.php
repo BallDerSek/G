@@ -2,10 +2,11 @@
 
 class Bctt {
     use WorkDir;
+    use Base;
     
     private string $cookieFile;
     private string $userAgent;
-    private string $email;
+    private string $mail;
     private $api;
     private string $bct_h = 'https://bitcotasks.com';
     
@@ -14,7 +15,7 @@ class Bctt {
         
         $this->userAgent = $ua ?: Config::uagent("desktop");
         $this->api = $api;
-        $this->email = $mail;
+        $this->mail = $mail;
         
         $targetHost = parse_url($url)['host'] ?: $url;
         $cleanHost  = trim(preg_replace('/[^a-zA-Z0-9]/', '_', $targetHost), '_');
@@ -348,16 +349,14 @@ class Bctt {
     private function _set($cc_p2, $cc_getG, $wall) {
         $cc_end = json_decode(Net::X($this->bct_h . "/system/ajax.php", 'POST', $cc_p2, $this->cookieFile, [], $cc_getG, $this->userAgent) ?: '', 1);
         
-        Logger::M($this->email);
-        $msg = strip_tags($cc_end['message'] ?? 'ora tau apa isinya');
+        $message = strip_tags($cc_end['message'] ?? 'ora tau apa isinya');
         
         if ($cc_end && ($cc_end['status'] ?? 0) == 200) {
-            Logger::X('info', "[ ".__CLASS__." ] ", false);
-            Logger::X('ok', $msg, true, true);
+            $this->logger('ok', "[ ".__CLASS__." ]", $message);
             return true;
         }
         
-        Logger::X('err', $msg);
+        $this->logger('ok', "[ ".__CLASS__." ]", $message);
         return false;
     }
     
