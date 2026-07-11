@@ -132,7 +132,7 @@ class Owme {
             return json_decode(
                 Net::X($go,
                        'POST',
-                       array_merge(solve::exec($_0, $url, $api), ['action' => 'redirect']),
+                       array_merge(Solve::exec($_0, $url, $api), ['action' => 'redirect']),
                        $ck,
                        [],
                        $_0,

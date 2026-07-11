@@ -112,6 +112,7 @@ function animate() {
 
 # Helpers
 function _cle() {
+    #return;
     system(PHP_OS_FAMILY === 'Windows' ? 'cls' : 'clear');
 }
 function _clr() {
@@ -229,7 +230,7 @@ function bootApp() {
 
     KEYS::sync();
 
-    $inn = check::Inn();
+    $inn = Check::Inn();
 
     $k = Config::credential()['_authApi_'];
     if (!$k) $k = $inn;

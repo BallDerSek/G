@@ -259,20 +259,17 @@ class Solve {
     
             $t = $solver->token($key, $host, $type, $Params);
             
-            #var_dump($t); die;
+            _sle(1);
+            #var_dump($t); #die;
             
             if (isset($t['fail']) && $t['fail'] === 777) {
     
-                if (!isset(Api::TKN[get_class($api)][$type])) {
-                    return ['fail' => 471];
-                }
+                if (!isset(Api::TKN[get_class($api)][$type])) return ['fail' => 471];
     
                 $t = $api->token($key, $host, $type, $Params);
     
                 if (isset($t['fail'])) {
-    
                     if ($t['fail'] === 71) return ['fail' => 471];
-    
                     return ['fail' => 404];
                 }
     
@@ -280,11 +277,7 @@ class Solve {
             }
     
             if (isset($t['fail'])) {
-    
-                if ($t['fail'] === 71) {
-                    return ['fail' => 471];
-                }
-    
+                if ($t['fail'] === 71) return ['fail' => 471];
                 return ['fail' => 404];
             }
     

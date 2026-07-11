@@ -46,38 +46,12 @@ final class Logger {
     }
     
     public static function G($t = true, $m = '', $n = true) {
-        
-        $theme = [
-            ['bg' => BG['WHT'], 'bgk' => 'WHT'],
-            ['bg' => BG['YLW'], 'bgk' => 'YLW'],
-            ['bg' => BG['CYN'], 'bgk' => 'CYN'],
-            ['bg' => BG['GRN'], 'bgk' => 'GRN'],
-            ['bg' => BG['RED'], 'bgk' => 'RED'],
-            ['bg' => BG['BLU'], 'bgk' => 'BLU'],
-            ['bg' => BG['MAG'], 'bgk' => 'MAG'],
-            ['bg' => BG['BLK'], 'bgk' => 'BLK'],
-        ];
-        
-        $pick = $theme[array_rand($theme)];
-        $fg = FGo['BLK'];
-        $fgk = 'BLK';
-        
-        if ($pick['bgk'] === 'BLK') {
-            $fg = FGo['WHT'];
-            $fgk = 'WHT';
-        }
-        
-        $time = $t ? BOLD . FGo['WHT'] . "[" . date('H:i:s') . "] " . RSET : "";
-        
-        $formatted = $time . $pick['bg'] . $fg . BOLD . " " . trim($m) . " " . RSET;
-        
+        $formatted = ($t ? BOLD . FGb['WHT'] . '[' . date('H:i:s') . '] ' . RSET : '') . BOLD . RBW[array_rand(RBW)] . trim($m) . RSET;
+    
         if (outTty()) {
-            echo $formatted . ($n ? PHP_EOL : "");
+            echo $formatted . ($n ? PHP_EOL : '');
             fflush(STDOUT);
-        } else logx('', $m, $n);
-        
-        #return;
-        
+        } else self::X('', $m, $n);
     }
     
     public static function M($mail, $mask = true) {
