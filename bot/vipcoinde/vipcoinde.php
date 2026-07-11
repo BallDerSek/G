@@ -1,75 +1,94 @@
 <?php
-if (!defined('ROOT')) { die; }
 
-$api = onKeys();
-
-$acc = config::credential([], false, ['login', 'PROXY']);
-$login = $acc['login'];
-putenv("PROXY=".$acc['PROXY']);
-
-login:
-$host = 'https://vipfaucet.de';
-$domain = parse_url($host, PHP_URL_HOST);
-$r = '';
-$ip = null;
-
-(function ($login, $ip, $host) {
-    Proxy::load();
-    Check::Geo();
-    $cookieFile = config::cookie($login);
-    $userAgent = config::uagent('mobile');
+class vipcoinde {
     
-    inf::setup($userAgent, $cookieFile, $ip, false, $login);
+    use Base;
     
-    $b = Banner::getInstance();
-    $b->show();
-    $b->task1('ok', "$login");
-    $b->task2('ok', "site: $host");
+    private $api;
+    private $acc;
+    private $banner;
+    private array $ctx;
+    private array $hcf;
     
-} ) ($login, $ip, $host);
-
-$headersCF = [];
-$skipped = [];
-$SLDONE = false;
-$claim = true;
-$curr = '';
-$habis = [];
-$needSL = false;
-
-while (true) {
-    $dash = null;
+    private string $host = 'https://vipfaucet.de';
+    private string $r = '/?r=16125';
+    private string $ip = '';
+    private string $domain;
     
-    $ret = 0;
-    do {
-        $ret++;
-        @unlink(inf::$cookie);
-        $_0 = Net::C($host, 'GET', null, inf::$cookie, $headersCF, '', inf::$uagent);
+    private string $mail, $pass;
+    
+    private bool $claim = true;
+    private bool $SLDONE = true;
+    private bool $ADDONE = true;
+    private array $headersCF = [];
+    
+    public function __construct() {
+        $this->api = onKeys();
+        $this->domain = parse_url($this->host, PHP_URL_HOST);
         
-        if ($ret >= 10) die;
-        if ($_0 === 99) {
-            Logger::X('warn', 'Proxy issue, wait 30s');
-            _sle(60);
-            continue;
-        }
-        if (empty($_0)) continue;
+        $this->acc = Config::credential([], false, ['login', 'PROXY']);
+        putenv("PROXY=" . $this->acc['PROXY']);
         
-        $f = scraper::payload($_0)[0] ?? null;
-        if (!empty($f)) {
-            $po = array_merge($f['payload'], ['user' => $login]);
-            $zer_u = $f['url'] .'?'. http_build_query($po);
+        Proxy::load();
+        Check::Geo();
+        
+        $this->mail = $this->acc['login'];
+        
+        Inf::setup(
+            Config::uagent('mobile'),
+            Config::cookie($this->mail),
+            $this->ip,
+            false, 
+            $this->mail
+        );
+        
+        $b = $this->banner = Banner::getInstance();
+        $b->show();
+        $b->task1('ok', $this->mail);
+        $b->task2('ok', "site: " . $this->host);
+    }
+    
+    public function exec() {
+        
+        login:
+            Proxy::load();
+            Check::Geo();
+        
+        while (true) {
+            $zer_u = null;
+            $ret = 0;
+            
+            do {
+                $ret++;
+                @unlink(Inf::$cookie);
+                $_0 = Net::C($this->host, 'GET', null, Inf::$cookie, $this->headersCF, '', Inf::$uagent);
+                
+                if ($ret >= 10) $this->logger('err', "can't login", 'RETRY LIMIT REACHED, CHECK BROWSER', true);
+                
+                if (!empty($_0) && $_0 !== 99) {
+                    $f = Scraper::payload($_0)[0] ?? null;
+                    
+                    $po = array_merge($f['payload'], ['user' => $this->mail]);
+                    $zer_u = $f['url'].'?'.http_build_query($po);
+                }
+                
+                
+                
+            } while (empty($zer_u));
+            
+            if (!empty($zer_u)) {
+                $setF = microtime(true);
+                $zera = new Zera($this->host, $this->api, $this->mail);
+                $zerads = $zera->exec($zer_u);
+                if (($zerads === 'claim') && $claim) $zera->cleanup();
+            }
             
         }
         
-    } while (empty($zer_u));
-    
-    if (!empty($zer_u)) {
-        $setF = microtime(true);
-        $zera = new Zera($host, $api, $login);
-        $zerads = $zera->exec($zer_u);
-        if (($zerads === 'claim') && $claim) $zera->cleanup();
-        
     }
     
-    styler('cooldown', fn() => _sle(100));
     
 }
+
+$BOTEXEC = new vipcoinde();
+$BOTEXEC->exec();

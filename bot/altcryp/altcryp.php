@@ -1,263 +1,402 @@
 <?php
-if (!defined('ROOT')) { die; }
 
-$api = onKeys();
-
-$acc = config::credential([], false, ['login', 'PROXY']);
-$login = $acc['login'];
-putenv("PROXY=".$acc['PROXY']);
-
-login:
-$host = 'https://altcryp.com';
-$domain = parse_url($host, PHP_URL_HOST);
-$r = '/?r=45909';
-$ip = null;
-
-(function ($login, $ip, $host) {
-    Proxy::load();
-    Check::Geo();
-    $cookieFile = config::cookie($login);
-    $userAgent = config::uagent('mobile');
+class altcryp {
     
-    inf::setup($userAgent, $cookieFile, $ip, false, $login);
+    use Base;
     
-    $b = Banner::getInstance();
-    $b->show();
-    $b->task1('ok', "$login");
-    $b->task2('ok', "site: $host");
+    private $api;
+    private $acc;
+    private $banner;
+    private array $ctx;
+    private array $hcf;
     
-} ) ($login, $ip, $host);
-
-$headersCF = [];
-$skipped = [];
-$SLDONE = false;
-$claim = true;
-$curr = '';
-$habis = [];
-$needSL = false;
-
-while (true) {
-    $dash = null;
+    private string $host = 'https://altcryp.com';
+    private string $r = '/?r=45909';
+    private string $ip = '';
+    private string $domain;
     
-    $ret = 0;
-    do {
-        $ret++;
-        $l = inf::check("$host", $headersCF, '/auth/login');
-
-        if ($l['ok']) {
-            $dash = $l['html'];
-            logx('info', "logged in", false); 
-            _sle(3); _clr();
-            #var_dump($dash); die;
-            break;
-        }
-        if ($ret >= 10) {
-            logx('warn', 'RETRY LIMIT REACHED, CHECK BROWSER');
-            
-            if (!empty($_0)) _put(__DIR__.'/lo.html', $_0);
-            if (isset($ve) && !empty($ve)) _put(__DIR__.'/ve.html', $ve);
-            
-            exit; 
-        }
-        
-        logx('err', "logging in ", false); 
-        _sle(3); _clr();
-        $_0 = Net::X($host.$r, 'GET', null, inf::$cookie, $headersCF, '', inf::$uagent, d: true);
-        if ($_0 === 99) {
-            logx('warn', "masalah proxy, warm up dulu");
-            _sle(60);
-            continue;
-        }
-        if (empty($_0)) continue;
-        $_0 = checkCF($host, $api, $_0)['html'] ?? null;
-        #_put('0.html', $_0);
-        $f = scraper::payload($_0)[0] ?? null;
-        $po = null;
-        
-        #print_r($f);
-        
-        if (!empty($f)) {
-            $pa = $f['payload'];
-            $cre = ['wallet' => $login];
-            $cap = Solve::exec($_0, $host, $api, $pa);
-            if (isset($cap['trouble'])) {
-                _sle(10);
-                continue;
-            }
-            $cleanCap = array_filter((array)$cap, fn($v, $k) => $k !== 'nocaptcha', ARRAY_FILTER_USE_BOTH);
-            $po = array_merge($pa, $cleanCap, $cre);
-        }
-        
-        if (!empty($po)) {
-            $ve = Net::X($f['url'], 'POST', $po, inf::$cookie, $headersCF, $host.$r, inf::$uagent);
-            #_put('ve.html', $ve);
-
-            if ($ve === 99) {
-                logx('warn', 'Proxy issue, wait 30s');
-                _sle(30);
-                continue;
-            }
-            
-            $_sucS = scraper::_jP($ve, "/Swal\.fire\s*\(\s*['\"]([^'\"]+)['\"]\s*,\s*['\"]([^'<]+)/i");
-            
-            if (isset($_sucS[2][0])) {
-                $msg = $_sucS[2][0];
-                logx('info', $msg, true, true);
-                if (stripos($msg, 'nvalid captcha')) continue;
-                if (preg_match('/registered|success/i', $msg)) continue;
-                die;
-            }
-            
-        }
-        
-    } while (empty($dash));
-    #_put('dash.html', $dash);
+    private string $mail, $pass;
     
-    $_fa = Scraper::_xP($dash, "//ul[@id='faucet'][contains(@class,'submenu')]//a/@href");
-    #print_r($_fa);
+    private bool $claim = true;
+    private bool $SLDONE = true;
+    private bool $ADDONE = false;
+    private array $headersCF = [];
     
-    static $afp = null;
-    foreach ($_fa as $fa) {
-        $_c = basename(parse_url($fa)['path']);
+    public function __construct() {
+        $this->api = onKeys();
+        $this->domain = parse_url($this->host, PHP_URL_HOST);
         
-        print(FGd['CYN']." ".ITAL.UNDR.'processing'.RSET."  ");
-        logx('err', strtoupper($_c));
+        $this->acc = Config::credential([], false, ['login', 'PROXY']);
+        putenv("PROXY=" . $this->acc['PROXY']);
         
-        if (!empty($curr) && stripos($_c, $curr) === false) continue; 
+        Proxy::load();
+        Check::Geo();
         
-        $ret99 = 0;
+        $this->mail = $this->acc['login'];
+        
+        Inf::setup(
+            Config::uagent('mobile'),
+            Config::cookie($this->mail),
+            $this->ip,
+            false, 
+            $this->mail
+        );
+        
+        $b = $this->banner = Banner::getInstance();
+        $b->show();
+        $b->task1('ok', $this->mail);
+        $b->task2('ok', "site: " . $this->host);
+    }
+    
+    
+    public function exec() {
+        
+        $habis = [];
+        $curr = '';
+        $skipped = [];
+        
+        login:
+            Proxy::load();
+            Check::Geo();
+        
         while (true) {
-            $fauu = null;
-            $fauu = Net::C($fa, 'GET', null, inf::$cookie, $headersCF, $host, inf::$uagent, d: true);
+            $dash = null;
             
-            if ($fauu === 99) {
-                $ret99++;
-                logx('warn', 'Proxy issue, wait 30s');
-                if ($ret99 >= 7) goto login;
-                _sle(30);
-                continue;
-            }
-            $ret99 = 0; 
-            
-            $cff = checkCF($fa, $api, $fauu, $headersCF);
-            
-            if (!empty($cff['html'])) {
-                $headersCF = $cff['head'];
-                $fau = $cff['html'];
-            } else {
-                $fau = $fauu['body'] ?? null;
-            }
-            
-            #_put('fauu.html', $fauu); die;
-            
-            if (!empty($fau)) {
-                #_put('fau.html', $fau);
-                $po = null;
-                $f = scraper::payload($fau,'fauform')[0] ?? null;
+            $ret = 0;
+            do {
+                $ret++;
+                $l = Inf::check("{$this->host}", $this->headersCF, '/auth/login');
                 
-                if ($f) {
-                    #print_r($f);
-                    $pa = $f['payload'];
-                    
-                    $cap = Solve::exec($fau, $host, $api, $pa);
-                    if (isset($cap['trouble'])) {
-                        _sle(5);
-                        continue;
-                    }
-                    if (isset($cap['nocaptcha']) && isset($pa['fp_os_name'])) {
-                        if ($afp === null) {
-                            $afp = _altcryptoken(inf::$uagent, $login);
-                        }
-                        $cap = $afp;
-                    }
-                    $po = array_merge($pa, $cap);
-                    
-                } else {
-                    
-                    if (stripos($fau, 'firewall')) {
-                        #_put('fwall.html', $fau); die;
-                        $ff = scraper::payload($fau)[0] ?? [];
-                        $cap = solve::exec($fau, $host, $api, $ff['payload']);
-                        
-                        $pp = array_merge($ff['payload'], $cap);
-                        Net::C($ff['url'], 'POST', $pp, inf::$cookie, $headersCF, $fa, inf::$uagent);
-                        continue;
-                        
-                    }
-                    
-                    if (str_contains($fau, 'claim limit')) {
-                        #_put('fau.html', $fau); 
-                        $habis[$fa] = true;
-                        break;
-                    }
-                    
+                if ($l['ok']) {
+                    $dash = $l['html'];
+                    logx('Info', "logged in", false); 
+                    _sle(3); _clr();
+                    #var_dump($dash); die;
+                    break;
                 }
                 
-                if (!empty($po)) {
-                    _sle(7);
-                    $cla = Net::C($f['url'], 'POST', $po, inf::$cookie, $headersCF, $fa, inf::$uagent);
+                if ($ret >= 10) $this->logger('err', "can't login", 'RETRY LIMIT REACHED, CHECK BROWSER', true);
+                
+                Logger::X('err', "logging in", false); 
+                _sle(3); _clr();
+                $po = null;
+                
+                $_0 = Net::X($this->host.$this->r, 'GET', null, Inf::$cookie, $this->headersCF, '', Inf::$uagent, d: true);
+                $_0 = $this->checkCF($this->headersCF, $this->host, $_0);
+                
+                if (!empty($_0) && $_0 !== 99) {
+                    $f = Scraper::payload($_0)[0] ?? null;
+                    #var_dump($f); die;
                     
-                    if (!empty($cla) && $cla !== 99) {
-                        #_put('cla.html', $cla);
-                        $_suc = scraper::_jP($cla, "/Swal\.fire\s*\(\s*['\"]([^'\"]+)['\"]\s*,\s*['\"]([^'<]+)/i");
-                        print(FGd['CYN'].maskEmail($login).RSET." ");
-                        if (isset($_suc[2][0])) {
-                            $stt = $_suc[1][0];
-                            $msg = $_suc[2][0];
+                    if (!empty($f)) {
+                        $pa = $f['payload'];
+                        $cre = ['wallet' => $this->mail];
+                        $cap = Solve::exec($_0, $this->host, $this->api, $pa);
+                        if (isset($cap['trouble'])) continue;
+                        
+                        $po = array_merge($pa, $cap, $cre);
+                        
+                    }
+                }
+                
+                if ($po) {
+                    #print_r($po); die;
+                    $ve = Net::X($f['url'], 'POST', $po, Inf::$cookie, $this->headersCF, $this->host.$this->r, Inf::$uagent);
+                    
+                    $msg_d = Scraper::_jP($ve, "/Swal\.fire\s*\(\s*['\"]([^'\"]+)['\"]\s*,\s*['\"]([^'<]+)/i")[2][0] ?? null;
+                    if (!empty($msg_d)) {
+                        if (stripos($msg_d, 'nvalid captcha')) continue;
+                        #if (preg_match('/registered|success/i', $msg_d)) continue;
+                        #$this->logger('err', '', $msg_d, 1);
+                    }
+                }
+                
+            } while (empty($dash));
+            #_put('dash.html', $dash);
+            
+            $_fa = Scraper::_xP($dash, "//ul[@id='faucet'][contains(@class,'submenu')]//a/@href");
+            #print_r($_fa);
+            
+            $setF = 0;
+            if ($this->claim) {
+                static $afp = null;
+                foreach ($_fa as $fa) {
+                    $_c = basename(parse_url($fa)['path']);
+                    if (!empty($curr) && str_contains($_c, $curr)) continue;
+                    
+                    if (isset($habis[$fa])) {
+                        $curr = '';
+                        continue 2;
+                    }
+                    
+                    print(FGd['CYN']." ".ITAL.'processing  ');
+                    Logger::X('err', $_c);
+                    
+                    $ret99 = 0;
+                    while (true) {
+                        $ret99++;
+                        $fau = Net::C($fa, 'GET', null, Inf::$cookie, $this->headersCF, $this->host, Inf::$uagent, d: true);
+                        
+                        if ($fau === 99) {
+                            if ($ret99 >= 5) goto login;
+                            continue;
+                        }
+                        $ret99 = 0;
+                        
+                        $fau = $this->checkCF($this->headersCF, $fa, $fau);
+                        #_put('fau.html', $fau);
+                        $po = null;
+                        if (!empty($fau) && $fau !== 99) {
+                            $f = Scraper::payload($fau)[0] ?? null;
                             
-                            logx('info', $stt, false, true);
-                            logg(false, "$msg");
-                            
-                            if (preg_match('/sufficient|could not be processed/i', $msg)) {
-                                $habis[$fa] = true;
-                                break;
+                            if (!empty($f)) {
+                                $pa = $f['payload'];
+                                
+                                $cap = Solve::exec($fau, $this->host, $this->api, $pa);
+                                
+                                if (isset($pa['fp_os_name'])) {
+                                    if ($afp === null) {
+                                        $afp = _altcryptoken(Inf::$uagent, $this->mail);
+                                    }
+                                    $capp = $afp;
+                                }
+                                if (isset($cap['trouble'])) continue;
+                                
+                                $po = array_merge($pa, $cap, $capp ?? []);
+                                
+                            } else {
+                                if (stripos($fau, 'firewall')) {
+                                    $ff = Scraper::payload($fau)[0] ?? [];
+                                    
+                                    if (!empty($ff)) {
+                                        $cap = Solve::exec($fau, $host, $api, $ff['payload'] ?? []);
+                                        $pp = array_merge($ff['payload'], $cap);
+                                        Net::C($ff['url'], 'POST', $pp, Inf::$cookie, $this->headersCF, $fa, Inf::$uagent);
+                                        continue;
+                                    }
+                                    
+                                }
+                                
+                                if (str_contains($fau, 'claim limit')) {
+                                    #_put('fau.html', $fau); 
+                                    $habis[$fa] = true;
+                                    break;
+                                }
                             }
-                            if (preg_match('/banned|flagged|anti-fraud/i', $msg)) {
-                                if (empty(getenv('AN'))) die;
+                            
+                        }
+                        
+                        if (!empty($po)) {
+                            _sle(7);
+                            #print_r($po);
+                            
+                            $cla = Net::C($f['url'], 'POST', $po, Inf::$cookie, $this->headersCF, $fa, Inf::$uagent);
+                            
+                            if (empty($cla) || ($cla === 99)) continue;
+                            
+                            $mf = Scraper::_jP($cla, "/Swal\.fire\s*\(\s*['\"]([^'\"]+)['\"]\s*,\s*['\"]([^'<]+)/i");
+                            if (!empty($mf[2][0])) {
+                                $stt = $mf[1][0];
+                                $msg = $mf[2][0];
+                                $this->logger($stt, 'fct', $msg);
+                                
+                                
+                                if (preg_match('/sufficient|could not be processed/i', $msg)) {
+                                    $habis[$fa] = true;
+                                    break;
+                                }
+                                
+                                if (preg_match('/blacklisted|flagged|banned|anti-fraud/i', $msg)) {
+                                    die;
+                                }
+                                
+                                if (stripos($msg, 'Shortlink')) {
+                                    if ($this->SLDONE) die;
+                                    $curr = $_c;
+                                    break 2;
+                                }
                                 
                             }
-                            #if (preg_match('/banned|flagged/i', $msg)) die;
+                            styler("waiting for next claim", fn() => _sle(5));
                         }
                         
-                        styler("waiting for next claim", fn() => _sle(5));
                     }
                     
+                }
+                
+                
+            }
+            
+            if (count($habis) === count($_fa)) $this->logger('ok', '', 'beres', 1);
+            
+            $ads = Net::C("{$this->host}/ptc", 'GET', null, Inf::$cookie, [], '', Inf::$uagent, ip: $this->ip);
+            if (!empty($ads) && $ads !== 99) {
+                $ptcList = $this->parsePtcAds($ads);
+                $ptcNumb = $ptcList['total'];
+                #print_r($ptcList); die;
+                
+                if ($ptcNumb <= 1) {
+                    $this->ADDONE = true;
+                } else {
+                    if (!empty($ptcList['local'])) {
+                        
+                    } else {
+                        if (!empty($ptcList['bctt'])) {
+                            foreach ($ptcList['bctt'] as $ptc) {
+                                [$ad_u, $ad_t] = $ptc;
+                                $bctt = new Bctt($this->host, $this->api, $this->mail);
+                                $ch = $bctt->exec($ad_u, $ad_t);
+                                if ($ch === 99) goto login;
+                                if ($ch === 'forbidden') break;
+                                $endF = microtime(true);
+                                if ($setF > 0 && $this->claim) {
+                                    $balik = $endF - $setF;
+                                    if ($balik >= 4 * 60) continue 2;
+                                }
+                                
+                            }
+                            
+                            
+                        }
+                    }
                     
                 }
                 
             }
-        #die;
+            
+            /*
+            $wd = Net::C("{$this->host}/withdraw", 'GET', null, Inf::$cookie, [], '', Inf::$uagent, ip: $this->ip);
+            $_bal = Scraper::_xP($wd, "//div[contains(@class, 'balance-hero')]//h2/text()")[0] ?? '';
+            if ($_bal) {
+                $this->logger('', "balance", "$_bal");
+                
+                $bal = (float) substr($_bal, 1);
+                if ($bal >= 0.0001) {
+                    $po = null;
+                    $jjn = [];
+                    $jjn = $this->_wd($wd);
+                    
+                    if (!empty($jjn['payload']) && !empty($jjn['url'])) {
+                        $pa = $jjn['payload'];
+                        $cap = Solve::exec($wd, $this->host, $this->api, $pa);
+                        
+                        $walletKey = isset($pa['address']) ? 'address' : (isset($pa['wallet']) ? 'wallet' : 'email');
+                        if (empty($pa[$walletKey])) $pa[$walletKey] = $this->mail;
+                        
+                        $po = array_merge($pa, $cap);
+                        
+                        
+                        $this->logger('', "{$po[$walletKey]}", "tes ilmu: ".$jjn['info']['coin']);
+                        $wdd = Net::X($jjn['url'], 'POST', $po, Inf::$cookie, [], "{$this->host}/withdraw", Inf::$uagent);
+                        _put('wdd.html', $wdd);
+                        
+                        
+                        
+                    } else Logger::X('err', 'gak bisa wd kayaknya');
+                }
+                
+            }
+            */
+            
         }
-
-    }
-    
-    if (count($habis) === count($_fa)) {
-        print(FGd['CYN'].maskEmail($login).RSET." ");
-        (logx('err', 'gak bisa claim') ?: die);
+        
+        
     }
     
     
-die;
+    private function parsePtcAds($html) {
+        
+        if (empty($html) || $html === 99) return ['total' => 0, 'local' => [], 'bctt' => [], 'owme' => [], 'zono' => [], 'external' => []];
+        
+        $xp = Scraper::dom($html);
+        if (!$xp) return ['total' => 0, 'local' => [], 'bctt' => [], 'owme' => [], 'zono' => [], 'external' => []];
+        
+        $result = ['local' => [], 'bctt' => [], 'owme' => [], 'zono' => [], 'external' => []];
+        $host = str_replace('www.', '', parse_url($this->host, PHP_URL_HOST) ?: $this->host);
+        $baseUrl = rtrim((parse_url($this->host, PHP_URL_SCHEME) ? $this->host : 'https://' . $this->host), '/');
+        
+        $cards = $xp->query("//div[contains(@class, 'card')][.//button[contains(@onclick, 'go_btn')]]");
+        
+        foreach ($cards as $card) {
+            $btn = $xp->query(".//button/@onclick", $card);
+            if ($btn->length === 0) continue;
+            
+            $onclick = $btn->item(0)->value;
+            $url = '';
+            if (preg_match("/go_btn\s*\(\s*'([^']+)'/", $onclick, $m)) $url = $m[1];
+            
+            if (empty($url)) continue;
+            
+            if (strpos($url, 'http') !== 0 && strpos($url, '//') !== 0) $url = (strpos($url, '/') === 0) ? $baseUrl . $url : $baseUrl . '/' . $url;
+            elseif (strpos($url, '//') === 0) $url = 'https:' . $url;
+            
+            $timer = 5;
+            $timerEl = $xp->query(".//span[contains(@class, 'badge-custom')]//i[contains(@class, 'fa-clock')]/parent::span", $card);
+            if ($timerEl->length === 0) $timerEl = $xp->query(".//span[contains(@class, 'badge-custom') and contains(text(), 'seconds')]", $card);
+            if ($timerEl->length > 0 && preg_match('/(\d+)\s*seconds?/', trim($timerEl->item(0)->textContent), $tm)) $timer = (int)$tm[1];
+            
+            $uHost = str_replace('www.', '', parse_url($url, PHP_URL_HOST) ?: '');
+            if ($uHost === $host) $result['local'][] = [$url, $timer];
+            elseif (strpos($url, 'bitcotasks.com') !== false) $result['bctt'][] = [$url, $timer];
+            elseif (strpos($url, 'offerwall.me') !== false) $result['owme'][] = [$url, $timer];
+            elseif (strpos($url, 'offerzono.com') !== false) $result['zono'][] = [$url, $timer];
+            else $result['external'][] = [$url, $timer];
+        }
+        
+        $result['total'] = count($result['local']) + count($result['bctt']) + count($result['owme']) + count($result['zono']) + count($result['external']);
+        return $result;
+        
+    }
+    
+    private function _wd($html) {
+        
+        $res = Scraper::payload($html)[0] ?? null;
+        if (!$res) return false;
+        
+        $balance = 0;
+        $xp = Scraper::dom($html);
+        if ($xp) {
+            $nodes = $xp->query("//div[contains(@class, 'balance-hero')]//h2");
+            if ($nodes->length > 0 && preg_match('/\$([\d.]+)/', trim($nodes->item(0)->textContent), $m)) $balance = (float)$m[1];
+        }
+        
+        $cards = explode('class="coin-card"', $html);
+        array_shift($cards);
+        foreach ($cards as $card) {
+            if (stripos($card, 'BTC') !== false || stripos($card, 'Bitcoin') !== false) continue;
+            if (strpos($card, 'READY TO WITHDRAW') !== false) {
+                preg_match('/name="method"\s+value="([^"]+)"/i', $card, $valMatch);
+                $method = $valMatch[1] ?? null;
+                
+                if ($method) {
+                    $res['payload']['method'] = $method;
+                    $res['payload']['amount'] = $balance;
+                    $res['url'] = "https://altcryp.com/withdraw/withdraw/" . $method;
+                    preg_match('/<span class="coin-title">([^<]+)<\/span>/', $card, $nameMatch);
+                    $coin = trim($nameMatch[1] ?? '');
+                    
+                    $res['info'] = [
+                        'coin' => $coin,
+                        'balance' => $balance,
+                        'status' => 'READY TO WITHDRAW'
+                    ];
+                    return $res;
+                }
+            }
+        }
+        return false;
+        
+    }
+    
 }
 
-
-
-
-
-tes:
-
-
-
-
-
-
-
+$BOTEXEC = new altcryp();
+$BOTEXEC->exec();
 
 
 
 
 function _altcryptoken($ua, $mail) {
-    
     $os = 'Windows';
     if (str_contains($ua, 'Android')) $os = 'Android';
     elseif (str_contains($ua, 'Macintosh')) $os = 'MacOS';
@@ -288,46 +427,4 @@ function _altcryptoken($ua, $mail) {
         'fp_cpu_cores' => $_core,
         'fp_adblocker' => 'Disabled',
     ];
-}
-
-
-function checkCF($url, $api, $body = null, $headersCF = []) {
-    
-    $html = $body['body'] ?? null;
-    $code = $body['http_code'] ?? null;
-    
-    if (!$html || !$code) return [];
-    
-    if ($code !== 200 && (stripos($html, 'Just a moment') !== false || stripos($html, 'Attention Required!') !== false)) {
-        
-        $cf = Cloudflare::exec($api, $url, inf::$cookie, inf::$uagent, ['html' => $html]);
-        
-        if ($cf) {
-            [$headersCF, $ua] = $cf;
-            inf::setup($ua, inf::$cookie);
-            
-            if (!empty($headersCF)) {
-                for ($try = 1; $try <= 3; $try++) {
-                    _sle(3);
-                    $fix = Net::X($url, 'GET', null, inf::$cookie, $headersCF, $url, inf::$uagent, d: true);
-                    
-                    if (!empty($fix) && isset($fix['http_code'])) {
-                        $_c = $fix['http_code'];
-                        $_b = $fix['body'];
-                        
-                        if ($_c === 200 && stripos($_b, 'Just a moment') === false && stripos($_b, 'Attention Required!') === false) {
-                            
-                            config::credential()['ua'] = $ua;
-                            return ['html' => $_b, 'head' => $headersCF];
-                        }
-                    }
-                    logx('info', "try-{$try} fail, reloading");
-                }
-            }
-        }
-    } else {
-        return ['html' => $html, 'head' => $headersCF];
-    }
-    
-    return [];
 }

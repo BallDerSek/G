@@ -401,7 +401,7 @@ final class Links {
                 $lastUrl = $nextUrl;
             }
             
-            $finalLink = inf::lastLocation($_1['headers'] ?? [], $back);
+            $finalLink = Inf::lastLocation($_1['headers'] ?? [], $back);
             if ($finalLink) {
                 return $finalLink;
             }
@@ -434,7 +434,7 @@ final class Links {
         }
         
         $_step = $current[0];
-        $pat = inf::lastLocation($_1['headers']);
+        $pat = Inf::lastLocation($_1['headers']);
         $jsUrl = parse_url($pat)['host'];
         $h = headers("https://$jsUrl", '', $jsUrl);
         
@@ -560,7 +560,7 @@ final class Links {
                     goto reload;
                 }
             } else {
-                $_c = capt::cha($html);
+                $_c = Capt::cha($html);
                 
                 while (($t = $api->token($_c['keys'][0], $host, $_c['type'], ['userAgent' => $uagent])) === false);
                 if ($t === null) throw new RuntimeException('');

@@ -4,7 +4,8 @@ class xevil extends Provider {
     
     
 
-    protected $baseUrl = "http://sctg.xyz";
+    protected $baseUrl = "https://api.sctg.xyz";
+    #protected $baseUrl = "http://157.180.15.203";
 
     protected function get_api($method, array $params) {
         

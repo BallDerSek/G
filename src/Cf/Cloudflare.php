@@ -4,9 +4,7 @@ class Cloudflare {
     
     private static function solve($api, $url, $uagent, $data, $force = false) {
         
-        if (!$api) {
-            return false;
-        }
+        if (!$api) return false;
     
         $param = array_filter([
             'body' => !empty($data['html']) ? base64_encode($data['html']) : null,
@@ -31,7 +29,9 @@ class Cloudflare {
         }
     
         if (!is_array($solve) || !isset($solve['done'])) return false;
-    
+        
+        #var_dump($solve);
+        
         $class = $solve['class'] ?? null;
         $res = $solve['done'];
     
@@ -75,9 +75,7 @@ class Cloudflare {
         
         $solution = self::solve($api, $url, $uagent, $data, $force);
 
-        if (!$solution || empty($solution['token'])) {
-            return false;
-        }
+        if (!$solution || empty($solution['token'])) return false;
 
         self::injectCookie($cookiePath, $solution['token'], $url);
 
