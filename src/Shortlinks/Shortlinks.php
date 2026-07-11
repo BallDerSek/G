@@ -158,8 +158,7 @@ class Shortlinks {
         if ($noapi) $api = null;
     
         try {
-            $_direct = new Links($url);
-            $f_url   = $_direct->exec($api);
+            $f_url = (new Links($url))->exec($api);
     
             if ($f_url && is_string($f_url)) {
                 Logger::X('ok', " SL Direct passed", true, true);

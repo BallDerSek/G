@@ -2,9 +2,12 @@
 
 trait Base {
     
-    protected function logger($info, $state = null, $msg = null, $fatal = false) {
+    protected function logger($info, $state = null, $msg = null, $fatal = false, $mail = null) {
+        
+        $email = $mail ?? $this->mail;
+        
         $state ??= static::class;
-        Logger::M($this->mail, !$fatal);
+        Logger::M($email, (!$fatal || !empty($mail)));
         Logger::X($info, "$state ", false, true);
         
         if ($msg) Logger::G(0, "$msg");
@@ -67,6 +70,10 @@ trait Base {
         $_ald = Scraper::_xP($cla, "//div[contains(@class, 'alert-danger')]");
         $_sucS = Scraper::_jP($ve, "/Swal\.fire\s*\(\s*['\"]([^'\"]+)['\"]\s*,\s*['\"]([^'<]+)/i");
         $_suc = Scraper::_jP($cla, "/Toast\.fire\(\s*\{.*?icon:\s*'([^']+)'.*?html:\s*'([^']+)'/s");
+        
+        $alert_d = scraper::_xP($ve, "//div[contains(@class, 'alert-danger')]");
+        $m = scraper::_jP($cla, "/Swal\.fire\(\{.*?title\s*:\s*(['\"])(.*?)\\1.*?\}\)/s");
+        
         
         
     }

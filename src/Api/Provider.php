@@ -90,7 +90,6 @@ abstract class Provider {
         return $this->run($method, $params);
     }
 
-
     public function access($siteUrl, $type, array $extraParams = []) {
 
         try {
@@ -154,4 +153,5 @@ abstract class Provider {
     abstract protected function get_api($method, array $params);
 
     abstract protected function res_api($jobId);
+    
 }

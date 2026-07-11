@@ -108,11 +108,12 @@ class onlyfans {
             #_put('dash.html', $dash);
             
             $_fa = Scraper::_xP($dash, "//ul[@id='faucet']//a/@href");
+            #print_r($_fa);
             if ($this->claim) {
                 foreach ($_fa as $fa) {
                     
                     $_c = basename(parse_url($fa)['path']);
-                    if (!empty($curr) && str_contains($_c, $curr)) continue;
+                    if (!empty($curr) && !str_contains($_c, $curr)) continue;
                     
                     if (isset($habis[$fa])) {
                         $curr = '';
@@ -207,7 +208,7 @@ class onlyfans {
             #print_r($_sl);
             foreach ($_sl as $sl) {
                 $_c = basename($sl);
-                if (!empty($curr) && str_contains($_c, $curr)) continue;
+                if (!empty($curr) && !str_contains($_c, $curr)) continue;
                 
                 $up = ['earnow','shortano', 'shortino', 'fc-lc', 'coinclix'];
                 $ret99 = 0;

@@ -122,7 +122,7 @@ class altcryp {
                 static $afp = null;
                 foreach ($_fa as $fa) {
                     $_c = basename(parse_url($fa)['path']);
-                    if (!empty($curr) && str_contains($_c, $curr)) continue;
+                    if (!empty($curr) && !str_contains($_c, $curr)) continue;
                     
                     if (isset($habis[$fa])) {
                         $curr = '';

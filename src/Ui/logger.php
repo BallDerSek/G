@@ -58,7 +58,6 @@ final class Logger {
         
         $formatted = $mask ? maskEmail($mail) : $mail;
         
-        #print(FGd['CYN'].maskEmail($mail).RSET." ");
         print(FGd['CYN'].$formatted.RSET." ");
         
     }
