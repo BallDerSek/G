@@ -183,11 +183,11 @@ class gptfaucet {
             
             if ($this->SLDONE && $this->ADDONE && $this->BCDONE) styler('cooldown', fn() => _sle(600));
         
-        
+        }
         
     }
     
-    function parsePtcAds($html) {
+    private function parsePtcAds($html) {
         $host = $this->host;
         if (empty($html) || $html === 99) return ['total' => 0, 'local' => [], 'bctt' => [], 'owme' => [], 'zono' => [], 'external' => []];
         
@@ -218,7 +218,7 @@ class gptfaucet {
         return $result;
     }
     
-    function _wd($html) {
+    private function _wd($html) {
         preg_match('/const currencies = (\{.*?\});/s', $html, $match);
         if (empty($match[1])) return false;
         
@@ -267,7 +267,8 @@ class gptfaucet {
             ]
         ];
     }
-    
+
+
 }
 
 $BOTEXEC = new gptfaucet();
