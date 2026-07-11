@@ -322,7 +322,7 @@ if __name__ == "__main__":
             #log(f"UA MASUK: {ua}")
             print(json.dumps(app.check_only(ua_in=ua)))
 
-        elif method == "inter":
+        elif method == "interstitial":
             url = sys.argv[2]
             ua = sys.argv[3] if len(sys.argv) >= 4 else None
             ck = sys.argv[4] if len(sys.argv) >= 5 else None

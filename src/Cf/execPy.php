@@ -19,25 +19,21 @@ final class execPy {
         
     }
 
-    public function run($type, $url = null, $act = null): array|string|null {
-        if (!getDeps('seledroid@py')) seledroid@py missingdie(Logger::X('err', "seledroid@py missing"));
+    public function run($type, $url = null, $act = null) {
         
-        
-        
-        
-        
+        if (!getDeps('seledroid@py')) die(Logger::X('err', "seledroid@py missing"));
         
         $m = strtolower($type);
-        if (!in_array($m, ['turnstile', 'inter', 'recaptcha3', 'check', 'ua'], true)) return null;
+        if (!in_array($m, ['turnstile', 'interstitial', 'recaptcha3', 'check', 'ua'], true)) return null;
         if (!in_array($m, ['check', 'ua'], true) && empty($url)) return null;
 
         $sync = ($this->cookie !== null && $this->uagent !== null);
         $out = $this->exec($m, $url, $sync, $act);
-        var_dump($out); die;
 
         if (empty(trim($out))) return null;
 
-        $json = json_decode($trim, true);
+        $json = json_decode($out, true);
+        
         if (!is_array($json) || isset($json['error'])) {
             if (isset($json['error'])) Logger::X('err', "execPy: " . $json['error']);
             return null;
@@ -48,16 +44,9 @@ final class execPy {
             case 'turnstile':
             case 'recaptcha3':
                 return (strlen($json['token'] ?? '') > 20) ? (string)$json['token'] : null;
-            case 'inter':
-                if (empty($json['cf_clearance']) || empty($json['user_agent'])) return null;
-                $token = str_ireplace('cf_clearance=', '', trim((string)$json['cf_clearance']));
-                if ($sync) {
-                    if (!$this->cfCookie("cf_clearance=$token", (string)$url)) return null;
-                    $this->uagent = $GLOBALS['uagent'] = (string)$json['user_agent'];
-                }
-                
+            case 'interstitial':
                 return [
-                    'token' => $token,
+                    'token' => (string)$json['cf_clearance'],
                     'ua' => (string)$json['user_agent']
                 ];
         }
@@ -69,18 +58,12 @@ final class execPy {
         $sc = escapeshellarg($this->scriptPath);
         $cmd = "{$py} {$sc} " . escapeshellarg($m);
         
-        $proxy = $GLOBALS['_CTX']['proxy']['src'] ?? null;
-
-        if (!empty($proxy) && getDeps('gost')) {
-            $cmd .= " --px " . escapeshellarg($proxy);
-        }
-
         if (!in_array($m, ['check','ua'], true)) $cmd .= " " . escapeshellarg($url);
         if ($m === 'recaptcha3') $cmd .= " " . escapeshellarg($act);
         
         if ($sync) {
             $cmd .= " " . escapeshellarg($this->uagent);
-            if (in_array($m, ['turnstile','recaptcha3', 'inter'], true)) {
+            if (in_array($m, ['turnstile','recaptcha3', 'interstitial'], true)) {
                 $cmd .= " " . escapeshellarg($this->cookie);
             }
         }
@@ -96,23 +79,4 @@ final class execPy {
         return null;
     }
 
-    public function cfCookie($cfString, $url) {
-        if (empty($this->cookie)) return false;
-        if (!preg_match('/cf_clearance=([^;]+)/', $cfString, $m)) return false;
-        $domain = parse_url($url)['host'];
-        $cookieDomain = '.' . ltrim($domain, '.');
-        $secure = (parse_url($url)['scheme'] === 'https') ? "TRUE" : "FALSE";
-        $lines = file_exists($this->cookie) ? file($this->cookie, FILE_IGNORE_NEW_LINES) : ["# Netscape HTTP Cookie File", ""];
-        $filtered = [];
-        foreach ($lines as $l) {
-            if ($l === '' || $l[0] === '#') { $filtered[] = $l; continue; }
-            $cols = explode("\t", $l);
-            if (count($cols) >= 7 && $cols[5] === 'cf_clearance') continue;
-            $filtered[] = $l;
-        }
-        $filtered[] = implode("\t", [$cookieDomain, "TRUE", "/", $secure, time() + 43200, "cf_clearance", $m[1]]);
-        _put($this->cookie, implode("\n", $filtered) . "\n");
-        return true;
-    }
-    
 }

@@ -18,7 +18,7 @@ class onlyfans {
     private string $mail, $pass;
     
     private bool $claim = true;
-    private bool $SLDONE = true;
+    private bool $SLDONE = false;
     private bool $ADDONE = false;
     private array $headersCF = [];
     
@@ -160,14 +160,16 @@ class onlyfans {
                                 if (isset($cap['trouble'])) continue;
                                 $po = array_merge($pa, $cap);
                                 
+                            } else {
+                                if (str_contains($fau, '/auth/login')) continue 3;
                             }
                             
                         }
                         
                         if (!empty($po)) {
-                            #print_r($po);
+                            #print_r($this->headersCF);
                             $cla = Net::X($f['url'], 'POST', $po, Inf::$cookie, $this->headersCF, $fa, Inf::$uagent);
-                            #_put('cla.html', $cla);
+                            #_put('cla.html', $cla); die;
                             
                             $mf = Scraper::_jP($cla, "/Toast\.fire\(\s*\{.*?icon:\s*'([^']+)'.*?html:\s*'([^']+)'/s");
                             if (!empty($mf[2][0])) {
@@ -193,9 +195,8 @@ class onlyfans {
                                 
                             }
                             
-                            
+                            styler("waiting for next claim", fn() => _sle(10));
                         }
-                        styler("waiting for next claim", fn() => _sle(10));
                         
                     }
                     
@@ -322,11 +323,6 @@ class onlyfans {
                 
             }
             
-            
-            
-            
-            
-            die;
         }
         
         
