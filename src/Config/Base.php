@@ -2,9 +2,12 @@
 
 trait Base {
     
-    protected function logger($info, $state = null, $msg = null, $fatal = false) {
+    protected function logger($info, $state = null, $msg = null, $fatal = false, $mail = null) {
+        
+        $email = $mail ?? $this->mail;
+        
         $state ??= static::class;
-        Logger::M($this->mail, !$fatal);
+        Logger::M($email, (!$fatal || !empty($mail)));
         Logger::X($info, "$state ", false, true);
         
         if ($msg) Logger::G(0, "$msg");
@@ -18,46 +21,6 @@ trait Base {
         }
         return false;
     }
-
-    protected function checkCF(&$hh, $url = '', $body = null) {
-        
-        $html = $body['body'] ?? null;
-        $code = $body['http_code'] ?? null;
-        
-        if (!$html || !$code) return null;
-        
-        if ($code !== 200 && (stripos($html, 'Just a moment') !== false)) {
-            
-            $cf = Cloudflare::exec($this->api, $url, Inf::$cookie, Inf::$uagent, ['html' => $html], 1);
-            #var_dump($cf);
-            
-            if ($cf) {
-                [$hh, $ua] = $cf;
-                Inf::setup($ua, Inf::$cookie);
-                
-                if (!empty($hh)) {
-                    for ($try = 1; $try <= 3; $try++) {
-                        _sle(3);
-                        $fix = Net::X($url, 'GET', null, Inf::$cookie, $hh, $url, Inf::$uagent, d: true);
-                        #var_dump($fix);
-                        
-                        if (!empty($fix) && isset($fix['http_code'])) {
-                            $_c = $fix['http_code'];
-                            $_b = $fix['body'];
-                            
-                            if ($_c === 200 && stripos($_b, 'Just a moment') === false && stripos($_b, 'Attention Required!') === false) {
-                                $this->acc['ua'] = $ua;
-                                return $_b;
-                            }
-                        }
-                        $this->logger('err', 'Cloudflare', "try-{$try} fail, reloading");
-                    }
-                }
-            }
-        } 
-        
-        return $html ?? null;
-    }
     
     protected function parseHtml($html) {
         $alert_d = Scraper::_jP($ve, '/type:\s*["\']([^"\']+)["\'],\s*message:\s*["\']([^"\']+)["\']/s');
@@ -67,6 +30,10 @@ trait Base {
         $_ald = Scraper::_xP($cla, "//div[contains(@class, 'alert-danger')]");
         $_sucS = Scraper::_jP($ve, "/Swal\.fire\s*\(\s*['\"]([^'\"]+)['\"]\s*,\s*['\"]([^'<]+)/i");
         $_suc = Scraper::_jP($cla, "/Toast\.fire\(\s*\{.*?icon:\s*'([^']+)'.*?html:\s*'([^']+)'/s");
+        
+        $alert_d = scraper::_xP($ve, "//div[contains(@class, 'alert-danger')]");
+        $m = scraper::_jP($cla, "/Swal\.fire\(\{.*?title\s*:\s*(['\"])(.*?)\\1.*?\}\)/s");
+        
         
         
     }
@@ -112,6 +79,94 @@ trait Base {
             'tmr' => sprintf('%02d:%02d', $m, $s),
             'sleep' => ($m * 60) + $s + 5 
         ];
+    }
+
+#legacy
+    protected function checkCF0(&$hh, $url = '', $body = null) {
+        
+        $html = $body['body'] ?? null;
+        $code = $body['http_code'] ?? null;
+        
+        if (!$html || !$code) return null;
+        
+        if ($code !== 200 && (stripos($html, 'Just a moment') !== false)) {
+            
+            $cf = Cloudflare::exec($this->api, $url, Inf::$cookie, Inf::$uagent, ['html' => $html], 1);
+            #var_dump($cf);
+            
+            if ($cf) {
+                [$hh, $ua] = $cf;
+                Inf::setup($ua, Inf::$cookie);
+                
+                if (!empty($hh)) {
+                    for ($try = 1; $try <= 3; $try++) {
+                        _sle(3);
+                        $fix = Net::X($url, 'GET', null, Inf::$cookie, $hh, $url, Inf::$uagent, d: true);
+                        #var_dump($fix);
+                        
+                        if (!empty($fix) && isset($fix['http_code'])) {
+                            $_c = $fix['http_code'];
+                            $_b = $fix['body'];
+                            
+                            if ($_c === 200 && stripos($_b, 'Just a moment') === false && stripos($_b, 'Attention Required!') === false) {
+                                $this->acc['ua'] = $ua;
+                                return $_b;
+                            }
+                        }
+                        $this->logger('err', 'Cloudflare', "try-{$try} fail, reloading");
+                    }
+                }
+            }
+        } 
+        
+        return $html ?? null;
+    }
+#legacy
+    
+    protected function checkCF(&$hh, $url = '', $body = null) {
+        $html = $body['body'] ?? null;
+        $code = $body['http_code'] ?? null;
+        
+        if (!$html || !$code) return null;
+        
+        if ($code === 200 || stripos($html, 'Just a moment') === false) return $html;
+        
+        $result = $this->_cf($hh, $url, $html, false);
+        
+        if (!$result) $result = $this->_cf($hh, $url, $html, true);
+        
+        return $result;
+    }
+    
+    private function _cf(&$hh, $url, $html, $fallback) {
+        $cf = Cloudflare::exec($this->api, $url, Inf::$cookie, Inf::$uagent, ['html' => $html], $fallback ? 1 : 0);
+        
+        if (!$cf) return null;
+        #var_dump($cf);
+        
+        [$hh, $ua] = $cf;
+        Inf::setup($ua, Inf::$cookie);
+        
+        if (empty($hh)) return null;
+        
+        for ($try = 1; $try <= 3; $try++) {
+            _sle(3);
+            $fix = Net::X($url, 'GET', null, Inf::$cookie, $hh, $url, Inf::$uagent, d: true);
+            #var_dump($fix);
+            
+            if (!empty($fix) && isset($fix['http_code'])) {
+                $_c = $fix['http_code'];
+                $_b = $fix['body'];
+                
+                if ($_c === 200 && stripos($_b, 'Just a moment') === false && stripos($_b, 'Attention Required!') === false) {
+                    $this->acc['ua'] = $ua;
+                    return $_b;
+                }
+            }
+            $this->logger('err', 'Cloudflare', "try-{$try} fail");
+        }
+        
+        return null;
     }
     
 }

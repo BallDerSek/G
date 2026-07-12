@@ -18,7 +18,7 @@ class onlyfans {
     private string $mail, $pass;
     
     private bool $claim = true;
-    private bool $SLDONE = true;
+    private bool $SLDONE = false;
     private bool $ADDONE = false;
     private array $headersCF = [];
     
@@ -101,18 +101,19 @@ class onlyfans {
                 if ($po) {
                     #print_r($po); die;
                     $ve = Net::X($f['url'], 'POST', $po, Inf::$cookie, $this->headersCF, $this->host.$this->r, Inf::$uagent);
-                    #_put('ve.html', $ve);
+                    #_put('ve.html', $ve); die;
                 }
                 
             } while (empty($dash));
             #_put('dash.html', $dash);
             
             $_fa = Scraper::_xP($dash, "//ul[@id='faucet']//a/@href");
+            #print_r($_fa);
             if ($this->claim) {
                 foreach ($_fa as $fa) {
                     
                     $_c = basename(parse_url($fa)['path']);
-                    if (!empty($curr) && str_contains($_c, $curr)) continue;
+                    if (!empty($curr) && !str_contains($_c, $curr)) continue;
                     
                     if (isset($habis[$fa])) {
                         $curr = '';
@@ -159,14 +160,16 @@ class onlyfans {
                                 if (isset($cap['trouble'])) continue;
                                 $po = array_merge($pa, $cap);
                                 
+                            } else {
+                                if (str_contains($fau, '/auth/login')) continue 3;
                             }
                             
                         }
                         
                         if (!empty($po)) {
-                            #print_r($po);
+                            #print_r($this->headersCF);
                             $cla = Net::X($f['url'], 'POST', $po, Inf::$cookie, $this->headersCF, $fa, Inf::$uagent);
-                            #_put('cla.html', $cla);
+                            #_put('cla.html', $cla); die;
                             
                             $mf = Scraper::_jP($cla, "/Toast\.fire\(\s*\{.*?icon:\s*'([^']+)'.*?html:\s*'([^']+)'/s");
                             if (!empty($mf[2][0])) {
@@ -192,9 +195,8 @@ class onlyfans {
                                 
                             }
                             
-                            
+                            styler("waiting for next claim", fn() => _sle(10));
                         }
-                        styler("waiting for next claim", fn() => _sle(10));
                         
                     }
                     
@@ -207,7 +209,7 @@ class onlyfans {
             #print_r($_sl);
             foreach ($_sl as $sl) {
                 $_c = basename($sl);
-                if (!empty($curr) && str_contains($_c, $curr)) continue;
+                if (!empty($curr) && !str_contains($_c, $curr)) continue;
                 
                 $up = ['earnow','shortano', 'shortino', 'fc-lc', 'coinclix'];
                 $ret99 = 0;
@@ -321,11 +323,6 @@ class onlyfans {
                 
             }
             
-            
-            
-            
-            
-            die;
         }
         
         

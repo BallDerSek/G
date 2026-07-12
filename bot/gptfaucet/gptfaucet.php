@@ -147,22 +147,19 @@ class gptfaucet {
                 } else {
                     if (!empty($ptcList['local'])) {
                         
-                    } else {
-                        if (!empty($ptcList['bctt'])) {
-                            foreach ($ptcList['bctt'] as $ptc) {
-                                [$ad_u, $ad_t] = $ptc;
-                                $bctt = new Bctt($this->host, $this->api, $this->mail);
-                                $ch = $bctt->exec($ad_u, $ad_t);
-                                if ($ch === 99) goto login;
-                                if ($ch === 'forbidden') break;
-                                $endF = microtime(true);
-                                if ($setF > 0 && $this->claim) {
-                                    $balik = $endF - $setF;
-                                    if ($balik >= 4 * 60) continue 2;
-                                }
-                                
+                    if (!empty($ptcList['bctt'])) {
+                        #print_r($ptcList['bctt']); die;
+                        foreach ($ptcList['bctt'] as $ptc) {
+                            [$ad_u, $ad_t] = $ptc;
+                            $bctt = new Bctt($this->host, $this->api, $this->mail);
+                            $ch = $bctt->exec($ad_u, $ad_t);
+                            if ($ch === 99) goto login;
+                            if ($ch === 'forbidden') break;
+                            $endF = microtime(true);
+                            if ($setF > 0 && $this->claim) {
+                                $balik = $endF - $setF;
+                                if ($balik >= 4 * 60) continue 2;
                             }
-                            
                             
                         }
                     }
@@ -171,6 +168,8 @@ class gptfaucet {
                 
             }
             
+        }
+        
             $off_B = Net::X("{$this->host}/offers", 'GET', null, Inf::$cookie, $this->headersCF, "{$this->host}/offers", Inf::$uagent);
             $bctt_u = Scraper::_xP($off_B, "//a[contains(text(), 'Earn More') and contains(@href, 'bitcotasks.com')]/@href")[0] ?? null;
             
@@ -183,15 +182,12 @@ class gptfaucet {
             }
             
             if ($this->SLDONE && $this->ADDONE && $this->BCDONE) styler('cooldown', fn() => _sle(600));
-            
+        
         }
-        
-        
-        
         
     }
     
-    function parsePtcAds($html) {
+    private function parsePtcAds($html) {
         $host = $this->host;
         if (empty($html) || $html === 99) return ['total' => 0, 'local' => [], 'bctt' => [], 'owme' => [], 'zono' => [], 'external' => []];
         
@@ -222,7 +218,7 @@ class gptfaucet {
         return $result;
     }
     
-    function _wd($html) {
+    private function _wd($html) {
         preg_match('/const currencies = (\{.*?\});/s', $html, $match);
         if (empty($match[1])) return false;
         
@@ -271,7 +267,8 @@ class gptfaucet {
             ]
         ];
     }
-    
+
+
 }
 
 $BOTEXEC = new gptfaucet();

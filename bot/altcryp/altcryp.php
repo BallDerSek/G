@@ -122,7 +122,7 @@ class altcryp {
                 static $afp = null;
                 foreach ($_fa as $fa) {
                     $_c = basename(parse_url($fa)['path']);
-                    if (!empty($curr) && str_contains($_c, $curr)) continue;
+                    if (!empty($curr) && !str_contains($_c, $curr)) continue;
                     
                     if (isset($habis[$fa])) {
                         $curr = '';
@@ -240,22 +240,21 @@ class altcryp {
                 } else {
                     if (!empty($ptcList['local'])) {
                         
-                    } else {
-                        if (!empty($ptcList['bctt'])) {
-                            foreach ($ptcList['bctt'] as $ptc) {
-                                [$ad_u, $ad_t] = $ptc;
-                                $bctt = new Bctt($this->host, $this->api, $this->mail);
-                                $ch = $bctt->exec($ad_u, $ad_t);
-                                if ($ch === 99) goto login;
-                                if ($ch === 'forbidden') break;
-                                $endF = microtime(true);
-                                if ($setF > 0 && $this->claim) {
-                                    $balik = $endF - $setF;
-                                    if ($balik >= 4 * 60) continue 2;
-                                }
-                                
+                    } 
+                    
+                    if (!empty($ptcList['bctt'])) {
+                        #print_r($ptcList['bctt']); die;
+                        foreach ($ptcList['bctt'] as $ptc) {
+                            [$ad_u, $ad_t] = $ptc;
+                            $bctt = new Bctt($this->host, $this->api, $this->mail);
+                            $ch = $bctt->exec($ad_u, $ad_t);
+                            if ($ch === 99) goto login;
+                            if ($ch === 'forbidden') break;
+                            $endF = microtime(true);
+                            if ($setF > 0 && $this->claim) {
+                                $balik = $endF - $setF;
+                                if ($balik >= 4 * 60) continue 2;
                             }
-                            
                             
                         }
                     }

@@ -8,9 +8,11 @@ class Cloudflare {
     
         $param = array_filter([
             'body' => !empty($data['html']) ? base64_encode($data['html']) : null,
-            'userAgent' => $uagent,
+            #'userAgent' => $uagent,
             'proxy' => $GLOBALS['_CTX']['proxy']['src'] ?? null
         ]);
+        
+        #if (empty($param['proxy'])) return 'seledroid';
     
         if ($force) {
             $solve = $api->access($url, 'interstitial', $param);
@@ -74,9 +76,11 @@ class Cloudflare {
     public static function exec($api, $url, $cookiePath, $uagent, array $data = [], $force = false) {
         
         $solution = self::solve($api, $url, $uagent, $data, $force);
-
+        
+        if ($solution === 'seledroid') $solution = self::seledroid($url, $uagent, $cookiePath);
+        
         if (!$solution || empty($solution['token'])) return false;
-
+        
         self::injectCookie($cookiePath, $solution['token'], $url);
 
         return [
@@ -103,9 +107,7 @@ class Cloudflare {
 
             $cols = explode("\t", $l);
 
-            if (count($cols) >= 7 && $cols[5] === 'cf_clearance') {
-                continue;
-            }
+            if (count($cols) >= 7 && $cols[5] === 'cf_clearance') continue;
 
             $filtered[] = $l;
         }
@@ -122,4 +124,22 @@ class Cloudflare {
 
         return _put($cookiePath, implode("\n", $filtered) . "\n");
     }
+    
+    private static function seledroid($url, $ua, $ck) {
+        
+        $solution = (new execPy())->run('interstitial', $url);
+        
+        if (!empty($solution['token'])) {
+            parse_str($solution['token'], $clearance);
+            
+            $solution['token'] = $clearance['cf_clearance'];
+            return $solution;
+        }
+        
+        return null;
+    }
+    
+    
+    
+    
 }

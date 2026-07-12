@@ -43,10 +43,10 @@ class Check {
             return [
                 'gd@php' => extension_loaded('gd'),
                 'python3' => self::depCmd($pyBin),
-                #'seledroid@py' => $hasSeledroid,
+                'seledroid@py' => $hasSeledroid,
                 #'gost' => self::depCmd('gost'),
-                'ssh' => self::depCmd('ssh'),
-                'sshpass' => self::depCmd('sshpass'),
+                #'ssh' => self::depCmd('ssh'),
+                #'sshpass' => self::depCmd('sshpass'),
                 'nodejs' => $hasNode,
                 'npm' => self::depCmd('npm'),
                 'synchrony@npm' => $hasSynchrony,
