@@ -139,7 +139,7 @@ class feyorratop {
                         $po = array_merge($pa, $cap);
                         
                         $this->logger('', "", "tes ilmu: ".$jjn['info']['coin']);
-                        $wdd = Net::C($jjn['url'], 'POST', $po, Inf::$cookie, [], "{$this->host}/withdraw", Inf::$uagent, ip: $this->$ip);
+                        $wdd = Net::C($jjn['url'], 'POST', $po, Inf::$cookie, [], "{$this->host}/withdraw", Inf::$uagent, ip: $this->ip);
                         $mwd = Scraper::_jP($wdd, "/Swal\.fire\(\{.*?title\s*:\s*(['\"])(.*?)\\1.*?\}\)/s");
                         if (isset($mwd[2][0])) {
                             $msg = $mwd[2][0];

@@ -187,6 +187,10 @@ class onlyfans {
                                     die;
                                 }
                                 
+                                if (stripos($msg, 'went wron')) {
+                                    continue 3;
+                                }
+                                
                                 if (stripos($msg, 'Shortlink')) {
                                     if ($this->SLDONE) die;
                                     $curr = $_c;
