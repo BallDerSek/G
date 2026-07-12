@@ -469,7 +469,7 @@ class feyorratop {
             $bctt_u = Scraper::_jP($off_B, '/<iframe[^>]*src=["\']([^"\']*bitcotask[^"\']*)["\'][^>]*>/i')[1][0] ?? null;
             
             if (!empty($bctt_u)) {
-                $bctt = new bctt($this->host, $this->api, $this->mail);
+                $bctt = new Bctt($this->host, $this->api, $this->mail);
                 $bcttwl = $bctt->wall($bctt_u);
                 if (($bcttwl === 'claim') && $this->claim) $bcttwl->cleanup();
                 if (($bcttwl === 'habis')) $this->BCDONE = true;

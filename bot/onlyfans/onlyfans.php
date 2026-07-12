@@ -109,6 +109,7 @@ class onlyfans {
             
             $_fa = Scraper::_xP($dash, "//ul[@id='faucet']//a/@href");
             #print_r($_fa);
+            if (empty($curr)) shuffle($_fa);
             if ($this->claim) {
                 foreach ($_fa as $fa) {
                     

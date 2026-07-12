@@ -174,7 +174,7 @@ class gptfaucet {
             $bctt_u = Scraper::_xP($off_B, "//a[contains(text(), 'Earn More') and contains(@href, 'bitcotasks.com')]/@href")[0] ?? null;
             
             if (!empty($bctt_u)) {
-                $bctt = new bctt($this->host, $this->api, $this->mail);
+                $bctt = new Bctt($this->host, $this->api, $this->mail);
                 $bcttwl = $bctt->wall($bctt_u);
                 if (($bcttwl === 'claim') && $this->claim) $bcttwl->cleanup();
                 if (($bcttwl === 'habis')) $this->BCDONE = true;

@@ -11,7 +11,7 @@ class vipcoinde {
     private array $hcf;
     
     private string $host = 'https://vipfaucet.de';
-    private string $r = '/?r=16125';
+    private string $r = '';
     private string $ip = '';
     private string $domain;
     
