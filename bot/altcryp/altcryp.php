@@ -389,8 +389,7 @@ class altcryp {
     
 }
 
-$BOTEXEC = new altcryp();
-$BOTEXEC->exec();
+(new altcryp())->exec();
 
 
 

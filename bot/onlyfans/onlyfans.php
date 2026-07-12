@@ -50,7 +50,7 @@ class onlyfans {
     
     public function exec() {
         $habis = [];
-        $curr = '';
+        $curr = 'usdt';
         $skipped = [];
         
         login:
