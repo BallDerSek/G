@@ -62,7 +62,7 @@ class vipcoinde {
                 $ret++;
                 @unlink(Inf::$cookie);
                 $_0 = Net::C($this->host, 'GET', null, Inf::$cookie, $this->headersCF, '', Inf::$uagent);
-                var_dump($_0); die;
+                #var_dump($_0); die;
                 if ($ret >= 10) $this->logger('err', "can't login", 'RETRY LIMIT REACHED, CHECK BROWSER', true);
                 
                 if (!empty($_0) && $_0 !== 99) {
