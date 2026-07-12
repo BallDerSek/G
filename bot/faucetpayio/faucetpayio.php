@@ -329,9 +329,9 @@ function _getTKN($api) {
     $cap = $api->run('faucetpay', [
         'sitekey' => 'a3760bfe5cf4254b2759c19fb2601667',
         'domain' => 'https://faucetpay.io',
-    ]);
+    ])['done'] ?? '';
     
-    var_dump($cap); die;
+    #var_dump($cap); die;
     if (str_starts_with($cap, 'cap')) {
         $token = trim(str_replace('cap_res:', '', $cap));
         return ['token' => $token];

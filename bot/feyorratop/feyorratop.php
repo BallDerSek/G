@@ -173,7 +173,7 @@ class feyorratop {
                         
                         if (!empty($f['payload'])) {
                             $pa = $f['payload'];
-                            $_ca = $pa['captcha'];
+                            $_ca = $pa['captcha'] ?? '';
                             
                             if  (($_ca === 'faucetcaptcha')) {
                                 $fcc = FaucetCaptcha::exec($this->host, $this->host.'/faucet', $this->mail);
@@ -206,7 +206,7 @@ class feyorratop {
                                 if ($_cu) {
                                     $img = Net::C($_cu, 'GET', null, Inf::$cookie, [], "{$this->host}/faucet", Inf::$uagent);
                                     
-                                    if (!empty($img) && ($img !== 99)) $t_text = _text($img, $host, $mail);
+                                    if (!empty($img) && ($img !== 99)) $t_text = _text($img, $this->host, $this->mail);
                                 }
                                 
                                 if (!$t_text) continue;
@@ -285,7 +285,7 @@ class feyorratop {
                                 $f = Scraper::payload($view)[0] ?? [];
                                 if (!empty($f)) {
                                     $pa = $f['payload'];
-                                    $_ca = $pa['captcha'];
+                                    $_ca = $pa['captcha'] ?? '';
                                     
                                     if (($_ca === 'hcaptcha')) {
                                         break;
@@ -386,7 +386,7 @@ class feyorratop {
                             }
                             if ($_cu) {
                                 $img = Net::C($_cu, 'GET', null, Inf::$cookie, [], "{$this->host}/links", Inf::$uagent);
-                                $t_text = _text($img, $host, $mail);
+                                $t_text = _text($img, $this->host, $this->mail);
                             }
                             if ($t_text) {
                                 foreach ($po as $key => $val) {
