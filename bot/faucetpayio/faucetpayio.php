@@ -123,7 +123,7 @@ $b->task2('ok', "");
     }
     
 }
-/*
+
 foreach ($jsonList as $acc) {
     $b->task1('info', "Getting RP for: {$acc['mail']}");
     $bearer = ['authorization: Bearer '.$acc['auth']];
@@ -132,7 +132,7 @@ foreach ($jsonList as $acc) {
         $b->task1('', "claimed ({$rp['reward']} rp) for {$acc['mail']}");
     }
 }
-*/
+
 while (true) {
     $b->show();
     $b->task1('ok', "use with caution");

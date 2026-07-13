@@ -229,6 +229,8 @@ class Net {
             else curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $type);
             
             if (isset($opt['data'])) {
+                if (isset($opt['data']['nocaptcha'])) unset($opt['data']['nocaptcha']);
+                
                 $payload = is_array($opt['data']) ? (!empty($opt['isJson']) ? json_encode($opt['data']) : http_build_query($opt['data'])) : $opt['data'];
                 curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
             }

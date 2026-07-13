@@ -139,7 +139,7 @@ class feyorratop {
                         $po = array_merge($pa, $cap);
                         
                         $this->logger('', "", "tes ilmu: ".$jjn['info']['coin']);
-                        $wdd = Net::C($jjn['url'], 'POST', $po, Inf::$cookie, [], "{$this->host}/withdraw", Inf::$uagent, ip: $this->$ip);
+                        $wdd = Net::C($jjn['url'], 'POST', $po, Inf::$cookie, [], "{$this->host}/withdraw", Inf::$uagent, ip: $this->ip);
                         $mwd = Scraper::_jP($wdd, "/Swal\.fire\(\{.*?title\s*:\s*(['\"])(.*?)\\1.*?\}\)/s");
                         if (isset($mwd[2][0])) {
                             $msg = $mwd[2][0];
@@ -469,7 +469,7 @@ class feyorratop {
             $bctt_u = Scraper::_jP($off_B, '/<iframe[^>]*src=["\']([^"\']*bitcotask[^"\']*)["\'][^>]*>/i')[1][0] ?? null;
             
             if (!empty($bctt_u)) {
-                $bctt = new bctt($this->host, $this->api, $this->mail);
+                $bctt = new Bctt($this->host, $this->api, $this->mail);
                 $bcttwl = $bctt->wall($bctt_u);
                 if (($bcttwl === 'claim') && $this->claim) $bcttwl->cleanup();
                 if (($bcttwl === 'habis')) $this->BCDONE = true;

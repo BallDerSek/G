@@ -34,7 +34,7 @@ trait Base {
         $alert_d = scraper::_xP($ve, "//div[contains(@class, 'alert-danger')]");
         $m = scraper::_jP($cla, "/Swal\.fire\(\{.*?title\s*:\s*(['\"])(.*?)\\1.*?\}\)/s");
         
-        
+        $msg_d = Scraper::_jP($ve, '/icon:\s*[\'"]([^\'"]+)[\'"]\s*,\s*title:\s*[\'"]([^\'"]+)[\'"]\s*,\s*text:\s*[\'"]([^\'"]+)[\'"]/s');
         
     }
     

@@ -191,5 +191,5 @@ while (true) {
 }
 
 function _tK($rc_U, $rc_K, $api) {
-    return solve::tkn($api, $rc_U, $rc_K, 'rc2')['done'] ?? null;
+    return Solve::tkn($api, $rc_U, $rc_K, 'rc2')['done'] ?? null;
 }

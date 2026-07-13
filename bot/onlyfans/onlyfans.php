@@ -50,7 +50,7 @@ class onlyfans {
     
     public function exec() {
         $habis = [];
-        $curr = '';
+        $curr = 'usdt';
         $skipped = [];
         
         login:
@@ -109,6 +109,7 @@ class onlyfans {
             
             $_fa = Scraper::_xP($dash, "//ul[@id='faucet']//a/@href");
             #print_r($_fa);
+            if (empty($curr)) shuffle($_fa);
             if ($this->claim) {
                 foreach ($_fa as $fa) {
                     
@@ -185,6 +186,10 @@ class onlyfans {
                                 
                                 if (preg_match('/blacklisted|flagged|banned/i', $msg)) {
                                     die;
+                                }
+                                
+                                if (stripos($msg, 'went wron')) {
+                                    continue 3;
                                 }
                                 
                                 if (stripos($msg, 'Shortlink')) {
