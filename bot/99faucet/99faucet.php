@@ -1,6 +1,6 @@
 <?php
 
-class 99faucet {
+class faucet99 {
     
     use Base;
     
@@ -351,6 +351,4 @@ class 99faucet {
     
 }
 
-
-$BOTEXEC = new 99faucet();
-$BOTEXEC->exec();
+(new faucet99())->exec();

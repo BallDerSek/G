@@ -367,7 +367,7 @@ class feyorratop {
                     $ret99 = 0;
                     
                     $short = Shortlinks::extract($sho);
-                    if (empty($short)) continue;
+                    if (empty($short)) continue 2;
                     #print_r($short); die;
                     
                     $f = Scraper::payload($sho)[0] ?? [];
@@ -449,7 +449,7 @@ class feyorratop {
                                     
                                 }
                                 
-                                break 2;
+                                break 3;
                                 
                             }
                         }
@@ -757,29 +757,21 @@ class FaucetCaptcha {
     
     public static function token($config) {
         
-        #return styler("faucetcaptcha", function() use ($config) {
+        $sign_res = self::_sign($config['signEndpoint']);
+        if (!empty($sign_res)) {
+            $solution = self::_verf($config, $sign_res);
+            if (!$solution || $solution === 404) return 404;
+            $fc_fi = $config['payloadField'] ?? 'f_' . substr(md5(self::$dataCAP['cid']), 0, 12);
             
-            $sign_res = self::_sign($config['signEndpoint']);
-            if (!empty($sign_res)) {
-                $solution = self::_verf($config, $sign_res);
-                
-                if (!$solution || $solution === 404) return 404;
-                
-                $fc_fi = $config['payloadField'] ?? 'f_' . substr(md5(self::$dataCAP['cid']), 0, 12);
-                
-                return [
-                    "captcha" => "faucetcaptcha",
-                    "$fc_fi" => $solution['sol'],
-                    'fc_token' => $solution['tkn'],
-                    'fc_challenge_id' => self::$dataCAP['cid']
-                ];
-                
-            }
-            die;
+            return [
+                "captcha" => "faucetcaptcha",
+                "$fc_fi" => $solution['sol'],
+                'fc_token' => $solution['tkn'],
+                'fc_challenge_id' => self::$dataCAP['cid']
+            ];
             
-            return ['trouble' => 1];
-            
-        #});
+        }
+        return ['trouble' => 1];
         
     }
 

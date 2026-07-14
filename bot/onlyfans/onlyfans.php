@@ -230,7 +230,7 @@ class onlyfans {
                     $ret99 = 0;
                     
                     $short = Shortlinks::extract($sho);
-                    if (empty($short)) continue;
+                    if (empty($short)) continue 3;
                     #print_r($short); die;
                     
                     $success_in_page = false;

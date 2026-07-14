@@ -75,6 +75,7 @@ class Shortlinks {
             }
 
             private function dom($html): DOMXPath {
+                if (!$html) return [];
                 libxml_use_internal_errors(true);
                 $dom = new DOMDocument();
                 $dom->loadHTML($html, LIBXML_NOWARNING | LIBXML_NOERROR | LIBXML_NONET);
