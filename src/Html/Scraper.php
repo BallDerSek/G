@@ -138,10 +138,37 @@ class Scraper {
     # REGexp BASED
     public static function _pP($html, $targets): array {
         if (!$html) return [];
+        
         $t = preg_quote($targets, '/');
+        $results = [];
+        
         $pattern = "/{$t}\s*=\s*[\"']([^\"']+)[\"']/";
         preg_match_all($pattern, $html, $m);
-        return $m[1] ?? [];
+        $results = array_merge($results, $m[1] ?? []);
+        
+        if (empty($results)) {
+            $pattern = "/{$t}\s*\(\s*[\"']([^\"']+)[\"']\s*\)/";
+            preg_match_all($pattern, $html, $m);
+            $results = array_merge($results, $m[1] ?? []);
+        }
+        
+        if (empty($results)) {
+            $pattern = "/{$t}\s*:\s*[\"']([^\"']+)[\"']/";
+            preg_match_all($pattern, $html, $m);
+            $results = array_merge($results, $m[1] ?? []);
+        }
+        
+        if (empty($results)) {
+            $pattern = "/{$t}\s*=\s*([^\"'\s&]+)/";
+            preg_match_all($pattern, $html, $m);
+            $results = array_merge($results, $m[1] ?? []);
+        }
+        
+        $results = array_map(function($val) {
+            return stripslashes($val);
+        }, $results);
+        
+        return array_unique($results);
     }
 
     public static function _jP($html, $pattern): array {

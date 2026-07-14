@@ -76,6 +76,7 @@ class vipfaucet {
                 
                 if ($ret >= 10) $this->logger('err', "can't login", 'RETRY LIMIT REACHED, CHECK BROWSER', true);
                 
+                @unlink(Inf::$cookie);
                 Logger::X('err', "logging in", false); 
                 _sle(3); _clr();
                 $po = null;
@@ -107,7 +108,7 @@ class vipfaucet {
             
             $_fa = Scraper::_xP($dash, "//a[contains(@href, '/faucet/currency/')]/@href");
             #print_r($_fa);
-            if (empty($curr)) shuffle($_fa);
+            #if (empty($curr)) shuffle($_fa);
             $setF = 0;
             if ($this->claim) {
                 foreach ($_fa as $fa) {
@@ -175,9 +176,7 @@ class vipfaucet {
                                     die;
                                 }
                                 
-                                if (stripos($msg, 'went wron')) {
-                                    continue 3;
-                                }
+                                if (stripos($msg, 'nvalid Claim')) break;
                                 
                                 if (stripos($msg, 'Shortlink')) {
                                     if ($this->SLDONE) die;

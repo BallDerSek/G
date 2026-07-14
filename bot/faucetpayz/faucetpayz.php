@@ -246,14 +246,12 @@ class faucetpayz {
                                 
                                 $ma = json_decode(Net::X("{$this->host}/ajax/surf", 'POST', $po, Inf::$cookie, [], $ad_u, Inf::$uagent)?: '', 1)['message'] ?? null;
                                 
-                                if (!empty($ma)) {
-                                    
-                                    $this->logger('info', 'ptc', $ma);
-                                    $endF = microtime(true);
-                                    if ($setF > 0 && $this->claim) {
-                                        $balik = $endF - $setF;
-                                        if ($balik >= 4 * 60) continue 2;
-                                    }
+                                if (!empty($ma)) $this->logger('info', 'ptc', $ma);
+                                
+                                $endF = microtime(true);
+                                if ($setF > 0 && $this->claim) {
+                                    $balik = $endF - $setF;
+                                    if ($balik >= 4 * 60) continue 2;
                                 }
                                 
                             }

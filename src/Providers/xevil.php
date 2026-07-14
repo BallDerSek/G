@@ -87,7 +87,8 @@ class xevil extends Provider {
             Logger::X('err', 'xevil: ' . $r['request']);
             return false;
         }
-        Logger::X('info', 'xevil: ' . ($r['request'] ?? 'unknown'));
+        
+        Logger::X('info', " [ ".static::class.": ".($r['request'] ?? 'unknown').' ] ', 1, 1);
         return true;
     }
     

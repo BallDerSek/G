@@ -27,14 +27,14 @@ abstract class Provider {
                 $code = $e->getMessage();
                 $type = Api::errType($code);
 
-                Logger::X('info', "\rApi [ ".static::class.' ] ', false, true);
+                Logger::X('info', "\rApi [ ".static::class.' ] ', false, 1);
                 Logger::X('err', "{$e->getMessage()}");
 
                 if ($strict) return ['fail' => 1];
 
-                if (static::class === 'gmxch' && in_array($code, ['INTERNAL_SERVER_ERROR', 'SERVICE_BUSY'], true)) return ['fail' => 777];
+                if (static::class === 'gmxch' && in_array($code, ['INTERNAL_SERVER_ERROR', 'SERVICE_BUSY'], 1)) return ['fail' => 777];
                 
-                if (in_array($type, ['ret','con','fail'], true)) {
+                if (in_array($type, ['ret','con','fail'], 1)) {
                     _sle(3);
                     continue;
                 }
@@ -62,7 +62,7 @@ abstract class Provider {
             );
 
         } catch (Throwable $e) {
-            Logger::X('warn', "\r{$e->getMessage()}", true, true);
+            Logger::X('warn', "\r{$e->getMessage()}", 1, 1);
             return ['fail' => 71];
         }
 
@@ -73,7 +73,7 @@ abstract class Provider {
         
         $raw = is_file($img) ? _get($img) : $img;
         
-        $is_base64 = (base64_encode(base64_decode($raw, true)) === $raw);
+        $is_base64 = (base64_encode(base64_decode($raw, 1)) === $raw);
     
         if ($is_base64) {
             if (strpos($raw, ',') !== false) $raw = explode(',', $raw, 2)[1];
@@ -83,11 +83,11 @@ abstract class Provider {
         try {
             [$method, $params] = Api::cfgB64(static::class, $type, $b64, $extra);
         } catch (Throwable $e) {
-            Logger::X('warn', "\r{$e->getMessage()}", true, true);
+            Logger::X('warn', "\r{$e->getMessage()}", 1, 1);
             return ['fail' => 71];
         }
         
-        return $this->run($method, $params);
+        return $this->run($method, $params, 1);
     }
 
     public function access($siteUrl, $type, array $extraParams = []) {
@@ -115,7 +115,7 @@ abstract class Provider {
             );
 
         } catch (Exception $e) {
-            Logger::X('warn', "\r{$e->getMessage()}", true, true);
+            Logger::X('warn', "\r{$e->getMessage()}", 1, 1);
             return ['fail' => 71];
         }
     }
@@ -133,7 +133,7 @@ abstract class Provider {
         }
 
         $pa['main'] = $data['main'];
-        $res = $this->run('antibot', $pa, true);
+        $res = $this->run('antibot', $pa, 1);
 
         if (isset($res['fail'])) return $res;
         $in = explode(',', $res['done']);

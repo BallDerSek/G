@@ -102,7 +102,7 @@ class tertuyul extends Provider {
             return false;
         }
     
-        Logger::X('info', 'Tertuyul: ' . $i['balance']);
+        Logger::X('info', " [ ".static::class.": ".($i['balance'] ?? 'unknown').' ] ', 1, 1);
         return true;
     }
     

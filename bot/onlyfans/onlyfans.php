@@ -50,7 +50,7 @@ class onlyfans {
     
     public function exec() {
         $habis = [];
-        $curr = 'usdt';
+        $curr = '';
         $skipped = [];
         
         login:
@@ -354,7 +354,7 @@ class onlyfans {
                 'ins' => $req['headers']['x-captcha-instruction'][0] ?? 'ASC',
                 'cnt' => (int)($req['headers']['x-captcha-target-count'][0] ?? 3)
             ];
-            $img = $req['body'];
+            $img = $req['body'] ?? null;
         }
         
         if (!empty($img)) {

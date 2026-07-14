@@ -138,7 +138,7 @@ function _sle($time) {
 }
 
 # Ui
-function logg($clock = true, $msg = '', $n = true, $check = false) {
+function logg($clock = true, $msg = '', $n = true) {
     return Logger::G($clock, $msg, $n);
 }
 function logx($in = "", $msg = "\n", $n = true, $b = false) {

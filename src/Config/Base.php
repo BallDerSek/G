@@ -12,6 +12,9 @@ trait Base {
         
         if ($msg) Logger::G(0, "$msg");
         if ($fatal) die;
+        
+        #if ($this->api instanceof Provider) ($this->api)->getInfo();
+        
     }
     
     protected function checkATB(&$err, $html) {

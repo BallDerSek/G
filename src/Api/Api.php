@@ -278,7 +278,7 @@ final class Api {
             'rs_icon' => ['api' => 'rsicon', 'img' => 'base64_str'],
             'ocr' => ['api' => 'image-to-text','img' => 'base64_str'],
             'least' => ['api' => 'least-icons',  'img' => 'base64_str'],
-            'upside' => ['api' => 'upsidedown_1', 'img' => 'base64_str'],
+            'upside' => ['api' => 'upsidedown_3', 'img' => 'base64_str'],
             'vie_upside' => ['api' => 'upsidedown_3', 'img' => 'base64_str'],
         ],
     
@@ -310,6 +310,15 @@ final class Api {
                 'img' => 'main',
                 'defaults' => [
                     'method' => 'onlyfans',
+                ],
+                
+            ],
+            
+            'upside' => [
+                'api' => 'visual',
+                'img' => 'main',
+                'defaults' => [
+                    'method' => 'upside',
                 ],
                 
             ],

@@ -4,6 +4,7 @@ class Net {
 
     public static function applyProxy($ch, $url) {
         Proxy::ensure();
+        #var_dump($GLOBALS['_CTX']['proxy']);
         if (!empty($GLOBALS['_CTX']['proxy'])) {
             $p = $GLOBALS['_CTX']['proxy'];
             curl_setopt($ch, CURLOPT_PROXY, $p['host']);
@@ -408,7 +409,7 @@ var_dump($err);
         ], $ins, true);
     }
 
-    public static function S($url, $type = 'POST', $data = null, array $head = [], $json = false) {
+    public static function S($url, $type = 'POST', $data = null, array $head = [], $json = false, $ua = '') {
         
         if (!self::hasHeader($head, 'Connection')) $head[] = "Connection: keep-alive";
         if ($json && !self::hasHeader($head, 'Content-Type')) $head[] = "Content-Type: application/json";
@@ -420,9 +421,9 @@ var_dump($err);
             'head' => $head,
             'isJson' => $json,
             'follow' => true,
-            'verbose' => false,
             'timeout' => 120,
             'speed' => 10,
+            'ua' => $ua,
             'no_proxy' => true
         ], false, true);
         

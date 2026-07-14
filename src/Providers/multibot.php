@@ -54,7 +54,7 @@ class multibot extends Provider {
         
         $balance = $r['balance'] ?? null;
         if ($balance !== null && strncmp((string) $balance, '-0.00', 5) !== 0) {
-            Logger::X('info', 'multibot: ' . $balance);
+            Logger::X('info', " [ ".static::class.": ".($r['balance'] ?? 'unknown').' ] ', 1, 1);
             return true;
         }
         

@@ -90,7 +90,7 @@ class skibidixxx extends Provider {
             return false;
         }
         
-        Logger::X('info', 'waryono: ' . ($r['balance'] ?? 'unknown'));
+        Logger::X('info', " [ ".static::class.": ".($r['balance'] ?? 'unknown').' ] ', 1, 1);
         return true;
     }
     

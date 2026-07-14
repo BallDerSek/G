@@ -18,7 +18,7 @@ class Menu {
             
             Logger::X('info', "\n [0 SETTINGS\n [1 RUN BOT\n [x EXIT", true, true);
             
-            $rlM = trim(_rl(' input [boot]: '));
+            $rlM = trim(_rl(' input [reboot]: '));
             switch ($rlM) {
                 case '0': 
                     if (self::tools()) return true; 
@@ -52,7 +52,7 @@ class Menu {
                 printf("  %s %-20s\n", $status, $p.RSET);
             }
             
-            Logger::X('info', "\n [0 USAGE INFO\n [1 UPDATE APIKEY\n [2 PROXY SETTINGS\n [3 HARD RESET (ALL BOTS)", true, true);
+            Logger::X('info', "\n [0 USAGE INFO\n [1 UPDATE APIKEY\n [2 PROXY SETTINGS\n [3 HARD RESET (ALL BOTS)\n [4 RESET AUTH_KEY", true, true);
             
             switch (trim(_rl(' input [back]: '))) {
                 case '0':
@@ -67,6 +67,11 @@ class Menu {
                 case '3':
                     self::hardReset();
                     break;
+                case '4':
+                    @unlink(CREDIR.'/credentials');
+                    self::$banner->task2('info', 'dont forget to reboot');
+                    _sle(3);
+                    return true;
                 default:
                     return false;
             }
