@@ -33,6 +33,7 @@ class locally {
                 if ($challengeId) break;
             }
             if (!$challengeId) return false;
+            #var_dump($res);
             
             // Selection Loop
             for ($i = 0; $i < 5; $i++) {
@@ -49,6 +50,7 @@ class locally {
                 $head = ["x-iconcaptcha-token: $token", "Content-Type: multipart/form-data; boundary=$boundary"];
                 
                 $r = json_decode(base64_decode(Net::X($endpoint, 'POST', $body, $ck, $head, $host, $ua, false, false, $ip, $in) ?: ''), true);
+                #var_dump($r);
                 
                 if (!empty($r['completed']) || (isset($r['success']) && $r['success'] == true)) {
                     return [

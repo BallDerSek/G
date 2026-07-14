@@ -294,7 +294,7 @@ class feyorratop {
                                     if  (($_ca === 'faucetcaptcha')) {
                                         $fcc = FaucetCaptcha::exec($this->host, $ad_u, $this->mail);
                                         if ($fcc === 404) {
-                                            $this->claim = false; break;
+                                            $this->ADDONE = true; break;
                                         }
                                         if (isset($fcc['trouble'])) continue;
                                     }
