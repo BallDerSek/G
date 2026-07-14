@@ -367,7 +367,7 @@ class feyorratop {
                     $ret99 = 0;
                     
                     $short = Shortlinks::extract($sho);
-                    if (empty($short)) continue 2;
+                    if (empty($short)) $this->SLDONE = true;
                     #print_r($short); die;
                     
                     $f = Scraper::payload($sho)[0] ?? [];
