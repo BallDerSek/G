@@ -254,8 +254,8 @@ class Menu {
             Logger::X('warn', "\n  FORMATS:", true, true);
             Logger::X('err', '    also support from environment variable');
             Logger::X('err', "    dont forget check usage on settings");
-            Logger::X('', '    ssh://USER:PASS@HOST:22');
             Logger::X('', '    http://USER:PASS@HOST:8080');
+            Logger::X('', '    https://USER:PASS@HOST:8080');
             Logger::X('', '    socks5://USER:PASS@HOST:1080');
             
             if (!empty($GLOBALS['_CTX']['proxy'])) {

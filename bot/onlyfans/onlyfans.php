@@ -167,8 +167,9 @@ class onlyfans {
                             
                         }
                         
+                        #_put('fau.html', $fau);
                         if (!empty($po)) {
-                            #print_r($this->headersCF);
+                            #print_r($po);
                             $cla = Net::X($f['url'], 'POST', $po, Inf::$cookie, $this->headersCF, $fa, Inf::$uagent);
                             #_put('cla.html', $cla); die;
                             
@@ -188,7 +189,8 @@ class onlyfans {
                                     die;
                                 }
                                 
-                                if (stripos($msg, 'went wron')) {
+                                if (preg_match('/went wron|cation failed/i', $msg)) {
+                                    $curr = '';
                                     continue 3;
                                 }
                                 
