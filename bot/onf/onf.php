@@ -34,7 +34,7 @@ $skipped = [];
 $SLDONE = false;
 $claim = true;
 $habis = [];
-$curr = 'DOGE';
+$curr = '';
 while (true) {
     $ret = 0;
 
