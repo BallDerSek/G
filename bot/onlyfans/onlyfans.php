@@ -190,7 +190,7 @@ class onlyfans {
                                 }
                                 
                                 if (preg_match('/went wron|cation failed/i', $msg)) {
-                                    $curr = '';
+                                    #$curr = '';
                                     continue 3;
                                 }
                                 
