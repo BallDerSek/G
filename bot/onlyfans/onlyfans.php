@@ -363,7 +363,10 @@ class onlyfans {
         if (!empty($img)) {
             if (!AUTH_KEY) $this->logger('err', "unauthorized apikey", 'contact owner', true);
             $solution = Solve::img($this->api, $reff, 'onlyfans', $img);
+            #var_dump($solution);
+            
             if (isset($solution['trouble'])) return ['trouble' => 'reload'];
+            if (count($solution) < $x_cap['cnt']) return ['trouble' => 'reload']; 
             
             usort($solution, function($a, $b) use ($x_cap) {
                 return ($x_cap['ins'] === 'ASC') ? ($a['area'] <=> $b['area']) : ($b['area'] <=> $a['area']);
