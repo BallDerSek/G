@@ -148,19 +148,8 @@ class bitfaucetcj {
                                 break;
                             }
                             
-                            
-                        } else {
-                            @unlink(Inf::$cookie);
-                            continue 3;
-                        }
+                        } else continue 3;
                         
-                        
-                        
-                        
-                        
-                        
-                        
-                        die;
                     }
                 }
             }
@@ -248,7 +237,8 @@ class bitfaucetcj {
                         if (preg_match('/blacklisted|flagged|banned/i', $msg)) {
                             die;
                         }
-                        if (preg_match('/went wron|new session/i', $msg)) {
+                        if (preg_match('/went wron|new session/i', $msg)) { 
+                            continue;
                             @unlink(Inf::$cookie);
                             return 'proxy';
                         }

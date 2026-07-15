@@ -2,10 +2,10 @@
 
 final class Logger {
     
-    /* pattern die log err 
-    die(Logger::X('err', 'die1'));
-    (Logger::X('err', 'die2') ?: die);
-    die(Logger::X('err', 'die3'));
+    /**
+        die(Logger::X('err', 'die1'));
+        (Logger::X('err', 'die2') ?: die);
+        die(Logger::X('err', 'die3'));
     */
 
     
@@ -51,7 +51,7 @@ final class Logger {
         if (outTty()) {
             echo $formatted . ($n ? PHP_EOL : '');
             fflush(STDOUT);
-        } else self::X('', $m, $n);
+        } else self::X('info', $m, $n, 1);
     }
     
     public static function M($mail, $mask = true) {

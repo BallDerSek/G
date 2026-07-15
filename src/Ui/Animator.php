@@ -28,9 +28,7 @@ final class Animator {
 
         $renderer ??= self::RENDERERS[array_rand(self::RENDERERS)];
 
-        if (!in_array($renderer, self::RENDERERS, true)) {
-            $renderer = 'spinner';
-        }
+        if (!in_array($renderer, self::RENDERERS, true)) $renderer = 'spinner';
 
         return self::$renderer($text, $task);
     }
@@ -255,4 +253,5 @@ final class Animator {
                 }
             }, $task);
     }
+
 }

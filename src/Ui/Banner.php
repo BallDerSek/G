@@ -14,28 +14,20 @@ class Banner {
     }
 
     public static function getInstance(): self {
-        if (self::$instance === null) {
-            self::$instance = new self();
-        }
+        if (self::$instance === null) self::$instance = new self();
         
         return self::$instance;
     }
 
     private function terminalWidth() {
-        if (!$this->isTty) {
-            return 80;
-        }
+        if (!$this->isTty) return 80;
 
-        if ($this->width !== null) {
-            return $this->width;
-        }
+        if ($this->width !== null) return $this->width;
 
         if (PHP_OS_FAMILY === 'Windows') {
             $output = shell_exec('mode con | find "Columns"');
 
-            if (preg_match('/Columns:\s+(\d+)/', $output, $matches)) {
-                return $this->width = (int) $matches[1];
-            }
+            if (preg_match('/Columns:\s+(\d+)/', $output, $matches)) return $this->width = (int) $matches[1];
 
             return $this->width = 80;
         }
@@ -55,49 +47,37 @@ class Banner {
     }
 
     private function moveCursor(int $row, int $col) {
-        if (!$this->isTty) {
-            return;
-        }
+        if (!$this->isTty) return;
 
         echo "\033[{$row};{$col}H";
     }
 
     private function saveCursor() {
-        if (!$this->isTty) {
-            return;
-        }
+        if (!$this->isTty) return;
 
         echo "\033[s";
     }
 
     private function restoreCursor() {
-        if (!$this->isTty) {
-            return;
-        }
+        if (!$this->isTty) return;
 
         echo "\033[u";
     }
 
     private function hideCursor() {
-        if (!$this->isTty) {
-            return;
-        }
+        if (!$this->isTty) return;
 
         echo "\033[?25l";
     }
 
     private function showCursor() {
-        if (!$this->isTty) {
-            return;
-        }
+        if (!$this->isTty) return;
 
         echo "\033[?25h";
     }
 
     private function clearLine() {
-        if (!$this->isTty) {
-            return;
-        }
+        if (!$this->isTty) return;
 
         echo "\r\033[K";
     }
@@ -184,28 +164,18 @@ class Banner {
     }
 
     public function taskPrint($level, $text, $line = 1) {
-        if (!$this->isTty) {
-            Logger::X($level, $text);
-            return;
-        }
-
-        $targetRow = ($line === 2)
-            ? self::TASK_LINE_2
-            : self::TASK_LINE_1;
+        
+        if (!$this->isTty) return Logger::X($level, $text);
+        
+        $targetRow = ($line === 2) ? self::TASK_LINE_2 : self::TASK_LINE_1;
 
         $inner = max(1, $this->getWidth() - 2);
 
         $text = preg_replace('/\s+/', ' ', trim($text));
 
-        if (strlen($text) > $inner) {
-            $text = substr($text, 0, $inner);
-        }
+        if (strlen($text) > $inner) $text = substr($text, 0, $inner);
 
-        $padLeft = intdiv(
-            $inner - strlen($text),
-            2
-        );
-
+        $padLeft = intdiv($inner - strlen($text), 2);
         $padRight = $inner - strlen($text) - $padLeft;
 
         $this->saveCursor();
