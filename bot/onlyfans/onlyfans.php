@@ -308,11 +308,12 @@ class onlyfans {
                                         }
                                     }
                                     
-                                    if (stripos($cla, 'has been sent to your')) $success_in_page = true;
+                                    if (stripos($cla, 'has been sent')) $success_in_page = true;
                                 
                                     
                                 }
-                                    
+                                
+                                $success_in_page = true;
                             }
                         }
                     }

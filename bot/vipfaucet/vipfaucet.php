@@ -91,7 +91,6 @@ class vipfaucet {
                         $pa = $f['payload'];
                         $cre = ['wallet' => $this->mail, 'uid' => md5($this->mail), 'private_ip' => IP()];
                         $cap = Solve::exec($_0, $this->host, $this->api, $pa);
-                        var_dump($cap);
                         if (isset($cap['trouble'])) continue;
                         
                         $po = array_merge($pa, $cap, $cre);
@@ -100,9 +99,9 @@ class vipfaucet {
                 }
                 
                 if ($po) {
-                    var_dump($f, $po); #die;
+                    #print_r($po); die;
                     $ve = Net::X($f['url'], 'POST', $po, Inf::$cookie, $this->headersCF, $this->host.$this->r, Inf::$uagent);
-                    _put('ve.html', $ve); die;
+                    #_put('ve.html', $ve);
                 }
                 
             } while (empty($dash));
