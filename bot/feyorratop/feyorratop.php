@@ -314,14 +314,12 @@ class feyorratop {
                                 
                                 $ma = Scraper::_jP($cla, "/Swal\.fire\(\{.*?title\s*:\s*(['\"])(.*?)\\1.*?\}\)/s")[2][0] ?? null;
                                 
-                                if (!empty($ma)) {
-                                    
-                                    $this->logger('info', 'ptc', $ma);
-                                    $endF = microtime(true);
-                                    if ($setF > 0 && $this->claim) {
-                                        $balik = $endF - $setF;
-                                        if ($balik >= 4 * 60) continue 2;
-                                    }
+                                if (!empty($ma)) $this->logger('info', 'ptc', $ma);
+                                
+                                $endF = microtime(true);
+                                if ($setF > 0 && $this->claim) {
+                                    $balik = $endF - $setF;
+                                    if ($balik >= 4 * 60) continue 2;
                                 }
                                 
                             }
@@ -539,7 +537,6 @@ class feyorratop {
             
             if ($uHost === $host) $result['local'][] = [$url, $timer];
             elseif (strpos($url, 'bitcotasks.com') !== false) $result['bctt'][] = [$url, $timer];
-            elseif (strpos($url, 'offerwall.me') !== false) $result['owme'][] = [$url, $timer];
             else $result['external'][] = [$url, $timer];
         }
         

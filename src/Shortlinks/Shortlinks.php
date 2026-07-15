@@ -159,14 +159,12 @@ class Shortlinks {
         if ($noapi) $api = null;
     
         try {
-            $f_url = (new Links($url))->exec($api);
-    
-            if ($f_url && is_string($f_url)) {
-                Logger::X('ok', " SL Direct passed", true, true);
-                return $f_url;
-            }
+            return styler(static::class . "=>$url", function() use ($api, $url) {
+                $f_url = (new Links($url))->exec($api);
+                if ($f_url && is_string($f_url)) return $f_url;
+            });
         } catch (Throwable $e) {
-            Logger::X('err', " SL Direct failed: " . $e->getMessage());
+            Logger::X('err', "SL Direct failed: " . $e->getMessage());
         }
     
         if (!$api) return false;

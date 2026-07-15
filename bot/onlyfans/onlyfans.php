@@ -167,7 +167,6 @@ class onlyfans {
                             
                         }
                         
-                        #_put('fau.html', $fau);
                         if (!empty($po)) {
                             #print_r($po);
                             $cla = Net::X($f['url'], 'POST', $po, Inf::$cookie, $this->headersCF, $fa, Inf::$uagent);
