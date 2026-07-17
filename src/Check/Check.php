@@ -6,19 +6,36 @@ class Check {
     public static $geo = [];
 
     public static function Env() {
-        if (getenv('ENV') !== '1') return;
-        $path = ROOT . "/.env";
-        if (file_exists($path)) {
-            foreach (file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) as $line) {
-                $line = trim($line);
-                if (empty($line) || str_starts_with($line, '#')) continue;
-                if (str_contains($line, '=')) {
-                    putenv($line);
-                    [$name, $value] = explode('=', $line, 2);
-                    $_ENV[$name] = $value;
-                    $_SERVER[$name] = $value;
-                }
-            }
+        $env = getenv('ENV');
+    
+        if (empty($env)) return;
+    
+        if (in_array(strtolower($env), ['1', 'true', 'yes'], true)) $path = ROOT . '/.env';
+        else {
+            $absolute = str_starts_with($env, '/')
+                || preg_match('/^[A-Za-z]:[\\\\\\/]/', $env);
+    
+            $path = $absolute
+                ? $env
+                : ROOT . '/' . ltrim($env, '/\\');
+        }
+    
+        if (!is_file($path) || !is_readable($path)) return;
+    
+        foreach (file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) as $line) {
+            $line = trim($line);
+    
+            if (
+                $line === ''
+                || str_starts_with($line, '#')
+                || !str_contains($line, '=')
+            ) continue;
+    
+            [$name, $value] = array_map('trim', explode('=', $line, 2));
+    
+            putenv("$name=$value");
+            $_ENV[$name] = $value;
+            $_SERVER[$name] = $value;
         }
     }
 

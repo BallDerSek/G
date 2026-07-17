@@ -146,7 +146,7 @@ class feyorratop {
                             $this->logger('ok', 'withdraw', $msg);
                         }
                         
-                    } else logx('err', 'gak bisa wd kayaknya');
+                    } else Logger::X('err', 'gak bisa wd kayaknya');
                     
                 }
                 
@@ -177,9 +177,9 @@ class feyorratop {
                             
                             if  (($_ca === 'faucetcaptcha')) {
                                 $fcc = FaucetCaptcha::exec($this->host, $this->host.'/faucet', $this->mail);
-                                if ($fcc === 404) {
-                                    $this->claim = false; break;
-                                }
+                                #var_dump($fcc); die;
+                                if ($fcc === 44) break;
+                                
                                 if (isset($fcc['trouble'])) continue;
                             }
                             
@@ -195,6 +195,8 @@ class feyorratop {
                             $po = array_merge($pa, $cap, $fcc ?? []);
                             
                             if (stripos($fau, 'rite what you see') !== false) {
+                                
+                                $t_text = null;
                                 $_cu = null;
                                 foreach (Scraper::_pP($fau, 'src') as $_u) {
                                     if (str_contains($_u, '/images/captcha')) {
@@ -206,8 +208,15 @@ class feyorratop {
                                 if ($_cu) {
                                     $img = Net::C($_cu, 'GET', null, Inf::$cookie, [], "{$this->host}/faucet", Inf::$uagent);
                                     
-                                    if (!empty($img) && ($img !== 99)) $t_text = _text($img, $this->host, $this->mail);
+                                } else {
+                                    $_cuu = Scraper::_jP($fau, '/src="data:image\/png;base64,([^"]+)"/i')[1][0] ?? null;
+                                    if (!empty($_cuu)) {
+                                        #var_dump($_cuu);
+                                        $img = base64_decode($_cuu);
+                                    }
+                                    
                                 }
+                                if (!empty($img) && ($img !== 99)) $t_text = _text($img, $this->host, $this->mail);
                                 
                                 if (!$t_text) continue;
                                 
@@ -293,7 +302,7 @@ class feyorratop {
                                     }
                                     if  (($_ca === 'faucetcaptcha')) {
                                         $fcc = FaucetCaptcha::exec($this->host, $ad_u, $this->mail);
-                                        if ($fcc === 404) {
+                                        if ($fcc === 44) {
                                             $this->ADDONE = true; break;
                                         }
                                         if (isset($fcc['trouble'])) continue;
@@ -413,7 +422,7 @@ class feyorratop {
                         $is_bl = false;
                         foreach ($up as $blacklisted) {
                             if (str_contains($loc_u, $blacklisted)) {
-                                logx('warn', "Domain $blacklisted Skipping..");
+                                Logger::X('warn', "Domain $blacklisted Skipping..");
                                 $skipped[$idd] = true;
                                 $is_bl = true;
                                 break; 
@@ -577,15 +586,11 @@ class feyorratop {
 
 
 function pre($in_put, $threshold = 128) {
-    if (!getDeps('gd@php')) die(Logger::X('err', 'gd@php missing'));
 
     $put_in = dirname($in_put) . DIRECTORY_SEPARATOR . 'pre_' . basename($in_put);
 
     $img = @imagecreatefromstring(_get($in_put));
-    if (!$img) {
-        logx('err', "Unknown image format");
-        return 300;
-    }
+    if (!$img) return 300;
 
     $width  = imagesx($img);
     $height = imagesy($img);
@@ -623,53 +628,57 @@ function pre($in_put, $threshold = 128) {
     return $put_in;
 }
 
-function _text($imgData, $host, $mail) {
-    if (empty($imgData)) return null;
-
-    $tmpDir = _lib('ocr', $host, $mail); 
-    $originalImg = $tmpDir . '/raw.png';
-
-    _put($originalImg, $imgData);
+function _text($imgData = null, $host = '', $mail = null) {
+    if (!getDeps('gd@php')) die(Logger::X('err', 'gd@php missing'));
+    return styler("solving ocr", function() use ($imgData, $host, $mail) {
+        if (empty($imgData)) return null;
     
-    $t_vote = [];
-    $_th = [80, 90, 100, 110, 120, 140, 160];
-    $_psms = [6, 8, 11];
-
-    try {
-        foreach ($_th as $th) {
-            $preFile = pre($originalImg, $th, 3); 
-            
-            if ($preFile === 300) return null;
-            
-            if (!$preFile || !file_exists($preFile)) continue;
-
-            foreach ($_psms as $psm) {
-                $output = [];
-                $cmd = "tesseract " . escapeshellarg($preFile) . " stdout --psm $psm -c tessedit_char_whitelist=0123456789 2>/dev/null";
-                @exec($cmd, $output);
+        $tmpDir = _lib('ocr', $host, $mail); 
+        $originalImg = $tmpDir . '/raw.png';
+    
+        _put($originalImg, $imgData);
+        
+        $t_vote = [];
+        $_th = [80, 90, 100, 110, 120, 140, 160];
+        $_psms = [6, 8, 11];
+    
+        try {
+            foreach ($_th as $th) {
+                $preFile = pre($originalImg, $th, 3); 
                 
-                $resText = trim(implode('', $output));
+                if ($preFile === 300) return null;
                 
-                if (ctype_digit($resText) && strlen($resText) === 4) {
-                    $t_vote[] = $resText;
+                if (!$preFile || !file_exists($preFile)) continue;
+    
+                foreach ($_psms as $psm) {
+                    $output = [];
+                    $cmd = "tesseract " . escapeshellarg($preFile) . " stdout --psm $psm -c tessedit_char_whitelist=0123456789 2>/dev/null";
+                    @exec($cmd, $output);
+                    
+                    $resText = trim(implode('', $output));
+                    
+                    if (ctype_digit($resText) && strlen($resText) === 4) {
+                        $t_vote[] = $resText;
+                    }
                 }
+                if (file_exists($preFile)) @unlink($preFile);
             }
-            if (file_exists($preFile)) @unlink($preFile);
+        } finally {
+            if (file_exists($originalImg)) @unlink($originalImg);
+            if (is_dir($tmpDir)) @rmdir($tmpDir);
         }
-    } finally {
-        if (file_exists($originalImg)) @unlink($originalImg);
-        if (is_dir($tmpDir)) @rmdir($tmpDir);
-    }
+    
+        if (!empty($t_vote)) {
+            $counts = array_count_values($t_vote);
+            arsort($counts); 
+            $t_text = (string)key($counts); 
+            #Logger::X('ok', "OCR: $t_text (" . reset($counts) . "/" . count($t_vote) . ")");
+            return $t_text;
+        }
+    
+        return null;
+    });
 
-    if (!empty($t_vote)) {
-        $counts = array_count_values($t_vote);
-        arsort($counts); 
-        $t_text = (string)key($counts); 
-        #logx('ok', "OCR: $t_text (" . reset($counts) . "/" . count($t_vote) . ")");
-        return $t_text;
-    }
-
-    return null;
 }
 
 class FaucetCaptcha {
@@ -757,7 +766,7 @@ class FaucetCaptcha {
         $sign_res = self::_sign($config['signEndpoint']);
         if (!empty($sign_res)) {
             $solution = self::_verf($config, $sign_res);
-            if (!$solution || $solution === 404) return 404;
+            if (!$solution || $solution === 44) return 44;
             $fc_fi = $config['payloadField'] ?? 'f_' . substr(md5(self::$dataCAP['cid']), 0, 12);
             
             return [
@@ -967,7 +976,7 @@ class FaucetCaptcha {
         if (!empty($sol['success']) || !empty($sol['token'])) {
             return ['tkn' => $sol['token'], 'sol' => $payload];
         }
-        if (!empty($sol['message']) && str_contains($sol['message'], 'verification failed')) return 404;
+        if (!empty($sol['message']) && str_contains($sol['message'], 'verification failed')) return 44;
         return null;
         
     }
