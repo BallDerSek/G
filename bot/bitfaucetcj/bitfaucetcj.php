@@ -27,7 +27,7 @@ class bitfaucetcj {
         $this->api = onKeys();
         $this->domain = parse_url($this->host, PHP_URL_HOST);
         
-        $this->acc = Config::credential([], false, ['login', 'PROXY']);
+        $this->acc = Config::credential(['ua' => fn() => Config::uagent('mobile')], true, ['login', 'PROXY']);
         putenv("PROXY=" . $this->acc['PROXY']);
         
         Proxy::load();
@@ -36,7 +36,7 @@ class bitfaucetcj {
         $this->mail = $this->acc['login'];
         
         Inf::setup(
-            Config::uagent('mobile'),
+            $this->acc['ua'],
             Config::cookie($this->mail),
             $this->ip,
             false, 
