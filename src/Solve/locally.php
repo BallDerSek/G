@@ -65,9 +65,6 @@ class locally {
     }
 
     public static function eCaptcha($host, $ctx) {
-        $cookie = inf::$cookie;
-        $ua = inf::$uagent;
-        $ip = inf::$ip;
 
         return styler("SOLVING eCaptcha", function() use ($host, $ctx) {
             $ck = $ctx['cookie'];
@@ -76,16 +73,13 @@ class locally {
             $ip = $ctx['ip'];
             
             $res = Net::X($host.'/ecaptcha/get_token', 'GET', null, $ck, [], $host, $ua, ip: $ip, ins: $in);
-            #var_dump($res);
+            
             if ($res === 99) return 99;
-            $json = json_decode($res ?: '', true);
-            $token = $json['token'] ?? null;
+            $token = json_decode($res ?: '', true)['token'] ?? null;
             if (!$token) return false;
 
-            $res = Net::X($host.'/ecaptcha/get_captcha', 'GET', null, $ck, [], $host, $ua, ip: $ip, ins: $in);
-            if ($res === 99) return 99;
-            $task = json_decode($res ?: '', true);
-            #print_r($task); die;
+            $task = json_decode(Net::X($host.'/ecaptcha/get_captcha', 'GET', null, $ck, [], $host, $ua, ip: $ip, ins: $in)?: '', true);
+            #var_dump($task); #die;
             if (empty($task['captcha_key']) || empty($task['question'])) return false;
             
             // 3. Parsing Answer 
@@ -98,15 +92,12 @@ class locally {
                 'token' => $token
             ];
             
-            // 4. Validate
-            $res = Net::X($host.'/ecaptcha/validate_icon', 'POST', $payload, $ck, [], $host, $ua, ip: $ip, ins: $in);
-            #print_r($post); die;
-            if ($res === 99) return 99;
-            $post = json_decode($res ?: '', true);
+            $post = json_decode(Net::X($host.'/ecaptcha/validate_icon', 'POST', $payload, $ck, [], $host, $ua, ip: $ip, ins: $in)?: '', true);
+            #var_dump($post); #die;
             if (($post['status'] ?? '') === 'valid') {
                 return [
                     'captcha' => 'emoji_captcha',
-                    'captcha_key' => $post['captcha_key'],
+                    'captcha_key' => $task['captcha_key'],
                     'captcha_token' => $token,
                     'selected_icon' => $answer
                 ];

@@ -77,7 +77,7 @@ class Solve {
             
             if ($_select) {
                 $_checks = str_replace(['-', '_'], '', strtolower($_select));
-            
+                
                 switch ($_checks) {
                     case 'shield':
                         if (isset($pa['shield_answer'])) {
@@ -99,7 +99,16 @@ class Solve {
                             }
                         }
                         break;
-            
+                    
+                    case 'emojicaptcha':
+                        if (str_contains($html, 'emoji-captcha')) {
+                            $res = locally::eCaptcha($host, $ctx);
+                            if ($res) {
+                                $solution = array_merge($solution, $res);
+                                $hardSolved = true;
+                            }
+                        }
+                    
                     case 'smart':
                     case 'smartcaptcha':
                         if (isset($pa['smart_token'])) {
@@ -249,8 +258,10 @@ class Solve {
             return $solution;
         }
     
-    public static function tkn($api, $host, $key, $type, array $data = [], $ctx = []) {
-    
+    public static function tkn($api, $url, $key, $type, array $data = [], $ctx = []) {
+        
+        $host = str_replace('http://', 'https://', $url);
+        
         $solver = config::getKeys($api, $type);
     
         $Params = array_merge($data, ['userAgent' => $ctx['uagent'] ?? '']);

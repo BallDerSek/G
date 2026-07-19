@@ -78,10 +78,11 @@ class Inf {
     
     public static function check($host, array $h = [], $pattern = '', $foll = false) {
         
-        $html = Net::X($host, 'GET', null, self::$cookie, $h, $host, self::$uagent, ip: self::$ip, foll: $foll, ins: self::$ins);
+        $res = Net::X($host, 'GET', null, self::$cookie, $h, $host, self::$uagent, ip: self::$ip, foll: $foll, ins: self::$ins, d: true);
         
-        #var_dump($html); _rl('lanjut: ');
+        #var_dump($res); _rl('lanjut: ');
         
+        $html = $res['body'] ?? null;
         if (!is_string($html)) {
             return ['ok' => false, 'html' => null, 'err' => 'Network error'];
         }
@@ -91,6 +92,66 @@ class Inf {
 
         return ['ok' => $ok, 'html' => $html];
 
+    }
+    
+    public static function injectCookie($cookiePath, $token, $url, $name = 'cf_clearance') {
+        if (empty($cookiePath) || !file_exists($cookiePath)) return false;
+    
+        $domain = parse_url($url, PHP_URL_HOST);
+        $cookieDomain = '.' . ltrim($domain, '.');
+        $secure = (parse_url($url, PHP_URL_SCHEME) === 'https') ? "TRUE" : "FALSE";
+    
+        $content = _get($cookiePath);
+        $isNetscape = strpos($content, "# Netscape HTTP Cookie File") !== false;
+        
+        if (!$isNetscape) {
+            $pairs = explode('; ', $content);
+            $newLines = ["# Netscape HTTP Cookie File"];
+            
+            foreach ($pairs as $pair) {
+                if (empty($pair)) continue;
+                $parts = explode('=', $pair, 2);
+                if (count($parts) == 2) {
+                    $newLines[] = implode("\t", [
+                        $cookieDomain,
+                        "TRUE",
+                        "/",
+                        $secure,
+                        "0",
+                        $parts[0],
+                        $parts[1]
+                    ]);
+                }
+            }
+            
+            _put($cookiePath, implode("\n", $newLines) . "\n");
+        }
+    
+        $lines = file($cookiePath, FILE_IGNORE_NEW_LINES);
+        $filtered = [];
+    
+        foreach ($lines as $l) {
+            if ($l === '' || $l[0] === '#') {
+                $filtered[] = $l;
+                continue;
+            }
+    
+            $col = explode("\t", $l);
+            if (count($col) >= 7 && $col[5] === $name) continue;
+            $filtered[] = $l;
+        }
+    
+        $filtered[] = implode("\t", [
+            $cookieDomain,
+            "TRUE",
+            "/",
+            $secure,
+            time() + 43200,
+            $name,
+            $token
+        ]);
+    
+        return _put($cookiePath, implode("\n", $filtered) . "\n");
     }
     
 }

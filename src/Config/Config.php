@@ -162,7 +162,7 @@ class Config {
         $norm = preg_replace('/[^a-z0-9]+/', '_', strtolower($email));
         $c_dir = $b_dir . '/cookies';
         
-        if (!is_dir($c_dir)) mkdir($c_dir, 0755, true);
+        if (!is_dir($c_dir)) @mkdir($c_dir, 0755, true);
 
         return $c_dir . '/' . $norm . '_cookie';
     }

@@ -409,6 +409,13 @@ final class Api {
             ],
         ],
         
+        skibidixxx::class => [
+            '_proxy_format' => 'uri',
+            'interstitiall' => [
+                'api' => 'cf-uam','url' => 'domain', 'need' => ['proxy'], 
+            ],
+        ],
+        
         glitch::class => [
             '_proxy_format' => 'object',
             'interstitial' => [

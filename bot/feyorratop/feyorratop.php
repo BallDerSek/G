@@ -235,10 +235,12 @@ class feyorratop {
                         } else {
                             if (str_contains($fau, '/register')) continue 2;
                             
+                            /*
                             if (!$this->SLDONE || !$this->ADDONE) {
                                 $setF = microtime(true);
                                 break;
                             }
+                            */
                             
                             styler('Waiting for faucet', fn() => _sle(30));
                             continue;

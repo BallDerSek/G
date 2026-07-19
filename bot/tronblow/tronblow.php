@@ -14,7 +14,7 @@ if (!is_file($mailPath)) {
 }
 $emails = file($mailPath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
 
-$emails = array_slice($emails, 0, 50);
+$emails = array_slice($emails, 0, 70);
 
 $urls = ['https://usdtblow.xyz', 'https://tronblow.site'];
 

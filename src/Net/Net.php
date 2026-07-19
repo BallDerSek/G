@@ -2,21 +2,41 @@
 
 class Net {
 
+    public static function save($resp, $path) {
+        if (is_array($resp) && isset($resp['headers']['set-cookie'])) {
+            $ck = [];
+            foreach ($resp['headers']['set-cookie'] as $cookie) {
+                $cookie = preg_replace('/;\s*secure/i', '', $cookie);
+                
+                $parts = explode(';', $cookie);
+                $nm = explode('=', trim($parts[0]), 2);
+                if (count($nm) == 2) $ck[trim($nm[0])] = trim($nm[1]);
+                
+            }
+            
+            $lines = ["# Netscape HTTP Cookie File"];
+            foreach ($ck as $k => $v) $lines[] = ".satoshifaucet.io\tTRUE\t/\tFALSE\t0\t$k\t$v";
+            
+            _put($path, implode("\n", $lines) . "\n");
+            return true;
+        }
+        return false;
+    }
+
     public static function applyProxy($ch, $url) {
         Proxy::ensure();
-        #var_dump($GLOBALS['_CTX']['proxy']);
         if (!empty($GLOBALS['_CTX']['proxy'])) {
             $p = $GLOBALS['_CTX']['proxy'];
             curl_setopt($ch, CURLOPT_PROXY, $p['host']);
             curl_setopt($ch, CURLOPT_PROXYPORT, $p['port']);
             curl_setopt($ch, CURLOPT_PROXYTYPE, $p['type']);
             if (!empty($p['auth'])) curl_setopt($ch, CURLOPT_PROXYUSERPWD, $p['auth']);
-            $i = stripos($url, 'https://') === 0;
             
-            if ($p['type'] === CURLPROXY_HTTP || (defined('CURLPROXY_HTTPS') && $p['type'] === CURLPROXY_HTTPS)) curl_setopt($ch, CURLOPT_HTTPPROXYTUNNEL, $i);
+            if ($p['type'] === CURLPROXY_HTTP) curl_setopt($ch, CURLOPT_HTTPPROXYTUNNEL, true);
+            
         }
     }
-    
+        
     public static function applyHead(&$opt) {
         $ua = trim($opt['ua'] ?? '');
         $url = $opt['url'];
@@ -125,7 +145,7 @@ class Net {
         
         if ($he_cookie) $head[] = $he_cookie;
         
-        $head[] = "Expect:";
+        #$head[] = "Expect:";
         
         return $head;
     }
@@ -220,6 +240,7 @@ class Net {
         if (!empty($opt['cookie'])) {
             curl_setopt($ch, CURLOPT_COOKIEJAR, $opt['cookie']);
             curl_setopt($ch, CURLOPT_COOKIEFILE, $opt['cookie']);
+            curl_setopt($ch, CURLOPT_COOKIESESSION, false);
         }
 
         # PAYLOAD

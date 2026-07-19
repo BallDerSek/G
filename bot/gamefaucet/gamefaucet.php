@@ -26,7 +26,7 @@ class gamefaucet {
         $this->api = onKeys();
         $this->domain = parse_url($this->host, PHP_URL_HOST);
         
-        $this->acc = Config::credential(['ua' => fn() => Config::uagent('mobile')], true, ['login', 'PROXY']);
+        $this->acc = Config::credential(['ua' => fn() => Config::uagent('mobile')], 0, ['login', 'PROXY']);
         putenv("PROXY=" . $this->acc['PROXY']);
         
         Proxy::load();
@@ -64,7 +64,7 @@ class gamefaucet {
             
             do {
                 $ret++;
-                $l = Inf::check("{$this->host}/dashboard", $this->headersCF, '/auth/login');
+                $l = Inf::check("{$this->host}/dashboard", $this->headersCF, '/auth/login', true);
                 
                 if ($l['ok']) {
                     $dash = $l['html'];
@@ -102,12 +102,6 @@ class gamefaucet {
                 if ($po) {
                     #print_r($po); die;
                     $ve = Net::X($f['url'], 'POST', $po, Inf::$cookie, $this->headersCF, $this->host.$this->r, Inf::$uagent);
-                    
-                    $msg_d = Scraper::_jP($ve, "/Swal\.fire\(\s*\{.*?title:\s*'([^']+)'.*?text:\s*'([^']+)'.*?icon:\s*'([^']+)'/s")[2][0] ?? null;
-                    if (!empty($msg_d)) {
-                        if (stripos($msg_d, 'nvalid Captcha')) continue;
-                        $this->logger('err', '', $msg_d, 1);
-                    }
                 }
                 
             } while (empty($dash));

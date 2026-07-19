@@ -187,7 +187,7 @@ class bitfaucetcj {
             "{$this->app}/api/fcj/", 'GET', $fpp_id,
             Inf::$cookie, $this->headersCF,
             $mett, Inf::$uagent)?: '', 1
-            )['fcj_id'] ?? null;
+        )['fcj_id'] ?? null;
         
         $data = null;
         if (!empty($fcj)) {
@@ -201,6 +201,7 @@ class bitfaucetcj {
         }
         
         if ($con && $fcj && $data) {
+            #var_dump($con, $fcj, $data);
             
             while (true) {
                 _sle(3);
@@ -221,6 +222,7 @@ class bitfaucetcj {
                         $this->headersCF, $mett,
                         Inf::$uagent, json: true
                     )?: '', 1);
+                    #var_dump($cla);
                     
                     if (!empty($cla)) {
                         $claa = $cla['data'] ?? null;
@@ -231,12 +233,10 @@ class bitfaucetcj {
                         
                         $this->logger($stt, 'fct', "$rwd $msg");
                         
-                        if (preg_match('/sufficient|could not be processed/i', $msg)) {
-                            return 'habis';
-                        }
-                        if (preg_match('/blacklisted|flagged|banned/i', $msg)) {
-                            die;
-                        }
+                        if (preg_match('/sufficient|could not be processed/i', $msg)) return 'habis';
+                        
+                        if (preg_match('/blacklisted|flagged|banned/i', $msg)) die;
+                        
                         if (preg_match('/went wron|new session/i', $msg)) { 
                             continue;
                             @unlink(Inf::$cookie);
@@ -295,6 +295,13 @@ class bitfaucetcj {
                 if (isset($res['verified']) && filter_var($res['verified'], FILTER_VALIDATE_BOOLEAN)) return ['captcha_id' => ($res['captcha_id']?? $req['captcha_id']), 'capdata' => 'ok'];
                 
             }
+            
+        }
+        
+        if (isset($req['error']) && stripos($req["message"], 'wait')) {
+            $this->logger('err', 'fct', $req['message']);
+            $wait = (int)filter_var($req['message'], FILTER_SANITIZE_NUMBER_INT);
+            styler("waiting for unlocked", fn() => _sle((int)$wait * 60));
             
         }
         

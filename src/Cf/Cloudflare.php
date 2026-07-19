@@ -9,10 +9,11 @@ class Cloudflare {
         $param = array_filter([
             'body' => !empty($data['html']) ? base64_encode($data['html']) : null,
             #'userAgent' => $uagent,
+            #'user_agent' => $uagent,
             'proxy' => $GLOBALS['_CTX']['proxy']['src'] ?? null
         ]);
         
-        #if (empty($param['proxy'])) return 'seledroid';
+        if (empty($param['proxy']) && (getenv("SELEDROID") === '1')) return 'seledroid';
     
         if ($force) {
             $solve = $api->access($url, 'interstitial', $param);
@@ -32,7 +33,7 @@ class Cloudflare {
     
         if (!is_array($solve) || !isset($solve['done'])) return false;
         
-        #var_dump($solve);
+        #var_dump($solve); die;
         
         $class = $solve['class'] ?? null;
         $res = $solve['done'];
@@ -80,6 +81,7 @@ class Cloudflare {
         if ($solution === 'seledroid') $solution = self::seledroid($url, $uagent, $cookiePath);
         
         if (!$solution || empty($solution['token'])) return false;
+        #var_dump($solution); die;
         
         self::injectCookie($cookiePath, $solution['token'], $url);
 
