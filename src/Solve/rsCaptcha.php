@@ -37,7 +37,7 @@ final class rsCaptcha {
         $img = Net::C($_K, 'GET', null, $this->ck, [], $this->host, $this->ua, ip: $this->ip, ins: $this->in);
         if (empty($img) || $img === 99) return false;
         
-        $co = solve::img($api, $this->host, $_M, $img);
+        $co = Solve::img($api, $this->host, $_M, $img);
         if (isset($co['trouble'])) return false;
         
         $coords = scraper::_jP($co, '/\d+/');
@@ -92,7 +92,7 @@ final class rsCaptcha {
                 if (method_exists($api, 'rss')) $coo = $api->rss($_get, $this->host);
             }
             if ($coo) {
-                $coords = scraper::_jP($coo, '/\d+/');
+                $coords = Scraper::_jP($coo, '/\d+/');
                 $_co = $coords[0] ?? $coords;
             }
             if (is_array($_co) && count($_co) >= 2) {
