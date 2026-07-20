@@ -1,6 +1,6 @@
 <?php
 
-class gptfaucet {
+return (new class {
     
     use Base;
     
@@ -269,7 +269,4 @@ class gptfaucet {
     }
 
 
-}
-
-$BOTEXEC = new gptfaucet();
-$BOTEXEC->exec();
+})->exec();

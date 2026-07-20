@@ -215,8 +215,7 @@ class faucetpayz {
                             
                             $po = null;
                             if (!empty($view) && $view !== 99) {
-                                _sle(5);
-                                styler("waiting for ads: $ad_t", fn() => _sle($ad_t));
+                                
                                 
                                 $f = Scraper::payload($view)[0] ?? [];
                                 
@@ -231,6 +230,7 @@ class faucetpayz {
                                     $go = ['uid' => $uid,'c' => $iid.rand(1, 9999)];
                                     
                                     Net::C("{$this->host}/surf", 'GET', $go, Inf::$cookie, [], $ad_u, Inf::$uagent);
+                                    styler("waiting for ads: $ad_t", fn() => _sle($ad_t));
                                     
                                     $cap = Solve::exec($view, $ad_u, $this->api, $pa);
                                     

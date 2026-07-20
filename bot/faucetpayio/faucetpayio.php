@@ -166,6 +166,8 @@ while (true) {
 
 
 function _getBal($akun, $host, $app, $coinsOnly = false) {
+    #print_r($akun); die;
+    
     $b = Banner::getInstance();
     $b->task1('ok', '');
     $b->task2('ok', '');
@@ -178,7 +180,7 @@ function _getBal($akun, $host, $app, $coinsOnly = false) {
         
         $bearer = ['authorization: Bearer '.$acc['auth']];
         $info = json_decode(Net::X($app.'/wallet/get-information', 'GET', null, Inf::$cookie, $bearer, $host, Inf::$uagent)?: '', 1)['data'] ?? null;
-        
+        #print_r($info);
         if (empty($info)) continue;
         
         if ($coinsOnly) {

@@ -56,6 +56,7 @@ class bifaucet {
     }
     
     public function exec() {
+        $skipped = [];
         
         login:
             Proxy::load();
@@ -150,7 +151,6 @@ class bifaucet {
                             $this->logger('ok', 'withdraw', $msg);
                         }
                         
-                        die;
                     } else logx('err', 'gak bisa wd kayaknya');
                     
                     

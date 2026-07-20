@@ -9,7 +9,7 @@ return (new class {
     private array $ctx;
     private array $hcf;
     
-    private string $host = 'https://feyorra.top';
+    private string $host = 'https://claimtrx.com';
     private string $ip = '';
     private string $domain;
     
@@ -19,7 +19,7 @@ return (new class {
     private bool $claim = true;
     private bool $SLDONE = false;
     private bool $ADDONE = false;
-    private bool $BCDONE = false;
+    private bool $BCDONE = true;
     private array $skipped = [];
     private array $headersCF = [];
     private bool $can_withdraw = true;
@@ -50,7 +50,7 @@ return (new class {
         $b->task1('ok', $this->mail);
         $b->task2('ok', "site: " . $this->host);
     }
-
+    
     public function exec() {
         $skipped = [];
         
@@ -87,7 +87,7 @@ return (new class {
                     
                     if (!empty($f)) {
                         $pa = $f['payload'];
-                        $cre = ['email' => $this->mail, 'password' => $this->pass];
+                        $cre = ['login_email' => $this->mail,'email' => $this->mail, 'password' => $this->pass];
                         
                         $cap = Solve::exec($_0, $this->host, $this->api, $pa);
                         
@@ -117,12 +117,12 @@ return (new class {
             
             if ($dash && str_contains($dash, 'confirm your email')) $this->can_withdraw = false;
             
-            $_bal = Scraper::_xP($dash, "//div[contains(@class, 'topStat_card')]//p[contains(text(), 'Coins')]/text()")[0] ?? '';
+            $_bal = Scraper::_xP($dash, "//h5[contains(text(), 'Balance')]/following-sibling::h2/text()")[0] ?? '';
             if ($_bal) {
                 $this->logger('', "balance", "$_bal");
-                $bal = ((int)$_bal);
+                $bal = ((float)$_bal);
                 
-                if ($this->can_withdraw && ($bal >= 2000)) {
+                if ($this->can_withdraw && ($bal >= 0.05)) {
                     $po = null;
                     $jjn = [];
                     $wd = Net::C("{$this->host}/withdraw", 'GET', null, Inf::$cookie, [], "{$this->host}/dashboard", Inf::$uagent, ip: $this->ip);
@@ -176,11 +176,11 @@ return (new class {
                             $_ca = $pa['captcha'] ?? '';
                             
                             if  (($_ca === 'faucetcaptcha')) {
-                                $fcc = FaucetCaptcha::exec($this->host, $this->host.'/faucet', $this->mail);
-                                #var_dump($fcc); die;
-                                if ($fcc === 44) break;
                                 
-                                if (isset($fcc['trouble'])) continue;
+                                $this->logger('err', 'fct', ' FAUCETCAPTCHA DETECTED, UPDATE SCRIPT');
+                                $this->claim = false;
+                                break;
+                                
                             }
                             
                             if (($_ca === 'hcaptcha')) {
@@ -231,7 +231,6 @@ return (new class {
                                 }
                             }
                             
-                            
                         } else {
                             if (str_contains($fau, '/register')) continue 2;
                             
@@ -245,6 +244,7 @@ return (new class {
                             styler('Waiting for faucet', fn() => _sle(30));
                             continue;
                         }
+                        
                         
                     }
                     
@@ -268,6 +268,7 @@ return (new class {
                     }
                     
                 }
+                
                 
             }
             
@@ -303,19 +304,18 @@ return (new class {
                                         
                                     }
                                     if  (($_ca === 'faucetcaptcha')) {
-                                        $fcc = FaucetCaptcha::exec($this->host, $ad_u, $this->mail);
-                                        if ($fcc === 44) {
-                                            $this->ADDONE = true; break;
-                                        }
-                                        if (isset($fcc['trouble'])) continue;
+                                        $this->logger('err', 'fct', ' FAUCETCAPTCHA DETECTED, UPDATE SCRIPT');
+                                        break;
+                                        
                                     }
                                     $cap = Solve::exec($view, $ad_u, $this->api, $pa);
                                     
                                     if (isset($cap['trouble'])) continue;
-                                    
                                     $po = array_merge($pa, $cap, $fcc ?? []);
                                     
                                 }
+                                
+                                
                                 
                             }
                             
@@ -357,8 +357,6 @@ return (new class {
                     }
                     
                 }
-                
-                
                 
             }
             
@@ -474,17 +472,6 @@ return (new class {
                 
             }
             
-            $off_B = Net::C("{$this->host}/offerwall/bitcotasks", 'GET', null, Inf::$cookie, [], "{$this->host}/dashboard", Inf::$uagent, ip: $this->ip);
-            $bctt_u = Scraper::_jP($off_B, '/<iframe[^>]*src=["\']([^"\']*bitcotask[^"\']*)["\'][^>]*>/i')[1][0] ?? null;
-            
-            if (!empty($bctt_u)) {
-                $bctt = new Bctt($this->host, $this->api, $this->mail);
-                $bcttwl = $bctt->wall($bctt_u);
-                if (($bcttwl === 'claim') && $this->claim) $bcttwl->cleanup();
-                if (($bcttwl === 'habis')) $this->BCDONE = true;
-                
-            }
-            
             if ($this->SLDONE && $this->ADDONE && !$this->claim && $this->BCDONE) styler('cooldown', fn() => _sle(600));
             
         }
@@ -519,7 +506,10 @@ return (new class {
         $baseUrl = (parse_url($host, PHP_URL_SCHEME) ? $host : 'https://' . $host);
         $baseUrl = rtrim($baseUrl, '/');
         
-        foreach ($xp->query("//div[contains(@class,'ptc_cards')]") as $card) {
+        // Cari card yang ada button onclick
+        $cards = $xp->query("//div[contains(@class, 'card')]//button[@onclick]/ancestor::div[contains(@class, 'card')]");
+        
+        foreach ($cards as $card) {
             $btn = $xp->query(".//button/@onclick", $card);
             if ($btn->length === 0) continue;
             
@@ -534,20 +524,18 @@ return (new class {
                 $url = 'https:' . $url;
             }
             
+            // Ambil timer dari badge-primary (format: "15 Seconds")
             $timer = 5;
-            $spans = $xp->query(".//span", $card);
-            foreach ($spans as $span) {
-                $text = trim($span->textContent);
-                if (preg_match('/(\d+)\s*s/', $text, $tm)) {
-                    $timer = (int)$tm[1];
-                    break;
-                }
+            $badge = $xp->query(".//span[contains(@class, 'badge-primary')]", $card);
+            if ($badge->length > 0 && preg_match('/(\d+)\s*Seconds?/', $badge->item(0)->textContent, $tm)) {
+                $timer = (int)$tm[1];
             }
             
             $uHost = str_replace('www.', '', parse_url($url, PHP_URL_HOST) ?: '');
             
             if ($uHost === $host) $result['local'][] = [$url, $timer];
             elseif (strpos($url, 'bitcotasks.com') !== false) $result['bctt'][] = [$url, $timer];
+            elseif (strpos($url, 'offerwall.me') !== false) $result['owme'][] = [$url, $timer];
             else $result['external'][] = [$url, $timer];
         }
         
@@ -555,7 +543,7 @@ return (new class {
         
         return $result;
     }
-    
+
     private function _wd($html) {
         $res = Scraper::payload($html)[0] ?? null;
         if (!$res) return false;
@@ -581,9 +569,8 @@ return (new class {
         }
         return false;
     }
-    
-})->exec();
 
+})->exec();
 
 function pre($in_put, $threshold = 128) {
 

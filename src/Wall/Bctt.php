@@ -65,7 +65,13 @@ class Bctt {
             if (empty($url)) return false;
             
             $cc_get = Net::C($url, 'GET', null, $this->cookieFile, [], '', $this->userAgent);
-            
+            /*
+            if (stripos($cc_get, 'article') && str_contains($url, 'article')) {
+                $view = $this->read($url);
+                var_dump($view);
+                die;
+            }
+            */
             $cc_getG = Scraper::_jP($cc_get, "/window\.location\.href\s*=\s*['\"]([^'\"]+)['\"]/")[1][0] ?? null;
             if (!empty($cc_getG)) {
                 $cc_pre = Net::C($cc_getG, 'GET', null, $this->cookieFile, [], '', $this->userAgent);
@@ -177,10 +183,84 @@ class Bctt {
         }
     }
     
+    public function read ($url) {
+        if (empty($url)) return false;
+        
+        $cc_get = Net::C($url, 'GET', null, $this->cookieFile, [], '', $this->userAgent);
+        _put('ccget.html', $cc_get);
+        
+        $cc_getG = Scraper::_jP($cc_get, "/window\.location\.href\s*=\s*['\"]([^'\"]+)['\"]/")[1][0] ?? null;
+        $cap_u = Scraper::_xP($cc_get, "//script[contains(@src,'captcha2/')]/@src")[0] ?? null;
+        
+        if (!empty($cap_u)) {
+            $cc_js = Net::C($this->bct_h . $cap_u, 'GET', null, $this->cookieFile, [], $url, $this->userAgent);
+            if ($cc_js === 99) return 99;
+        }
+        
+        $fjs = null;
+        $solution = null;
+        if (!empty($cc_js) && $cc_js !== 99) {
+            preg_match('/fetch\("([^"]+captcha[^"]+\.js\?action=captcha)"/', $cc_js, $m);
+            $cc_ep = $m[1] ?? $cap_u;
+            $fjs = $this->_get($cc_js);
+            
+            $cc_p0 = [
+                't' => round(microtime(true) * 1000),
+                'r' => mt_rand() / mt_getrandmax()
+            ];
+            
+            $cap_get = json_decode(Net::X($this->bct_h . $cc_ep, 'POST', $cc_p0, $this->cookieFile, [], $url, $this->userAgent, true) ?: '', true);
+            if (!empty($cap_get['options']) && !empty($cap_get['pixel'])) $solution = $this->_solve($cap_get);
+        }
+        
+        $read = null;
+        if ($fjs && is_array($solution)) {
+            $cc_p1 = $this->_buildPayload($fjs, null, $solution);
+            $cap_tok = json_decode(Net::X($this->bct_h . $cc_p1['url'], 'POST', $cc_p1['payload'], $this->cookieFile, [], $url, $this->userAgent) ?: '', true)[$fjs['cc_ver']] ?? false;
+            
+            if ($cap_tok && $cc_getG) {
+                
+                $rrr = Net::X($cc_getG, 'GET', null, $this->cookieFile, [], $url, $this->userAgent);
+                
+                $cc_getR = Scraper::_jP($rrr, "/window\.location\.href\s*=\s*['\"]([^'\"]+)['\"]/")[1][0] ?? null;
+                $read = Net::X($cc_getR, 'GET', null, $this->cookieFile, [], $url, $this->userAgent);
+                if ($read === 99) return 99;
+                
+            }
+        }
+        
+        if (!empty($read) && $read !== 99) {
+            $set = microtime(true);
+            $tm = Scraper::_jP($read, '/var\s+time\s*=\s*(\d+)/')[1][0] ?? 20;
+            
+            _put('read.html', $read);
+            
+            $capt = Capt::cha($read);
+            #var_dump($capt);
+            if (isset($capt['cft']) && stripos($read, 'turnstile/v0/api')) {
+                $captt = $capt['cft'];
+                $cft = Solve::tkn($this->api, $this->bct_h, $captt['keys'], $captt['type'])['done'] ?? null;
+                if ($cft) {
+                    $valid = ['validate_data' => $cft];
+                    $end = microtime(true);
+                    if (($wait = (int)$tm - ($end - $set)) >= 0) styler("waiting for bitcotask", fn() => _sle((int)ceil($wait)));
+                    
+                    $next = Net::X($cc_getR, 'GET', $valid, $this->cookieFile, [], $cc_getR, $this->userAgent);
+                    _put('next.html', $next);
+                    
+                }
+            }
+            
+        }
+        
+        die;
+    }
+    
     public function exec($url, $tmr = 5, $wall = false, $data = null, $cleanup = true) {
         try {
             return $this->view($url, $tmr, $wall, $data);
         } catch (Throwable $e) {
+            #var_dump($e);
             return false;
         } finally {
             if ($cleanup) $this->cleanup();
@@ -204,6 +284,8 @@ class Bctt {
                 $cc_getG = $url;
             }
         }
+        
+        #_put('ccpre.html', $cc_pre); die;
         
         if (!empty($cc_pre) && $cc_pre !== 99) {
             Net::X($cc_getG, 'POST', ['action' => 'start_view'], $this->cookieFile, [], $cc_getG, $this->userAgent);

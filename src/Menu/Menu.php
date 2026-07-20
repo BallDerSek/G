@@ -159,9 +159,7 @@ class Menu {
                     $num = str_pad($first + 1, 2, " ", STR_PAD_LEFT);
                     $name = str_pad($bots[$first], $maxLen, " ");
                     $line .= "[$num " . BOLD . FGb['GRN'] . $name . RSET;
-                } else {
-                    $line .= str_repeat(" ", $maxLen + 6);
-                }
+                } else $line .= str_repeat(" ", $maxLen + 6);
                 
                 $line .= "  ";
                 
@@ -176,9 +174,7 @@ class Menu {
             echo "\n";
             
             $input = trim(_rl('  input [back]: '));
-            if ($input === '' || $input === 'back') {
-                return;
-            }
+            if ($input === '' || $input === 'back') return;
             
             $parts = explode('_', $input);
             $sel = $parts[0];
@@ -208,7 +204,7 @@ class Menu {
             
             if ($result['action'] === 'run') {
                 $GLOBALS['_CTX']['current_bot'] = $result['bot'];
-                self::$banner->task2('ok', 'Starting: ' . $result['bot']);
+                self::$banner->task2('info', 'Starting: ' . $result['bot']);
                 _sle(2);
                 require $result['bot_file'];
                 exit;
