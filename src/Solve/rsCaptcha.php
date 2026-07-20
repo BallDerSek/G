@@ -263,7 +263,7 @@ class rsResponse {
         #$hasil = $this->_dump($jsContent);
         $i = $this->workDir . '/i.js';
         $o = $this->workDir . '/o.js';
-        $hasil = solveUtils::dumpJs($jsContent, $i);
+        $hasil = SolveUtils::dumpJs($jsContent, $i);
         if ($hasil && is_file($i)) exec("synchrony $i -o $o");
         
         if ($hasil && is_file($o)) $token = $this->_token($o, $x, $y, $this->uagent);
