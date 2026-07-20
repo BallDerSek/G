@@ -1,6 +1,6 @@
 <?php
 
-class bifaucet {
+return (new class {
     
     use Base;
     
@@ -515,6 +515,4 @@ class bifaucet {
         return false;
     }
     
-}
-
-(new bifaucet())->exec();
+})->exec();

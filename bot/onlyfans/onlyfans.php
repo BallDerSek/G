@@ -1,6 +1,6 @@
 <?php
 
-class onlyfans {
+return (new class {
     
     use Base;
     
@@ -482,6 +482,4 @@ class onlyfans {
             
     }
     
-}
-
-(new onlyfans())->exec();
+})->exec();

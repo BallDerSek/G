@@ -1,80 +1,70 @@
 <?php
-if (!defined('ROOT')) {die;}
 
-login:
-$api = onKeys();
-$apiName = $api ? get_class($api) : 'without api';
-
-$b = Banner::getInstance();
-$supportedSL = [
-    'mid' => [
-        $cuty = 'https://cuty.io/WrPYm6ec3EhF',
-        $exe = 'https://exe.io/HWljFgW',
-        $rsShort = "https://rsshort.com/ek2206",
-        $btcut = "https://btcut.io/tmT1BM",
-        $sky = "https://skyshorts.top/OWchcb1aekb",
-        $cRadio = "https://crypto-radio.eu/eGeO3",
-        $cc = "https://coinclix.co/go/hh1YhH",
-    ],
-    'low' => [
-        $lpay = "https://linkpay.top/O7jjc", #done
-        $horr = "https://horrorpay.online/1pkuD", #done
-        $ad = "https://link.adlink.click/HimD", #done
-        $xut = "https://xut.io/ZijDK", 
-        $shme = "https://shrinkme.click/9QPFs0B", #done
-        $ez4s = "https://ez4short.com/OEb4nl",
-        $iio = 'https://oii.io/CBjykr2h09d',
-    ],
-    'clk' => [
-        $oii = 'https://oii.la/CB3igk8ax19', #done
-        $lnbz = "https://lnbz.la/y2hXh", #done
-        $tpi = "https://tpi.li/jJlY7YxL", #done
-        $aii = "https://aii.sh/UX0B", #done
-    ],
-    'nono' => [
-        $tino = "https://shortino.link/HippDJn",
-        $tano = "https://shortano.link/6XXLZ",
-        $erno = "https://earnow.online/VJfJpx",
-        $erno = "https://earnow.online/pqmu",
-    ],
-    'cut' => [
-        $just = 'https://justcut.io/3Cjw8',
-        ]
-];
-
-
-while (true) {
-    $b->show();
-    $ddd = 0;
-    while (true) {
-        $ddd++;
-        $b->task1('info', "provider: ".$apiName);
-        $b->task2('info', "input shortlink or (change api)");
+return (new class {
+    
+    private $api;
+    private $banner;
+    
+    public function __construct() {
+        $this->api = onKeys();
+        $b = $this->banner = Banner::getInstance();
+    }
+    
+    public function exec() {
         
-        if ($ddd >= 10) break;
-        
-        $url = getenv('login') ?: _rl('shortlink: ');
-        
-        if (!empty($url)) {
-            if ($url === 'change api') goto login;
+        while (true) {
+            $apiName = $this->api ? get_class($this->api) : 'none';
+            $this->banner->show();
+            $ddd = 0;
             
-            $b->task1('warn', "processing");
-            $b->task2('info', "");
-            $bakk = Shortlinks::exec($api, $url);
+            while (true) {
+                $ddd++;
+                $this->banner->task1('info', "provider: ".$apiName);
+                $this->banner->task2('info', "input shortlink or (change api)");
+                
+                if ($ddd >= 10) break;
+                $url = getenv('login') ?: _rl('shortlink: ');
+                
+                if (!empty($url)) {
+                    if ($url === 'change api') {
+                        $this->api = onKeys();
+                        break;
+                    }
+                    
+                    $this->banner->task1('warn', "processing");
+                    $this->banner->task2('info', "");
+                    $bakk = Shortlinks::exec($this->api, $url);
+                    
+                    if ($bakk) {
+                        $this->banner->task2('ok', "done");
+                        Logger::X('ok', "result: ".$bakk, true, true);
+                    } else $this->banner->task2('err', "fail");
+                    
+                } else {
+                    $this->banner->task1('warn', "jangan kosong");
+                    $this->banner->task2('err', "fail");
+                }
+                
+                _sle(2);
+            }
             
-            if ($bakk) {
-                $b->task2('ok', "done");
-                Logger::X('ok', "result: ".$bakk, true, true);
-            } else $b->task2('err', "fail");
-            
-        } else {
-            $b->task1('warn', "jangan kosong");
-            $b->task2('err', "fail");
         }
         
-        _sle(2);
     }
-}
+    
+    
+    
+})->exec();
+
+
+
+
+
+
+
+
+
+
 
 
 

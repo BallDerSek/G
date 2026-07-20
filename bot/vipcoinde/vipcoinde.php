@@ -1,6 +1,6 @@
 <?php
 
-class vipcoinde {
+return (new class {
     
     use Base;
     
@@ -80,7 +80,7 @@ class vipcoinde {
                 $setF = microtime(true);
                 $zera = new Zera($this->host, $this->api, $this->mail);
                 $zerads = $zera->exec($zer_u);
-                if (($zerads === 'claim') && $claim) $zera->cleanup();
+                if (($zerads === 'claim') && $this->claim) $zera->cleanup();
             }
             
         }
@@ -88,7 +88,4 @@ class vipcoinde {
     }
     
     
-}
-
-$BOTEXEC = new vipcoinde();
-$BOTEXEC->exec();
+})->exec();

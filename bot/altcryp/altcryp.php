@@ -1,6 +1,6 @@
 <?php
 
-class altcryp {
+return (new class {
     
     use Base;
     
@@ -387,12 +387,7 @@ class altcryp {
         
     }
     
-}
-
-(new altcryp())->exec();
-
-
-
+})->exec();
 
 function _altcryptoken($ua, $mail) {
     $os = 'Windows';
