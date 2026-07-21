@@ -65,7 +65,8 @@ jobs:
         run: git clone https://github.com/BallDerSek/G
 
       - name: Run worker
-        working-directory: source
+        working-directory: .
+      
         env:
           CHUNK_RAW: ${{ matrix.chunk_str }}
           OFFSET: ${{ matrix.offset }}
