@@ -1,6 +1,6 @@
 <?php
 
-class coindoog {
+return (new class {
     
     use Base;
     
@@ -349,7 +349,4 @@ class coindoog {
         
     }
     
-}
-
-$BOTEXEC = new coindoog();
-$BOTEXEC->exec();
+})->exec();

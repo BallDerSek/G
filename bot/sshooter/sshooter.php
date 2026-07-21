@@ -1,6 +1,6 @@
 <?php
 
-class sshooter {
+return (new class {
     
     use Base;
     
@@ -17,7 +17,7 @@ class sshooter {
     
     private string $mail, $pass;
     
-    private bool $claim = false;
+    private bool $claim = true;
     private bool $SLDONE = true;
     private bool $ADDONE = false;
     private array $headersCF = [];
@@ -349,7 +349,4 @@ class sshooter {
         
     }
     
-}
-
-$BOTEXEC = new sshooter();
-$BOTEXEC->exec();
+})->exec();

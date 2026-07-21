@@ -1,6 +1,6 @@
 <?php
 
-class faucetpayz {
+return (new class {
     
     use Base;
     
@@ -311,8 +311,6 @@ class faucetpayz {
         
     }
     
-    
-    
     private function parsePtcAds($html) {
         
         if (empty($html) || $html === 99) {
@@ -354,8 +352,4 @@ class faucetpayz {
         return $result;
     }
     
-}
-
-$BOTEXEC = new faucetpayz();
-$BOTEXEC->exec();
-
+})->exec();

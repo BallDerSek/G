@@ -10,8 +10,8 @@ return (new class {
     private array $ctx;
     private array $hcf;
     
-    private string $host = 'https://gamefaucet.fun';
-    private string $r = '/?r=10275';
+    private string $host = 'https://claimpepe.xyz';
+    private string $r = '/';
     private string $ip = '';
     private string $domain;
     
@@ -26,7 +26,7 @@ return (new class {
         $this->api = onKeys();
         $this->domain = parse_url($this->host, PHP_URL_HOST);
         
-        $this->acc = Config::credential(['ua' => fn() => Config::uagent('mobile')], 0, ['login', 'PROXY']);
+        $this->acc = Config::credential(['ua' => fn() => Config::uagent('mobile')], true, ['login', 'PROXY']);
         putenv("PROXY=" . $this->acc['PROXY']);
         
         Proxy::load();
@@ -64,7 +64,7 @@ return (new class {
             
             do {
                 $ret++;
-                $l = Inf::check("{$this->host}/dashboard", $this->headersCF, '/auth/login', true);
+                $l = Inf::check("{$this->host}/dashboard", $this->headersCF, '/auth/login');
                 
                 if ($l['ok']) {
                     $dash = $l['html'];
@@ -102,6 +102,12 @@ return (new class {
                 if ($po) {
                     #print_r($po); die;
                     $ve = Net::X($f['url'], 'POST', $po, Inf::$cookie, $this->headersCF, $this->host.$this->r, Inf::$uagent);
+                    
+                    $msg_d = Scraper::_jP($ve, "/Swal\.fire\(\s*\{.*?title:\s*'([^']+)'.*?text:\s*'([^']+)'.*?icon:\s*'([^']+)'/s")[2][0] ?? null;
+                    if (!empty($msg_d)) {
+                        if (stripos($msg_d, 'nvalid Captcha')) continue;
+                        $this->logger('err', '', $msg_d, 1);
+                    }
                 }
                 
             } while (empty($dash));
@@ -222,7 +228,7 @@ return (new class {
                     $ret99 = 0;
                     
                     $short = Shortlinks::extract($sho);
-                    if (empty($short)) continue 3;
+                    if (empty($short)) continue;
                     #print_r($short); die;
                     
                     $success_in_page = false;

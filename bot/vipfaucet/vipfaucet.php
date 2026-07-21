@@ -1,6 +1,6 @@
 <?php
-
-class vipfaucet {
+_die();
+return (new class {
     
     use Base;
     
@@ -202,9 +202,4 @@ class vipfaucet {
         
     }
     
-    
-    
-    
-}
-
-(new vipfaucet())->exec();
+})->exec();

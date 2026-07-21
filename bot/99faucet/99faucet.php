@@ -1,6 +1,6 @@
 <?php
 
-class faucet99 {
+return (new class {
     
     use Base;
     
@@ -349,6 +349,4 @@ class faucet99 {
         
     }
     
-}
-
-(new faucet99())->exec();
+})->exec();
