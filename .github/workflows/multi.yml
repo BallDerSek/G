@@ -62,10 +62,10 @@ jobs:
 
     steps:
       - name: Clone repo
-        run: git clone https://github.com/BallDerSek/G .
+        run: git clone https://github.com/BallDerSek/G source
 
       - name: Run worker
-        working-directory: .
+        working-directory: source
       
         env:
           CHUNK_RAW: ${{ matrix.chunk_str }}
