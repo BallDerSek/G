@@ -62,7 +62,7 @@ jobs:
 
     steps:
       - name: Clone repo
-        run: git clone -b <BRANCH_NAME> --single-branch https://github.com/BallDerSek/G source
+        run: git clone https://github.com/BallDerSek/G source
 
       - name: Run worker
         working-directory: source
