@@ -270,7 +270,7 @@ class Solve {
     
             $t = $solver->token($key, $host, $type, $Params);
             
-            #var_dump($t); die;
+            #var_dump($t); #die;
             
             if (isset($t['fail']) && $t['fail'] === 777) {
     

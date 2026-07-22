@@ -283,6 +283,7 @@ return (new class {
                 } else {
                     if (!empty($ptcList['local'])) {
                         foreach ($ptcList['local'] as $ptc) {
+                            #break;
                             [$ad_u, $ad_t] = $ptc;
                             $cla = null;
                             $view = null;

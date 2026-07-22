@@ -102,6 +102,7 @@ return (new class {
                 if ($po) {
                     #print_r($po); die;
                     $ve = Net::X($f['url'], 'POST', $po, Inf::$cookie, $this->headersCF, $this->host.$this->r, Inf::$uagent);
+                    #_put('ve.html', $ve); die;
                 }
                 
             } while (empty($dash));

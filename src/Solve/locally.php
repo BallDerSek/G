@@ -71,7 +71,7 @@ class locally {
             $ua = $ctx['uagent'];
             $in = $ctx['ins'];
             $ip = $ctx['ip'];
-            
+            _sle(3);
             $res = Net::X($host.'/ecaptcha/get_token', 'GET', null, $ck, [], $host, $ua, ip: $ip, ins: $in);
             
             if ($res === 99) return 99;
@@ -91,7 +91,7 @@ class locally {
                 'selected' => $answer,
                 'token' => $token
             ];
-            
+            _sle(5);
             $post = json_decode(Net::X($host.'/ecaptcha/validate_icon', 'POST', $payload, $ck, [], $host, $ua, ip: $ip, ins: $in)?: '', true);
             #var_dump($post); #die;
             if (($post['status'] ?? '') === 'valid') {

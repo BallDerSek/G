@@ -28,7 +28,7 @@ return (new class {
         $this->api = onKeys();
         $this->domain = parse_url($this->host, PHP_URL_HOST);
         
-        $this->acc = Config::credential([], false, /*['mail', 'pass', 'PROXY']*/);
+        $this->acc = Config::credential([], false, ['mail', 'pass', 'PROXY']);
         putenv("PROXY=" . $this->acc['PROXY']);
         
         Proxy::load();
@@ -121,7 +121,7 @@ return (new class {
             
             $setF = 0;
             if (!$this->limit && $this->claim) {
-                $ret99 = 0; _rl('tes: '); @unlink(Inf::$cookie);
+                $ret99 = 0;
                 while (true) {
                     $ret99++;
                     $fau = Net::C("{$this->host}/api/faucet", 'GET', null, Inf::$cookie, [], "{$this->host}/", Inf::$uagent, ip: $this->ip);
@@ -131,7 +131,7 @@ return (new class {
                         _sle(40);
                         continue;
                     }
-                    var_dump($fau); die;
+                    
                     $fauu = json_decode($fau, 1)['data'] ?? null;
                     $po = null;
                     if (!empty($fauu) && $fauu !== 99) {
@@ -139,29 +139,35 @@ return (new class {
                         $c_end = strtotime($fauu['cycle_ended_at']);
                         $now = microtime(1);
                         if ($now >= $c_end) {
-                            $cap = $this->tkn();
+                            $cap = $this->tkn(); 
                             if (isset($cap['trouble'])) continue;
                             $po = $cap;
                             
                         } else {
-                            $setF = $now;
-                            $endF = $c_end;
-                            break;
+                            $wait = $c_end - $now;
+                            styler('Waiting for faucet', fn() => _sle((int)$wait));
                             
                         }
+                        
+                    } else {
+                        
+                        if (str_contains($fau, 'not found')) continue 2;
+                        
                         
                     }
                     
                     if (!empty($po)) {
-                        print_r($po); die;
-                        $cla = json_decode(Net::C($this->host.'/api/faucet', 'POST', $po, Inf::$cookie, [], "{$this->host}/faucet", Inf::$uagent, ip: $this->ip)?: '', 1)['data'] ?? null;
+                        #print_r($po); die;
+                        $cla = json_decode(Net::X($this->host.'/api/faucet', 'POST', $po, Inf::$cookie, [], "{$this->host}/faucet", Inf::$uagent, ip: $this->ip, json: 1)?: '', 1)['data'] ?? null;
+                        #var_dump($cla); #die;
+                        
                         if (empty($cla) || ($cla === 99)) continue;
                         
-                        var_dump($cla);
                         if (!empty($cla)) {
-                            $msg =  ("roll: ".$cla['roll_value'] ?? '')." claimed ".($cla['claimed_amount'] ?? '');
                             
-                            $this->logger($stt, 'fct', $msg);
+                            $msg =  " claimed ".($cla['claimed_amount']. ' coins' ?? '') ?? 'unknown';
+                            
+                            $this->logger('ok', 'fct', $msg);
                             if (stripos($msg, 'claimed')) {
                                 $setF = microtime(1);
                                 $endF = strtotime($cla['cycle_ended_at']);;
@@ -170,20 +176,43 @@ return (new class {
                             
                         }
                         
-                        
                     }
                     
-                    die;
                 }
-                
                 
             }
             
+            $off_T = Net::C("{$this->host}/surveys", 'GET', null, Inf::$cookie, [], "{$this->host}/faucet", Inf::$uagent, ip: $this->ip);
+            $scc = Scraper::_sC($off_T)['inline'] ?? null;
+            if (!empty($scc)) {
+                
+                foreach ($scc as $i => $_sc) {
+                    if (stripos($_sc, 'timewall') && str_contains($_sc, 'https://timewall.io')) {
+                        
+                        $cfg = Scraper::_jP($_sc, '/https?:\/\/[^"]*timewall[^"]*/')[0][0] ?? null;
+                        
+                        if (!empty($cfg)) break;
+                        
+                    }
+                }
+                
+                if (!empty($cfg)) {
+                    $url = Scraper::_jP($cfg, '/https?:\/\/[^"]*timewall[^"]*/')[0][0] ?? null;
+                    
+                    if ($url) {
+                        $url = str_replace('\u0026', '&', trim($url, '"'));
+                        $timw_I = stripslashes($url);
+                    }
+                }
+                
+                if ($timw_I) {
+                    $tmwl = new Twall($this->host, $this->api, $this->mail);
+                    $tmwwl = $tmwl->exec($timw_I, $setF, $endF);
+                    
+                }
+                
+            }
             
-            
-            
-            
-            die;
         }
         
         

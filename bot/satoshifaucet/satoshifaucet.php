@@ -1,6 +1,6 @@
 <?php
 _die();
-class satoshif {
+return (new class {
     
     use Base;
     
@@ -141,7 +141,7 @@ class satoshif {
                         $ret99 = 0;
                         
                         $fau = $this->checkCF($this->headersCF, $fa, $fau_d);
-                        _put('fau.html', $fau);
+                        #_put('fau.html', $fau);
                         if ($ban = $this->isBan($fau)) {
                             if (!$this->SLDONE) {
                                 $curr = $_c;
@@ -276,6 +276,4 @@ class satoshif {
         
     }
     
-}
-
-(new satoshif())->exec();
+})->exec();

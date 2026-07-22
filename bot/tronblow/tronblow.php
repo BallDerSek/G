@@ -16,7 +16,7 @@ $emails = file($mailPath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
 
 $emails = array_slice($emails, 0, 70);
 
-$urls = ['https://usdtblow.xyz', 'https://tronblow.site'];
+$urls = ['https://tronblow.site'];
 
 $b = Banner::getInstance();
 $b->show();

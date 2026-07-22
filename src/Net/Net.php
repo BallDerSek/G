@@ -431,7 +431,7 @@ var_dump($err);
         ], $ins, true);
     }
 
-    public static function S($url, $type = 'POST', $data = null, array $head = [], $json = false, $ua = '') {
+    public static function S($url, $type = 'POST', $data = null, array $head = [], $json = false, $ua = '', $h2 = false) {
         
         if (!self::hasHeader($head, 'Connection')) $head[] = "Connection: keep-alive";
         if ($json && !self::hasHeader($head, 'Content-Type')) $head[] = "Content-Type: application/json";
@@ -446,6 +446,7 @@ var_dump($err);
             'timeout' => 120,
             'speed' => 10,
             'ua' => $ua,
+            'http2' => $h2,
             'no_proxy' => true
         ], false, true);
         
