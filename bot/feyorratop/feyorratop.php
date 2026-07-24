@@ -130,7 +130,7 @@ return (new class {
                     
                     if (!empty($jjn['payload']) && !empty($jjn['url'])) {
                         $pa = $jjn['payload'];
-                        $cap = Solve::exec($dash, $this->host, $this->api, $pa);
+                        $cap = Solve::exec($wd, $this->host, $this->api, $pa);
                         if (isset($cap['trouble'])) $this->can_withdraw = false;
                         
                         $walletKey = isset($pa['address']) ? 'address' : (isset($pa['wallet']) ? 'wallet' : 'email');
@@ -234,6 +234,12 @@ return (new class {
                             
                         } else {
                             if (str_contains($fau, '/register')) continue 2;
+                            
+                            if (str_contains($fau, 'Daily limit reached')) {
+                                $this->logger('err', 'fct', 'Daily limit reached');
+                                $this->limit = true;
+                                break;
+                            }
                             
                             /*
                             if (!$this->SLDONE || !$this->ADDONE) {

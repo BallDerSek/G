@@ -10,7 +10,7 @@ trait Base {
         Logger::M($email, (!$fatal || !empty($mail)));
         Logger::X($info, "$state ", false, true);
         
-        if ($msg) Logger::G(0, "$msg");
+        if ($msg) Logger::G(0, strlen($msg) > 55 ? substr($msg, 0, 55) . '...' : "$msg");
         if ($fatal) die;
         
         #if ($this->api instanceof Provider) ($this->api)->getInfo();
@@ -119,7 +119,7 @@ trait Base {
                 $_c = $fix['http_code'];
                 $_b = $fix['body'];
                 
-                if ($_c === 200 && stripos($_b, 'Just a moment') === false && stripos($_b, 'Attention Required!') === false) {
+                if ($_c === 200 || (stripos($_b, 'Just a moment') === false && stripos($_b, 'Attention Required!') === false)) {
                     $this->acc['ua'] = $ua;
                     return $_b;
                 }

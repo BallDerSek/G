@@ -5,9 +5,7 @@ class locally {
     public static function iCaptcha($host, $data, $ctx) {
         $endpoint = $data['endpoint'];
         $token = $data['token'];
-        if (!str_starts_with($endpoint, 'http')) {
-            $endpoint = rtrim($host, '/') . '/' . ltrim($endpoint, '/');
-        }
+        if (!str_starts_with($endpoint, 'http')) $endpoint = rtrim($host, '/') . '/' . ltrim($endpoint, '/');
         
         return styler("SOLVING iCaptcha", function() use ($endpoint, $token, $host, $ctx) {
             if (!$endpoint || !$token) return false;
@@ -71,11 +69,8 @@ class locally {
             $ua = $ctx['uagent'];
             $in = $ctx['ins'];
             $ip = $ctx['ip'];
-            _sle(3);
-            $res = Net::X($host.'/ecaptcha/get_token', 'GET', null, $ck, [], $host, $ua, ip: $ip, ins: $in);
             
-            if ($res === 99) return 99;
-            $token = json_decode($res ?: '', true)['token'] ?? null;
+            $token = json_decode(Net::X($host.'/ecaptcha/get_token', 'GET', null, $ck, [], $host, $ua, ip: $ip, ins: $in)?: '', true)['token'] ?? null;
             if (!$token) return false;
 
             $task = json_decode(Net::X($host.'/ecaptcha/get_captcha', 'GET', null, $ck, [], $host, $ua, ip: $ip, ins: $in)?: '', true);

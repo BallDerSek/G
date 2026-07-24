@@ -10,9 +10,10 @@ return (new class {
     private array $ctx;
     private array $hcf;
     
-    private string $host = 'https://satoshifaucet.io';
+    private string $host = 'http://satoshifaucet.io';
+    private string $app = 'https://satoshifaucet.io';
     private string $r = '';
-    private string $ip = '';
+    private string $ip = '173.249.41.150';
     private string $domain;
     
     private string $mail, $pass;
@@ -79,8 +80,8 @@ return (new class {
                 _sle(3); _clr();
                 $po = null;
                 
-                $_0 = Net::X($this->host.$this->r, 'GET', null, Inf::$cookie, $this->headersCF, '', Inf::$uagent, d: true);
-                $_0 = $this->checkCF($this->headersCF, $this->host, $_0);
+                $_0d = Net::X($this->host.$this->r, 'GET', null, Inf::$cookie, $this->headersCF, '', Inf::$uagent, d: true);
+                $_0 = $this->checkCF($this->headersCF, $this->host, $_0d);
                 
                 if (!empty($_0) && $_0 !== 99) {
                     $f = Scraper::payload($_0)[0] ?? null;
@@ -90,7 +91,7 @@ return (new class {
                         $pa = $f['payload'];
                         $cre = ['uf' => md5($this->mail), 'ls' => LANGUAGE(), 'utt' => TIMEZONE(), 'wallet' => $this->mail];
                         #$cap = $this->_cp($_0);
-                        $cap = Solve::exec($_0, $this->host, $this->api, $pa);
+                        $cap = Solve::exec($_0, $this->app, $this->api, $pa);
                         if (isset($cap['trouble'])) continue;
                         
                         $po = array_merge($pa, $cap, $cre);
@@ -99,6 +100,7 @@ return (new class {
                 }
                 
                 if ($po) {
+                    $this->_ck($_0, $_0d); 
                     #print_r($po); #die;
                     $ve = Net::X($this->host.'/auth/login', 'POST', $po, Inf::$cookie, $this->headersCF, $this->host.$this->r, Inf::$uagent, ip: $this->ip, d: true, foll: false);
                     Net::save($ve, Inf::$cookie);
@@ -106,7 +108,7 @@ return (new class {
                 }
                 
             } while (empty($dash));
-            #_put('dash.html', $dash); die;
+            #_put('dash.html', $dash);
             
             $_fa = Scraper::_xP($dash, "//div[normalize-space()='Faucets']/ancestor::li//div[@class='sub-menu-two']/a/@href");
             #print_r($_fa);
@@ -114,6 +116,7 @@ return (new class {
             if ($this->claim) {
                 foreach ($_fa as $fa) {
                     
+                    $fa = str_replace('https://', 'http://', $fa);
                     $_c = basename(parse_url($fa)['path']);
                     if (!empty($curr) && !str_contains($_c, $curr)) continue;
                     
@@ -129,15 +132,15 @@ return (new class {
                     
                     while (true) {
                         $ret99++;
-                        $fau = Net::C($fa, 'GET', null, Inf::$cookie, $this->headersCF, $this->host, Inf::$uagent, d: true, ip: $this->ip);
+                        $fau_d = Net::C($fa, 'GET', null, Inf::$cookie, $this->headersCF, $this->host, Inf::$uagent, d: true, ip: $this->ip);
                         
-                        if ($fau === 99) {
+                        if ($fau_d === 99) {
                             if ($ret99 >= 5) goto login;
                             continue;
                         }
                         $ret99 = 0;
                         
-                        $fau = $this->checkCF($this->headersCF, $fa, $fau);
+                        $fau = $this->checkCF($this->headersCF, $fa, $fau_d);
                         _put('fau.html', $fau);
                         if ($ban = $this->isBan($fau)) {
                             if (!$this->SLDONE) {
@@ -171,8 +174,13 @@ return (new class {
                         }
                         
                         if (!empty($po)) {
+                            $this->_ck($fau, $fau_d); 
+                            #_sle(2); 
                             #print_r($po);
-                            $cla = Net::X($f['url'], 'POST', $po, Inf::$cookie, $this->headersCF, $fa, Inf::$uagent, ip: $this->ip);
+                            $ve = str_replace('https://', 'http://', $f['url']);
+                            $claa = Net::X($ve, 'POST', $po, Inf::$cookie, $this->headersCF, $fa, Inf::$uagent, ip: $this->ip, foll: false);
+                            
+                            $cla = Net::X($fa, 'GET', null, Inf::$cookie, $this->headersCF, '', Inf::$uagent, ip: $this->ip);
                             
                             if (empty($cla) || ($cla === 99)) continue;
                             
@@ -255,6 +263,7 @@ return (new class {
         return null;
         
     }
+    
     
     private function _ck($html, $resp) {
         $_ck = Inf::$cookie;

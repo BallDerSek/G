@@ -1,9 +1,5 @@
 <?php
-if (!defined('ROOT')) {
-    die;
-}
 
-$login = Config::credential()['login'];
 $userAgent = Config::uagent();
 $r = '/?ref=gamamoch%40gmail.com';
 
@@ -179,7 +175,7 @@ while (!empty($accs)) {
         _sle(30);
     }
 }
-_cle();
+#_cle();
 
 die(Logger::X('ok', "ALL BATCHES FINISHED"));
 #_rl('mode pesawat');
