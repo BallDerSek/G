@@ -236,7 +236,7 @@ return (new class {
                             
                             if (str_contains($fau, 'Daily limit reached')) {
                                 $this->logger('err', 'fct', 'Daily limit reached');
-                                $this->limit = true;
+                                $this->claim = false;
                                 break;
                             }
                             
