@@ -1,5 +1,5 @@
 <?php
-_die();
+
 return (new class {
     
     use Base;
@@ -12,14 +12,14 @@ return (new class {
     
     private string $host = 'http://satoshifaucet.io';
     private string $app = 'https://satoshifaucet.io';
-    private string $r = '/?r=129617';
+    private string $r = '';
     private string $ip = '173.249.41.150';
     private string $domain;
     
     private string $mail, $pass;
     
     private bool $claim = true;
-    private bool $SLDONE = false;
+    private bool $SLDONE = true;
     private bool $ADDONE = false;
     private array $headersCF = [];
     
@@ -51,7 +51,7 @@ return (new class {
     
     public function exec() {
         $habis = [];
-        $curr = '';
+        $curr = 'ltc';
         $skipped = [];
         
         login:
