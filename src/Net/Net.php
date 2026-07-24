@@ -302,7 +302,7 @@ var_dump($err);
                         $proxyFailCount++;
                         
                         if ($proxyFailCount >= 7) {
-                            Logger::X('warn', "\rUnhealthy Proxy ($errno)");
+                            Logger::X('warn', "\rUnhealthy Proxy ($errno)\r");
                             return 99; 
                         }
                         

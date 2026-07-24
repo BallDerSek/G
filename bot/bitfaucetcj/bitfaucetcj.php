@@ -1,5 +1,5 @@
 <?php
-
+_die();
 class bitfaucetcj {
     
     use Base;

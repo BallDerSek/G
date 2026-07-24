@@ -152,7 +152,7 @@ return (new class {
                             
                             if (!empty($f)) {
                                 $pa = $f['payload'];
-                                
+                                _sle(5);
                                 #$cap = $this->_cp($fau);
                                 $cap = Solve::exec($fau, $this->host, $this->api, $pa);
                                 

@@ -979,6 +979,7 @@ class FaucetCaptcha {
             ['X-FC-Sign: 1'],
             self::$reff, Inf::$uagent, json: true)?: ''
         , 1);
+        #var_dump($sol); die;
         
         if (!empty($sol['success']) || !empty($sol['token'])) {
             return ['tkn' => $sol['token'], 'sol' => $payload];

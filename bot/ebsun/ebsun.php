@@ -53,6 +53,7 @@ return (new class {
     
     public function exec() {
         $skipped = [];
+        $wall = false;
         
         login:
             Proxy::load();
@@ -168,7 +169,7 @@ return (new class {
                             $msg =  " claimed ".($cla['claimed_amount']. ' coins' ?? '') ?? 'unknown';
                             
                             $this->logger('ok', 'fct', $msg);
-                            if (stripos($msg, 'claimed')) {
+                            if (stripos($msg, 'claimed') && !$wall) {
                                 $setF = microtime(1);
                                 $endF = strtotime($cla['cycle_ended_at']);;
                                 break;
@@ -208,7 +209,7 @@ return (new class {
                 if ($timw_I) {
                     $tmwl = new Twall($this->host, $this->api, $this->mail);
                     $tmwwl = $tmwl->exec($timw_I, $setF, $endF);
-                    
+                    if ($tmwwl == 'habis') $wall = true;
                 }
                 
             }
