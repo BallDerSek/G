@@ -53,6 +53,8 @@ return (new class {
         $curr = '';
         $skipped = [];
         
+        $this->headersCF = Inf::netHead($this->adcookie());
+        
         login:
             Proxy::load();
             Check::Geo();
@@ -135,8 +137,8 @@ return (new class {
                         }
                         $ret99 = 0;
                         
-                        $fau = $this->checkCF($this->headersCF, $fa, $fau);
-                        
+                        $fau = $this->checkCF($this->headersCF, $fa, $fau, 1);
+                        #_put('fau.html', $fau); die;
                         if ($ban = $this->isBan($fau)) {
                             if (!$this->SLDONE) {
                                 $curr = $_c;
@@ -184,14 +186,11 @@ return (new class {
                                     break;
                                 }
                                 
-                                if (preg_match('/blacklisted|flagged|banned/i', $msg)) {
-                                    die;
-                                }
+                                if (preg_match('/blacklisted|flagged|banned/i', $msg)) die;
                                 
-                                if (preg_match('/went wron|cation failed/i', $msg)) {
-                                    #$curr = '';
-                                    continue 3;
-                                }
+                                if (preg_match('/went wron/i', $msg)) die;
+                                
+                                if (preg_match('/cation failed/i', $msg)) continue 3;
                                 
                                 if (stripos($msg, 'Shortlink')) {
                                     if ($this->SLDONE) die;
@@ -315,6 +314,8 @@ return (new class {
                                 }
                                 
                                 $success_in_page = true;
+                                
+                                break 3;
                             }
                         }
                     }

@@ -312,7 +312,7 @@ while (true) {
                     }
                     
                     if (!empty($po)) {
-                        
+                        #print_r($po); die;
                         $cla = Net::X($f['url'], 'POST', $po, Inf::$cookie, $headersCF, $host, Inf::$uagent);
                         
                         $_suc = Scraper::_jP($cla, "/Toast\.fire\(\s*\{.*?icon:\s*'([^']+)'.*?html:\s*'([^']+)'/s");

@@ -10,7 +10,7 @@ return (new class {
     private array $ctx;
     private array $hcf;
     
-    private string $host = 'https://earnsolana.xyz';
+    private string $host = 'https://cryptofuture.co.in';
     private string $ip = '';
     private string $domain;
     
@@ -31,7 +31,7 @@ return (new class {
         $this->api = onKeys();
         $this->domain = parse_url($this->host, PHP_URL_HOST);
         
-        $this->acc = Config::credential(['ua' => fn() => Config::uagent('mobile')], true, ['mail', 'pass', 'PROXY']);
+        $this->acc = Config::credential(['ua' => fn() => Config::uagent('mobile')], true, /*['mail', 'pass', 'PROXY']*/);
         putenv("PROXY=" . $this->acc['PROXY']);
         
         Proxy::load();
@@ -62,7 +62,7 @@ return (new class {
         
         while (true) {
             $dash = null;
-            $madd = false;
+            $madd = true;
             $ret = 0;
             
             do {
@@ -126,7 +126,7 @@ return (new class {
                 $this->logger('', "balance", "$_bal");
                 $bal = ((int)$_bal);
                 
-                if ($this->can_withdraw && ($bal >= 2000)) {
+                if ($this->can_withdraw && ($bal >= 10000)) {
                     $po = null;
                     $jjn = [];
                     $wd = Net::C("{$this->host}/withdraw", 'GET', null, Inf::$cookie, $this->headersCF, "{$this->host}/dashboard", Inf::$uagent, ip: $this->ip);
@@ -340,12 +340,14 @@ return (new class {
             }
             
             
-            
         }
         
         
         
     }
+    
+    
+    
     
     
     

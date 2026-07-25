@@ -2,11 +2,34 @@
 
 class Net {
 
-    public static function save($resp, $path) {
+    public static function save($url, $resp, $path) {
         if (is_array($resp) && isset($resp['headers']['set-cookie'])) {
             $ck = [];
+            $domain = '';
+            $expiresMap = [];
+            
+            if ($url) {
+                $parsed = parse_url($url);
+                $host = $parsed['host'] ?? '';
+                if ($host) {
+                    $parts = explode('.', $host);
+                    if (count($parts) >= 2) $domain = '.' . implode('.', array_slice($parts, -2));
+                    else $domain = '.' . $host;
+                }
+            }
+            
             foreach ($resp['headers']['set-cookie'] as $cookie) {
+                $cookieRaw = $cookie;
                 $cookie = preg_replace('/;\s*secure/i', '', $cookie);
+                $cookie = preg_replace('/;\s*httponly/i', '', $cookie);
+                
+                if (preg_match('/domain\s*=\s*([^;]+)/i', $cookie, $dm)) $domain = trim($dm[1]);
+                
+                $cookieName = trim(explode('=', trim($cookieRaw), 2)[0] ?? '');
+                
+                if (preg_match('/expires\s*=\s*([^;]+)/i', $cookie, $ex)) $expiresMap[$cookieName] = strtotime(trim($ex[1]));
+                
+                if (preg_match('/max-age\s*=\s*([^;]+)/i', $cookie, $ma)) $expiresMap[$cookieName] = time() + (int)trim($ma[1]);
                 
                 $parts = explode(';', $cookie);
                 $nm = explode('=', trim($parts[0]), 2);
@@ -14,8 +37,51 @@ class Net {
                 
             }
             
+            if (empty($domain) || empty($ck)) return false;
+            
+            $existing = [];
+            if (file_exists($path)) {
+                $lines = file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+                foreach ($lines as $line) {
+                    if ($line[0] === '#' || strpos($line, '#HttpOnly') === 0) continue;
+                    $parts = explode("\t", $line);
+                    if (count($parts) >= 7) $existing[trim($parts[5])] = $parts;
+                }
+            }
+            
             $lines = ["# Netscape HTTP Cookie File"];
-            foreach ($ck as $k => $v) $lines[] = ".satoshifaucet.io\tTRUE\t/\tFALSE\t0\t$k\t$v";
+            foreach ($ck as $k => $v) {
+                $secure = 'FALSE';
+                $expires = $expiresMap[$k] ?? (time() + 86400 * 30);
+                
+                $httpOnly = false;
+                foreach ($resp['headers']['set-cookie'] as $cookie) {
+                    if (stripos($cookie, $k . '=') !== false && stripos($cookie, 'HttpOnly') !== false) {
+                        $httpOnly = true;
+                        break;
+                    }
+                }
+                
+                foreach ($resp['headers']['set-cookie'] as $cookie) {
+                    if (stripos($cookie, $k . '=') !== false && stripos($cookie, 'Secure') !== false) {
+                        $secure = 'TRUE';
+                        break;
+                    }
+                }
+                
+                $line = "$domain\tTRUE\t/\t$secure\t$expires\t$k\t$v";
+                if ($httpOnly) $lines[] = "#HttpOnly_$line";
+                else $lines[] = $line;
+                
+            }
+            
+            $now = time();
+            foreach ($existing as $name => $parts) {
+                if (!isset($ck[$name])) {
+                    $exp = (int)$parts[4];
+                    if ($exp === 0 || $exp > $now) $lines[] = implode("\t", $parts);
+                }
+            }
             
             _put($path, implode("\n", $lines) . "\n");
             return true;
@@ -36,7 +102,7 @@ class Net {
             
         }
     }
-        
+    
     public static function applyHead(&$opt) {
         $ua = trim($opt['ua'] ?? '');
         $url = $opt['url'];
@@ -241,7 +307,7 @@ class Net {
         if (!empty($opt['cookie'])) {
             curl_setopt($ch, CURLOPT_COOKIEJAR, $opt['cookie']);
             curl_setopt($ch, CURLOPT_COOKIEFILE, $opt['cookie']);
-            curl_setopt($ch, CURLOPT_COOKIESESSION, false);
+            curl_setopt($ch, CURLOPT_COOKIESESSION, true);
         }
 
         # PAYLOAD

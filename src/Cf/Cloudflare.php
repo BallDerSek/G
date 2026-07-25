@@ -2,7 +2,7 @@
 
 class Cloudflare {
     
-    private static function solve($api, $url, $uagent, $data, $force = false) {
+    public static function solve($api, $url, $uagent, $data, $force = false) {
         
         if (!$api) return false;
     
@@ -86,7 +86,7 @@ class Cloudflare {
         self::injectCookie($cookiePath, $solution['token'], $url);
 
         return [
-            Inf::netHead(['cf_clearance' => $solution['token']]),
+            ['cf_clearance' => $solution['token']],
             $solution['ua']
         ];
     }
