@@ -52,8 +52,7 @@ return (new class {
         $habis = [];
         $curr = '';
         $skipped = [];
-        
-        $this->headersCF = Inf::netHead($this->adcookie());
+        $claimed = 0;
         
         login:
             Proxy::load();
@@ -129,6 +128,11 @@ return (new class {
                     $ret99 = 0;
                     while (true) {
                         $ret99++;
+                        if ($claimed >= 4) {
+                            @unlink(Inf::$cookie);
+                            _sle(10);
+                            goto login;
+                        }
                         $fau = Net::X($fa, 'GET', null, Inf::$cookie, $this->headersCF, $this->host, Inf::$uagent, d: true);
                         
                         if ($fau === 99) {
@@ -170,6 +174,7 @@ return (new class {
                         }
                         
                         if (!empty($po)) {
+                            $claimed++;
                             #print_r($po);
                             $cla = Net::X($f['url'], 'POST', $po, Inf::$cookie, $this->headersCF, $fa, Inf::$uagent);
                             #_put('cla.html', $cla); die;

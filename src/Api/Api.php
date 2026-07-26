@@ -76,6 +76,9 @@ final class Api {
             'cft' => [
                 'k' => 'sitekey','url' => 'pageurl','api' => 'turnstile'
                 ],
+            'hc'  => [
+                'k' => 'sitekey','url' =>'pageurl','api' => 'hcaptcha'
+                ],
             'rc2' => [
                 'k' => 'googlekey','url' => 'pageurl','api' => 'userrecaptcha'
                 ],
