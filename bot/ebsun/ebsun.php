@@ -53,7 +53,7 @@ return (new class {
     
     public function exec() {
         $skipped = [];
-        $wall = false;
+        $wall = true;
         
         login:
             Proxy::load();
@@ -116,7 +116,6 @@ return (new class {
                 $_bal = $akun['balance'];
                 $this->logger('', "balance", "$_bal");
                 $bal = ((int)$_bal);
-                
                 
             }
             

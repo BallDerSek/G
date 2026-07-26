@@ -92,7 +92,7 @@ trait Base {
         
         if ($code === 200 || stripos($html, 'Just a moment') === false) return $html;
         
-        $result = $this->_cf($hh, $url, $html, true, $ads);
+        $result = $this->_cf($hh, $url, $html, false, $ads);
         
         if (!$result) $result = $this->_cf($hh, $url, $html, true, $ads);
         
@@ -100,17 +100,26 @@ trait Base {
     }
     
     private function _cf(&$cookieHeader, $url, $html, $force, $ads = false) {
+        
         $cf = Cloudflare::exec($this->api, $url, Inf::$cookie, Inf::$uagent, ['html' => $html], $force ? 1 : 0);
         
         if (!$cf) return null;
         [$hhh, $ua] = $cf;
         
         if ($ads) {
-            $newCookies = $this->adcookie(true);
-            foreach ($newCookies as $key => $value) $hh[$key] = $value;
+            $cookies = $this->adcookie(true);
+            foreach ($cookies as $name => $value) {
+                Inf::injectCookie(Inf::$cookie, $value, $this->host, $name);
+            }
+            
+            foreach ($cookies as $key => $value) {
+                $hh[$key] = $value;
+            }
         }
         
-        foreach ($hhh as $key => $value) $hh[$key] = $value;
+        foreach ($hhh as $key => $value) {
+            $hh[$key] = $value;
+        }
         
         Inf::setup($ua, Inf::$cookie);
         if (empty($hh)) return null;
@@ -134,7 +143,7 @@ trait Base {
         
         return null;
     }
-        
+    
     public function adcookie($refresh = false) {
         static $cached = null;
         
@@ -163,7 +172,6 @@ trait Base {
         static $cc_pu = null;
         if (!$cc_pu) $cc_pu = '9a36387661f7b638';
         
-        // ARRAY VALUE! (tanpa "Cookie: ")
         $cached = [
             '_ga' => 'GA1.1.' . $clientId . '.' . $now,
             '_ga_8MW4PHBZKX' => 'GS2.1.' . $gaSession,

@@ -10,7 +10,7 @@ return (new class {
     private array $ctx;
     private array $hcf;
     
-    private string $host = 'https://cryptofuture.co.in';
+    private string $host = 'https://freeltc.fun';
     private string $ip = '';
     private string $domain;
     
@@ -62,7 +62,7 @@ return (new class {
         
         while (true) {
             $dash = null;
-            $madd = true;
+            $madd = false;
             $ret = 0;
             
             do {
@@ -126,7 +126,7 @@ return (new class {
                 $this->logger('', "balance", "$_bal");
                 $bal = ((int)$_bal);
                 
-                if ($this->can_withdraw && ($bal >= 10000)) {
+                if ($this->can_withdraw && ($bal >= 2000)) {
                     $po = null;
                     $jjn = [];
                     $wd = Net::C("{$this->host}/withdraw", 'GET', null, Inf::$cookie, $this->headersCF, "{$this->host}/dashboard", Inf::$uagent, ip: $this->ip);
@@ -340,14 +340,12 @@ return (new class {
             }
             
             
+            
         }
         
         
         
     }
-    
-    
-    
     
     
     
