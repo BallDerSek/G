@@ -65,6 +65,7 @@ class locally {
     public static function eCaptcha($host, $ctx) {
 
         return styler("SOLVING eCaptcha", function() use ($host, $ctx) {
+            _sle(rand(3, 8));
             $ck = $ctx['cookie'];
             $ua = $ctx['uagent'];
             $in = $ctx['ins'];
@@ -85,7 +86,7 @@ class locally {
                 'selected' => $answer,
                 'token' => $token
             ];
-            _sle(rand(3, 8));
+            _sle(1);
             $post = json_decode(Net::X($host.'/ecaptcha/validate_icon', 'POST', $payload, $ck, [], $host, $ua, ip: $ip, ins: $in)?: '', true);
             #var_dump($post); #die;
             if (($post['status'] ?? '') === 'valid') {

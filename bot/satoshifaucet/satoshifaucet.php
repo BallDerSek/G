@@ -126,7 +126,6 @@ return (new class {
                     Logger::X('err', $_c);
                     
                     $ret99 = 0;
-                    
                     while (true) {
                         $ret99++;
                         $fau = Net::C($fa, 'GET', null, Inf::$cookie, $this->headersCF, $this->host, Inf::$uagent, d: true, ip: $this->ip);
@@ -138,7 +137,7 @@ return (new class {
                         $ret99 = 0;
                         
                         $fau = $this->checkCF($this->headersCF, $fa, $fau);
-                        _put('fau.html', $fau);
+                        #_put('fau.html', $fau);
                         if ($ban = $this->isBan($fau)) {
                             if (!$this->SLDONE) {
                                 $curr = $_c;
@@ -165,10 +164,16 @@ return (new class {
                             } else {
                                 if (stripos($fau, 'rate limit') !== false) continue 3;
                                 
+                                if (str_contains($fau, 'limit for this coin reached')) {
+                                    #_put('fau.html', $fau); 
+                                    $habis[$fa] = true;
+                                    break;
+                                }
                             }
                         }
                         
                         if (!empty($po)) {
+                            _sle(2);
                             #print_r($po);
                             $cla = Net::X($f['url'], 'POST', $po, Inf::$cookie, $this->headersCF, $fa, Inf::$uagent, ip: $this->ip);
                             
