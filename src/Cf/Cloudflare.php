@@ -3,7 +3,7 @@
 class Cloudflare {
     
     public static function solve($api, $url, $uagent, $data, $force = false) {
-        
+        $force = true;
         if (!$api) return false;
     
         $param = array_filter([
@@ -69,6 +69,24 @@ class Cloudflare {
                 'token' => $part[0] ?? null,
                 'ua' => $part[1] ?? null,
             ];
+        }
+
+        if (str_contains($className, 'skibidixxx')) {
+            if (preg_match('/cf_clearance=([^,]+),\s*user-agent:(.+)/', $res, $matches)) {
+                return [
+                    'token' => trim($matches[1]),
+                    'ua' => trim($matches[2]),
+                ];
+            }
+            
+            if (str_contains($res, ', user-agent:')) {
+                $parts = explode(', user-agent:', $res, 2);
+                $tokenPart = str_replace('cf_clearance=', '', $parts[0]);
+                return [
+                    'token' => trim($tokenPart),
+                    'ua' => trim($parts[1] ?? null),
+                ];
+            }
         }
 
         return null;
@@ -140,8 +158,5 @@ class Cloudflare {
         
         return null;
     }
-    
-    
-    
     
 }

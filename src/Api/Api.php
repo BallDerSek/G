@@ -414,7 +414,7 @@ final class Api {
         
         skibidixxx::class => [
             '_proxy_format' => 'uri',
-            'interstitiall' => [
+            'interstitial' => [
                 'api' => 'cf-uam','url' => 'domain', 'need' => ['proxy'], 
             ],
         ],

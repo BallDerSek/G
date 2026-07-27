@@ -81,7 +81,7 @@ return (new class {
                 $po = null;
                 
                 $_0 = Net::X($this->host.$this->r, 'GET', null, Inf::$cookie, $this->headersCF, '', Inf::$uagent, d: true);
-                $_0 = $this->checkCF($this->headersCF, $this->host, $_0);
+                $_0 = $this->checkCF($this->headersCF, $this->host, $_0, 1);
                 
                 if (!empty($_0) && $_0 !== 99) {
                     $f = Scraper::payload($_0)[0] ?? null;
@@ -128,11 +128,7 @@ return (new class {
                     $ret99 = 0;
                     while (true) {
                         $ret99++;
-                        if ($claimed >= 4) {
-                            @unlink(Inf::$cookie);
-                            _sle(10);
-                            goto login;
-                        }
+                        
                         $fau = Net::X($fa, 'GET', null, Inf::$cookie, $this->headersCF, $this->host, Inf::$uagent, d: true);
                         
                         if ($fau === 99) {
@@ -141,7 +137,7 @@ return (new class {
                         }
                         $ret99 = 0;
                         
-                        $fau = $this->checkCF($this->headersCF, $fa, $fau, 1);
+                        $fau = $this->checkCF($this->headersCF, $fa, $fau);
                         #_put('fau.html', $fau); die;
                         if ($ban = $this->isBan($fau)) {
                             if (!$this->SLDONE) {
@@ -157,8 +153,8 @@ return (new class {
                             $f = Scraper::payload($fau, 'fauform')[0] ?? null;
                             
                             if (!empty($f)) {
+                                
                                 $pa = $f['payload'];
-                                _sle(5);
                                 #$cap = $this->_cp($fau);
                                 $cap = Solve::exec($fau, $this->host, $this->api, $pa);
                                 
@@ -174,9 +170,8 @@ return (new class {
                         }
                         
                         if (!empty($po)) {
-                            $claimed++;
                             #print_r($po);
-                            $cla = Net::X($f['url'], 'POST', $po, Inf::$cookie, $this->headersCF, $fa, Inf::$uagent);
+                            $cla = Net::X($f['url'], 'POST', $po, Inf::$cookie, $this->headersCF, $host, Inf::$uagent);
                             #_put('cla.html', $cla); die;
                             
                             $mf = Scraper::_jP($cla, "/Toast\.fire\(\s*\{.*?icon:\s*'([^']+)'.*?html:\s*'([^']+)'/s");
@@ -193,7 +188,7 @@ return (new class {
                                 
                                 if (preg_match('/blacklisted|flagged|banned/i', $msg)) die;
                                 
-                                if (preg_match('/went wron/i', $msg)) die;
+                                if (preg_match('/went wron/i', $msg)) break;
                                 
                                 if (preg_match('/cation failed/i', $msg)) continue 3;
                                 
@@ -205,7 +200,7 @@ return (new class {
                                 
                             }
                             
-                            styler("waiting for next claim", fn() => _sle(rand(12, 20)));
+                            styler("waiting for next claim", fn() => _sle(8));
                         }
                         
                     }
@@ -351,7 +346,7 @@ return (new class {
         $img = null;
         $x_cap = ['ins' => 'ASC', 'cnt' => 3];
     
-        $req = Net::X($host.'/faucet/captcha_image?_t=' . (time() * 1000), 'GET', null, Inf::$cookie, [], $reff, Inf::$uagent, d: true);
+        $req = Net::X($host.'/faucet/captcha_image?_t=' . (time() * 1000), 'GET', null, Inf::$cookie, $this->headersCF, $reff, Inf::$uagent, d: true);
         
         if (!empty($req) && $req !== 99) {
             $x_pow = [
