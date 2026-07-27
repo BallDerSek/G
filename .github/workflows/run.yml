@@ -45,7 +45,7 @@ jobs:
           
           valid_targets = [t for t in targets if str(t) != "0"]
           
-          size = 6
+          size = 1
           batches = []
           for i in range(0, len(valid_targets), size):
               chunk = valid_targets[i:i + size]

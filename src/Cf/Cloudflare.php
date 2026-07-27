@@ -3,7 +3,7 @@
 class Cloudflare {
     
     public static function solve($api, $url, $uagent, $data, $force = false) {
-        $force = true;
+        #$force = true;
         if (!$api) return false;
     
         $param = array_filter([

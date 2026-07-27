@@ -22,13 +22,13 @@ class Inf {
         
     }
 
-    public static function netHead(array $cookie = []) {
-        if (empty($cookie)) return [];
-        
+    public static function netHead(array $ck = []) {
         $pairs = [];
-        foreach ($cookie as $k => $v) {
-            $pairs[] = "$k=$v";
-        }
+        
+        if (empty($ck)) return $pairs;
+        
+        foreach ($ck as $k => $v) $pairs[] = "$k=$v";
+        
         return ["Cookie: " . implode('; ', $pairs)];
     }
 

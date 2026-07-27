@@ -384,7 +384,7 @@ function onfCap($html, $host, $reff, $api, $headersCF) {
             'ins' => $req['headers']['x-captcha-instruction'][0] ?? 'ASC',
             'cnt' => (int)($req['headers']['x-captcha-target-count'][0] ?? 3)
         ];
-        $img = $req['body'];
+        $img = $req['body'] ?? null;
     }
     
     if (!empty($img)) {

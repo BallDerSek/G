@@ -264,7 +264,8 @@ class Solve {
         
         $solver = config::getKeys($api, $type);
     
-        $Params = array_merge($data, ['userAgent' => $ctx['uagent'] ?? '']);
+        #$Params = array_merge($data, ['userAgent' => $ctx['uagent'] ?? '']);
+        $Params = array_merge($data, []);
     
         $t = Retry::until(function() use ($solver, $api, $key, $host, $type, $Params) {
     

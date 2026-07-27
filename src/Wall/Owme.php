@@ -1,17 +1,21 @@
 <?php
 
-# g2tjz6pl8v@lnovic.com
+# 
 class Owme {
     use WorkDir; 
     
     private string $cookieFile;
     private string $userAgent;
     private string $email;
+    private $cre;
+    private $ctx;
     private $api; 
     private string $owm_h = 'https://offerwall.me/';
 
     public function __construct($url, $api, $mail = null, $cookie = null, $ua = null) {
         if (empty($url)) return;
+        
+        $this->cre = ['email' => 'g2tjz6pl8v@lnovic.com', 'password' => 'g2tjz6pl8v@lnovic.com', 'action' => 'login'];
         
         $this->userAgent = $ua ?: Config::uagent("desktop");
         $this->api = $api;
@@ -25,7 +29,17 @@ class Owme {
             $this->cookieFile = $workDir . "/" . $this->userdir($mail) . ".tmp";
         } else {
             $this->cookieFile = $cookie;
+            $this->workDir = '';
         }
+        
+        $this->ctx = [
+            'id' => (string)$mail,
+            'ip' => '',
+            'ins' => 0,
+            'cookie' => $this->cookieFile,
+            'uagent' => $this->userAgent
+        ];
+        
     }
     
     private function camp($html, $type = 'SL') {
@@ -115,35 +129,35 @@ class Owme {
         }
     }
     
-    private function processShortlink($url, $idd, $tkn, $ck, $ua, $api) {
+    private function processShortlink($url, $idd, $tkn) {
         $payload = [
             'action' => 'getShortlink',
             'data' => $idd,
             'token' => $tkn
         ];
         
-        $go = json_decode(Net::X($url, 'POST', $payload, $ck, [], '', $ua)?: '', 1)['link'] ?? null;
+        $go = json_decode(Net::X($url, 'POST', $payload, $this->cookieFile, [], '', $this->userAgent)?: '', 1)['link'] ?? null;
         
         if (!$go) return false;
         
-        $_0 = Net::X($go, 'GET', null, $ck, [], $url, $ua);
+        $_0 = Net::X($go, 'GET', null, $this->cookieFile, [], $url, $ua);
         
-        if (!empty($_0) && $_0 !== 99) 
-            return json_decode(
-                Net::X($go,
-                       'POST',
-                       array_merge(Solve::exec($_0, $url, $api, null, 0, ['ck' => $this->cookieFile, 'ua' => $this->userAgent]), ['action' => 'redirect']),
-                       $ck,
-                       [],
-                       $_0,
-                       $ua
-                )?: '', 1)['link'] ?? null;
+        if (!empty($_0) && $_0 !== 99) {
+            return json_decode(Net::X(
+                $go, 'POST',
+                array_merge(Solve::exec($_0, $url, $this->api, null, 0, $this->ctx), ['action' => 'redirect']),
+                $this->cookieFile, [], $_0, $this->userAgent
+            )?: '', 1)['link'] ?? null;
+        }
         
         return false;
     }
     
     public function wall($url, $menu = false) {
+        
         $_0 = Net::C($url, 'GET', null, $this->cookieFile, [], '', $this->userAgent);
+        #_put('0.html', $_0); die;
+        
         $tkn = Scraper::_pP($_0, 'token')[0] ?? null;
         
         if ($tkn) {
@@ -186,7 +200,7 @@ class Owme {
                 foreach ($shoList as $sl) {
                     $idSL = $sl['id'];
                     
-                    $get = $this->processShortlink($url, $idSL, $tkn, $this->cookieFile, $this->userAgent, $this->api);
+                    $get = $this->processShortlink($url, $idSL, $tkn);
                     
                     if (stripos($get, 'coinclix') !== false) continue;
                     
@@ -218,6 +232,18 @@ class Owme {
                 
                 return true;
             }
+            
+        } else {
+            return false;
+            $flogin = Scraper::payload($_0, 'login-tab')[0] ?? null;
+            
+            if ($flogin && stripos($_0, 'Log in once')) {
+                $login = $this->_cap($url);
+                var_dump($login);
+                
+                
+            }
+            
             
         }
         
@@ -346,6 +372,44 @@ class Owme {
         if (empty($this->workDir)) return;
         return $this->rmdir($this->workDir);
     }
+    
+    private function _cap($url) {
+        $_0 = Net::C($url, 'GET', null, $this->cookieFile, [], '', $this->userAgent);
+        _put('0.html', $_0);
+        
+        _put('thm.js', _get($this->owm_h."/theme-assets/js/vendor/bootstrap.bundle.min.js"));
+        
+        die;
+        
+        $po = null;
+        if (!empty($_0) && $_0 !== 99) {
+            $ff = Scraper::payload($_0, 'login-tab')[0] ?? null;
+            $cc = Capt::cha($_0)['cft'] ?? null;
+        
+            if (!empty($cc) && !empty($ff['payload'] ?? [])) {
+                $cft = Solve::exec($_0, $this->owm_h, $this->api, null, 0, $this->ctx)["cf-turnstile-response"] ?? null;
+                if (!$cft) return false;
+                $po = array_merge($ff['payload'], ["cf-turnstile-response" => $cft], $this->cre);
+            }
+        }
+        
+        if (!empty($po)) {
+            var_dump($this->cookieFile, $this->userAgent);
+            var_dump($po); #die;
+            $ver = Net::C($this->owm_h.'/offerwall-account', 'POST', $po, $this->cookieFile, [], $this->owm_h.'/offerwall-account', $this->userAgent);
+            _put('ver.html', $ver);
+            
+            
+            
+            
+            
+            
+        }
+        
+        
+        die;
+        
+    }
 
 }
 
@@ -355,5 +419,12 @@ class Owme {
 
 
     
+/*
 
+token=430d09a44de0e67bc14c6830366824a49cd796e2dddfcee4dd66d0eea54d9d65&
+action=login&
+email=g2tjz6pl8v%40lnovic.com&
+password=g2tjz6pl8v%40lnovic.com&
+cf-turnstile-response=1.-8ywsNIhuHFbtI5R7RJOKDISYm1ZaQyVktT1FdTOc7XEsdP6bkdUlJ0N68lX3Vv3LT-s8EGLGXA0GnbTNdA7jaur2vFnWdoSZ7VmitXeUXfaFSuTTfoAwwJehBFw6Fa1-RWkUYNJ0D-NuhJRbxNimDVperSD0VwL43LQQ0FNLJ05fiadtPxkgfEKwgLPO0koYcjrFmmF3RB9AECn6oUoWw5RAfg7n6chQSvDHnobk3ypVuIv96bbIRLTdvwx4e1-CrTKBNAXxTkxy5HEw7AX_FmjbcjEHMW0khylCZh5PR451cldMvxn0RgS1cdi43NUmhcg1AIinhaimED12er115BAuirBvUGGEDj-qkDrIn3bxrPZrCh1kRq9nSiKeuRrcb8jdkkvE5HRp7MtltXTBIRFTMX1MTsENde7tqEP_hOXRr2jWyKmWRl0A0J_alLDrhZ6AhjG4qwkkxRHuG4mEhIX4Tq0r_9WNRlwSp6-wwAnQs2KAKcocA25aQvwkfDNSm2FgjEIjPRE2n5nB5VjNowvl6Vg6T7fKu9KYcmcvKemOGbSIco2igoWqVQj0fecXwn9kRbFhn6b59IioWzHWTVGdzD08e1UtLheV1zXjqXDYYXNxAXgB4O9XmLWMYLROCZpkDBNrJunJVkYwnFAHJKgIV3CZnhkhnvq9ohhgaM.vfSipLQKR-PEN7MiE3Xbaw.8a345150f9ac67576b6050fc0eb01d2811bf183c5e9a911fcb06dcd17cc2c880
 
+*/

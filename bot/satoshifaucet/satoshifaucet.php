@@ -100,8 +100,8 @@ return (new class {
                 
                 if ($po) {
                     #print_r($po); #die;
-                    $ve = Net::X($this->host.'/auth/login', 'POST', $po, Inf::$cookie, $this->headersCF, $this->host.$this->r, Inf::$uagent, ip: $this->ip, d: true, foll: false);
-                    Net::save($ve, Inf::$cookie);
+                    $ve = Net::X($this->host.'/auth/login', 'POST', $po, Inf::$cookie, $this->headersCF, $this->host.$this->r, Inf::$uagent, ip: $this->ip);
+                    #Net::save($this->host, $ve, Inf::$cookie);
                     #_put('ve.html', $ve); die;
                 }
                 
@@ -163,10 +163,8 @@ return (new class {
                                 $po = array_merge($pa, $cap, $cre);
                                 
                             } else {
-                                if (stripos($fau, 'rate limit') !== false) {
-                                    @unlink(Inf::$cookie);
-                                    continue 3;
-                                }
+                                if (stripos($fau, 'rate limit') !== false) continue 3;
+                                
                             }
                         }
                         
@@ -208,7 +206,6 @@ return (new class {
                             }
                             
                             styler("waiting for next claim", fn() => _sle(10));
-                            
                             
                         }
                         
@@ -259,7 +256,7 @@ return (new class {
     private function _ck($html, $resp) {
         $_ck = Inf::$cookie;
         
-        Net::save($resp, $_ck);
+        Net::save($this->host, $resp, $_ck);
         
         $csrfToken = Scraper::find($html, 'csrf_token_name', 'input', 'value', 'name')[0] ?? null;
         if ($csrfToken) Inf::injectCookie($_ck, $csrfToken, $this->host, 'csrf_cookie_name');

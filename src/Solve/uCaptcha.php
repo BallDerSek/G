@@ -24,10 +24,7 @@ final class uCaptcha {
     }
 
     public function exec(array $ucap, $headersOnly = false) {
-        if (!getDeps('nodejs')) {
-            Logger::X('err', 'nodejs missing');
-            exit;
-        }
+        if (!getDeps('nodejs')) die(Logger::X('err', 'nodejs missing'));
     
         return styler("SOLVING uCaptcha", function () use ($ucap, $headersOnly) {
             try {

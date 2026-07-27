@@ -77,7 +77,6 @@ class locally {
             #var_dump($task); #die;
             if (empty($task['captcha_key']) || empty($task['question'])) return false;
             
-            // 3. Parsing Answer 
             $sel = explode(':', $task['question']);
             $answer = strtolower(trim(end($sel))) . '.gif';
             
@@ -86,7 +85,7 @@ class locally {
                 'selected' => $answer,
                 'token' => $token
             ];
-            _sle(5);
+            _sle(rand(3, 8));
             $post = json_decode(Net::X($host.'/ecaptcha/validate_icon', 'POST', $payload, $ck, [], $host, $ua, ip: $ip, ins: $in)?: '', true);
             #var_dump($post); #die;
             if (($post['status'] ?? '') === 'valid') {

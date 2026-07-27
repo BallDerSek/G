@@ -18,7 +18,7 @@ return (new class {
     private string $mail, $pass;
     
     private bool $claim = true;
-    private bool $SLDONE = false;
+    private bool $SLDONE = true;
     private bool $ADDONE = false;
     private array $headersCF = [];
     
@@ -171,7 +171,7 @@ return (new class {
                         
                         if (!empty($po)) {
                             #print_r($po);
-                            $cla = Net::X($f['url'], 'POST', $po, Inf::$cookie, $this->headersCF, $host, Inf::$uagent);
+                            $cla = Net::X($f['url'], 'POST', $po, Inf::$cookie, $this->headersCF, $this->host, Inf::$uagent);
                             #_put('cla.html', $cla); die;
                             
                             $mf = Scraper::_jP($cla, "/Toast\.fire\(\s*\{.*?icon:\s*'([^']+)'.*?html:\s*'([^']+)'/s");
@@ -190,7 +190,7 @@ return (new class {
                                 
                                 if (preg_match('/went wron/i', $msg)) break;
                                 
-                                if (preg_match('/cation failed/i', $msg)) continue 3;
+                                #if (preg_match('/cation failed/i', $msg)) continue 3;
                                 
                                 if (stripos($msg, 'Shortlink')) {
                                     if ($this->SLDONE) die;
