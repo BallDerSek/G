@@ -13,34 +13,34 @@ if (!defined('ANN')) {
     
     #foreround colours origin 
     define("FGo", [
-      "BLK" => ANN."30m", "RED" => ANN."31m",
-      "GRN" => ANN."32m", "YLW" => ANN."33m",
-      "BLU" => ANN."34m", "MAG" => ANN."35m",
-      "CYN" => ANN."36m", "WHT" => ANN."37m",
+        "BLK" => ANN."30m", "RED" => ANN."31m",
+        "GRN" => ANN."32m", "YLW" => ANN."33m",
+        "BLU" => ANN."34m", "MAG" => ANN."35m",
+        "CYN" => ANN."36m", "WHT" => ANN."37m",
     ]);
     
     #foreround colours bright 
     define("FGb", [
-      "BLK" => ANN."90m", "RED" => ANN."91m",
-      "GRN" => ANN."92m", "YLW" => ANN."93m",
-      "BLU" => ANN."94m", "MAG" => ANN."95m",
-      "CYN" => ANN."96m", "WHT" => ANN."97m",
+        "BLK" => ANN."90m", "RED" => ANN."91m",
+        "GRN" => ANN."92m", "YLW" => ANN."93m",
+        "BLU" => ANN."94m", "MAG" => ANN."95m",
+        "CYN" => ANN."96m", "WHT" => ANN."97m",
     ]);
     
     #foreround colours dark 
     define("FGd", [
-      "BLK" => DIMM.FGo["BLK"], "RED" => DIMM.FGo["RED"],
-      "GRN" => DIMM.FGo["GRN"], "YLW" => DIMM.FGo["YLW"],
-      "BLU" => DIMM.FGo["BLU"], "MAG" => DIMM.FGo["MAG"],
-      "CYN" => DIMM.FGo["CYN"], "WHT" => DIMM.FGo["WHT"],
+        "BLK" => DIMM.FGo["BLK"], "RED" => DIMM.FGo["RED"],
+        "GRN" => DIMM.FGo["GRN"], "YLW" => DIMM.FGo["YLW"],
+        "BLU" => DIMM.FGo["BLU"], "MAG" => DIMM.FGo["MAG"],
+        "CYN" => DIMM.FGo["CYN"], "WHT" => DIMM.FGo["WHT"],
     ]);
     
     #background colours 
     define("BG", [
-      "BLK" => ANN."40m", "RED" => ANN."41m",
-      "GRN" => ANN."42m", "YLW" => ANN."43m",
-      "BLU" => ANN."44m", "MAG" => ANN."45m",
-      "CYN" => ANN."46m", "WHT" => ANN."47m",
+        "BLK" => ANN."40m", "RED" => ANN."41m",
+        "GRN" => ANN."42m", "YLW" => ANN."43m",
+        "BLU" => ANN."44m", "MAG" => ANN."45m",
+        "CYN" => ANN."46m", "WHT" => ANN."47m",
     ]);
 
     define('RBW', [

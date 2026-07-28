@@ -126,7 +126,7 @@ return (new class {
                     
                     if (isset($habis[$fa])) {
                         $curr = '';
-                        continue 2;
+                        break;
                     }
                     
                     print(FGd['CYN']." ".ITAL.'processing  ');

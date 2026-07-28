@@ -5,13 +5,13 @@ class KEYS {
     private static $file = LIBDIR . '/apikey.json';
 
     private static $defaultEndpoints = [
-        'https://solverify.net' => '',
         'http://tertuyul.my.id' => '',
         'Xevil_check_bot.t.me' => '',
         'https://waryono.my.id' => '',
         'http://multibot.in' => '',
-        'https://capsolver.com' => '',
         'https://buxads.com/api-token' => '',
+        #'https://solverify.net' => '',
+        #'https://capsolver.com' => '',
     ];
 
     public static function sync() {

@@ -121,7 +121,7 @@ return (new class {
                     
                     if (isset($habis[$fa])) {
                         $curr = '';
-                        continue 2;
+                        break;
                     }
                     
                     print(FGd['CYN']." ".ITAL.'processing  ');
@@ -193,12 +193,12 @@ return (new class {
                                 $msg = $mf[3][0];
                                 $this->logger($stt, 'fct', $msg);
                                 
-                                if (preg_match('/sufficient|could not be processed/i', $msg)) {
+                                if (preg_match('/sufficient|could not be processed|faucet limit/i', $msg)) {
                                     $habis[$fa] = true;
                                     break;
                                 }
                                 
-                                if (preg_match('/blacklisted|flagged|banned/i', $msg)) {
+                                if (preg_match('/blacklisted|flagged|banned|cheat/i', $msg)) {
                                     die;
                                 }
                                 
