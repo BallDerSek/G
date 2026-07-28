@@ -192,7 +192,7 @@ return (new class {
                                 
                                 if (preg_match('/went wron/i', $msg)) break;
                                 
-                                #if (preg_match('/cation failed/i', $msg)) continue 3;
+                                if (preg_match('/cation failed/i', $msg)) continue 3;
                                 
                                 if (stripos($msg, 'Shortlink')) {
                                     if ($this->SLDONE) die;
