@@ -1,5 +1,5 @@
 <?php
-
+_die();
 return (new class {
     
     use Base;
@@ -27,7 +27,7 @@ return (new class {
         $this->api = onKeys();
         $this->domain = parse_url($this->host, PHP_URL_HOST);
         
-        $this->acc = Config::credential([], false, ['login', 'PROXY']);
+        $this->acc = Config::credential([], false, /*['login', 'PROXY']*/);
         putenv("PROXY=" . $this->acc['PROXY']);
         
         Proxy::load();
@@ -61,7 +61,7 @@ return (new class {
             $ret = 0;
             do {
                 $ret++;
-                $l = Inf::check("{$this->host}/dashboard", $this->headersCF, 'loginModalLabel');
+                $l = Inf::check("{$this->host}/dashboard", $this->headersCF, 'loginModalLabel', 1);
                 
                 if ($l['ok']) {
                     $dash = $l['html'];
@@ -98,11 +98,12 @@ return (new class {
                 if ($po) {
                     #print_r($po);
                     $ve = Net::X("{$this->host}/login", 'POST', $po, Inf::$cookie, $this->headersCF, $this->host.$this->r, Inf::$uagent);
+                    #_put('ve.html', $ve); #die;
                 }
                 
                 
             } while (empty($dash));
-            #_put('dash.html', $dash);
+            _put('dash.html', $dash); die;
             
             $_bal = Scraper::_xP($dash, "//div[contains(@class, 'card-body')][.//h6[contains(text(), 'Balance')]]//h5[contains(text(), 'Coins')]/text()")[0] ?? null;
             if ($_bal) {
@@ -267,6 +268,6 @@ return (new class {
             ]
         ];
     }
-
+    
 
 })->exec();

@@ -12,6 +12,7 @@ class Inf {
         self::$cookie = $ck;
         self::$ip = $ip;
         self::$ins = $ins;
+        
         self::$context = [
             'id' => (string)$id,
             'ip' => (string)$ip,

@@ -26,7 +26,7 @@ return (new class {
         $this->api = onKeys();
         $this->domain = parse_url($this->host, PHP_URL_HOST);
         
-        $this->acc = Config::credential(['ua' => fn() => Config::uagent('mobile')], false, ['login', 'PROXY']);
+        $this->acc = Config::credential(['ua' => fn() => Config::uagent('mobile')], false, /*['login', 'PROXY']*/);
         putenv("PROXY=" . $this->acc['PROXY']);
         
         Proxy::load();
@@ -53,6 +53,8 @@ return (new class {
         $curr = '';
         $skipped = [];
         $claimed = 0;
+        
+        $this->headersCF = inf::Nethead(array_merge($this->headersCF, $this->adcookie()));
         
         login:
             Proxy::load();
@@ -129,7 +131,7 @@ return (new class {
                     while (true) {
                         $ret99++;
                         
-                        $fau = Net::X($fa, 'GET', null, Inf::$cookie, $this->headersCF, $this->host, Inf::$uagent, d: true);
+                        $fau = Net::X($fa, 'GET', null, Inf::$cookie, $this->headersCF, $fa, Inf::$uagent, d: true);
                         
                         if ($fau === 99) {
                             if ($ret99 >= 5) goto login;
@@ -137,8 +139,8 @@ return (new class {
                         }
                         $ret99 = 0;
                         
-                        $fau = $this->checkCF($this->headersCF, $fa, $fau);
-                        #_put('fau.html', $fau); die;
+                        $fau = $this->checkCF($this->headersCF, $fa, $fau, 1);
+                        
                         if ($ban = $this->isBan($fau)) {
                             if (!$this->SLDONE) {
                                 $curr = $_c;
@@ -170,9 +172,9 @@ return (new class {
                         }
                         
                         if (!empty($po)) {
-                            #print_r($po);
-                            $cla = Net::X($f['url'], 'POST', $po, Inf::$cookie, $this->headersCF, $this->host, Inf::$uagent);
-                            #_put('cla.html', $cla); die;
+                            #print_r($po); die;
+                            $cla = Net::X($f['url'], 'POST', $po, Inf::$cookie, $this->headersCF, $fa, Inf::$uagent);
+                            #_put('cla.html', $cla); #die;
                             
                             $mf = Scraper::_jP($cla, "/Toast\.fire\(\s*\{.*?icon:\s*'([^']+)'.*?html:\s*'([^']+)'/s");
                             if (!empty($mf[2][0])) {
@@ -338,9 +340,7 @@ return (new class {
         
     }
     
-    
-    
-    
+
     private function onfCap($html, $host, $reff) {
         $setCAP = microtime(true);
         $img = null;

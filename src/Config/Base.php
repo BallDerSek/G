@@ -145,44 +145,53 @@ trait Base {
     }
     
     public function adcookie($refresh = false) {
+        _sle(3);
         static $cached = null;
-        
         if ($cached && !$refresh) return $cached;
         
         $now = time();
         
         static $clientId = null;
-        if (!$clientId) $clientId = 896547868;
+        if (!$clientId) $clientId = 691235932;
         
-        static $gaSession = null;
-        if (!$gaSession) $gaSession = 's' . $now . '$o26$g1$t' . $now . '$j' . rand(40, 60) . '$l0$h0';
+        static $sessionStart = null;
+        if (!$sessionStart) $sessionStart = $now;
         
-        $popAds = ['992-1-' . ($now + rand(0, 300)), '994-1-' . ($now + rand(0, 300)), '995-1-' . ($now + rand(0, 300))];
-        $data_pop = implode('_', $popAds);
+        static $sessionCount = 1;
+        $gaSession = 's' . $sessionStart . '$o' . $sessionCount++ . '$g1$t' . $now . '$j' . rand(10, 30) . '$l0$h0';
         
-        $cpcAds = [
-            '894-2-' . ($now + rand(0, 300)),
-            '1001-1-' . ($now + rand(0, 300)),
-            '1067-4-' . ($now + rand(0, 300)),
-            '1068-2-' . ($now + rand(0, 300)),
-            '1174-3-' . ($now + rand(0, 300))
-        ];
-        $data_cpc = implode('_', $cpcAds);
+        $popTime = $now + rand(3600, 3660);
+        $data_pop = '992-1-' . $popTime;
+        
+        $cpcTime = $now + rand(3600, 3660);
+        $data_cpc = '632-1-' . $cpcTime;
         
         static $cc_pu = null;
         if (!$cc_pu) $cc_pu = '9a36387661f7b638';
+        
+        static $bitmedia_fid = null;
+        if (!$bitmedia_fid) {
+            $fid = bin2hex(random_bytes(15));
+            $fidnoua = bin2hex(random_bytes(16));
+            $payload = ['fid' => $fid, 'fidnoua' => $fidnoua];
+            $bitmedia_fid = base64_encode(json_encode($payload));
+        }
         
         $cached = [
             '_ga' => 'GA1.1.' . $clientId . '.' . $now,
             '_ga_8MW4PHBZKX' => 'GS2.1.' . $gaSession,
             '_data_pop' => $data_pop,
             '_data_cpc' => $data_cpc,
+            'pop_delay_12321' => '1',
             'cc_pu' => $cc_pu,
-            'bitmedia_fid' => 'eyJmaWQiOiIxMzBlY2JiMDAxMGIwMGMwNzI4MDgxZWNkYjA5ZmMyZCIsImZpZG5vdWEiOiJkZTg5NDM4ODFmYWNlNTI3ZGQxMDVhYTI2YTYwZGEzOCJ9'
+            'bitmedia_fid' => $bitmedia_fid
         ];
         
         return $cached;
     }
+
+
+
     
     
 }
