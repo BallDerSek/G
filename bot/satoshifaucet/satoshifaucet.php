@@ -21,6 +21,8 @@ return (new class {
     private bool $SLDONE = true;
     private bool $ADDONE = false;
     private array $headersCF = [];
+    private bool $atbforce = false;
+    private int $atbfail = 0;
     
     public function __construct() {
         $this->api = onKeys();
@@ -148,6 +150,7 @@ return (new class {
                         }
                         
                         $po = null;
+                        $this->atbforce = $this->atbfail >= 3;
                         if (!empty($fau) && $fau !== 99) {
                             $f = Scraper::payload($fau, 'fauform')[0] ?? null;
                             
@@ -156,7 +159,7 @@ return (new class {
                                 $cre = ['uf' => md5($this->mail), 'ls' => LANGUAGE(), 'utt' => TIMEZONE(), 'wallet' => $this->mail];
                                 
                                 #$cap = $this->_cp($fau);
-                                $cap = Solve::exec($fau, $this->host, $this->api, $pa);
+                                $cap = Solve::exec($fau, $this->host, $this->api, $pa, $this->atbforce);
                                 
                                 if (isset($cap['trouble'])) continue;
                                 $po = array_merge($pa, $cap, $cre);
@@ -178,6 +181,8 @@ return (new class {
                             $cla = Net::X($f['url'], 'POST', $po, Inf::$cookie, $this->headersCF, $fa, Inf::$uagent, ip: $this->ip);
                             
                             if (empty($cla) || ($cla === 99)) continue;
+                            
+                            checkATB($this->atbfail, $cla);
                             
                             if (stripos($cla, 'rate limited') !== false) goto login;
                             
@@ -206,6 +211,11 @@ return (new class {
                                     if ($this->SLDONE) die;
                                     $curr = $_c;
                                     break 2;
+                                }
+                                
+                                if (stripos($msg, 'has been sent')) {
+                                    $this->atbforce = false;
+                                    $this->atbfail = 0;
                                 }
                                 
                             }
