@@ -47,13 +47,13 @@ final class Api {
                 'k'=>'siteKey','url'=>'domain','api'=>'cloudflare', 'defaults' => ['method' => 'turnstile'], 'map' => ['cdata' => 'cData']
                 ],
 
+            /*
             'cf' => [
                 'k'=>'siteKey','url'=>'domain','api'=>'popularcaptcha', 'defaults' => ['method' => 'turnstile']
                 ],
             'hc' => [
                 'k'=>'siteKey','url'=>'domain','api'=>'popularcaptcha', 'defaults' => ['method' => 'hcaptcha']
                 ],
-            /*
             'rc2' => [
                 'k'=>'siteKey','url'=>'domain','api'=>'popularcaptcha', 'defaults' => ['method' => 'recaptcha2']
                 ],
