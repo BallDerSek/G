@@ -83,6 +83,7 @@ class Bctt {
             }
             
             $cc_js = null;
+            #_put('ccpre.html', $cc_pre); #die;
             if (!empty($cc_pre) && $cc_pre !== 99) {
                 $cap_u = Scraper::_xP($cc_pre, "//script[contains(@src,'captcha2/')]/@src")[0] ?? null;
                 
@@ -95,6 +96,7 @@ class Bctt {
             $fjs = null;
             $solution = null;
             if (!empty($cc_js) && $cc_js !== 99) {
+                #_put('cc.js', $cc_js); #die;
                 preg_match('/fetch\("([^"]+captcha[^"]+\.js\?action=captcha)"/', $cc_js, $m);
                 $cc_ep = $m[1] ?? $cap_u;
                 $fjs = $this->_get($cc_js);
@@ -285,7 +287,7 @@ class Bctt {
             }
         }
         
-        #_put('ccpre.html', $cc_pre); die;
+        #_put('ccpre.html', $cc_pre); #die;
         
         if (!empty($cc_pre) && $cc_pre !== 99) {
             Net::X($cc_getG, 'POST', ['action' => 'start_view'], $this->cookieFile, [], $cc_getG, $this->userAgent);
@@ -348,6 +350,7 @@ class Bctt {
 
         if (!empty($param) && $cc_getG) {
             $cc_js = Net::C($this->bct_h . $cap_u, 'GET', null, $this->cookieFile, [], $cc_getG, $this->userAgent);
+            #_put('cc.js', $cc_js); #die;
             
             $fjs = null;
             $solution = null;
@@ -358,17 +361,20 @@ class Bctt {
                 $fjs = $this->_get($cc_js);
                 
                 $cc_p0 = [
-                    't' => round(microtime(true) * 1000),
+                    #'t' => round(microtime(true) * 1000),
+                    't' => (int)(microtime(true) * 1000),
                     'r' => mt_rand() / mt_getrandmax()
                 ];
+                #var_dump($this->bct_h . $cc_ep, $cc_p0);
                 
-                $cap_get = json_decode(Net::X($this->bct_h . $cc_ep, 'POST', $cc_p0, $this->cookieFile, [], $cc_getG, $this->userAgent, true) ?: '', true);
+                $cap_get = json_decode(Net::X($this->bct_h . $cc_ep, 'POST', $cc_p0, $this->cookieFile, [], $cc_getG, $this->userAgent, json: 1) ?: '', true);
                 
                 if (!empty($cap_get['options']) && !empty($cap_get['pixel'])) {
                     $solution = $this->_solve($cap_get);
                 }
             }
             
+            #var_dump($cap_get, $param, $cc_getG, $fjs);
             if ($fjs && is_array($solution)) {
                 $cc_p1 = $this->_buildPayload($fjs, $param, $solution);
                 $cap_tok = json_decode(Net::X($this->bct_h . $cc_p1['url'], 'POST', $cc_p1['payload'], $this->cookieFile, [], $cc_getG, $this->userAgent) ?: '', true)[$fjs['cc_ver']] ?? false;
@@ -400,6 +406,7 @@ class Bctt {
         $result = [];
         
         $m = Scraper::_jP($js, '/var payload = "([^"]+)"/')[1] ?? null;
+        #var_dump($m);
         if (!empty($m[0])) {
             parse_str($m[0], $parsed);
             foreach ($parsed as $key => $value) {
@@ -531,6 +538,51 @@ class Bctt {
         
         return [
             'url' => $fjs['cc_end'],
+            'payload' => $payload,
+        ];
+    }
+    
+    private function _gettt($js) {
+        $result = [];
+        
+        preg_match('/fetch\("([^"]+captcha2[^"]+)"\s*,\s*\{/', $js, $m);
+        $result['cc_init'] = $m[1] ?? null;
+        
+        preg_match('/xhr\.open\("POST",\s*"([^"]+captcha2[^"]+)"/', $js, $m);
+        $result['cc_verify'] = $m[1] ?? null;
+        
+        if (empty($result['cc_verify'])) return false;
+        
+        return $result;
+    }
+    
+    private function _buildPayloaddd($fjs = null, $param = null, $solution = null) {
+
+        $elapsed = $param['elapsed'] ?? rand(3000, 6000);
+        $moveCount = $param['moveCount'] ?? rand(2, 5);
+        $canvasFingerprint = $param['canvasFingerprint'] ?? 1894;
+        $selectedIndex = $param['selectedIndex'] ?? $solution['cap'] ?? 0;
+        
+        $ch = $solution['pow']['ch'] ?? $fjs['cc_challenge'] ?? '';
+        $nonce = $solution['pow']['nonce'] ?? rand(1000, 9999);
+        $hash = $solution['pow']['hash'] ?? '';
+        
+        $payload = [
+            'selected' => json_encode([(int)$selectedIndex]),
+            '_et' => (string)$elapsed,
+            '_mv' => (string)$moveCount,
+            '_cf' => (string)$canvasFingerprint,
+            '_pw' => json_encode(['nonce' => $nonce, 'hash' => $hash]),
+            '_ch' => $ch,
+            '_bh' => hash('sha256', $elapsed . ':' . $nonce . ':' . $ch)
+        ];
+        
+        $payload = array_filter($payload, function($v) {
+            return $v !== '' && $v !== null;
+        });
+        
+        return [
+            'url' => $fjs['cc_verify'] ?? $fjs['cc_end'],
             'payload' => $payload,
         ];
     }

@@ -90,7 +90,7 @@ trait Base {
         
         if (!$html || !$code) return null;
         
-        if ($code === 200 || stripos($html, 'Just a moment') === false) return $html;
+        if ($code === 200 || (stripos($html, 'Just a moment') === false)) return $html;
         
         $result = $this->_cf($hh, $url, $html, false, $ads);
         
@@ -108,18 +108,11 @@ trait Base {
         
         if ($ads) {
             $cookies = $this->adcookie(true);
-            foreach ($cookies as $name => $value) {
-                Inf::injectCookie(Inf::$cookie, $value, $this->host, $name);
-            }
-            
-            foreach ($cookies as $key => $value) {
-                $hh[$key] = $value;
-            }
+            foreach ($cookies as $name => $value) Inf::injectCookie(Inf::$cookie, $value, $this->host, $name);
+            foreach ($cookies as $key => $value) $hh[$key] = $value;
         }
         
-        foreach ($hhh as $key => $value) {
-            $hh[$key] = $value;
-        }
+        foreach ($hhh as $key => $value) $hh[$key] = $value;
         
         Inf::setup($ua, Inf::$cookie);
         if (empty($hh)) return null;
@@ -129,6 +122,7 @@ trait Base {
         for ($try = 1; $try <= 3; $try++) {
             _sle(3);
             $fix = Net::X($url, 'GET', null, Inf::$cookie, $cookieHeader, $url, Inf::$uagent, d: true);
+            #var_dump($fix); die;
             
             if (!empty($fix) && isset($fix['http_code'])) {
                 $_c = $fix['http_code'];

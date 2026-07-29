@@ -1,5 +1,5 @@
 <?php
-
+_die();
 return (new class {
     
     use Base;
@@ -79,7 +79,7 @@ return (new class {
                 Logger::X('err', "logging in", false); 
                 _sle(3); _clr();
                 $po = null;
-                $_0 = Net::C("{$this->host}/login", 'GET', null, Inf::$cookie, [], '', Inf::$uagent, false, false, $this->ip);
+                $_0 = Net::C("{$this->host}/login", 'GET', null, Inf::$cookie, [], $this->host, Inf::$uagent, ip: $this->ip);
                 
                 if (!empty($_0) && $_0 !== 99) {
                     $f = Scraper::payload($_0)[0] ?? null;
@@ -100,8 +100,8 @@ return (new class {
                 }
                 
                 if ($po) {
-                    #print_r($po); die;
-                    $ve = Net::C($this->host.'/login', 'POST', $po, Inf::$cookie, [], $this->host.'/login', Inf::$uagent, ip: $this->ip);
+                    #print_r($po); #die;
+                    $ve = Net::X($this->host.'/login', 'POST', $po, Inf::$cookie, [], $this->host.'/login', Inf::$uagent, ip: $this->ip);
                     
                     $msg_d = Scraper::_jP($ve, '/type:\s*["\']([^"\']+)["\'],\s*message:\s*["\']([^"\']+)["\']/s')[2][0] ?? null;
                     if (!empty($msg_d)) {
