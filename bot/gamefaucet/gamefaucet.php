@@ -18,7 +18,7 @@ return (new class {
     private string $mail, $pass;
     
     private bool $claim = true;
-    private bool $SLDONE = true;
+    private bool $SLDONE = false;
     private bool $ADDONE = false;
     private array $headersCF = [];
     
@@ -141,11 +141,13 @@ return (new class {
                         
                         $po = null;
                         if (!empty($fau) && $fau !== 99) {
+                            $setF = microtime(1);
                             $f = Scraper::payload($fau)[0] ?? null;
+                            #var_dump($f); die;
                             
                             if (!empty($f)) {
                                 $pa = $f['payload'];
-                                $cre = ['uf' => md5($this->mail), 'ls' => LANGUAGE(), 'utt' => TIMEZONE()];
+                                $cre = ['uf' => md5($this->mail), 'ls' => LANGUAGE(), 'utt' => TIMEZONE(), 'wallet' => $this->mail];
                                 
                                 #$cap = $this->_cp($fau);
                                 $cap = Solve::exec($fau, $this->host, $this->api, $pa);
@@ -162,7 +164,17 @@ return (new class {
                         }
                         
                         if (!empty($po)) {
-                            $cla = Net::C($f['url'], 'POST', $po, Inf::$cookie, $this->headersCF, $this->host, Inf::$uagent);
+                            if (isset($po['bh_dwell'])) {
+                                $endF = microtime(1);
+                                $dwell = (int)(($endF - $setF) * 1000);
+                                $dwell += rand(-500, 500);
+                                $po['bh_dwell'] = $dwell;
+                                $po['bh_interacted'] = 1;
+                                $po['bh_gesture'] = 1;
+                                #print_r($po); die;
+                            }
+                            
+                            $cla = Net::X($f['url'], 'POST', $po, Inf::$cookie, $this->headersCF, $this->host, Inf::$uagent);
                             #_put('cla.html', $cla);
                             
                             if (empty($cla) || ($cla === 99)) continue;

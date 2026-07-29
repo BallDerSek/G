@@ -18,7 +18,7 @@ return (new class {
     private string $mail, $pass;
     
     private bool $claim = true;
-    private bool $SLDONE = true;
+    private bool $SLDONE = false;
     private bool $ADDONE = false;
     private array $headersCF = [];
     
@@ -147,10 +147,11 @@ return (new class {
                         $po = null;
                         if (!empty($fau) && $fau !== 99) {
                             $f = Scraper::payload($fau)[0] ?? null;
+                            #var_dump($f); die;
                             
                             if (!empty($f)) {
                                 $pa = $f['payload'];
-                                $cre = ['uf' => md5($this->mail), 'ls' => LANGUAGE(), 'utt' => TIMEZONE()];
+                                $cre = ['uf' => md5($this->mail), 'ls' => LANGUAGE(), 'utt' => TIMEZONE(), 'wallet' => $this->mail];
                                 
                                 #$cap = $this->_cp($fau);
                                 $cap = Solve::exec($fau, $this->host, $this->api, $pa);
