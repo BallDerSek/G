@@ -63,8 +63,7 @@ while (!empty($accs)) {
         }
     }
 
-    if (empty($calls))
-        break;
+    if (empty($calls)) break;
 
     $_0 = styler("Preparing " . count($calls) . " payloads", function() use ($calls) {
         return Mux::C(...$calls);
@@ -74,8 +73,7 @@ while (!empty($accs)) {
     $postKeys = [];
 
     foreach ($_0 as $j => $html) {
-        if (empty($html))
-            continue;
+        if (empty($html)) continue;
 
         $info = $keys[$j];
         $f = Scraper::payload($html);
@@ -144,17 +142,6 @@ while (!empty($accs)) {
             } else
                 Logger::X();
             @unlink($info['cFile']);
-        }
-
-        foreach ($processedUrls as $idx => $urlsProcessed) {
-            foreach ($urlsProcessed as $url) {
-                $sKey = array_search($url, $accs[$idx]['sites']);
-                if ($sKey !== false)
-                    unset($accs[$idx]['sites'][$sKey]);
-            }
-            if (empty($accs[$idx]['sites'])) {
-                $toRemoveAcc[] = $idx;
-            }
         }
 
         if (!empty($toRemoveAcc)) {

@@ -144,7 +144,7 @@ return (new class {
                         $ret99 = 0;
                         
                         $fau = $this->checkCF($this->headersCF, $fa, $fau);
-                        #_put('fau.html', $fau);
+                        #_put('fau.html', $fau); die;
                         $po = null;
                         if (!empty($fau) && $fau !== 99) {
                             $f = Scraper::payload($fau)[0] ?? null;

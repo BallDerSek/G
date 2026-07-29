@@ -152,6 +152,12 @@ return (new class {
                                 if (isset($cap['trouble'])) continue;
                                 $po = array_merge($pa, $cap, $cre);
                                 
+                            } else {
+                                if (stripos($fau, 'complete atleast 1')) {
+                                    if ($this->SLDONE) die;
+                                    $curr = $_c;
+                                    break 2;
+                                }
                             }
                         }
                         
@@ -174,9 +180,7 @@ return (new class {
                                     break;
                                 }
                                 
-                                if (preg_match('/blacklisted|flagged|banned/i', $msg)) {
-                                    die;
-                                }
+                                if (preg_match('/blacklist|flagged|banned|nti fraud/i', $msg)) die;
                                 
                                 if (stripos($msg, 'Shortlink')) {
                                     if ($this->SLDONE) die;
