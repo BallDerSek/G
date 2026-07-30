@@ -304,13 +304,14 @@ return (new class {
                                         $this->logger($stt, 'sho', $msg);
                                         
                                         if (preg_match('/sufficient|could not be processed/i', $msg)) {
-                                        $sidx = array_search($sl, $_sl);
-                                        
-                                        if ($sidx !== false && isset($_sl[$sidx + 1])) $curr = basename($_sl[$sidx + 1]);
+                                            $sidx = array_search($sl, $_sl);
                                             
-                                        else $curr = '';
-                                        
+                                            if ($sidx !== false && isset($_sl[$sidx + 1])) $curr = basename($_sl[$sidx + 1]);
+                                            
+                                            else $curr = '';
+                                            
                                         }
+                                        break 3;
                                     }
                                     
                                     if (stripos($cla, 'has been sent')) $success_in_page = true;

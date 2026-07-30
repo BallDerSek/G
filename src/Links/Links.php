@@ -92,6 +92,7 @@ final class Links {
         
         low_start:
         $html = Net::C($_0, 'GET', null, $this->cookie, [], $reff, $this->uagent);
+        #_put('res.html', $html);
         if (!$html || $html === 99) {
             $this->enableProxy();
             goto low_start;

@@ -234,7 +234,7 @@ return (new class {
                     $ret99 = 0;
                     
                     $short = Shortlinks::extract($sho);
-                    if (empty($short)) continue;
+                    if (empty($short)) continue 3;
                     #print_r($short); die;
                     
                     $success_in_page = false;
@@ -298,6 +298,8 @@ return (new class {
                                         else $curr = '';
                                         
                                     }
+                                    
+                                    break 3;
                                 }
                                 
                                 if (stripos($ver, 'has been sent to your')) $success_in_page = true;

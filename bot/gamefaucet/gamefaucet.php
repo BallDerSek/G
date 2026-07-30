@@ -303,6 +303,8 @@ return (new class {
                                         else $curr = '';
                                         
                                     }
+                                    
+                                    break 3;
                                 }
                                 
                                 if (stripos($ver, 'has been sent to your')) $success_in_page = true;
