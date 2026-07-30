@@ -84,7 +84,7 @@ return (new class {
                 
                 $_0 = Net::X($this->host.$this->r, 'GET', null, Inf::$cookie, $this->headersCF, '', Inf::$uagent, d: true);
                 $_0 = $this->checkCF($this->headersCF, $this->host, $_0, 1);
-                var_dump($_0);
+                
                 if (!empty($_0) && $_0 !== 99) {
                     $f = Scraper::payload($_0)[0] ?? null;
                     #var_dump($f); die;
@@ -104,7 +104,6 @@ return (new class {
                 if ($po) {
                     #print_r($po); die;
                     $ve = Net::X($f['url'], 'POST', $po, Inf::$cookie, $this->headersCF, $this->host.$this->r, Inf::$uagent);
-                    var_dump($ve);
                     #_put('ve.html', $ve); die;
                 }
                 
