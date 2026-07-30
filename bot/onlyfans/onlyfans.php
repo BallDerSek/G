@@ -190,12 +190,12 @@ return (new class {
                                 
                                 if (preg_match('/blacklisted|flagged|banned/i', $msg)) die;
                                 
-                                if (preg_match('/went wron/i', $msg)) break;
-                                
-                                if (preg_match('/cation failed/i', $msg)) {
-                                    #_sle(10);
-                                    continue 3;
+                                if (preg_match('/went wron/i', $msg)) {
+                                    _sle(60);
+                                    break;
                                 }
+                                
+                                if (preg_match('/cation failed/i', $msg)) continue 3;
                                 
                                 if (stripos($msg, 'Shortlink')) {
                                     if ($this->SLDONE) die;
