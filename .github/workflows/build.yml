@@ -17,29 +17,28 @@ jobs:
       - name: Generate Dockerfile
         run: |
           cat <<'EOF' > Dockerfile
-          FROM php:8.2-cli-bookworm
+          FROM php:8.2-cli-alpine
 
           WORKDIR /workspace
 
-          RUN apt-get update && apt-get install -y --no-install-recommends \
+          RUN apk add --no-cache \
+              curl \
               git \
               unzip \
-              curl \
               ca-certificates \
               imagemagick \
-              sshpass \
               python3 \
-              python3-pip \
+              py3-pip \
               nodejs \
               npm \
               tesseract-ocr \
-              tesseract-ocr-eng \
+              freetype \
+              libpng \
+              libjpeg-turbo \
+              freetype-dev \
               libpng-dev \
-              libjpeg62-turbo-dev \
-              libfreetype6-dev \
-              && rm -rf /var/lib/apt/lists/*
-
-          RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
+              libjpeg-turbo-dev \
+              && docker-php-ext-configure gd --with-freetype --with-jpeg \
               && docker-php-ext-install gd
 
           RUN npm install -g deobfuscator synchrony
