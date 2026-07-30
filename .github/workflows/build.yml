@@ -47,7 +47,6 @@ jobs:
           ENV CI=1
           EOF
 
-
       - name: Login GHCR
         uses: docker/login-action@v3
         with:
@@ -55,11 +54,17 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and Push
+      - name: Build
         run: |
           IMAGE_NAME="ghcr.io/${{ github.repository_owner }}/71:latest"
-
           docker build -t $IMAGE_NAME .
-          docker push $IMAGE_NAME
 
+      - name: Check versions
+        run: |
+          docker run --rm ghcr.io/${{ github.repository_owner }}/71:latest php -r "echo 'PHP: ' . PHP_VERSION . PHP_EOL; echo 'cURL: ' . curl_version()['version'] . PHP_EOL; echo 'SSL: ' . curl_version()['ssl_version'] . PHP_EOL; echo 'Libz: ' . curl_version()['libz_version'] . PHP_EOL;"
+
+      - name: Push
+        run: |
+          IMAGE_NAME="ghcr.io/${{ github.repository_owner }}/71:latest"
+          docker push $IMAGE_NAME
           echo "Image ready: $IMAGE_NAME"
