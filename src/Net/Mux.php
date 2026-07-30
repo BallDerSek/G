@@ -20,9 +20,20 @@ class Mux {
         # 3. PROXY
         if (!empty($opt['proxy'])) {
             $p = $opt['proxy'];
+            
+            if (is_string($p)) {
+                $parsed = parse_url($p);
+                $p = [
+                    'host' => $parsed['host'] ?? '',
+                    'port' => $parsed['port'] ?? 8080,
+                    'type' => CURLPROXY_HTTP,
+                    'auth' => isset($parsed['user']) ? $parsed['user'] . ':' . ($parsed['pass'] ?? '') : null
+                ];
+            }
+            
             curl_setopt($ch, CURLOPT_PROXY, $p['host']);
             curl_setopt($ch, CURLOPT_PROXYPORT, $p['port']);
-            curl_setopt($ch, CURLOPT_PROXYTYPE, $p['type']);
+            curl_setopt($ch, CURLOPT_PROXYTYPE, $p['type'] ?? CURLPROXY_HTTP);
             if (!empty($p['auth'])) {
                 curl_setopt($ch, CURLOPT_PROXYUSERPWD, $p['auth']);
             }

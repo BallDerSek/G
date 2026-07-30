@@ -40,7 +40,7 @@ class rsResponse {
         $i = $this->workDir . '/i.js';
         $o = $this->workDir . '/o.js';
         $hasil = SolveUtils::dumpJs($jsContent, $i);
-        if ($hasil && is_file($i)) exec("synchrony $i -o $o");
+        if ($hasil && is_file($i)) exec("synchrony " . escapeshellarg($i) . " -o " . escapeshellarg($o) . " >/dev/null 2>&1");
         
         if ($hasil && is_file($o)) $token = $this->_token($o, $x, $y, $this->uagent);
         
@@ -101,5 +101,6 @@ class rsResponse {
         $rss = new rsBuilders();
         return $rss->build($y, $x, $html);
     }
+    
 }
 
