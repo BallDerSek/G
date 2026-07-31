@@ -28,7 +28,7 @@ return (new class {
         $this->api = onKeys();
         $this->domain = parse_url($this->host, PHP_URL_HOST);
         
-        $this->acc = Config::credential(['ua' => fn() => Config::uagent('mobile')], false, ['login', 'PROXY']);
+        $this->acc = Config::credential(['ua' => fn() => Config::uagent('mobile')], false, /*['login', 'PROXY']*/);
         putenv("PROXY=" . $this->acc['PROXY']);
         
         Proxy::load();
@@ -153,9 +153,17 @@ return (new class {
                         $this->atbforce = $this->atbfail >= 3;
                         if (!empty($fau) && $fau !== 99) {
                             $f = Scraper::payload($fau, 'fauform')[0] ?? null;
+                            #var_dump($f); die;
                             
                             if (!empty($f)) {
                                 $pa = $f['payload'];
+                                $_ca = $pa['captcha'] ?? '';
+                                
+                                if  (($_ca === 'advanced_captcha') && isset($pa['fc_token'])) {
+                                    $fcc = $this->_fc($fau,$fa);
+                                    $pa['fc_token'] = $fcc;
+                                }
+                                
                                 $cre = ['uf' => md5($this->mail), 'ls' => LANGUAGE(), 'utt' => TIMEZONE(), 'wallet' => $this->mail];
                                 
                                 #$cap = $this->_cp($fau);
@@ -177,7 +185,7 @@ return (new class {
                         
                         if (!empty($po)) {
                             _sle(2);
-                            #print_r($po);
+                            #print_r($po); die;
                             $cla = Net::X($f['url'], 'POST', $po, Inf::$cookie, $this->headersCF, $fa, Inf::$uagent, ip: $this->ip);
                             
                             if (empty($cla) || ($cla === 99)) continue;
@@ -268,14 +276,49 @@ return (new class {
         
     }
     
-    private function _ck($html, $resp) {
-        $_ck = Inf::$cookie;
+    private function _fc($html, $reff) {
         
-        Net::save($this->host, $resp, $_ck);
+        $task = json_decode(Net::C(
+            $this->host.'/faucetcaptcha/challenge',
+            'GET', null, Inf::$cookie,
+            $this->headersCF, $reff, Inf::$uagent
+        )?: '', 1);
         
-        $csrfToken = Scraper::find($html, 'csrf_token_name', 'input', 'value', 'name')[0] ?? null;
-        if ($csrfToken) Inf::injectCookie($_ck, $csrfToken, $this->host, 'csrf_cookie_name');
+        $pow = null;
+        $set = microtime(1);
+        $nonce = $task['nonce'] ?? '';
+        $level = $task['difficulty'] ?? 3;
         
+        if ($nonce && $level) $pow = SolveUtils::Pow($nonce, $level);
+        
+        if ($pow) {
+            _sle($ev = rand(1, 3));
+            $end = microtime(1);
+            
+            return base64_encode(json_encode([
+                'n'  => $nonce,
+                'p'  => [
+                    'c' => $pow['nonce'],
+                    'h' => $pow['hash']
+                ],
+                'c'  => cnvs($this->mail, Inf::$uagent),
+                'e'  => ($end - $set) * 1000,
+                'ks' => rand(20, 60),
+                'kc' => rand(10, 21),
+                'ev' => $ev + 5,
+                'ts' => time()
+            ]));
+            
+        }
+        
+        return '';
     }
     
 })->exec();
+
+function cnvs($_e, $_u) {
+    return base_convert(abs(crc32("$_e|$_u")), 10, 36);
+}
+
+
+
