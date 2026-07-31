@@ -60,6 +60,9 @@ return (new class {
             Proxy::load();
             Check::Geo();
         
+        $ccc = $this->adcookie(true);
+        foreach ($ccc as $nn => $vv) Inf::injectCookie(Inf::$cookie, $vv, $this->host, $nn);
+        
         while (true) {
             $dash = null;
             $ret = 0;

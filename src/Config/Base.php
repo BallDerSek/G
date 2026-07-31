@@ -60,13 +60,9 @@ trait Base {
     
     protected function isBan($html) {
         if (!$html) return false;
-        if (stripos($html, 'account has been banned')) {
-            $this->logger('err', "BANNED", 'Yahhh... Akun Banned Permanen!', 1);
-        }
+        if (stripos($html, 'account has been banned')) $this->logger('err', "BANNED", 'Yahhh... Akun Banned Permanen!', 1);
         
-        if (!stripos($html, 'Temporarily Blocked') && !stripos($html, 'Temporary Ban') && !stripos($html, 'temporarily locked')) {
-            return false;
-        }
+        if (!stripos($html, 'Temporarily Blocked') && !stripos($html, 'Temporary Ban') && !stripos($html, 'temporarily locked')) return false;
     
         $countdownText = Scraper::_xP($html, "//*[@id='block-countdown']")[0] ?? '';
         
