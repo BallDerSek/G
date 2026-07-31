@@ -60,8 +60,7 @@ return (new class {
             Proxy::load();
             Check::Geo();
         
-        $ccc = $this->adcookie(true);
-        foreach ($ccc as $nn => $vv) Inf::injectCookie(Inf::$cookie, $vv, $this->host, $nn);
+        $this->_ck();
         
         while (true) {
             $dash = null;
@@ -105,6 +104,7 @@ return (new class {
                 }
                 
                 if ($po) {
+                    $this->_ck();
                     #print_r($po); die;
                     $ve = Net::X($f['url'], 'POST', $po, Inf::$cookie, $this->headersCF, $this->host.$this->r, Inf::$uagent);
                     var_dump($ve); die;
@@ -489,6 +489,11 @@ return (new class {
         
         return null;
             
+    }
+    
+    private function _ck() {
+        $ccc = $this->adcookie(true);
+        foreach ($ccc as $nn => $vv) Inf::injectCookie(Inf::$cookie, $vv, $this->host, $nn);
     }
     
 })->exec();
