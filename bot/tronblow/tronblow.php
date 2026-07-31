@@ -149,9 +149,11 @@ return (new class {
             
             if (empty($this->ctx)) {
                 
-                count($this->ctx);
+                var_dump(count($this->ctx));
                 $this->_init();
-                count($this->ctx);
+                var_dump(count($this->ctx));
+                styler("waiting for next claim", fn() => _sle(100));
+                $claimed = false;
                 
             }
             

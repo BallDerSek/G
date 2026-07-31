@@ -28,7 +28,7 @@ return (new class {
         $this->api = onKeys();
         $this->domain = parse_url($this->host, PHP_URL_HOST);
         
-        $this->acc = Config::credential(['ua' => fn() => Config::uagent('mobile')], false, /*['login', 'PROXY']*/);
+        $this->acc = Config::credential(['ua' => fn() => Config::uagent('mobile')], false, ['login', 'PROXY']);
         putenv("PROXY=" . $this->acc['PROXY']);
         
         Proxy::load();
