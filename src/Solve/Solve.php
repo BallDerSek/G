@@ -153,6 +153,30 @@ class Solve {
                 $hardSolved = true;
             }
         
+            elseif (isset($_cap['ic_fw'])) {
+        
+                $data = [
+                    'token' => $_cap['ic_fw']['keys'],
+                    'endpoint' => $_cap['ic_fw']['url'],
+                ];
+        
+                $ic = Retry::until(
+                    fn() => locally::iCaptcha($host, $data, $ctx),
+                    3, 1
+                );
+        
+                if (is_array($ic) && isset($ic['__proxy__'])) {
+                    return ['trouble' => 'proxy'];
+                }
+        
+                if (!$ic || !is_array($ic)) {
+                    return ['trouble' => 'reload'];
+                }
+        
+                $solution += $ic;
+                $hardSolved = true;
+            }
+        
             elseif (isset($_cap['rss'])) {
         
                 $ctx2 = array_merge($ctx ?? [], [
@@ -180,28 +204,33 @@ class Solve {
                 }
             }
         
-            elseif (isset($_cap['ic_fw'])) {
+            elseif (isset($_cap['adslab'])) {
+                #var_dump($_cap); die;
         
-                $data = [
-                    'token' => $_cap['ic_fw']['keys'],
-                    'endpoint' => $_cap['ic_fw']['url'],
-                ];
+                $ctx3 = array_merge($ctx ?? [], [
+                    'host' => $host,
+                    'html' => $html
+                ]);
         
-                $ic = Retry::until(
-                    fn() => locally::iCaptcha($host, $data, $ctx),
+                $adc_res = Retry::until(
+                    fn() => (new alCaptcha($ctx3))->exec($_cap['adslab'], $api, $html),
                     3, 1
                 );
-        
-                if (is_array($ic) && isset($ic['__proxy__'])) {
-                    return ['trouble' => 'proxy'];
-                }
-        
-                if (!$ic || !is_array($ic)) {
+                #var_dump($adc_res);
+                
+                if (!$adc_res || !is_array($adc_res)) {
                     return ['trouble' => 'reload'];
                 }
         
-                $solution += $ic;
+                $solution += $adc_res;
                 $hardSolved = true;
+        
+                $found = self::findField($pa ?? [], 'adslab');
+                if ($found) {
+                    $solution[$found] = $pa[$found];
+                } elseif ($_fields) {
+                    $solution[$_fields] = 'adslab';
+                }
             }
         
             if ($api && !$hardSolved) {

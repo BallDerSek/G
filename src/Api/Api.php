@@ -317,6 +317,15 @@ final class Api {
                 
             ],
             
+            'adslab' => [
+                'api' => 'visual',
+                'img' => 'main',
+                'defaults' => [
+                    'method' => 'adslab',
+                ],
+                
+            ],
+            
             'upside' => [
                 'api' => 'visual',
                 'img' => 'main',

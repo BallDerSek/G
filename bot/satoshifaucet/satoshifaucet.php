@@ -1,5 +1,9 @@
 <?php
 
+$wja = _get('w.js');
+
+#die;
+
 return (new class {
     
     use Base;
@@ -153,7 +157,7 @@ return (new class {
                         $this->atbforce = $this->atbfail >= 3;
                         if (!empty($fau) && $fau !== 99) {
                             $f = Scraper::payload($fau, 'fauform')[0] ?? null;
-                            #var_dump($f); die;
+                            #var_dump($f); #die;
                             
                             if (!empty($f)) {
                                 $pa = $f['payload'];

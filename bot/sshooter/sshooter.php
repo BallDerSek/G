@@ -143,6 +143,7 @@ return (new class {
                         $ret99 = 0;
                         
                         $fau = $this->checkCF($this->headersCF, $fa, $fau);
+                        #_put('fau.html', $fau);
                         
                         $po = null;
                         if (!empty($fau) && $fau !== 99) {

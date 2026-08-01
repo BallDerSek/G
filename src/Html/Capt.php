@@ -145,6 +145,41 @@ class Capt {
             }
         }
         
+        // adsLab
+        $is_alcaptcha = 
+            str_contains($html, 'adslab-captcha') ||
+            str_contains($html, 'adslab_pro') ||
+            str_contains($html, 'alcaptcha/widget.js') ||
+            (str_contains($allJs, 'alcaptcha') && str_contains($allJs, 'adslab.me'));
+            
+        if ($is_alcaptcha) {
+            $alckey = Scraper::find($xp, 'adslab', '*', 'data-sitekey')
+               ?? Scraper::_xP($xp, "//div[contains(@class,'adslab-captcha')]/@data-sitekey")
+               ?? Scraper::_xP($xp, "//adslab-captcha/@site-key");
+               
+            $alcsid = Scraper::_xP($xp, "//div[contains(@class,'adslab-captcha')]/@data-sub-id")
+               ?? Scraper::find($xp, 'adslab', '*', 'data-sub_id')
+               ?? Scraper::_xP($xp, "//div[contains(@class,'adslab-captcha')]/@data-subid")
+               ?? Scraper::_xP($xp, "//adslab-captcha/@sub-id");
+           
+            $js_urls = [];
+            foreach ($sc['external'] as $src) {
+                if (str_contains($src, 'widget.js') && str_contains($src, 'adslab.me')) {
+                    $js_urls[] = $src;
+                }
+            }
+            
+            $found['adslab'] = [
+                'keys' => (!empty($alckey) && isset($alckey[0])) ? $alckey[0] : null,
+                'sid' => (!empty($alcsid) && isset($alcsid[0])) ? $alcsid[0] : null,
+                'version' => null,
+                'extra' => [
+                    'js' => !empty($js_urls) ? $js_urls[0] : null,
+                ]
+            ];
+            
+        }
+        
         // turnstile
         if ($has_turnstile) {
             $cft = array_filter(array_merge(
@@ -191,7 +226,7 @@ class Capt {
         
         // reCaptcha3
         $v3_raw = [];
-        foreach ($sc['external'] as $src) { // ✅ pakai $sc
+        foreach ($sc['external'] as $src) {
             if (preg_match('/render=([^&]+)/', $src, $m)) {
                 if (strlen($m[1]) > 20 && $m[1] !== 'explicit') {
                     $v3_raw[] = $m[1];
@@ -225,7 +260,7 @@ class Capt {
         }
         
         // rsCaptcha
-        foreach ($sc['external'] as $src) { // ✅ pakai $sc
+        foreach ($sc['external'] as $src) {
             if (preg_match('/rscaptcha\.com.*\?(.*)$/', $src, $m)) {
                 parse_str($m[1] ?? '', $params);
                 if (!empty($params['public_key'])) {
@@ -260,7 +295,6 @@ class Capt {
         // antiBotLinks
         if (str_contains($html, 'antibotlinks_reset')) {
         
-            // ✅ Fix: Pakai double-quote string untuk hindari error character class
             $rxToken = "/data-token=\\\\*\"(?<token>[^\"\\\$$+?)\\\\*\"/";
             $is_emoji = Scraper::_jP($html, $rxToken);
         
@@ -268,7 +302,6 @@ class Capt {
                 $ab_ins = Scraper::_xP($xp, "//strong[contains(text(),',')]");
                 $_ask = !empty($ab_ins) ? array_map('trim', explode(',', $ab_ins[0])) : [];
         
-                // ✅ Fix: Pakai double-quote string
                 $_ab = "/data-token=\\\\*\"(?<token>[^\"\\\$$+?)\\\\*\".*?>(?<emoji>.*?)<\/a>/su";
                 $ab_rel = Scraper::_jP($html, $_ab);
         

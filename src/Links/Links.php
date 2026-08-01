@@ -35,7 +35,7 @@ final class Links {
 
     public function exec($api) {
         $rules = [
-            'coinclix' => ['coinclix.co'],
+            #'coinclix' => ['coinclix.co'],
             'clk' => ['lnbz.la','tpi.li','oii.la','aii.sh'],
             'low' => ['xut.io','shrinkme.click','link.adlink.click','horrorpay.online','linkpay.top'],
         ];
