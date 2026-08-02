@@ -139,11 +139,14 @@ class Net {
         if ($ua !== '') {
             if ($useHints) {
                 $is_mobile = (stripos($ua, 'Android') !== false || stripos($ua, 'Mobile') !== false);
-                $platform = (stripos($ua, 'Android') !== false) ? "Android" : "Windows";
+                $platform = "Windows";
+                if (stripos($ua, 'Android') !== false) $platform = "Android";
+                elseif (stripos($ua, 'Macintosh') !== false || stripos($ua, 'Mac OS X') !== false) $platform = "macOS";
+                elseif (stripos($ua, 'Linux') !== false) $platform = "Linux";
                 preg_match('/Chrome\/(\d+)/', $ua, $m);
                 $v_chrome = $m[1] ?? '122';
                 
-                $head[] = 'Sec-CH-UA: "Google Chrome";v="' . $v_chrome . '", "Chromium";v="' . $v_chrome . '", "Not?A_Brand";v="99"';
+                $head[] = 'Sec-CH-UA: "Chromium";v="' . $v_chrome . '", "Not)A;Brand";v="99"';
                 $head[] = 'Sec-CH-UA-Mobile: ' . ($is_mobile ? '?1' : '?0');
                 $head[] = 'Sec-CH-UA-Platform: "' . $platform . '"';
             }
@@ -271,7 +274,7 @@ class Net {
             CURLOPT_SSLVERSION => CURL_SSLVERSION_DEFAULT,
             #CURLOPT_SSLVERSION => CURL_SSLVERSION_TLSv1_3,
             CURLOPT_SSL_ENABLE_ALPN => true,
-            CURLOPT_SSL_CIPHER_LIST => 'ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:ECDHE-RSA-AES128-SHA:ECDHE-RSA-AES256-SHA',
+            #CURLOPT_SSL_CIPHER_LIST => 'ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:ECDHE-RSA-AES128-SHA:ECDHE-RSA-AES256-SHA',
             
             CURLOPT_ENCODING => '',
         ]);

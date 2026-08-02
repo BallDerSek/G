@@ -110,6 +110,7 @@ trait Base {
         
         foreach ($hhh as $key => $value) $hh[$key] = $value;
         
+        Config::resetUA();
         Inf::setup($ua, Inf::$cookie);
         if (empty($hh)) return null;
         
