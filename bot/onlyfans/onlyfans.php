@@ -53,6 +53,7 @@ return (new class {
         $curr = '';
         $skipped = [];
         $claimed = 0;
+        $wrrr = 0;
         
         $this->headersCF = inf::Nethead(array_merge($this->headersCF, $this->adcookie()));
         
@@ -195,6 +196,8 @@ return (new class {
                                 
                                 if (preg_match('/went wron/i', $msg)) {
                                     _sle(60);
+                                    if ($wrr >= 10) die;
+                                    $wrrr++;
                                     break;
                                 }
                                 
