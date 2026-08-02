@@ -102,8 +102,8 @@ return (new class {
                 if ($po) {
                     #print_r($po); die;
                     $ve = Net::X($f['url'], 'POST', $po, Inf::$cookie, $this->headersCF, $this->host.$this->r, Inf::$uagent);
-                    
-                    $msg_d = Scraper::_jP($ve, "/Swal\.fire\(\s*\{.*?title:\s*'([^']+)'.*?text:\s*'([^']+)'.*?icon:\s*'([^']+)'/s")[2][0] ?? null;
+                    _put('ve.html', $ve);
+                    $msg_d = Scraper::_jP($ve, "/Swal\.fire\(\s*\{.*?title:\s*'([^']+)'.*?text:\s*'([^']+)'.*?icon:\s*'([^']+)'/s")[2][0] ?? Scraper::_xP($ve, "//div[contains(@class, 'alert-danger')]")[0] ?? null;
                     if (!empty($msg_d)) {
                         if (stripos($msg_d, 'nvalid Captcha')) continue;
                         $this->logger('err', '', $msg_d, 1);
