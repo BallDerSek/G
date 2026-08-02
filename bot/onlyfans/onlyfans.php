@@ -196,7 +196,7 @@ return (new class {
                                 
                                 if (preg_match('/went wron/i', $msg)) {
                                     _sle(60);
-                                    if ($wrr >= 10) die;
+                                    if ($wrrr >= 10) die;
                                     $wrrr++;
                                     break;
                                 }
