@@ -67,7 +67,7 @@ final class execPy {
                 $cmd .= " " . escapeshellarg($this->cookie);
             }
         }
-        
+        #var_dump($cmd); die;
         $fp = fopen($this->lockFile, "w+");
         if ($fp && flock($fp, LOCK_EX)) {
             $out = shell_exec($cmd); 

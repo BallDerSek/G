@@ -53,7 +53,6 @@ return (new class {
         $curr = '';
         $skipped = [];
         $claimed = 0;
-        $wrrr = 0;
         
         $this->headersCF = inf::Nethead(array_merge($this->headersCF, $this->adcookie()));
         
@@ -194,12 +193,7 @@ return (new class {
                                 
                                 if (preg_match('/blacklisted|flagged|banned/i', $msg)) die;
                                 
-                                if (preg_match('/went wron/i', $msg)) {
-                                    _sle(60);
-                                    if ($wrrr >= 10) die;
-                                    $wrrr++;
-                                    break;
-                                }
+                                if (preg_match('/went wron/i', $msg)) die;
                                 
                                 if (preg_match('/cation failed/i', $msg)) continue 3;
                                 

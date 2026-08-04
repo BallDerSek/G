@@ -156,9 +156,12 @@ return (new class {
             if (!$this->limit && $this->claim) {
                 $ret99 = 0; 
                 while (true) {
+                    Inf::injectCookie(Inf::$cookie, '0', $this->host, 'faucet_link_url_cookie');
+                    
                     $ret99++;
                     $fau = Net::C("{$this->host}/faucet", 'GET', null, Inf::$cookie, [], "{$this->host}/dashboard", Inf::$uagent, ip: $this->ip);
-                    #_put('fau.html', $fau); 
+                    #_put('fau.html', $fau);
+                    
                     if ($fau === 99) {
                         if ($ret99 >= 5) goto login;
                         _sle(40);
