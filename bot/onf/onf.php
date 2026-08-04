@@ -388,29 +388,30 @@ function onfCap($html, $host, $reff, $api, $headersCF) {
     }
     
     if (!empty($img)) {
-        if (!AUTH_KEY) die(Logger::X('err', 'unauthorized apikey'));
+        #if (!AUTH_KEY) die(Logger::X('err', 'unauthorized apikey'));
         $solution = Solve::img($api, $host, 'onlyfans', $img);
         if (isset($solution['trouble'])) return ['trouble' => 'reload'];
-        if (count($solution) < $x_cap['cnt']) return ['trouble' => 'reload']; 
         
-        usort($solution, function($a, $b) use ($x_cap) {
-            return ($x_cap['ins'] === 'ASC') ? ($a['area'] <=> $b['area']) : ($b['area'] <=> $a['area']);
-        });
+        preg_match_all('/x[=:\s]*(\d+)[,\s]*y[=:\s]*(\d+)/i', $solution, $matches, PREG_SET_ORDER);
         
-        $clk = array_slice($solution, 0, $x_cap['cnt']);
+        if (count($matches) < $x_cap['cnt']) return ['trouble' => 'reload'];
+        
+        if ($x_cap['ins'] === 'DESC') $matches = array_reverse($matches);
+        
+        $clk = array_slice($matches, 0, $x_cap['cnt']);
         
         $mdt = [];
         $ANS = [];
         $setCLK = microtime(true);
         
-        foreach ($clk as $index => $obj) {
+        foreach ($clk as $index => $match) {
             $delay = ($index === 0) ? mt_rand(800000, 1200000) : mt_rand(400000, 700000);
             usleep($delay);
             
             $current = (microtime(true) - $setCLK) * 1000;
             
-            $x = (int)max(0, min(449, $obj['center'][0]));
-            $y = (int)max(0, min(279, $obj['center'][1]));
+            $x = (int)max(0, min(449, $match[1]));
+            $y = (int)max(0, min(279, $match[2]));
             
             $ANS[] = "$x,$y";
             $mdt[] = [
