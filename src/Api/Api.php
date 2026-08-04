@@ -261,6 +261,13 @@ final class Api {
             'vie_upside' => ['api' => 'viefaucet', 'img' => 'body'],
             'icon_up' => ['api' => 'iconupfinder', 'img' => 'body'],
             'rs_icon' => ['api' => 'rscaptcha', 'img' => 'body'],
+            'onlyfans' => [
+                'api' => 'basiliskimg',
+                'img' => 'body',
+                'defaults' => [
+                    'textinstructions' => 'roundiconcap',
+                ]
+            ],
         ],
     
         multibot::class => [
@@ -277,12 +284,19 @@ final class Api {
         skibidixxx::class => [
             'antibot' => true,
             'fa_icon' => ['api' => 'bitcocaptcha', 'img' => 'base64_str'],
-            'rs_upside'  => ['api' => 'upsidedown_2', 'img' => 'base64_str'],
-            'rs_icon' => ['api' => 'rsicon', 'img' => 'base64_str'],
-            'ocr' => ['api' => 'image-to-text','img' => 'base64_str'],
+            'rs_upside'  => ['api' => 'upsidedown_2', 'img' => 'image'],
+            'rs_icon' => ['api' => 'rsicon', 'img' => 'image'],
+            'ocr' => ['api' => 'image-to-text','img' => 'image'],
             'least' => ['api' => 'least-icons',  'img' => 'base64_str'],
             'upside' => ['api' => 'upsidedown_3', 'img' => 'base64_str'],
-            'vie_upside' => ['api' => 'upsidedown_3', 'img' => 'base64_str'],
+            'vie_upside' => ['api' => 'upsidedown_3', 'img' => 'image'],
+            'onlyfans' => [
+                'api' => 'mcaptcha',
+                'img' => 'image',
+                'defaults' => [
+                    'text' => 'SMALLEST to LARGEST',
+                ]
+            ],
         ],
     
         capsolver::class => [
