@@ -192,6 +192,11 @@ return (new class {
                                     break 2;
                                 }
                                 
+                                if (stripos($msg, 'relogin') !== false) {
+                                    @unlink(Inf::$cookie);
+                                    continue 3;
+                                }
+                                
                             }
                             
                         }
