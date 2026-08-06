@@ -95,9 +95,13 @@ return (new class {
                 
                 if ($po) {
                     #print_r($po); die;
-                    $ve = Net::X($this->host.'/api/auth/login', 'POST', $po, Inf::$cookie, $this->headersCF, $this->host.$this->r, Inf::$uagent, json: 1);
+                    $ve = json_decode(Net::X($this->host.'/api/auth/login', 'POST', $po, Inf::$cookie, $this->headersCF, $this->host.$this->r, Inf::$uagent, json: 1)?: '', 1);
                     #var_dump($ve);
-                    
+                    $msg_d = $ve['error'] ?? null;
+                    if (!empty($msg_d)) {
+                        if (stripos($msg_d, 'nvalid Captcha')) continue;
+                        $this->logger('err', '', $msg_d, 1);
+                    }
                     
                 }
                 
@@ -192,7 +196,7 @@ return (new class {
                                     break 2;
                                 }
                                 
-                                if (stripos($msg, 'relogin') !== false) {
+                                if (stripos($msg, 'login again') !== false) {
                                     @unlink(Inf::$cookie);
                                     continue 3;
                                 }

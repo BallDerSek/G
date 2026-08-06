@@ -351,6 +351,7 @@ class Solve {
             $res = isset(Api::B64[get_class($solver)][$type])
                 ? $solver->base64($img, $type, $extra)
                 : ['fail' => 777];
+            #var_dump($res);
     
             if (isset($res['fail']) && $res['fail'] === 777) {
     

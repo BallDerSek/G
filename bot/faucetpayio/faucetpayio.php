@@ -125,13 +125,14 @@ $b->task2('ok', "");
 }
 
 foreach ($jsonList as $acc) {
-    $b->task1('info', "Getting RP for: {$acc['mail']}");
+    #$b->task1('info', "Getting RP for: {$acc['mail']}");
     $bearer = ['authorization: Bearer '.$acc['auth']];
     $rp = json_decode(Net::X($app.'/rp/claim-daily-rp', 'POST', null, Inf::$cookie, ['authorization: Bearer '.$acc['auth']], $host, Inf::$uagent)?: '', 1);
     #var_dump($rp); 
     if ($rp && $rp['success'] !== false) {
         $b->task1('', "claimed ({$rp['reward']} rp) for {$acc['mail']}");
-    }
+    } else $b->task1('info', "fetching account...");
+    
 }
 
 while (true) {

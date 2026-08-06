@@ -52,7 +52,6 @@ return (new class {
         $habis = [];
         $curr = '';
         $skipped = [];
-        $claimed = 0;
         
         $this->headersCF = inf::Nethead(array_merge($this->headersCF, $this->adcookie()));
         

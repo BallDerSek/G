@@ -61,7 +61,7 @@ return (new class {
         login:
             Proxy::load();
             Check::Geo();
-            
+        
         while (true) {
             $dash = null;
             $ret = 0; 

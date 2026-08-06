@@ -181,8 +181,15 @@ trait Base {
         return $cached;
     }
 
-
-
+    private function fetch() {
+        
+        if (!$this->fetched) {
+            Proxy::load();
+            Check::Geo();
+            $this->fetched = false;
+        }
+        
+    }
     
     
 }

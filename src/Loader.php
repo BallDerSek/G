@@ -25,17 +25,15 @@ if (!defined('ROOT')) {
     require_once SRCDIR.'/Ansi.php';
     require_once SRCDIR.'/Func.php';
     
-    $dirs = glob(SRCDIR.'/*',GLOB_ONLYDIR);
-    spl_autoload_register(function ($class) use ($dirs) {
-        
-        foreach ($dirs as $dir) {
-            $file = $dir.DIRECTORY_SEPARATOR."{$class}.php";
-            if (is_file($file)) {
-                require_once $file;
-                return;
-            }
-        }
-        
+    $classMap = [];
+    $iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator(SRCDIR, RecursiveDirectoryIterator::SKIP_DOTS));
+
+    foreach ($iterator as $file) {
+        if ($file->isFile() && $file->getExtension() === 'php') $classMap[$file->getBasename('.php')] = $file->getRealPath();
+    }
+
+    spl_autoload_register(function ($class) use ($classMap) {
+        if (isset($classMap[$class])) require_once $classMap[$class];
     });
 
 }

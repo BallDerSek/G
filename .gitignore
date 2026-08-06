@@ -14,6 +14,8 @@ bot/tes/
 bot/set/
 bot/bct/
 
+bot/shibpay/
+
 bott/
 **/email.txt
 **/email.json

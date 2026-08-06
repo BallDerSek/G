@@ -134,6 +134,7 @@ function _rl($prompt = '') {
     return $line;
 }
 function _sle($time) {
+    gc_collect_cycles();
     return sleep($time);
 }
 

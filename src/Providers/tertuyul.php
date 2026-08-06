@@ -27,6 +27,7 @@ class tertuyul extends Provider {
             $r = json_decode(
                 Net::S($this->baseUrl."/res.php", "GET", ["key" => $this->apiKey, "id"  => $jobId, "json"=> 1]) ?: ''
                 , 1);
+            #var_dump($r);
 
             if (($r['status'] ?? 0) == 1) 
                 return $r['request'];

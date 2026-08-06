@@ -237,13 +237,55 @@ final class Api {
             'antibot' => true,
     
             'ocr' => ['api' => 'universal', 'img' => 'body'],
-            'least' => ['api' => 'iconfinder', 'img' => 'body'],
-            'rs_upside' => ['api' => 'upside', 'img' => 'body'],
-            'upside' => ['api' => 'upside', 'img' => 'body'],
-            'vie_upside' => ['api' => 'upside', 'img' => 'body'],
-            'fa_icon' => ['api' => 'hunter', 'img' => 'body'],
-            'icon_up' => ['api' => 'iconflip', 'img' => 'body'],
-            'rs_icon' => ['api' => 'rscaptcha', 'img' => 'body'],
+            'rs_upside' => [
+                'api' => 'upside',
+                'img' => 'body',
+                'defaults' => [
+                    'request' => 'iconcaptcha',
+                ],
+            ],
+            'upside' => [
+                'api' => 'upside',
+                'img' => 'body',
+                'defaults' => [
+                    'request' => 'iconcaptcha',
+                ],
+            ],
+            'vie_upside' => [
+                'api' => 'upside',
+                'img' => 'body',
+                'defaults' => [
+                    'request' => 'iconcaptcha',
+                ],
+            ],
+            'fa_icon' => [
+                'api' => 'hunter',
+                'img' => 'body',
+                'defaults' => [
+                    'request' => 'iconcaptcha',
+                ],
+            ],
+            'icon_up' => [
+                'api' => 'iconflip',
+                'img' => 'body',
+                'defaults' => [
+                    'request' => 'iconcaptcha',
+                ],
+            ],
+            'rs_icon' => [
+                'api' => 'rscaptcha',
+                'img' => 'body',
+                'defaults' => [
+                    'request' => 'iconcaptcha',
+                ],
+            ],
+            'adslab' => [
+                'api' => 'icon_order',
+                'img' => 'body',
+                'defaults' => [
+                    'request' => 'iconcaptcha',
+                ],
+            ],
         ],
     
         glitch::class => [
@@ -261,6 +303,7 @@ final class Api {
             'vie_upside' => ['api' => 'viefaucet', 'img' => 'body'],
             'icon_up' => ['api' => 'iconupfinder', 'img' => 'body'],
             'rs_icon' => ['api' => 'rscaptcha', 'img' => 'body'],
+            'adslab' => ['api' => 'surfebe', 'img' => 'body'],
             'onlyfans' => [
                 'api' => 'basiliskimg',
                 'img' => 'body',

@@ -2,6 +2,7 @@
 
 class Scraper {
 
+    private static ?string $lastKey = null;
     private static array $cache = [];
 
     private static function _init(string $html): string {
@@ -12,9 +13,13 @@ class Scraper {
 
         if (!$html) return null;
         if ($html instanceof DOMXPath) return $html;
+        
         $key = self::_init($html);
 
-        if (isset(self::$cache[$key]['xp'])) return self::$cache[$key]['xp'];
+        if ($key === self::$lastKey && isset(self::$cache['xp'])) return self::$cache['xp'];
+
+        self::clearCache();
+        self::$lastKey = $key;
 
         libxml_use_internal_errors(true);
         $dom = new DOMDocument();
@@ -24,13 +29,16 @@ class Scraper {
 
         $dom->loadHTML($html, LIBXML_NOWARNING | LIBXML_NOERROR | LIBXML_NONET);
         libxml_clear_errors();
+        
         $xp = new DOMXPath($dom);
-        self::$cache[$key]['xp'] = $xp;
+        self::$cache['xp'] = $xp;
+        
         return $xp;
     }
 
     public static function clearCache() {
         self::$cache = [];
+        self::$lastKey = null;
     }
 
     public static function title($html) {
@@ -67,7 +75,6 @@ class Scraper {
 
             foreach ($xp->query(".//input[@name]", $form) as $input) {
                 $name = $input->getAttribute('name');
-                $type = strtolower($input->getAttribute('type') ?: 'text');
                 $val  = $input->getAttribute('value');
                 $addPayload($name, $val);
             }
@@ -254,9 +261,7 @@ class Scraper {
 
         if (is_string($html)) {
             $key = self::_init($html);
-            if (isset(self::$cache[$key]['scripts'])) {
-                return self::$cache[$key]['scripts'];
-            }
+            if ($key === self::$lastKey && isset(self::$cache['scripts'])) return self::$cache['scripts'];
         }
 
         $xp = self::dom($html);
@@ -277,23 +282,16 @@ class Scraper {
             'inline' => $inline
         ];
 
-        if (is_string($html)) {
-            $key = self::_init($html);
-            self::$cache[$key]['scripts'] = $result;
-        }
+        if (is_string($html)) self::$cache['scripts'] = $result;
 
         return $result;
     }
 
     public static function _get($html, $key) {
         $scripts = self::_sC($html);
-        foreach ($scripts['external'] as $src) {
-            if (str_contains($src, $key)) return $src;
-        }
+        foreach ($scripts['external'] as $src) if (str_contains($src, $key)) return $src;
 
-        foreach ($scripts['inline'] as $content) {
-            if (str_contains($content, $key)) return $content;
-        }
+        foreach ($scripts['inline'] as $content) if (str_contains($content, $key)) return $content;
 
         return null;
     }

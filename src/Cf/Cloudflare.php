@@ -3,13 +3,10 @@
 class Cloudflare {
     
     public static function solve($api, $url, $uagent, $data, $force = false) {
-        #$force = true;
         if (!$api) return false;
     
         $param = array_filter([
-            'body' => !empty($data['html']) ? base64_encode($data['html']) : null,
-            #'userAgent' => $uagent,
-            #'user_agent' => $uagent,
+            'body'  => !empty($data['html']) ? base64_encode($data['html']) : null,
             'proxy' => $GLOBALS['_CTX']['proxy']['src'] ?? null
         ]);
         
@@ -19,24 +16,21 @@ class Cloudflare {
             $solve = $api->access($url, 'interstitial', $param);
         } else {
             $solver = Config::getKeys($api, 'interstitial', 'acc');
-            $solve = $solver ? $solver->access($url, 'interstitial', $param) : false;
+            $solve  = $solver ? $solver->access($url, 'interstitial', $param) : false;
         }
     
-        if (is_array($solve) && isset($solve['fail'])) {
-            if ($solve['fail'] === 777) {
-                if (isset(Api::ACC[get_class($api)]['interstitial'])) {
-                    $solve = $api->access($url, 'interstitial', $param);
-                    if (isset($solve['fail']) && $solve['fail'] === 71) return false;
-                }
+        if (is_array($solve) && ($solve['fail'] ?? null) === 777) {
+            if (isset(Api::ACC[get_class($api)]['interstitial'])) {
+                $solve = $api->access($url, 'interstitial', $param);
             }
         }
     
-        if (!is_array($solve) || !isset($solve['done'])) return false;
-        
-        #var_dump($solve); die;
-        
+        if (!is_array($solve) || !isset($solve['done'])) {
+            return false;
+        }
+    
         $class = $solve['class'] ?? null;
-        $res = $solve['done'];
+        $res   = $solve['done'];
     
         return self::parseResult($class, $res);
     }

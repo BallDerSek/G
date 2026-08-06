@@ -61,11 +61,19 @@ final class alCaptcha {
                 #_put('img.png', $img);
                 $jawaban = Solve::img($api, $this->host, 'adslab', $img);
                 if (isset($jawaban['trouble'])) return $soll;
-                $ans = Scraper::_jP($jawaban, '/\d+/');
-                $angka = array_map('intval', ($ans[0] ?? []));
                 
+                if (is_string($jawaban) && str_contains($jawaban, 'idx=')) {
+                    $matches = Scraper::_jP($jawaban, '/idx=(\d+)/');
+                    $angka = array_map('intval', $matches[1] ?? []);
+                } else {
+                    $ans = Scraper::_jP($jawaban, '/\d+/');
+                    $angka = array_map('intval', ($ans[0] ?? []));
+                }
+            
+                #var_dump($jawaban, $angka);
+            
                 $endd = microtime(1);
-                
+            
                 $cc_po = [
                     'token' => $cc_0['token'],
                     'answer' => $angka,
@@ -91,8 +99,10 @@ final class alCaptcha {
                 
             }
             
-            return $soll;
         }
+        
+        #var_dump($soll);
+        return $soll;
         
     }
     
