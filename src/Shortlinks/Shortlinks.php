@@ -164,7 +164,7 @@ class Shortlinks {
                 if ($f_url && is_string($f_url)) return $f_url;
             });
         } catch (Throwable $e) {
-            #Logger::X('err', "SL Direct failed: " . $e->getMessage());
+            #Logger::X('err', "\rSL Direct failed: " . $e->getMessage());
         }
     
         if (!$api) return false;

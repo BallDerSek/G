@@ -216,7 +216,7 @@ class Solve {
                     fn() => (new alCaptcha($ctx3))->exec($_cap['adslab'], $api, $html),
                     3, 1
                 );
-                #var_dump($adc_res);
+                #var_dump($adc_res); die;
                 
                 if (!$adc_res || !is_array($adc_res)) {
                     return ['trouble' => 'reload'];
@@ -303,39 +303,27 @@ class Solve {
             #var_dump($t); #die;
             
             if (isset($t['fail']) && $t['fail'] === 777) {
-    
                 if (!isset(Api::TKN[get_class($api)][$type])) {
                     return ['fail' => 471];
                 }
-    
                 $t = $api->token($key, $host, $type, $Params);
     
                 if (isset($t['fail'])) {
-    
-                    if ($t['fail'] === 71) return ['fail' => 471];
-    
+                    if ($t['fail'] === 71) return ['fail'=>471];
                     return ['fail' => 404];
                 }
-    
                 return $t;
             }
     
             if (isset($t['fail'])) {
-    
-                if ($t['fail'] === 71) {
-                    return ['fail' => 471];
-                }
-    
+                if ($t['fail'] === 71) return ['fail' => 471];
                 return ['fail' => 404];
             }
-    
+            
             return $t;
-    
         }, 2, 1);
     
-        if ($t === false) {
-            return ['fail' => 404];
-        }
+        if ($t === false) return ['fail' => 404];
         
         #var_dump($t);
         
@@ -366,17 +354,13 @@ class Solve {
                 }
             }
     
-            if (isset($res['fail'])) {
-                return ['trouble' => 'reload'];
-            }
+            if (isset($res['fail'])) return ['trouble' => 'reload'];
     
             return $res['done'];
     
         }, 2, 1);
     
-        if ($res === false) {
-            return ['trouble' => 'reload'];
-        }
+        if ($res === false) return ['trouble' => 'reload'];
     
         return $res;
     }

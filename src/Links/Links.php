@@ -1,9 +1,4 @@
 <?php
-/*
-if (!trait_exists('WorkDir')) {
-    require_once SRCDIR . '/config/Workdir.php';
-}
-*/
 
 final class Links {
     use WorkDir;
@@ -91,23 +86,33 @@ final class Links {
         $_0 = str_replace($this->host, $link, $this->url);
         
         low_start:
-        $html = Net::C($_0, 'GET', null, $this->cookie, [], $reff, $this->uagent);
-        #_put('res.html', $html);
+        $awal = Net::C($_0, 'GET', null, $this->cookie, [], $reff, $this->uagent, d: 1);
+        $html = $awal['body'] ?? null;
+        
+        /*
+        _put('awal.json', json_encode($awal, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+        _put('0.html', $html);
+        */
+        
         if (!$html || $html === 99) {
             $this->enableProxy();
             goto low_start;
         }
 
         $p = Scraper::payload($html)[0]['payload'] ?? null;
+        Net::save("https://{$link}", $awal, $this->cookie);
         if (!$p) {
             $this->enableProxy();
             goto low_start;
         }
         
         _sle(17);
-        $res = Net::X("https://{$link}/links/go", 'POST', $p, $this->cookie, [], $reff, $this->uagent);
         
-        $r = json_decode($res, true);
+        $ver = Net::X("https://{$link}/links/go", 'POST', $p, $this->cookie, [], $reff, $this->uagent);
+        #var_dump($ver);
+        
+        $r = json_decode($ver, 1);
+        
         if (!empty($r['url'])) return $r['url'];
 
         throw new RuntimeException("totally failed");

@@ -18,7 +18,7 @@ return (new class {
     private string $mail, $pass;
     
     private bool $claim = true;
-    private bool $SLDONE = true;
+    private bool $SLDONE = false;
     private bool $ADDONE = false;
     private array $headersCF = [];
     
@@ -201,11 +201,9 @@ return (new class {
                                 
                                 if (preg_match('/blacklisted|flagged|banned/i', $msg)) die;
                                 
-                                if (preg_match('/went wron/i', $msg)) die;
-                                
                                 if (preg_match('/cation failed/i', $msg)) continue 3;
                                 
-                                if (stripos($msg, 'Shortlink')) {
+                                if (stripos($msg, 'Shortlink') || preg_match('/went wron/i', $msg)) {
                                     if ($this->SLDONE) die;
                                     $curr = $_c;
                                     break 2;

@@ -44,6 +44,7 @@ final class alCaptcha {
         $cc_0 = json_decode(Net::S(
             $_H."/alcaptcha/init", 'POST', $cc_po, json: 1
         )?: '', 1);
+        #var_dump($cc_0);
         
         #$wwjs = Net::S('https://adslab.me', 'GET', $cc_po);
         #_put('ww.html', $wwjs);
@@ -99,6 +100,9 @@ final class alCaptcha {
                 
             }
             
+        } else {
+            Logger::X('info', "\rSolve [ ".static::class.' ] ', false, 1);
+            Logger::X('err', $cc_0['message'] ?? 'unknown error');
         }
         
         #var_dump($soll);

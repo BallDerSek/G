@@ -61,35 +61,26 @@ return (new class {
 
 
 
+/*
+https://link.adlink.click/4mRT
+https://shrinkme.click/MVQtY6
 
+login=https://shrinkme.click/MVQtY6 AN=0 BOT=shortlink API=xevil KEY=FrKZCtU85kMDIdAQONfiKPcpXAsL7RyG CI=1 php run.*
+login=https://link.adlink.click/4mRT AN=0 BOT=shortlink API=xevil KEY=FrKZCtU85kMDIdAQONfiKPcpXAsL7RyG CI=1 php run.*
+*/
 
-
-
-
-
-
-die;
 tes:
+    
+    
+    
 $cookieFile = config::cookie();
 $userAgent = config::uagent();
-$url = $ez4s;
+$url = "https://link.adlink.click/4mRT";
 $_0 = Net::C($url, 'GET', null, $cookieFile, [], '', $userAgent);
 _put('0.html', $_0);
 
-$res = Scraper::_pP($_0, 'window.location.href');
-$url = $res[0] ?? '';
-if (!empty($url)) {
-    $_1 = Net::X($url, 'GET', null, $cookieFile, [], $url, $userAgent);
-    _put('1.html', $_1);
-}
-
-
-preg_match('/url=([^"\'>\s]+)/i', $_1, $url);
-if ($url[1]) {
-    $url = trim($url[1]);
-    $_2 = Net::X($url, 'GET', null, $cookieFile, [], $url, $userAgent);
-    _put('2.html', $_2);
-}
+$_1 = Net::C('https://maqal360.com/script.js', 'GET', null, $cookieFile, [], '', $userAgent);
+_put('1.js', $_1);
 
 
 

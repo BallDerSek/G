@@ -27,7 +27,7 @@ abstract class Provider {
                 $code = $e->getMessage();
                 $type = Api::errType($code);
 
-                Logger::X('info', "\rApi [ ".static::class.' ] ', false, 1);
+                Logger::X('info', "\rApi [ ".static::class.' ] ', 0, 1);
                 Logger::X('err', "{$e->getMessage()}");
 
                 if ($strict) return ['fail' => 1];
@@ -62,7 +62,8 @@ abstract class Provider {
             );
 
         } catch (Throwable $e) {
-            Logger::X('warn', "\r{$e->getMessage()}", 1, 1);
+            Logger::X('info', "\r[ ".static::class.' ] ', 0, 1);
+            Logger::X('warn', "{$e->getMessage()}", 1, 1);
             return ['fail' => 71];
         }
 
@@ -83,7 +84,8 @@ abstract class Provider {
         try {
             [$method, $params] = Api::cfgB64(static::class, $type, $b64, $extra);
         } catch (Throwable $e) {
-            Logger::X('warn', "\r{$e->getMessage()}", 1, 1);
+            Logger::X('info', "\r[ ".static::class.' ] ', 0, 1);
+            Logger::X('warn', "{$e->getMessage()}", 1, 1);
             return ['fail' => 71];
         }
         
@@ -104,7 +106,8 @@ abstract class Provider {
 
             foreach (($cfg['need'] ?? []) as $k) {
                 if (!isset($params[$k])) {
-                    Logger::X('warn', "\rmissing required arg: $k for $type");
+                    Logger::X('info', "\r[ ".static::class.' ] ', 0, 1);
+                    Logger::X('warn', "missing required arg: $k for $type");
                     return ['fail' => 73];
                 }
             }
@@ -115,7 +118,8 @@ abstract class Provider {
             );
 
         } catch (Exception $e) {
-            Logger::X('warn', "\r{$e->getMessage()}", 1, 1);
+            Logger::X('info', "\r[ ".static::class.' ] ', 0, 1);
+            Logger::X('warn', "{$e->getMessage()}", 1, 1);
             return ['fail' => 71];
         }
     }
