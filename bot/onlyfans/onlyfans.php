@@ -49,6 +49,7 @@ return (new class {
     }
     
     public function exec() {
+        $claimed = 0;
         $habis = [];
         $curr = '';
         $skipped = [];
@@ -131,6 +132,10 @@ return (new class {
                     
                     $ret99 = 0;
                     while (true) {
+                        if ($claimed >= 10) {
+                            styler("waiting for next minute", fn() => _sle(60));
+                            $claimed = 0;
+                        }
                         $ret99++;
                         
                         $fau = Net::X($fa, 'GET', null, Inf::$cookie, $this->headersCF, $fa, Inf::$uagent, d: true);
@@ -183,6 +188,7 @@ return (new class {
                             
                             $mf = Scraper::_jP($cla, "/Toast\.fire\(\s*\{.*?icon:\s*'([^']+)'.*?html:\s*'([^']+)'/s");
                             if (!empty($mf[2][0])) {
+                                $claimed++;
                                 
                                 $stt = $mf[1][0];
                                 $msg = $mf[2][0];
@@ -207,7 +213,7 @@ return (new class {
                                 
                             }
                             
-                            styler("waiting for next claim", fn() => _sle(rand(8, 15)));
+                            styler("waiting for next claim", fn() => _sle(rand(18, 30)));
                         }
                         
                     }

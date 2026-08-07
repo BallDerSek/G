@@ -29,6 +29,7 @@ $ip = null;
     
 } ) ($login, $ip, $host);
 
+$claimed = 0;
 $headersCF = [];
 $skipped = [];
 $SLDONE = false;
@@ -111,8 +112,12 @@ while (true) {
         if (!empty($curr) && stripos($_c, $curr) === false) continue; 
         
         $ret99 = 0;
-        $ret99 = 0;
         while (true) {
+            if ($claimed >= 10) {
+                styler("waiting for next minute", fn() => _sle(60));
+                $claimed = 0;
+            }
+            
             $fauu = null;
             $fauu = Net::X($fa, 'GET', null, Inf::$cookie, $headersCF, $host, Inf::$uagent, d: true);
             
@@ -182,6 +187,7 @@ while (true) {
                     $_suc = Scraper::_jP($cla, "/Toast\.fire\(\s*\{.*?icon:\s*'([^']+)'.*?html:\s*'([^']+)'/s");
                     
                     if (!empty($_suc[1][0])) {
+                        $claimed++;
                         $stt = $_suc[1][0];
                         $msg = $_suc[2][0];
                         $is_ok = (stripos($stt, 'success') !== false);
