@@ -43,7 +43,7 @@ final class alCaptcha {
         ];
         $cc_0 = json_decode(Net::X(
             $_H."/alcaptcha/init", 'POST', $cc_po,
-            null, [], $this->ua, $this->host, json: 1
+            null, [], $this->host, $this->ua, json: 1
         )?: '', 1);
         #var_dump($cc_0);
         
@@ -61,7 +61,8 @@ final class alCaptcha {
             $img = _get($cc_0['captchaUrl']);
             if ($img !== null) {
                 #_put('img.png', $img);
-                $jawaban = Solve::img($api, $this->host, 'adslab', $img);
+                #$jawaban = Solve::img($api, $this->host, 'adslab', $img);
+                $jawaban = Solve::img($api, $this->host, 'adslab', $img, [], 1);
                 if (isset($jawaban['trouble'])) return $soll;
                 
                 if (is_string($jawaban) && str_contains($jawaban, 'idx=')) {
@@ -103,7 +104,7 @@ final class alCaptcha {
                     'token' => $cc_0['token'],
                     'answer' => $angka,
                     'hp_field' => '',
-                    'hp_time' => intval(($endd - $sett) * 1000)
+                    'hp_time' => intval(($endd - $sett) * 1000),
                     'deviceTimezone' => TIMEZONE(),
                     'mouseMoves' => count($angka) + rand(0, 3),
                     'clickTimes' => $clk
@@ -115,7 +116,7 @@ final class alCaptcha {
                 $cc_1 = json_decode(Net::X(
                     $_H."/alcaptcha/verify-click", 'POST',
                     $cc_po, null, [],
-                    $this->ua, $this->host, json: 1
+                    $this->host, $this->ua, json: 1
                 ) ?: '', 1);
                 if ($cc_1 && $cc_1['success']) {
                     #var_dump($cc_1);
@@ -136,6 +137,14 @@ final class alCaptcha {
         
         #var_dump($soll);
         return $soll;
+        
+    }
+    
+    private function _solve($img, $force = false) {
+        
+        $jawaban = Solve::img($api, $this->host, 'adslab', $img, [], $force);
+        
+        
         
     }
     

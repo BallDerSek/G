@@ -302,7 +302,7 @@ class Solve {
             
             #var_dump($t); #die;
             
-            if (isset($t['fail']) && $t['fail'] === 777) {
+            if (isset($t['fail']) || ($res['fail'] == 777 ?? '')) {
                 if (!isset(Api::TKN[get_class($api)][$type])) {
                     return ['fail' => 471];
                 }
@@ -330,34 +330,31 @@ class Solve {
         return $t;
     }
     
-    public static function img($api, $host, $type, $img, array $extra = []) {
-    
+    public static function img($api, $host, $type, $img, array $extra = [], $force = false) {
         $solver = config::getKeys($api, $type, 'b64');
     
-        $res = Retry::until(function() use ($solver, $api, $img, $type, $extra) {
+        $res = Retry::until(function() use ($solver, $api, $img, $type, $extra, $force) {
+            if ($force) $re = ['fail' => 777];
+            else {
+                $re = isset(Api::B64[get_class($solver)][$type])
+                    ? $solver->base64($img, $type, $extra)
+                    : ['fail' => 777];
+            }
+            #var_dump($re);
     
-            $res = isset(Api::B64[get_class($solver)][$type])
-                ? $solver->base64($img, $type, $extra)
-                : ['fail' => 777];
-            #var_dump($res);
-    
-            if (isset($res['fail']) && $res['fail'] === 777) {
-    
+            if (isset($re['fail'])) {
                 if (!isset(Api::B64[get_class($api)][$type])) {
                     return ['trouble' => 'reload'];
                 }
     
-                $res = $api->base64($img, $type, $extra);
+                $re = $api->base64($img, $type, $extra);
     
-                if (isset($res['fail']) && $res['fail'] === 71) {
+                if (isset($re['fail']) && $re['fail'] === 71) {
                     return ['trouble' => 'reload'];
                 }
             }
     
-            if (isset($res['fail'])) return ['trouble' => 'reload'];
-    
-            return $res['done'];
-    
+            return $re['done'] ?? ['trouble' => 'reload'];
         }, 2, 1);
     
         if ($res === false) return ['trouble' => 'reload'];
