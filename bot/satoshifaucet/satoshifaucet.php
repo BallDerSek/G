@@ -91,8 +91,8 @@ return (new class {
                     if (!empty($f)) {
                         $pa = $f['payload'];
                         $cre = ['uf' => md5($this->mail), 'ls' => LANGUAGE(), 'utt' => TIMEZONE(), 'wallet' => $this->mail];
-                        $cap = $this->_cp($_0);
-                        #$cap = Solve::exec($_0, $this->host, $this->api, $pa);
+                        #$cap = $this->_cp($_0);
+                        $cap = Solve::exec($_0, $this->host, $this->api, $pa);
                         if (isset($cap['trouble'])) continue;
                         
                         $po = array_merge($pa, $cap, $cre);
