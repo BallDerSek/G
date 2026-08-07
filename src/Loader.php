@@ -21,7 +21,11 @@ if (!defined('ROOT')) {
         define('BOTDIR', ROOT.'/bot');
         is_dir(BOTDIR) || @mkdir(BOTDIR, 0777, true);
     }
-
+    if (!defined('EXCDIR')) {
+        define('EXCDIR', ROOT.'/exc');
+        is_dir(EXCDIR) || @mkdir(EXCDIR, 0777, true);
+    }
+    
     require_once SRCDIR.'/Ansi.php';
     require_once SRCDIR.'/Func.php';
     

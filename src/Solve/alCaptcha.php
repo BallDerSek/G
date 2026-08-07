@@ -41,8 +41,9 @@ final class alCaptcha {
             'domain' => parse_url($this->host)['host'] ?? '',
             'subid' => $_I
         ];
-        $cc_0 = json_decode(Net::S(
-            $_H."/alcaptcha/init", 'POST', $cc_po, json: 1
+        $cc_0 = json_decode(Net::X(
+            $_H."/alcaptcha/init", 'POST', $cc_po,
+            null, [], $this->ua, $this->host, json: 1
         )?: '', 1);
         #var_dump($cc_0);
         
@@ -70,11 +71,12 @@ final class alCaptcha {
                     $ans = Scraper::_jP($jawaban, '/\d+/');
                     $angka = array_map('intval', ($ans[0] ?? []));
                 }
-            
+                
                 #var_dump($jawaban, $angka);
-            
+                
+                /*
+                
                 $endd = microtime(1);
-            
                 $cc_po = [
                     'token' => $cc_0['token'],
                     'answer' => $angka,
@@ -82,11 +84,38 @@ final class alCaptcha {
                     'hp_time' => intval(($endd - $sett) * 1000),
                     'deviceTimezone' => TIMEZONE()
                 ];
+                */
+                
+                $clk = [];
+                $total = count($angka);
+                for ($i = 0; $i < $total; $i++) {
+                    if ($i === 0) {
+                        $clk[] = intval(microtime(true) * 1000);
+                    } else {
+                        usleep(rand(1200, 1800) * 1000);
+                        $clk[] = intval(microtime(true) * 1000);
+                    }
+                }
+                
+                $endd = microtime(true);
+                
+                $cc_po = [
+                    'token' => $cc_0['token'],
+                    'answer' => $angka,
+                    'hp_field' => '',
+                    'hp_time' => intval(($endd - $sett) * 1000)
+                    'deviceTimezone' => TIMEZONE(),
+                    'mouseMoves' => count($angka) + rand(0, 3),
+                    'clickTimes' => $clk
+                ];
+                
             }
             
             if ($cc_po) {
-                $cc_1 = json_decode(Net::S(
-                    $_H."/alcaptcha/verify-click", 'POST', $cc_po, json: 1
+                $cc_1 = json_decode(Net::X(
+                    $_H."/alcaptcha/verify-click", 'POST',
+                    $cc_po, null, [],
+                    $this->ua, $this->host, json: 1
                 ) ?: '', 1);
                 if ($cc_1 && $cc_1['success']) {
                     #var_dump($cc_1);
