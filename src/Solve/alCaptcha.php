@@ -2,6 +2,8 @@
 
 final class alCaptcha {
     
+    private static $attempts = [];
+    
     private string $host, $ua, $ck, $ip;
     private bool $in;
     private string $html, $id;
@@ -28,13 +30,13 @@ final class alCaptcha {
         $_W = $_D['js'] ?? null;
         if (!$_K) return false;
         
-        $_H = 'https://adslab.me/api/'.$_T;
+        $cacheKey = md5($_K . $this->host);
+        self::$attempts[$cacheKey] = (self::$attempts[$cacheKey] ?? 0) + 1;
+        $force = self::$attempts[$cacheKey] >= 3;
         
-        /*
-        $wdgt = $_W ?? $_H."/alcaptcha/widget.js?v=".intval(microtime(true));
-        $wjs = Net::C($wdgt, 'GET', null, $this->ck, [], $this->host, $this->ua);
-        _put('w.js', $wjs); die;
-        */
+        // Logger::X('info', "Attempt #" . self::$attempts[$cacheKey] . " Force: " . ($force ? 'YES' : 'NO'));
+        
+        $_H = 'https://adslab.me/api/'.$_T;
         
         $cc_po = [
             'sitekey' => $_K,
@@ -45,25 +47,22 @@ final class alCaptcha {
             $_H."/alcaptcha/init", 'POST', $cc_po,
             null, [], $this->host, $this->ua, json: 1
         )?: '', 1);
-        #var_dump($cc_0);
-        
-        #$wwjs = Net::S('https://adslab.me', 'GET', $cc_po);
-        #_put('ww.html', $wwjs);
         
         $soll = null;
         if ($cc_0 && isset($cc_0['captchaUrl'])) {
             $sett = microtime(1);
-            #var_dump($cc_0); #die;
-            
-            #$img = Net::C($cc_0['captchaUrl'], 'GET', null, $this->ck, [], $this->host, $this->ua);
             
             $cc_po = null;
             $img = _get($cc_0['captchaUrl']);
             if ($img !== null) {
-                #_put('img.png', $img);
-                #$jawaban = Solve::img($api, $this->host, 'adslab', $img);
-                $jawaban = Solve::img($api, $this->host, 'adslab', $img, [], 1);
-                if (isset($jawaban['trouble'])) return $soll;
+                $jawaban = $this->_solve($api, $img, $force);
+                
+                if (isset($jawaban['trouble'])) {
+                    if (self::$attempts[$cacheKey] >= 3) {
+                        unset(self::$attempts[$cacheKey]);
+                    }
+                    return $soll;
+                }
                 
                 if (is_string($jawaban) && str_contains($jawaban, 'idx=')) {
                     $matches = Scraper::_jP($jawaban, '/idx=(\d+)/');
@@ -72,20 +71,6 @@ final class alCaptcha {
                     $ans = Scraper::_jP($jawaban, '/\d+/');
                     $angka = array_map('intval', ($ans[0] ?? []));
                 }
-                
-                #var_dump($jawaban, $angka);
-                
-                /*
-                
-                $endd = microtime(1);
-                $cc_po = [
-                    'token' => $cc_0['token'],
-                    'answer' => $angka,
-                    'hp_field' => '',
-                    'hp_time' => intval(($endd - $sett) * 1000),
-                    'deviceTimezone' => TIMEZONE()
-                ];
-                */
                 
                 $clk = [];
                 $total = count($angka);
@@ -119,33 +104,31 @@ final class alCaptcha {
                     $this->host, $this->ua, json: 1
                 ) ?: '', 1);
                 if ($cc_1 && $cc_1['success']) {
-                    #var_dump($cc_1);
-                    
                     $soll = [
                         'alcaptcha-response' => $cc_1['token'] ?? $cc_0['token']
                     ];
                     
-                    
+                    unset(self::$attempts[$cacheKey]);
                 }
-                
             }
             
         } else {
             Logger::X('info', "\rSolve [ ".static::class.' ] ', false, 1);
             Logger::X('err', $cc_0['message'] ?? 'unknown error');
+            
+            unset(self::$attempts[$cacheKey]);
         }
         
-        #var_dump($soll);
+        if (isset(self::$attempts[$cacheKey]) && self::$attempts[$cacheKey] >= 3) {
+            unset(self::$attempts[$cacheKey]);
+        }
+        
         return $soll;
         
     }
     
-    private function _solve($img, $force = false) {
-        
-        $jawaban = Solve::img($api, $this->host, 'adslab', $img, [], $force);
-        
-        
-        
+    private function _solve($api, $img, $force = false) {
+        return Solve::img($api, $this->host, 'adslab', $img, [], $force);
     }
     
 }

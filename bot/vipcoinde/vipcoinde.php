@@ -12,6 +12,7 @@ return (new class {
     
     private string $host = 'https://vipfaucet.de';
     private string $r = '';
+    #private string $ip = '94.130.10.95';
     private string $ip = '';
     private string $domain;
     
