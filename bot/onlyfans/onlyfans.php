@@ -2,7 +2,7 @@
 
 return (new class {
     
-    use Base;
+    use Base, Mimic;
     
     private $api;
     private $acc;
@@ -61,6 +61,7 @@ return (new class {
             Check::Geo();
         
         $this->_ck();
+        $this->generateFingerprint($this->acc['ua']);
         
         while (true) {
             $dash = null;
@@ -211,7 +212,7 @@ return (new class {
                                 
                             }
                             
-                            styler("waiting for next claim", fn() => _sle(rand(18, 30)));
+                            styler("waiting for next claim", fn() => _sle(rand(10, 13)));
                         }
                         
                     }
@@ -350,7 +351,6 @@ return (new class {
         
     }
     
-
     private function onfCap($html, $host, $reff) {
         
         $setCAP = microtime(true);
@@ -420,7 +420,7 @@ return (new class {
         return ['trouble' => 'reload'];
     }
     
-    private function onfFPS($ua, array $mouse, int $waktu) {
+    private function onfFPS0($ua, array $mouse, int $waktu) {
         $isMobile = (strpos($ua, 'Mobile') !== false || strpos($ua, 'Android') !== false || strpos($ua, 'iPhone') !== false);
         $gl = $isMobile ? 'ANGLE (ARM, Mali-G57, OpenGL ES 3.2)' : 'ANGLE (NVIDIA, NVIDIA GeForce RTX 3060, OpenGL 4.5)';
     
@@ -457,6 +457,28 @@ return (new class {
     
         return base64_encode(json_encode($payload, JSON_UNESCAPED_SLASHES));
     }
+    
+    public function onfFPS($ua, array $mouse, int $waktu) {
+        
+        return base64_encode(json_encode([
+            'solve_time_ms' => $waktu,
+            'hardware_hash' => $this->browserFingerprint['canvas']['hash'] ?? $this->gen_fphash(),
+            'webdriver' => 0,
+            'mouse_data' => array_values($mouse),
+            'raw' => [
+                'iw' => $this->screenFingerprint['width'] ?? 1920,
+                'ih' => $this->screenFingerprint['height'] ?? 1080,
+                'gl' => $this->webglFingerprint['renderer'] ?? 'ANGLE (NVIDIA, NVIDIA GeForce RTX 3060, OpenGL 4.5)',
+                'sw' => $this->screenFingerprint['availWidth'] ?? 1920,
+                'sh' => $this->screenFingerprint['availHeight'] ?? 1040,
+                'wd' => false,
+                'chr' => true,
+                'ua' => $ua
+            ],
+            'fingerprint' => $this->browserFingerprint
+        ], JSON_UNESCAPED_SLASHES));
+    }
+    
 
     private function djb2($str) {
         $hash = 5381;

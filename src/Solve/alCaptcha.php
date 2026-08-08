@@ -56,6 +56,7 @@ final class alCaptcha {
             $img = _get($cc_0['captchaUrl']);
             if ($img !== null) {
                 $jawaban = $this->_solve($api, $img, $force);
+                #var_dump($jawaban);
                 
                 if (isset($jawaban['trouble'])) {
                     if (self::$attempts[$cacheKey] >= 3) {
@@ -103,6 +104,7 @@ final class alCaptcha {
                     $cc_po, null, [],
                     $this->host, $this->ua, json: 1
                 ) ?: '', 1);
+                #var_dump($cc_1);
                 if ($cc_1 && $cc_1['success']) {
                     $soll = [
                         'alcaptcha-response' => $cc_1['token'] ?? $cc_0['token']

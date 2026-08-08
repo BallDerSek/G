@@ -126,6 +126,7 @@ trait Base {
                 $_b = $fix['body'];
                 if ($_c === 200 || (stripos($_b, 'Just a moment') === false && stripos($_b, 'Attention Required!') === false)) {
                     $this->acc['ua'] = $ua;
+                    $this->refreshFingerprint();
                     return $_b;
                 }
             }
@@ -191,5 +192,23 @@ trait Base {
         
     }
     
+    protected function refreshFingerprint() {
+        $traits = class_uses($this);
+        if (!isset($traits['Mimic'])) return;
+        
+        if (!isset($this->acc['ua'])) return;
+        
+        if (method_exists($this, 'generateFingerprint')) {
+            $this->generateFingerprint($this->acc['ua']);
+        }
+        
+        if (method_exists($this, 'gen_fphash')) {
+            $this->headersCF = array_merge($this->headersCF, [
+                'X-Fingerprint' => base64_encode(json_encode($this->browserFingerprint ?? [])),
+                'X-FP-Hash' => $this->gen_fphash(),
+                'X-FP-Data' => $this->gen_fpdata()
+            ]);
+        }
+    }
     
 }
