@@ -11,7 +11,7 @@ return (new class {
     private array $hcf;
     
     private string $host = 'https://onlyfaucet.com';
-    private string $r = '';
+    private string $r = '/?r=88049';
     private string $ip = '';
     private string $domain;
     
