@@ -112,9 +112,28 @@ return (new class {
             $_bal = Scraper::_xP($dash, "//span[@id='header-user-balance']/text()")[0] ?? '';
             if ($_bal) {
                 $this->logger('', "balance", "$_bal");
-                $bal = ((float)$_bal);
+                $bal = str_replace(',', '', $_bal);
                 
                 if ($this->can_withdraw && ($bal >= 1000)) {
+                    $po = null;
+                    $jjn = [];
+                    $wd = Net::C($this->host."/pages/load_withdraw.php", 'GET', null, Inf::$cookie, [], "{$this->host}/index.php", Inf::$uagent);
+                    
+                    $pa = ['currency' => 'LTC'];
+                    $cap = Solve::exec($wd, $this->host, $this->api, $pa);
+                    if (isset($cap['trouble'])) $this->can_withdraw = false;
+                    
+                    $po = array_merge($pa, $cap);
+                    
+                    $this->logger('', "", "tes ilmu: LTC");
+                    $wdd = json_decode(Net::C("{$this->host}/actions/withdraw_request_ajax.php", 'POST', SolveUtils::webkitID($po, $bon), Inf::$cookie, ["Content-Type: multipart/form-data; boundary=$bon"], "{$this->host}/index.php", Inf::$uagent)?: '', 1);
+                    
+                    $mwd = $wdd['message'] ?? '';
+                    if (!empty($mwd)) {
+                        $this->logger('ok', 'withdraw', $mwd);
+                    }
+                    
+                    
                     
                     
                 }
