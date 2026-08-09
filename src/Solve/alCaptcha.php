@@ -20,8 +20,11 @@ final class alCaptcha {
         
     }
     
-    public function exec($alc, $api, $html = null) {
-        #var_dump($alc);
+    private function _solve($api, $img, $force = false) {
+        return Solve::img($api, $this->host, 'adslab', $img, [], $force);
+    }
+    
+    public function exec($alc, $api, $html = null, $ppp = false) {
         
         $_I = $alc['sid'] ?? 'widget_user';
         $_T = $alc['version'] ?? 'v1';
@@ -32,9 +35,7 @@ final class alCaptcha {
         
         $cacheKey = md5($_K . $this->host);
         self::$attempts[$cacheKey] = (self::$attempts[$cacheKey] ?? 0) + 1;
-        $force = self::$attempts[$cacheKey] >= 3;
-        
-        // Logger::X('info', "Attempt #" . self::$attempts[$cacheKey] . " Force: " . ($force ? 'YES' : 'NO'));
+        $force = $ppp ?? (self::$attempts[$cacheKey] >= 3);
         
         $_H = 'https://adslab.me/api/'.$_T;
         
@@ -56,7 +57,6 @@ final class alCaptcha {
             $img = _get($cc_0['captchaUrl']);
             if ($img !== null) {
                 $jawaban = $this->_solve($api, $img, $force);
-                #var_dump($jawaban);
                 
                 if (isset($jawaban['trouble'])) {
                     if (self::$attempts[$cacheKey] >= 3) {
@@ -79,45 +79,63 @@ final class alCaptcha {
                     if ($i === 0) {
                         $clk[] = intval(microtime(true) * 1000);
                     } else {
-                        usleep(rand(1200, 1800) * 1000);
+                        usleep(rand(800, 1500) * 1000);
                         $clk[] = intval(microtime(true) * 1000);
                     }
                 }
                 
                 $endd = microtime(true);
+                $hp_time = intval(($endd - $sett) * 1000);
                 
-                $cc_po = [
+                $imgData = getimagesizefromstring($img);
+                $imgWidth = $imgData[0] ?? 400;
+                $imgHeight = $imgData[1] ?? 300;
+                
+                $payloadOld = [
                     'token' => $cc_0['token'],
                     'answer' => $angka,
                     'hp_field' => '',
-                    'hp_time' => intval(($endd - $sett) * 1000),
+                    'hp_time' => $hp_time,
                     'deviceTimezone' => TIMEZONE(),
                     'mouseMoves' => count($angka) + rand(0, 3),
                     'clickTimes' => $clk
                 ];
                 
-            }
-            
-            if ($cc_po) {
                 $cc_1 = json_decode(Net::X(
                     $_H."/alcaptcha/verify-click", 'POST',
-                    $cc_po, null, [],
+                    $payloadOld, null, [],
                     $this->host, $this->ua, json: 1
                 ) ?: '', 1);
-                #var_dump($cc_1);
-                if ($cc_1 && $cc_1['success']) {
+                
+                if (!$cc_1 || !isset($cc_1['success']) || !$cc_1['success']) {
+                    
+                    $coordinates = $this->indexToCoordinates($angka, $imgWidth, $imgHeight);
+                    
+                    $p_payload = $this->buildPayload($coordinates, $clk, $hp_time);
+                    
+                    $payloadNew = [
+                        'token' => $cc_0['token'],
+                        'p_payload' => $p_payload
+                    ];
+                    
+                    $cc_1 = json_decode(Net::X(
+                        $_H."/alcaptcha/verify-click", 'POST',
+                        $payloadNew, null, [],
+                        $this->host, $this->ua, json: 1
+                    ) ?: '', 1);
+                }
+                
+                if ($cc_1 && isset($cc_1['success']) && $cc_1['success']) {
                     $soll = [
                         'alcaptcha-response' => $cc_1['token'] ?? $cc_0['token']
                     ];
-                    
                     unset(self::$attempts[$cacheKey]);
                 }
             }
             
         } else {
             Logger::X('info', "\rSolve [ ".static::class.' ] ', false, 1);
-            Logger::X('err', $cc_0['message'] ?? 'unknown error');
-            
+            Logger::X('err', $cc_1['message'] ?? $cc_0['message'] ?? 'unknown error');
             unset(self::$attempts[$cacheKey]);
         }
         
@@ -126,11 +144,79 @@ final class alCaptcha {
         }
         
         return $soll;
-        
     }
     
-    private function _solve($api, $img, $force = false) {
-        return Solve::img($api, $this->host, 'adslab', $img, [], $force);
+    private function indexToCoordinates(array $indices, $imgWidth, $imgHeight): array {
+        $cols = 3;
+        $rows = 3;
+        $cellWidth = $imgWidth / $cols;
+        $cellHeight = $imgHeight / $rows;
+        $coords = [];
+        
+        foreach ($indices as $idx) {
+            $col = $idx % $cols;
+            $row = floor($idx / $cols);
+            
+            $x = ($col * $cellWidth) + ($cellWidth / 2) + rand(-8, 8);
+            $y = ($row * $cellHeight) + ($cellHeight / 2) + rand(-8, 8);
+            
+            $x = max(5, min($imgWidth - 5, $x));
+            $y = max(5, min($imgHeight - 5, $y));
+            
+            $coords[] = [
+                'x' => (int)$x, 
+                'y' => (int)$y,
+                'w' => $imgWidth,
+                'h' => $imgHeight
+            ];
+        }
+        
+        return $coords;
     }
+    
+    private function buildPayload(array $coordinates, array $clickTimes, $hp_time) {
+        
+        $positionNames = ['top-left', 'top-center', 'top-right', 'center-left', 'center', 'center-right', 'bottom-left', 'bottom-center', 'bottom-right'];
+        shuffle($positionNames);
+        $positions = array_slice($positionNames, 0, count($coordinates));
+        
+        
+        $mouseMoves = count($coordinates) + rand(0, 6);
+        
+        $clickTimes = array_map(function($t, $i) {
+            return $t + rand(-30, 30);
+        }, $clickTimes, array_keys($clickTimes));
+        
+        $width = 400;
+        $height = 300;
+        if (!empty($coordinates)) {
+            $width = $coordinates[0]['w'] ?? 400;
+            $height = $coordinates[0]['h'] ?? 300;
+        }
+        
+        $coordinates = array_map(function($coord) {
+            return [
+                'x' => $coord['x'] + rand(-2, 2),
+                'y' => $coord['y'] + rand(-2, 2),
+                'w' => $coord['w'],
+                'h' => $coord['h']
+            ];
+        }, $coordinates);
+        
+        $payload = [
+            'a' => $positions,
+            'vt' => array_map(function($coord) use ($width, $height) {
+                return base64_encode("{$coord['x']}|{$coord['y']}|{$width}|{$height}");
+            }, $coordinates),
+            'hf' => '',
+            'ht' => $hp_time + rand(-100, 100),
+            'dz' => TIMEZONE(),
+            'mm' => $mouseMoves,
+            'ct' => $clickTimes
+        ];
+        
+        return strrev(base64_encode(json_encode($payload)));
+    }
+
     
 }

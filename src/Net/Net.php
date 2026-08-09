@@ -306,7 +306,7 @@ class Net {
         if (!empty($opt['cookie'])) {
             curl_setopt($ch, CURLOPT_COOKIEJAR, $opt['cookie']);
             curl_setopt($ch, CURLOPT_COOKIEFILE, $opt['cookie']);
-            curl_setopt($ch, CURLOPT_COOKIESESSION, true);
+            #curl_setopt($ch, CURLOPT_COOKIESESSION, true);
         }
 
         # PAYLOAD
