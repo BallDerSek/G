@@ -22,7 +22,7 @@ return (new class {
     private bool $BCDONE = false;
     private array $skipped = [];
     private array $headersCF = [];
-    private bool $can_withdraw = true;
+    private bool $can_withdraw = false;
     
     public function __construct() {
         $this->api = onKeys();

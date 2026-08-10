@@ -184,10 +184,7 @@ class Solve {
                     'html' => $html
                 ]);
         
-                $rss_res = Retry::until(
-                    fn() => (new rsCaptcha($ctx2))->exec($_cap['rss'], $api, $html),
-                    3, 1
-                );
+                $rss_res = (new rsCaptcha($ctx2))->exec($_cap['rss'], $api, $html);
         
                 if (!$rss_res || !is_array($rss_res)) {
                     return ['trouble' => 'reload'];
