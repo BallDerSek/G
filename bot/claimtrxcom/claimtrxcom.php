@@ -122,7 +122,7 @@ return (new class {
                 $this->logger('', "balance", "$_bal");
                 $bal = ((float)$_bal);
                 
-                if ($this->can_withdraw && ($bal >= 0.05)) {
+                if ($this->can_withdraw && ($bal >= 0.5)) {
                     $po = null;
                     $jjn = [];
                     $wd = Net::C("{$this->host}/withdraw", 'GET', null, Inf::$cookie, [], "{$this->host}/dashboard", Inf::$uagent, ip: $this->ip);
