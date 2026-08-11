@@ -1,5 +1,5 @@
 <?php
-_die();
+
 return (new class {
     
     use Base;

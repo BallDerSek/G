@@ -258,15 +258,19 @@ return (new class {
                     }
                     
                     if (!empty($po)) {
-                        #print_r($po); die;
+                        #print_r($po); #die;
                         $cla = Net::C($f['url'], 'POST', $po, Inf::$cookie, [], "{$this->host}/faucet", Inf::$uagent, ip: $this->ip);
+                        #_put('cla.html', $cla);
+                        
                         if (empty($cla) || ($cla === 99)) continue;
                         
-                        $mf = Scraper::_jP($cla, "/Swal\.fire\(\{.*?title\s*:\s*(['\"])(.*?)\\1.*?\}\)/s");
-                        if (!empty($mf[2][0])) {
-                            $msg = $mf[2][0];
+                        $mf = Scraper::_jP($cla, "/Swal\.fire\(\{.*?title\s*:\s*(['\"])(.*?)\\1.*?\}\)/s")[2][0] ?? Scraper::_xP($cla, "//div[contains(@class, 'alert-danger')]")[0] ?? null;
+                        
+                        if (!empty($mf)) {
+                            $msg = $mf;
+                            $stt = (stripos($msg, 'has been added') ? 'ok' : 'err');
                             
-                            $this->logger('ok', 'fct', $msg);
+                            $this->logger($stt, 'fct', $msg);
                             if (stripos($msg, 'has been added')) {
                                 $setF = microtime(true);
                                 break;
@@ -354,7 +358,7 @@ return (new class {
                         }
                         
                     }
-                    
+                    /*
                     if (!empty($ptcList['bctt'])) {
                         #print_r($ptcList['bctt']); die;
                         foreach ($ptcList['bctt'] as $ptc) {
@@ -371,7 +375,7 @@ return (new class {
                             
                         }
                     }
-                    
+                    */
                 }
                 
                 
@@ -490,6 +494,7 @@ return (new class {
                 
             }
             
+            /*
             $off_B = Net::C("{$this->host}/offerwall/bitcotasks", 'GET', null, Inf::$cookie, [], "{$this->host}/dashboard", Inf::$uagent, ip: $this->ip);
             $bctt_u = Scraper::_jP($off_B, '/<iframe[^>]*src=["\']([^"\']*bitcotask[^"\']*)["\'][^>]*>/i')[1][0] ?? null;
             
@@ -500,6 +505,7 @@ return (new class {
                 if (($bcttwl === 'habis')) $this->BCDONE = true;
                 
             }
+            */
             
             if ($this->SLDONE && $this->ADDONE && !$this->claim && $this->BCDONE) styler('cooldown', fn() => _sle(600));
             

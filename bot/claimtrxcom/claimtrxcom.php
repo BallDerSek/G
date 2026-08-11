@@ -255,15 +255,19 @@ return (new class {
                     }
                     
                     if (!empty($po)) {
-                        #print_r($po); die;
+                        #print_r($po); #die;
                         $cla = Net::C($f['url'], 'POST', $po, Inf::$cookie, [], "{$this->host}/faucet", Inf::$uagent, ip: $this->ip);
+                        #_put('cla.html', $cla);
+                        
                         if (empty($cla) || ($cla === 99)) continue;
                         
-                        $mf = Scraper::_jP($cla, "/Swal\.fire\(\{.*?title\s*:\s*(['\"])(.*?)\\1.*?\}\)/s");
-                        if (!empty($mf[2][0])) {
-                            $msg = $mf[2][0];
+                        $mf = Scraper::_jP($cla, "/Swal\.fire\(\{.*?title\s*:\s*(['\"])(.*?)\\1.*?\}\)/s")[2][0] ?? Scraper::_xP($cla, "//div[contains(@class, 'alert-danger')]")[0] ?? null;
+                        
+                        if (!empty($mf)) {
+                            $msg = $mf;
+                            $stt = (stripos($msg, 'has been added') ? 'ok' : 'err');
                             
-                            $this->logger('ok', 'fct', $msg);
+                            $this->logger($stt, 'fct', $msg);
                             if (stripos($msg, 'has been added')) {
                                 $setF = microtime(true);
                                 break;
@@ -289,55 +293,62 @@ return (new class {
                 } else {
                     if (!empty($ptcList['local'])) {
                         foreach ($ptcList['local'] as $ptc) {
-                            #break;
+                            break;
                             [$ad_u, $ad_t] = $ptc;
                             $cla = null;
                             $view = null;
                             
                             $view = Net::C($ad_u, 'GET', null, Inf::$cookie, [], "{$this->host}/ptc", Inf::$uagent, ip: $this->ip);
+                            #_put('view.html', $view);
                             
                             $po = null;
                             if (!empty($view) && $view !== 99) {
-                                _sle(1);
+                                
                                 styler("waiting for ads: $ad_t", fn() => _sle($ad_t));
                                 
                                 $f = Scraper::payload($view)[0] ?? [];
+                                
                                 if (!empty($f)) {
-                                    $pa = $f['payload'];
-                                    $_ca = $pa['captcha'] ?? '';
+                                    $paa = $f['payload'];
+                                    $_caa = $paa['captcha'] ?? '';
                                     
-                                    if (($_ca === 'hcaptcha')) {
+                                    if (($_caa === 'hcaptcha')) {
                                         break;
                                         
                                     }
-                                    if  (($_ca === 'faucetcaptcha')) {
-                                        $this->logger('err', 'fct', ' FAUCETCAPTCHA DETECTED, UPDATE SCRIPT');
-                                        break;
-                                        
+                                    if  (($_caa === 'faucetcaptcha')) {
+                                        $fcc = FaucetCaptcha::exec($this->host, $ad_u, $this->mail);
+                                        if ($fcc === 44) {
+                                            $this->ADDONE = true; break;
+                                        }
+                                        if (isset($fcc['trouble'])) continue;
                                     }
-                                    $cap = Solve::exec($view, $ad_u, $this->api, $pa);
+                                    $cap = Solve::exec($view, $ad_u, $this->api, $paa);
                                     
                                     if (isset($cap['trouble'])) continue;
-                                    $po = array_merge($pa, $cap, $fcc ?? []);
+                                    
+                                    $po = array_merge($paa, $cap, $fcc ?? []);
                                     
                                 }
-                                
-                                
                                 
                             }
                             
                             if (!empty($po)) {
-                                #print_r($po); die;
                                 $cla = Net::X($f['url'], 'POST', $po, Inf::$cookie, [], $ad_u, Inf::$uagent, ip: $this->ip);
                                 
                                 $ma = Scraper::_jP($cla, "/Swal\.fire\(\{.*?title\s*:\s*(['\"])(.*?)\\1.*?\}\)/s")[2][0] ?? null;
                                 
                                 if (!empty($ma)) $this->logger('info', 'ptc', $ma);
-                                
+                                /*
+                                var_dump($po, $f, $_ca); 
+                                _put('view.html', $view);
+                                _put('cla.html', $cla);
+                                _rl('cek:'); 
+                                */
                                 $endF = microtime(true);
                                 if ($setF > 0 && $this->claim) {
                                     $balik = $endF - $setF;
-                                    if ($balik >= 4 * 60) continue 2;
+                                    if ($balik >= 2 * 60) continue 2;
                                 }
                                 
                             }
@@ -345,7 +356,7 @@ return (new class {
                         }
                         
                     }
-                    
+                    /*
                     if (!empty($ptcList['bctt'])) {
                         #print_r($ptcList['bctt']); die;
                         foreach ($ptcList['bctt'] as $ptc) {
@@ -357,13 +368,15 @@ return (new class {
                             $endF = microtime(true);
                             if ($setF > 0 && $this->claim) {
                                 $balik = $endF - $setF;
-                                if ($balik >= 4 * 60) continue 2;
+                                if ($balik >= 2 * 60) continue 2;
                             }
                             
                         }
                     }
-                    
+                    */
                 }
+                
+                
                 
             }
             
