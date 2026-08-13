@@ -165,7 +165,7 @@ class gmxch extends Provider {
             if ($i !== null) break;
         }
         
-        #var_dump($i); die;
+        #var_dump($i); #die;
         if ($i === null) return false;
         
         if (!empty($i['status']) && isset($i['authorized'])) return (bool) $i['authorized'];
