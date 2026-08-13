@@ -299,7 +299,7 @@ class Solve {
             
             #var_dump($t); #die;
             
-            if (($t['fail'] ?? null) == 777) {
+            if (isset($t['fail'])) {
                 if (!isset(Api::TKN[get_class($api)][$type])) {
                     return ['fail' => 471];
                 }

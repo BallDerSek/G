@@ -4,7 +4,7 @@ class gmxch extends Provider {
     
     
     
-    protected $baseUrl = "https://route.up.railway.app";
+    protected $baseUrl = "https://router-api.up.railway.app";
 
     /** submit job ke API */
     protected function get_api($method, array $params) {

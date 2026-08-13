@@ -19,7 +19,7 @@ class Cloudflare {
             $solve  = $solver ? $solver->access($url, 'interstitial', $param) : false;
         }
     
-        if (is_array($solve) && ($solve['fail'] ?? null) === 777) {
+        if (($solve['fail'] ?? null) === 777) {
             if (isset(Api::ACC[get_class($api)]['interstitial'])) {
                 $solve = $api->access($url, 'interstitial', $param);
             }
