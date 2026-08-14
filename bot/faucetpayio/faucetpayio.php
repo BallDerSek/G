@@ -181,8 +181,10 @@ function _getBal($akun, $host, $app, $coinsOnly = false) {
         $b->task1('info', 'fetching balance, please wait');
         
         $bearer = ['authorization: Bearer '.$acc['auth']];
-        $info = json_decode(Net::X($app.'/wallet/get-information', 'GET', null, Inf::$cookie, $bearer, $host, Inf::$uagent)?: '', 1)['data'] ?? null;
-        #print_r($info);
+        $wallet = json_decode(Net::X($app.'/wallet/get-information', 'GET', null, Inf::$cookie, $bearer, $host, Inf::$uagent)?: '', 1);
+        #var_dump($wallet); _rl($acc['mail']);
+        
+        $info = $wallet['data'] ?? null;
         if (empty($info)) continue;
         
         if ($coinsOnly) {

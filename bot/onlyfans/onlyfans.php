@@ -165,6 +165,7 @@ return (new class {
                             if (!empty($f)) {
                                 
                                 $pa = $f['payload'];
+                                
                                 #$cap = $this->_cp($fau);
                                 $cap = Solve::exec($fau, $this->host, $this->api, $pa);
                                 
@@ -184,6 +185,7 @@ return (new class {
                         
                         if (!empty($po)) {
                             #print_r($po); #die;
+                            
                             $cla = Net::X($f['url'], 'POST', $po, Inf::$cookie, $this->headersCF, $fa, Inf::$uagent);
                             #_put('cla.html', $cla); #die;
                             
@@ -210,6 +212,12 @@ return (new class {
                                     break 2;
                                 }
                                 
+                            } else {
+                                if ((stripos($cla, 'Just a moment') !== false)) {
+                                    unset($po['nocaptcha']);
+                                    $this->tesONF($f['url'], $po);
+                                    continue;
+                                }
                             }
                             
                             styler("waiting for next claim", fn() => _sle(rand(10, 13)));
@@ -420,44 +428,6 @@ return (new class {
         return ['trouble' => 'reload'];
     }
     
-    private function onfFPS0($ua, array $mouse, int $waktu) {
-        $isMobile = (strpos($ua, 'Mobile') !== false || strpos($ua, 'Android') !== false || strpos($ua, 'iPhone') !== false);
-        $gl = $isMobile ? 'ANGLE (ARM, Mali-G57, OpenGL ES 3.2)' : 'ANGLE (NVIDIA, NVIDIA GeForce RTX 3060, OpenGL 4.5)';
-    
-        $raw = [
-            'iw' => $isMobile ? 360 : 1920,
-            'ih' => $isMobile ? 664 : 1080,
-            'gl' => $gl,
-            'sw' => $isMobile ? 360 : 1920,
-            'sh' => $isMobile ? 800 : 1080,
-            'wd' => false,
-            'chr' => true,
-            'ua' => $ua
-        ];
-    
-        $hwDetails = [
-            'gl' => $raw['gl'],
-            'sw' => $raw['sw'],
-            'sh' => $raw['sh'],
-            'wd' => $raw['wd'],
-            'chr' => $raw['chr'],
-            'ua' => $raw['ua']
-        ];
-        
-        $jsonString = json_encode($hwDetails, JSON_UNESCAPED_SLASHES); 
-        $hardwareHash = $this->djb2($jsonString); 
-    
-        $payload = [
-            'solve_time_ms' => $waktu,
-            'hardware_hash' => $hardwareHash,
-            'webdriver' => 0,
-            'mouse_data' => array_values($mouse),
-            'raw' => $raw
-        ];
-    
-        return base64_encode(json_encode($payload, JSON_UNESCAPED_SLASHES));
-    }
-    
     public function onfFPS($ua, array $mouse, int $waktu) {
         
         return base64_encode(json_encode([
@@ -479,7 +449,6 @@ return (new class {
         ], JSON_UNESCAPED_SLASHES));
     }
     
-
     private function djb2($str) {
         $hash = 5381;
         for ($i = (strlen($str) - 1); $i >= 0; $i--) $hash = ((($hash * 33) & 0xFFFFFFFF) ^ ord($str[$i])) & 0xFFFFFFFF;
@@ -519,6 +488,13 @@ return (new class {
     private function _ck() {
         $ccc = $this->adcookie(true);
         foreach ($ccc as $nn => $vv) Inf::injectCookie(Inf::$cookie, $vv, $this->host, $nn);
+    }
+    
+    private function tesONF($url, $po = null) {
+        $cekk = Net::X($url, 'POST', $po, Inf::$cookie, $this->headersCF, $url, Inf::$uagent, d: true);
+        
+        return $this->checkCF($this->headersCF, $url, $cekk, 1, $po);
+        
     }
     
 })->exec();

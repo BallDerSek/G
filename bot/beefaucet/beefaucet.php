@@ -47,7 +47,8 @@ return (new class {
         ];
         
         $FAST_CLAIM = true;
-        # change true if u want to use single token for all sites, false to use single token per sites.
+        # [ true ] if u want to use single token for all sites
+        # [ false ] to use single token per sites.
         
         login:
             Proxy::load();
@@ -110,14 +111,6 @@ return (new class {
                 $_u = $data['urls'];
                 $_coo = $data['cookie'];
                 
-                if (!$FAST_CLAIM) {
-                    $token = $this->_tK($host, $data['key']);
-                    if (empty($token) || $token === null) {
-                        unset($sites[$host]);
-                        continue;
-                    }
-                }
-                
                 $prep_queue = [];
                 foreach ($_u as $f_u) {
                     $u_nam = basename(parse_url($f_u)['path']);
@@ -139,6 +132,14 @@ return (new class {
                 $pages = styler("Preparing " . count($prep_queue) . " coins", function() use ($prep_queue) {
                     return Mux::C(...array_values($prep_queue));
                 });
+                
+                if (!$FAST_CLAIM) {
+                    $token = $this->_tK($host, $data['key']);
+                    if (empty($token) || $token === null) {
+                        unset($sites[$host]);
+                        continue;
+                    }
+                }
                 
                 $multi_calls = [];
                 $coin_map = [];
@@ -221,7 +222,6 @@ return (new class {
                 }
                 
             }
-            
             
             if (!empty($sites)) styler("waiting", fn() => _sle(30));
             

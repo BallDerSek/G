@@ -1,6 +1,7 @@
 <?php
 
 trait Base {
+    #protected bool $fetched = true;
     
     protected function logger($info, $state = null, $msg = null, $fatal = false, $mail = null) {
         
@@ -80,7 +81,8 @@ trait Base {
         ];
     }
     
-    protected function checkCF(&$hh, $url = '', $body = null, $ads = false) {
+    protected function checkCF(&$hh, $url = '', $body = null, $ads = false, $payload = null) {
+        
         $html = $body['body'] ?? null;
         $code = $body['http_code'] ?? null;
         
@@ -88,16 +90,18 @@ trait Base {
         
         if ($code === 200 || (stripos($html, 'Just a moment') === false)) return $html;
         
-        $result = $this->_cf($hh, $url, $html, false, $ads);
+        $result = $this->_cf($hh, $url, $html, false, $ads, $payload);
         
-        if (!$result) $result = $this->_cf($hh, $url, $html, true, $ads);
+        if (!$result) $result = $this->_cf($hh, $url, $html, true, $ads, $payload);
         
         return $result;
     }
     
-    private function _cf(&$cookieHeader, $url, $html, $force, $ads = false) {
+    private function _cf(&$cookieHeader, $url, $html, $force, $ads, $payload) {
         
-        $cf = Cloudflare::exec($this->api, $url, Inf::$cookie, Inf::$uagent, ['html' => $html], $force ? 1 : 0);
+        $method = (!empty($payload) ? 'POST' : 'GET');
+        
+        $cf = Cloudflare::exec($this->api, $url, Inf::$cookie, Inf::$uagent, ['html' => $html, 'payload' => $payload], $force ? 1 : 0);
         
         if (!$cf) return null;
         [$hhh, $ua] = $cf;
@@ -118,8 +122,8 @@ trait Base {
         
         for ($try = 1; $try <= 3; $try++) {
             _sle(3);
-            $fix = Net::X($url, 'GET', null, Inf::$cookie, $cookieHeader, $url, Inf::$uagent, d: true);
-            #var_dump($fix); die;
+            $fix = Net::X($url, $method, null, Inf::$cookie, $cookieHeader, $url, Inf::$uagent, d: true);
+            #var_dump($fix); #die;
             
             if (!empty($fix) && isset($fix['http_code'])) {
                 $_c = $fix['http_code'];
@@ -170,6 +174,8 @@ trait Base {
         }
         
         $cached = [
+            'clever-counter-105662' => '0-1',
+            'ads-counter-105739' => '0-1',
             '_ga' => 'GA1.1.' . $clientId . '.' . $now,
             '_ga_8MW4PHBZKX' => 'GS2.1.' . $gaSession,
             '_data_pop' => $data_pop,
@@ -184,7 +190,7 @@ trait Base {
 
     private function fetch() {
         
-        if (!$this->fetched) {
+        if ($this->fetched) {
             Proxy::load();
             Check::Geo();
             $this->fetched = false;

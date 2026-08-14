@@ -112,7 +112,6 @@ jobs:
               global_idx = offset + local_idx
               real_proxy = proxies[global_idx] if global_idx < len(proxies) else ""
               
-              # Bersihkan target (email) dari spasi dan tanda petik
               clean_target = str(target).strip().replace('"', '').replace("'", "")
               
               secrets_map = {
@@ -142,7 +141,6 @@ jobs:
                  "BOT": os.getenv("BOT_INPUT", ""),
               })
               
-              # Log untuk memastikan tidak ada spasi liar (diapit tanda |)
               print(f"[*] [Acc-{global_idx}] Executing: |{clean_target}|")
 
               subprocess.run(["php", "run.php"], env=php_env)

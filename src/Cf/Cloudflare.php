@@ -3,12 +3,15 @@
 class Cloudflare {
     
     public static function solve($api, $url, $uagent, $data, $force = false) {
+        
         if (!$api) return false;
     
         $param = array_filter([
             'body'  => !empty($data['html']) ? base64_encode($data['html']) : null,
+            'payload' => $data['payload'],
             'proxy' => $GLOBALS['_CTX']['proxy']['src'] ?? null
         ]);
+        #var_dump($param); die;
         
         if (empty($param['proxy']) && (getenv("SELEDROID") === '1')) return 'seledroid';
     
@@ -89,13 +92,22 @@ class Cloudflare {
     public static function exec($api, $url, $cookiePath, $uagent, array $data = [], $force = false) {
         
         $solution = self::solve($api, $url, $uagent, $data, $force);
+        #var_dump($solution);
+        
+        /*
+        var_dump($url, $data);
+        $solution = [
+            'token' => _rl('token: '),
+            'ua' => _rl('uagent: ')
+        ];
+        */
         
         if ($solution === 'seledroid') $solution = self::seledroid($url, $uagent, $cookiePath);
         
         if (!$solution || empty($solution['token'])) return false;
         #var_dump($solution); die;
         
-        self::injectCookie($cookiePath, $solution['token'], $url);
+        Inf::injectCookie($cookiePath, $solution['token'], $url);
 
         return [
             ['cf_clearance' => $solution['token']],
@@ -103,42 +115,6 @@ class Cloudflare {
         ];
     }
 
-    public static function injectCookie($cookiePath, $token, $url) {
-        if (empty($cookiePath) || !file_exists($cookiePath)) return false;
-
-        $domain = parse_url($url, PHP_URL_HOST);
-        $cookieDomain = '.' . ltrim($domain, '.');
-        $secure = (parse_url($url, PHP_URL_SCHEME) === 'https') ? "TRUE" : "FALSE";
-
-        $lines = file($cookiePath, FILE_IGNORE_NEW_LINES);
-        $filtered = [];
-
-        foreach ($lines as $l) {
-            if ($l === '' || $l[0] === '#') {
-                $filtered[] = $l;
-                continue;
-            }
-
-            $cols = explode("\t", $l);
-
-            if (count($cols) >= 7 && $cols[5] === 'cf_clearance') continue;
-
-            $filtered[] = $l;
-        }
-
-        $filtered[] = implode("\t", [
-            $cookieDomain,
-            "TRUE",
-            "/",
-            $secure,
-            time() + 43200,
-            "cf_clearance",
-            $token
-        ]);
-
-        return _put($cookiePath, implode("\n", $filtered) . "\n");
-    }
-    
     private static function seledroid($url, $ua, $ck) {
         
         $solution = (new execPy())->run('interstitial', $url);
