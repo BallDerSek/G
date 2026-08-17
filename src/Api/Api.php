@@ -305,11 +305,10 @@ final class Api {
             'rs_icon' => ['api' => 'rscaptcha', 'img' => 'body'],
             'adslab' => ['api' => 'surfebe', 'img' => 'body'],
             'onlyfans' => [
-                'api' => 'basiliskimg',
+                #'api' => 'basiliskimg',
+                'api' => 'necaptcha',
                 'img' => 'body',
-                'defaults' => [
-                    'textinstructions' => 'roundiconcap',
-                ]
+                'map' => ['ins' => 'textinstructions'],
             ],
         ],
     
@@ -333,27 +332,13 @@ final class Api {
             'least' => ['api' => 'least-icons',  'img' => 'base64_str'],
             'upside' => ['api' => 'upsidedown_3', 'img' => 'base64_str'],
             'vie_upside' => ['api' => 'upsidedown_3', 'img' => 'image'],
-            'onlyfans' => [
-                'api' => 'mcaptcha',
-                'img' => 'image',
-                'defaults' => [
-                    'text' => 'SMALLEST to LARGEST',
-                ]
-            ],
-        ],
-    
-        capsolver::class => [
-            'ocr' => [
-                'api' => 'ImageToTextTask',
-                'img' => 'body',
-            ],
         ],
     
         gmxch::class => [
             'bitcotask' => true,
             'antibot' => true,
             'zercaptcha' => true,
-            
+            /*
             'fa_icon' => [
                 'api' => 'visual',
                 'img' => 'main',
@@ -391,7 +376,14 @@ final class Api {
                 ],
                 
             ],
-            
+            */
+        ],
+    
+        capsolver::class => [
+            'ocr' => [
+                'api' => 'ImageToTextTask',
+                'img' => 'body',
+            ],
         ],
     
         solverify::class => [

@@ -112,7 +112,7 @@ return (new class {
                 }
                 
             } while (empty($dash));
-            #_put('dash.html', $dash);
+            #_put('dash.html', $dash); die;
             
             $_fa = Scraper::_xP($dash, "//ul[@id='faucet']//a/@href");
             #print_r($_fa);
@@ -158,9 +158,11 @@ return (new class {
                             continue;
                         }
                         
+                        #_put('fau.html', $fau); die;
                         $po = null;
                         if (!empty($fau) && $fau !== 99) {
                             $f = Scraper::payload($fau, 'fauform')[0] ?? null;
+                            #var_dump($f); die;
                             
                             if (!empty($f)) {
                                 
@@ -368,28 +370,33 @@ return (new class {
         $req = Net::X($host.'/faucet/captcha_image?_t=' . (time() * 1000), 'GET', null, Inf::$cookie, $this->headersCF, $reff, Inf::$uagent, d: true);
         
         if (!empty($req) && $req !== 99) {
+            #var_dump($req['headers']); #die;
             $x_pow = [
                 'salt' => $req['headers']['x-pow-salt'][0] ?? '',
                 'diff' => (int)($req['headers']['x-pow-difficulty'][0] ?? 2)
             ];
+            $sequence = $req['headers']['x-captcha-prompt-sequence'][0] ?? null;
             $x_cap = [
-                'ins' => $req['headers']['x-captcha-instruction'][0] ?? 'ASC',
-                'cnt' => (int)($req['headers']['x-captcha-target-count'][0] ?? 3)
+                'ins' => $sequence,
+                'cnt' => count(explode(',', $sequence)) ?? 3
             ];
             $img = $req['body'] ?? null;
             
         }
         
         if (!empty($img)) {
+            #var_dump($x_cap, $x_pow); #die;
+            
             #_put(microtime(1).'.png', $img);
-            $solution = Solve::img($this->api, $reff, 'onlyfans', $img);
+            $solution = Solve::img($this->api, $reff, 'onlyfans', $img, $x_cap);
             if (isset($solution['trouble'])) return ['trouble' => 'reload'];
             
             preg_match_all('/x[=:\s]*(\d+)[,\s]*y[=:\s]*(\d+)/i', $solution, $matches, PREG_SET_ORDER);
+            #var_dump($matches); #die;
             
             if (count($matches) < $x_cap['cnt']) return ['trouble' => 'reload'];
             
-            if ($x_cap['ins'] === 'DESC') $matches = array_reverse($matches);
+            #if ($x_cap['ins'] === 'DESC') $matches = array_reverse($matches);
             
             $clk = array_slice($matches, 0, $x_cap['cnt']);
             
