@@ -87,7 +87,7 @@ return (new class {
                 
                 $_0 = Net::X($this->host.$this->r, 'GET', null, Inf::$cookie, $this->headersCF, '', Inf::$uagent, d: true);
                 $_0 = $this->checkCF($this->headersCF, $this->host, $_0, 1);
-                
+                #var_dump($_0); die;
                 if (!empty($_0) && $_0 !== 99) {
                     $f = Scraper::payload($_0)[0] ?? null;
                     #var_dump($f); die;
@@ -498,9 +498,18 @@ return (new class {
     }
     
     private function tesONF($url, $po = null) {
-        $cekk = Net::X($url, 'POST', $po, Inf::$cookie, $this->headersCF, $url, Inf::$uagent, d: true);
         
-        return $this->checkCF($this->headersCF, $url, $cekk, 1, $po);
+        $payload = null;
+        $cekk = Net::X($url, 'GET', null, Inf::$cookie, $this->headersCF, $url, Inf::$uagent, d: true);
+        if (($cekk['http_code'] ?? 0) === 200 || !stripos(($cekk['body'] ?? ''), 'Just a moment')) {
+            $payload = $po;
+            $cekk = Net::X($url, 'POST', $payload, Inf::$cookie, $this->headersCF, $url, Inf::$uagent, d: true);
+            if (!($cekk['http_code'] ?? null) === 200 || stripos($html, 'Just a moment')) {
+                $this->logger('err', 'CLOUDFLARE', 'interstitial-post detected!!!');
+            }
+        }
+        
+        return $this->checkCF($this->headersCF, $url, $cekk, 1, $payload);
         
     }
     

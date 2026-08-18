@@ -7,12 +7,12 @@ class Cloudflare {
         if (!$api) return false;
     
         $param = array_filter([
-            'body'  => !empty($data['html']) ? base64_encode($data['html']) : null,
-            'payload' => $data['payload'],
-            'userAgent' => $uagent ?? '',
-            'proxy' => $GLOBALS['_CTX']['proxy']['src'] ?? null
+            #'body'  => !empty($data['html']) ? base64_encode($data['html']) : null,
+            'proxy' => $GLOBALS['_CTX']['proxy']['src'] ?? null,
+            #'userAgent' => $uagent ?? '',
+            'payload' => $data['payload']
         ]);
-        #var_dump($param); die;
+        #var_dump($param); #die;
         
         if (empty($param['proxy']) && (getenv("SELEDROID") === '1')) return 'seledroid';
     
