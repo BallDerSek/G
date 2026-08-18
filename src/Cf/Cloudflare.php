@@ -9,6 +9,7 @@ class Cloudflare {
         $param = array_filter([
             'body'  => !empty($data['html']) ? base64_encode($data['html']) : null,
             'payload' => $data['payload'],
+            'userAgent' => $uagent ?? '',
             'proxy' => $GLOBALS['_CTX']['proxy']['src'] ?? null
         ]);
         #var_dump($param); die;
