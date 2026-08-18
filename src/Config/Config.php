@@ -174,14 +174,40 @@ class Config {
     
     private static function genUA($type = 'desktop') {
         if ($type === 'desktop') {
-            $os = ["Windows NT 10.0; Win64; x64", "Macintosh; Intel Mac OS X 13_6", "X11; Linux x86_64"];
-            $ver = rand(120, 150);
-            return "Mozilla/5.0 ({$os[array_rand($os)]}) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/$ver.0.0.0 Safari/537.36";
+            $osList = [
+                ["Windows NT 10.0; Win64; x64", 120, 128],
+                ["Macintosh; Intel Mac OS X 14_5", 120, 128],
+                ["X11; Linux x86_64", 120, 150]
+            ];
+            
+            $pick = $osList[array_rand($osList)];
+            [$os, $min, $max] = $pick;
+            $ver = rand($min, $max);
+            
+            return "Mozilla/5.0 ({$os}) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/$ver.0.0.0 Safari/537.36";
         }
         
-        $androidVer = [10, 11, 12, 13, 14][array_rand([10, 11, 12, 13, 14])];
-        $chromeVer = rand(120, 150);
-        return "Mozilla/5.0 (Linux; Android $androidVer; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/$chromeVer.0.0.0 Mobile Safari/537.36";
+        if ($type === 'nolinux') {
+            $osList = [
+                ["Windows NT 10.0; Win64; x64", 120, 128],
+                ["Macintosh; Intel Mac OS X 14_5", 120, 128],
+                ["Macintosh; Intel Mac OS X 15_0", 120, 128]
+            ];
+            
+            $pick = $osList[array_rand($osList)];
+            [$os, $min, $max] = $pick;
+            $ver = rand($min, $max);
+            
+            return "Mozilla/5.0 ({$os}) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/$ver.0.0.0 Safari/537.36";
+        }
+        
+        $androidVersions = [10, 11, 12, 13, 14];
+        $androidVer = $androidVersions[array_rand($androidVersions)];
+        $chromeVer = rand(120, 128);
+        $models = ["K", "SM-G998B", "Pixel 6", "SM-N986B", "SM-S908B", "SM-A536B"];
+        $model = $models[array_rand($models)];
+        
+        return "Mozilla/5.0 (Linux; Android $androidVer; $model) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/$chromeVer.0.0.0 Mobile Safari/537.36";
     }
 
     public static function resetUA() {

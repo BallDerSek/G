@@ -129,6 +129,7 @@ trait Base {
                 $_c = $fix['http_code'];
                 $_b = $fix['body'];
                 if ($_c === 200 || (stripos($_b, 'Just a moment') === false && stripos($_b, 'Attention Required!') === false)) {
+                    Config::resetUA();
                     $this->acc['ua'] = $ua;
                     $this->refreshFingerprint();
                     return $_b;
