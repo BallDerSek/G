@@ -370,33 +370,28 @@ return (new class {
         $req = Net::X($host.'/faucet/captcha_image?_t=' . (time() * 1000), 'GET', null, Inf::$cookie, $this->headersCF, $reff, Inf::$uagent, d: true);
         
         if (!empty($req) && $req !== 99) {
-            #var_dump($req['headers']); #die;
             $x_pow = [
                 'salt' => $req['headers']['x-pow-salt'][0] ?? '',
                 'diff' => (int)($req['headers']['x-pow-difficulty'][0] ?? 2)
             ];
-            $sequence = $req['headers']['x-captcha-prompt-sequence'][0] ?? null;
             $x_cap = [
-                'ins' => $sequence,
-                'cnt' => count(explode(',', $sequence)) ?? 3
+                'ins' => $req['headers']['x-captcha-instruction'][0] ?? 'ASC',
+                'cnt' => (int)($req['headers']['x-captcha-target-count'][0] ?? 3)
             ];
             $img = $req['body'] ?? null;
             
         }
         
         if (!empty($img)) {
-            #var_dump($x_cap, $x_pow); #die;
-            
             #_put(microtime(1).'.png', $img);
-            $solution = Solve::img($this->api, $reff, 'onlyfans', $img, $x_cap);
+            $solution = Solve::img($this->api, $reff, 'onlyfans', $img);
             if (isset($solution['trouble'])) return ['trouble' => 'reload'];
             
             preg_match_all('/x[=:\s]*(\d+)[,\s]*y[=:\s]*(\d+)/i', $solution, $matches, PREG_SET_ORDER);
-            #var_dump($matches); #die;
             
             if (count($matches) < $x_cap['cnt']) return ['trouble' => 'reload'];
             
-            #if ($x_cap['ins'] === 'DESC') $matches = array_reverse($matches);
+            if ($x_cap['ins'] === 'DESC') $matches = array_reverse($matches);
             
             $clk = array_slice($matches, 0, $x_cap['cnt']);
             
