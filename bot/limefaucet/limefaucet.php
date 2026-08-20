@@ -11,7 +11,7 @@ return (new class {
     private array $hcf;
     
     private string $host = 'https://limefaucet.com';
-    private string $r = '/ref/jSzXvkh0oy0M2Xn0';
+    private string $r = '/ref/39vfrZ9ZbcOoKkgA';
     private string $ip = '';
     private string $domain;
     
