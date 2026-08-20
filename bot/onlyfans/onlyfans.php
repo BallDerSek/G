@@ -87,7 +87,7 @@ return (new class {
                 
                 $_0 = Net::X($this->host.$this->r, 'GET', null, Inf::$cookie, $this->headersCF, '', Inf::$uagent, d: true);
                 $_0 = $this->checkCF($this->headersCF, $this->host, $_0, 1);
-                #var_dump($_0); die;
+                
                 if (!empty($_0) && $_0 !== 99) {
                     $f = Scraper::payload($_0)[0] ?? null;
                     #var_dump($f); die;
@@ -108,7 +108,12 @@ return (new class {
                     $this->_ck();
                     #print_r($po); die;
                     $ve = Net::X($f['url'], 'POST', $po, Inf::$cookie, $this->headersCF, $this->host.$this->r, Inf::$uagent);
-                    #_put('ve.html', $ve); die;
+                    #_put('ve.html', $ve); #die; _rl('cek ve: ');
+                    
+                    if ((stripos($ve, 'Just a moment') !== false)) {
+                        $this->tesONF($f['url'], $f['payload']);
+                    }
+                    
                 }
                 
             } while (empty($dash));
@@ -362,45 +367,60 @@ return (new class {
     }
     
     private function onfCap($html, $host, $reff) {
-        
         $setCAP = microtime(true);
         $img = null;
         $x_cap = ['ins' => 'ASC', 'cnt' => 3];
-    
-        $req = Net::X($host.'/faucet/captcha_image?_t=' . (time() * 1000), 'GET', null, Inf::$cookie, $this->headersCF, $reff, Inf::$uagent, d: true);
+        $warna = null;
+        
+        $req = Net::X(
+            $host.'/faucet/captcha_image?_t=' . (time() * 1000), 
+            'GET', null, Inf::$cookie, $this->headersCF, 
+            $reff, Inf::$uagent, d: true
+        );
         
         if (!empty($req) && $req !== 99) {
             $x_pow = [
                 'salt' => $req['headers']['x-pow-salt'][0] ?? '',
                 'diff' => (int)($req['headers']['x-pow-difficulty'][0] ?? 2)
             ];
-            $x_cap = [
+            
+            $sequence = $req['headers']['x-captcha-prompt-sequence'][0] ?? null;
+            
+            if (str_contains($html, 'destinations in order') && !empty($sequence)) {
+                
+                $warna = [
+                    'ins' => $sequence,
+                    'cnt' => count(explode(',', $sequence))
+                ];
+            }
+            
+            $x_cap = $warna ?? [
                 'ins' => $req['headers']['x-captcha-instruction'][0] ?? 'ASC',
                 'cnt' => (int)($req['headers']['x-captcha-target-count'][0] ?? 3)
             ];
-            $img = $req['body'] ?? null;
             
+            $img = $req['body'] ?? null;
         }
         
         if (!empty($img)) {
-            #_put(microtime(1).'.png', $img);
-            $solution = Solve::img($this->api, $reff, 'onlyfans', $img);
+            $captype = $warna ? 'necaptcha' : 'onlyfans';
+            $cappart = $warna ? $x_cap : [];
+            
+            $solution = Solve::img($this->api, $reff, $captype, $img, $cappart);
             if (isset($solution['trouble'])) return ['trouble' => 'reload'];
             
             preg_match_all('/x[=:\s]*(\d+)[,\s]*y[=:\s]*(\d+)/i', $solution, $matches, PREG_SET_ORDER);
-            
             if (count($matches) < $x_cap['cnt']) return ['trouble' => 'reload'];
             
-            if ($x_cap['ins'] === 'DESC') $matches = array_reverse($matches);
+            if ($x_cap['ins'] === 'DESC' && !$warna) $matches = array_reverse($matches);
             
             $clk = array_slice($matches, 0, $x_cap['cnt']);
-            
             $mdt = [];
             $ANS = [];
             $setCLK = microtime(true);
             
             foreach ($clk as $index => $match) {
-                $delay = ($index === 0) ? mt_rand(800000, 1200000) : mt_rand(400000, 700000);
+                $delay = $index === 0 ? mt_rand(800000, 1200000) : mt_rand(400000, 700000);
                 usleep($delay);
                 
                 $current = (microtime(true) - $setCLK) * 1000;
@@ -415,7 +435,6 @@ return (new class {
                     't' => (int)$current
                 ];
             }
-            $x_ans = implode(';', $ANS);
             
             $waktu = (int)((microtime(true) - $setCAP) * 1000);
             $bfp = $this->onfFPS(Inf::$uagent, $mdt, $waktu);
@@ -427,6 +446,7 @@ return (new class {
                 'browser_fingerprint' => $bfp
             ];
         }
+        
         return ['trouble' => 'reload'];
     }
     
@@ -495,7 +515,7 @@ return (new class {
     private function tesONF($url, $po = null) {
         
         $payload = null;
-        $cekk = Net::X($url, 'GET', null, Inf::$cookie, $this->headersCF, $url, Inf::$uagent, d: true);
+        $cekk = Net::X($url, 'GET', $payload, Inf::$cookie, $this->headersCF, $url, Inf::$uagent, d: true);
         if (($cekk['http_code'] ?? 0) === 200 || !stripos(($cekk['body'] ?? ''), 'Just a moment')) {
             $payload = $po;
             $cekk = Net::X($url, 'POST', $payload, Inf::$cookie, $this->headersCF, $url, Inf::$uagent, d: true);

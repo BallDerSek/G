@@ -10,7 +10,7 @@ class Solve {
     }
 
     private static function init($context = null) {
-        return $context ?? (inf::$context ?? []);
+        return $context ?? (Inf::$context ?? []);
     }
     
     public static function exec($html, $host, ?Provider $api, $pa = null, $force = false, $context = null) {

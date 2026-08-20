@@ -201,4 +201,17 @@ class Mux {
         return self::Exec($queue, 15); 
     }
 
+    public static function K(array $calls) {
+        $keys = array_keys($calls);
+        $res = self::C(...array_values($calls));
+        
+        $response = [];
+        foreach ($res as $idx => $html) {
+            $key = $keys[$idx] ?? $idx;
+            $response[$key] = $html;
+        }
+        
+        return $response;
+    }
+
 }

@@ -19,11 +19,12 @@ return (new class {
     private string $ip = '162.213.248.69';
     
     private $mail;
+    private $prox;
     
     public function __construct() {
         $this->api = onKeys();
         $this->acc = Config::credential([], false, ['login', 'PROXY']);
-        putenv("PROXY=" . $this->acc['PROXY']);
+        putenv("PROXY=" . ($this->prox = $this->acc['PROXY']));
         
         $this->mail = $this->acc['login'];
         
@@ -124,7 +125,7 @@ return (new class {
                     $prep_queue[$_url] = [
                         $_url, 'GET', null, $u_coo,
                         [], $host, $_ua, $this->ip,
-                        false, $this->acc['PROXY']
+                        false, #$this->prox['PROXY']
                     ];
                     
                 }
@@ -171,7 +172,7 @@ return (new class {
                     $multi_calls[] = [
                         $post_url, 'POST', $pa, $args[3],
                         [], $_url, $_ua, $this->ip,
-                        false, $this->acc['PROXY']
+                        false, #$this->prox['PROXY']
                     ];
                     $coin_map[] = $u_nam;
                     

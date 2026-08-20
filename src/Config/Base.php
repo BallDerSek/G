@@ -90,7 +90,7 @@ trait Base {
         
         if ($code === 200 || (stripos($html, 'Just a moment') === false)) return $html;
         
-        $result = $this->_cf($hh, $url, $html, false, $ads, $payload);
+        $result = $this->_cf($hh, $url, $html, true, $ads, $payload);
         
         if (!$result) $result = $this->_cf($hh, $url, $html, true, $ads, $payload);
         

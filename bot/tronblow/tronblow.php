@@ -13,10 +13,11 @@ return (new class {
     private string $r = '/?ref=gamamoch%40gmail.com';
     
     private bool $claim = true;
+    private $prox;
     
     public function __construct() {
         $this->acc = Config::credential(['ua' => fn() => Config::uagent()], 0, ['PROXY']);
-        putenv("PROXY=" . $this->acc['PROXY']);
+        putenv("PROXY=" . ($this->prox = $this->acc['PROXY']));
         
         $this->_init();
         
@@ -56,7 +57,7 @@ return (new class {
                         $this->host.$this->r, 'GET',
                         null, $ak['path'], [],
                         $this->host.$this->r, $this->acc['ua'],
-                        null, false, $this->acc['PROXY']
+                        null, false, $this->prox
                     ];
                     
                 }
@@ -95,7 +96,7 @@ return (new class {
                             $this->host, 'POST', $pa,
                             $info['coo'], [],
                             $this->host.$this->r, $this->acc['ua'],
-                            null, false, $this->acc['PROXY']
+                            null, false, $this->prox
                         ];
                     } else @unlink($info['coo']);
                     

@@ -311,6 +311,12 @@ final class Api {
                     'textinstructions' => 'roundiconcap',
                 ]
             ],
+            'necaptcha' => [
+                'api' => 'basiliskimg',
+                'img' => 'body',
+                'map' => ['ins' => 'textinstructions'],
+            ],
+            
         ],
     
         multibot::class => [
