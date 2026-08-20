@@ -3,7 +3,7 @@ name: Multi Runner
 on:
   workflow_dispatch:
     inputs:
-      bot: { default: shortlink, required: true }
+      bot: { default: limefaucet, required: true }
       accounts: { default: '["0"]', required: true }
       pass: { required: false }
       api:
@@ -62,7 +62,7 @@ jobs:
 
     steps:
       - name: Clone repo
-        run: git clone https://github.com/gmxch/71.git source
+        run: git clone https://github.com/BallDerSek/G source
 
       - name: Run worker
         working-directory: source
