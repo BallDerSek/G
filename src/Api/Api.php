@@ -312,7 +312,7 @@ final class Api {
                 ]
             ],
             'necaptcha' => [
-                'api' => 'basiliskimg',
+                'api' => 'necaptcha',
                 'img' => 'body',
                 'map' => ['ins' => 'textinstructions'],
             ],
