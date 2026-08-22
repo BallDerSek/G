@@ -1,5 +1,10 @@
 <?php
-
+/*
+$html = _get('fau.html');
+$ins = Scraper::_var($html, 'instructText.innerText');
+var_dump($ins);
+die;
+*/
 return (new class {
     
     use Base, Mimic;
@@ -154,6 +159,7 @@ return (new class {
                         
                         $fau = $this->checkCF($this->headersCF, $fa, $fau, 1);
                         
+                        _put('fau.html', $fau);
                         if ($ban = $this->isBan($fau)) {
                             if (!$this->SLDONE) {
                                 $curr = $_c;
@@ -371,6 +377,7 @@ return (new class {
         $img = null;
         $x_cap = ['ins' => 'ASC', 'cnt' => 3];
         $warna = null;
+        $wtype = '';
         
         $req = Net::X(
             $host.'/faucet/captcha_image?_t=' . (time() * 1000), 
@@ -385,6 +392,7 @@ return (new class {
             ];
             
             $sequence = $req['headers']['x-captcha-prompt-sequence'][0] ?? null;
+            #var_dump($req['headers'], $sequence);
             
             if (str_contains($html, 'destinations in order') && !empty($sequence)) {
                 
@@ -392,6 +400,13 @@ return (new class {
                     'ins' => $sequence,
                     'cnt' => count(explode(',', $sequence))
                 ];
+                $wtype = 'necaptcha';
+            } elseif (str_contains($html, 'line to the correct destination ')) {
+                $warna = [
+                    'ins' => $req['headers']['x-captcha-color-name'][0] ?? 'RED',
+                    'cnt' => (int)($req['headers']['x-captcha-target-count'][0] ?? 1)
+                ];
+                $wtype = 'necaptcha';
             }
             
             $x_cap = $warna ?? [
@@ -403,7 +418,10 @@ return (new class {
         }
         
         if (!empty($img)) {
-            $captype = $warna ? 'necaptcha' : 'onlyfans';
+            #var_dump($x_cap); #die;
+            #_put('img.png', $img); die;
+            
+            $captype = $wtype ?? 'onlyfans';
             $cappart = $warna ? $x_cap : [];
             
             $solution = Solve::img($this->api, $reff, $captype, $img, $cappart);
