@@ -1,60 +1,60 @@
 1
-export PROXY=http://huhu:huhu@116.97.102.233:42694
+export PROXY=http://huhu:huhu@103.166.184.10:14125
 
 2
-export PROXY=http://huhu:huhu@171.236.182.228:10933
+export PROXY=http://huhu:huhu@103.166.184.10:11392
 
 3
-export PROXY=http://huhu:huhu@171.236.174.154:46090
+export PROXY=http://huhu:huhu@103.166.184.10:33103
 
 4
-export PROXY=http://huhu:huhu@171.224.203.253:19683
+export PROXY=http://huhu:huhu@103.166.184.10:15578
 
 5
-export PROXY=http://huhu:huhu@27.76.94.137:46098
+export PROXY=http://huhu:huhu@103.166.184.10:27743
 
 6
-export PROXY=http://huhu:huhu@171.236.161.11:14295
+export PROXY=http://huhu:huhu@103.166.184.10:17980
 
 7
-export PROXY=http://huhu:huhu@27.76.91.207:32021
+export PROXY=http://huhu:huhu@103.166.184.10:23099
 
 8
-export PROXY=http://huhu:huhu@171.236.166.3:21059
+export PROXY=http://huhu:huhu@103.166.184.10:17436
 
 9
-export PROXY=http://huhu:huhu@117.7.196.31:29760
+export PROXY=http://huhu:huhu@103.166.184.10:26351
 
 10
-export PROXY=http://huhu:huhu@116.96.62.31:15064
+export PROXY=http://huhu:huhu@103.166.184.10:21519
 
 11
-export PROXY=http://huhu:huhu@125.234.209.115:19793
+export PROXY=http://huhu:huhu@103.166.184.10:18743
 
 12
-export PROXY=http://huhu:huhu@117.0.180.150:52829
+export PROXY=http://huhu:huhu@103.82.27.208:22394
 
 13
-export PROXY=http://huhu:huhu@171.224.203.1:24141
+export PROXY=http://huhu:huhu@103.82.27.208:26844
 
 14
-export PROXY=http://huhu:huhu@27.76.80.105:27505
+export PROXY=http://huhu:huhu@103.82.27.208:23085
 
 15
-export PROXY=http://huhu:huhu@116.96.57.29:50495
+export PROXY=http://huhu:huhu@103.82.27.208:21371
 
 16
-export PROXY=http://huhu:huhu@171.236.167.43:55000
+export PROXY=http://huhu:huhu@103.82.27.208:19342
 
 17
-export PROXY=http://huhu:huhu@171.236.166.171:51073
+export PROXY=http://huhu:huhu@103.82.27.208:39691
 
 18
-export PROXY=http://huhu:huhu@171.236.163.161:34867
+export PROXY=http://huhu:huhu@103.82.27.208:39591
 
 19
-export PROXY=http://huhu:huhu@116.110.99.173:42699
+export PROXY=http://huhu:huhu@103.82.27.208:32700
 
 20
-export PROXY=http://huhu:huhu@171.236.163.51:47024
+export PROXY=http://huhu:huhu@103.82.27.208:13633
 
