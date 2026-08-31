@@ -34,7 +34,7 @@ $skipped = [];
 $SLDONE = false;
 $claim = true;
 $habis = [];
-$curr = '';
+$curr = 'usdt';
 while (true) {
     $ret = 0;
 
