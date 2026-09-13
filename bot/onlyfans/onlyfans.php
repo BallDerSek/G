@@ -375,19 +375,20 @@ return (new class {
         $req = null;
         $mungkin_tanpa_fp = false;
         
+        /*
         $init = json_decode(Net::X(
             $host.'/faucet/init_captcha?_t=' . (time() * 1000), 
             'GET', null, Inf::$cookie, $this->headersCF, 
             $reff, Inf::$uagent
         )?: '', 1)['token'] ?? null;
         
-        if ($init) {
-            $req = Net::X(
-                $host.'/faucet/captcha_image?token=' . $init, 
-                'GET', null, Inf::$cookie, $this->headersCF, 
-                $reff, Inf::$uagent, d: true
-            );
-        }
+        #if ($init) $req = Net::X($host.'/faucet/captcha_image?token=' . $init, 'GET', null, Inf::$cookie, $this->headersCF, $reff, Inf::$uagent, d: true);
+        
+        */
+        
+        # BERUBAH MULU ANJING
+        $req = Net::X($host.'/faucet/captcha_image?_t=' . (time() * 1000), 'GET', null, Inf::$cookie, $this->headersCF, $reff, Inf::$uagent, d: true);
+        
         
         #_put('img.png', $req['body']); die;
         #unset($req['body']);
@@ -419,7 +420,7 @@ return (new class {
                     'cnt' => (int)($req['headers']['x-captcha-target-count'][0] ?? 1)
                 ];
                 $wtype = 'necaptcha';
-            } elseif (preg_match('/Match the animation|Match the movement type/i', $html)) {
+            } elseif (preg_match('/Match the animation|Match the movement|sharing the motion style/i', $html)) {
                 
                 $mungkin_tanpa_fp = true;
                 
