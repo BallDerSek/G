@@ -11,7 +11,7 @@ return (new class {
     private array $hcf;
     
     private string $host = 'https://spaceshooter.net';
-    private string $r = '/?r=1197';
+    private string $r = '/?r=';
     private string $ip = '';
     private string $domain;
     
