@@ -11,7 +11,7 @@ return (new class {
     private array $hcf;
     
     private string $host = 'https://gamefaucet.fun';
-    private string $r = '/?r=10275';
+    private string $r = '/?r=';
     private string $ip = '';
     private string $domain;
     
