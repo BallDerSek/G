@@ -1,8 +1,8 @@
 <?php
 
 if (!defined('ROOT')) {
-    
     define('ROOT', realpath(__DIR__.'/../'));
+    
     if (!defined('RUNNER')) define('RUNNER', '31.9.2');
     
     if (!defined('LIBDIR')) {
@@ -29,15 +29,13 @@ if (!defined('ROOT')) {
     require_once SRCDIR.'/Ansi.php';
     require_once SRCDIR.'/Func.php';
     
-    $classMap = [];
-    $iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator(SRCDIR, RecursiveDirectoryIterator::SKIP_DOTS));
+    $clsMap = [];
+    $itr = new RecursiveIteratorIterator(new RecursiveDirectoryIterator(SRCDIR, RecursiveDirectoryIterator::SKIP_DOTS));
 
-    foreach ($iterator as $file) {
-        if ($file->isFile() && $file->getExtension() === 'php') $classMap[$file->getBasename('.php')] = $file->getRealPath();
-    }
+    foreach ($itr as $file) if ($file->isFile() && $file->getExtension() === 'php') $clsMap[$file->getBasename('.php')] = $file->getRealPath();
 
-    spl_autoload_register(function ($class) use ($classMap) {
-        if (isset($classMap[$class])) require_once $classMap[$class];
+    spl_autoload_register(function ($cls) use ($clsMap) {
+        if (isset($clsMap[$cls])) require_once $clsMap[$cls];
     });
 
 }

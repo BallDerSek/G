@@ -86,6 +86,10 @@ final class Api {
                 'k' => 'googlekey','url' => 'pageurl','api' => 'userrecaptcha','need' => ['action'],
                 'defaults' => ['version' => 'v3']
                 ],
+            'alc' => [
+                'k' => 'sitekey', 'url' => 'pageurl', 'api' => 'adslab',
+                'map' => ['sid' => 'subid']
+                ],
         ],
 
         xevil::class => [
@@ -134,8 +138,6 @@ final class Api {
             'cft' => [
                 'k' => 'sitekey', 'url' => 'domain', 'api' => 'turnstile'
                 ],
-            /*
-            */
             'hc' => [
                 'k' => 'sitekey', 'url' => 'domain', 'api' => 'hcaptcha'
                 ],
@@ -146,6 +148,10 @@ final class Api {
             'rc3' => [
                 'k' => 'sitekey', 'url' => 'domain', 'api' => 'userrecaptcha',
                 'defaults' => ['version' => '3']
+                ],
+            'alc' => [
+                'k' => 'sitekey', 'url' => 'domain', 'api' => 'adslab',
+                'map' => ['sid' => 'subid']
                 ],
         ],
 
@@ -279,13 +285,6 @@ final class Api {
                     'request' => 'iconcaptcha',
                 ],
             ],
-            'adslab' => [
-                'api' => 'icon_order',
-                'img' => 'body',
-                'defaults' => [
-                    'request' => 'iconcaptcha',
-                ],
-            ],
         ],
     
         glitch::class => [
@@ -303,18 +302,12 @@ final class Api {
             'vie_upside' => ['api' => 'viefaucet', 'img' => 'body'],
             'icon_up' => ['api' => 'iconupfinder', 'img' => 'body'],
             'rs_icon' => ['api' => 'rscaptcha', 'img' => 'body'],
-            'adslab' => ['api' => 'surfebe', 'img' => 'body'],
             'onlyfans' => [
-                'api' => 'basiliskimg',
-                'img' => 'body',
-                'defaults' => [
-                    'textinstructions' => 'roundiconcap',
-                ]
-            ],
-            'necaptcha' => [
                 'api' => 'necaptcha',
                 'img' => 'body',
-                'map' => ['ins' => 'textinstructions'],
+                'map' => [
+                    'ins' => 'textinstructions'
+                    ],
             ],
             
         ],
@@ -339,13 +332,6 @@ final class Api {
             'least' => ['api' => 'least-icons',  'img' => 'base64_str'],
             'upside' => ['api' => 'upsidedown_3', 'img' => 'base64_str'],
             'vie_upside' => ['api' => 'upsidedown_3', 'img' => 'image'],
-            'onlyfans' => [
-                'api' => 'mcaptcha',
-                'img' => 'image',
-                'defaults' => [
-                    'text' => 'SMALLEST to LARGEST',
-                ]
-            ],
         ],
     
         capsolver::class => [
@@ -370,7 +356,7 @@ final class Api {
                     'opt' => 'options',
                 ],
             ],
-            
+            /*
             'onlyfans' => [
                 'api' => 'visual',
                 'img' => 'main',
@@ -379,16 +365,7 @@ final class Api {
                 ],
                 
             ],
-            
-            'adslab' => [
-                'api' => 'visual',
-                'img' => 'main',
-                'defaults' => [
-                    'method' => 'adslab',
-                ],
-                
-            ],
-            
+            */
             'upside' => [
                 'api' => 'visual',
                 'img' => 'main',

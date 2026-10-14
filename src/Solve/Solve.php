@@ -201,38 +201,9 @@ class Solve {
                 }
             }
         
-            elseif (isset($_cap['adslab'])) {
-                #var_dump($_cap); die;
-        
-                $ctx3 = array_merge($ctx ?? [], [
-                    'host' => $host,
-                    'html' => $html
-                ]);
-        
-                $adc_res = Retry::until(
-                    fn() => (new alCaptcha($ctx3))->exec($_cap['adslab'], $api, $html),
-                    3, 1
-                );
-                #var_dump($adc_res); die;
-                
-                if (!$adc_res || !is_array($adc_res)) {
-                    return ['trouble' => 'reload'];
-                }
-        
-                $solution += $adc_res;
-                $hardSolved = true;
-        
-                $found = self::findField($pa ?? [], 'adslab');
-                if ($found) {
-                    $solution[$found] = $pa[$found];
-                } elseif ($_fields) {
-                    $solution[$_fields] = 'adslab';
-                }
-            }
-        
             if ($api && !$hardSolved) {
             
-                $priority = ['cft','rc3','rc2','hc'];
+                $priority = ['alc','cft','rc3','rc2','hc'];
             
                 foreach ($priority as $t) {
             
@@ -278,8 +249,10 @@ class Solve {
             }
         
             if (!$api) die(Logger::X('err', 'undefined provider'));
-            
+        
             if (empty($solution) && empty($_cap)) return ['nocaptcha' => true];
+        
+            if (isset($_cap['alc']) && !empty($solution)) $solution['alcaptcha-response'] = $token['done'];
         
             return $solution;
         }

@@ -169,7 +169,8 @@ class Capt {
                 }
             }
             
-            $found['adslab'] = [
+            $found['alc'] = [
+                'type' => 'alc',
                 'keys' => (!empty($alckey) && isset($alckey[0])) ? $alckey[0] : null,
                 'sid' => (!empty($alcsid) && isset($alcsid[0])) ? $alcsid[0] : null,
                 'version' => null,

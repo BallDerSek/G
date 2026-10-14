@@ -217,6 +217,25 @@ function checkATB(&$err, $html) {
 function _die() {
     die(Logger::X('err', 'bloman bener') ?: Logger::X('info', 'tunggu update', true, true));
 }
+function parseSolution($solution) {
+    $solution = trim((string)$solution);
+    if ($solution === '') return [];
+    
+    $matches = [];
+    
+    if (preg_match_all(
+        '/(?:x\s*[=:]\s*)?(\d+)\s*[,:\s]\s*(?:y\s*[=:]\s*)?(\d+)/i',
+        $solution,
+        $mAll,
+        PREG_SET_ORDER
+    )) {
+        foreach ($mAll as $m) {
+            $matches[] = $m;
+        }
+    }
+    
+    return $matches;
+}
 
 # Boot
 function bootApp() {

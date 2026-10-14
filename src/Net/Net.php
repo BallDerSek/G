@@ -170,21 +170,28 @@ class Net {
         $he_cookie = null;
         foreach ($he_manual as $h) {
             $h = trim($h);
-            if ($h === '' || stripos($h, 'detail-hints') !== false) continue; 
+            if ($h === '') continue;
             
             if (stripos($h, 'Cookie:') === 0) {
                 $he_cookie = $h;
                 continue;
             }
-            if (stripos($h, 'Host:') === 0) continue;
-            if (stripos($h, 'Accept:') === 0) continue;
-            if (stripos($h, 'Accept-Encoding:') === 0) continue;
-            if (stripos($h, 'Accept-Language:') === 0) continue;
-            if (stripos($h, 'Cache-Control:') === 0) continue;
-            if (stripos($h, 'Connection:') === 0) continue;
-            if (stripos($h, 'User-Agent:') === 0) continue;
             
-            $head[] = $h;
+            $headerName = strtolower(explode(':', $h, 2)[0]) . ':';
+            $alreadySet = false;
+            foreach ($head as $existing) {
+                if (stripos($existing, $headerName) === 0) {
+                    $alreadySet = true;
+                    break;
+                }
+            }
+            
+            if ($alreadySet) {
+                $head = array_filter($head, function($item) use ($headerName) {
+                    return stripos($item, $headerName) !== 0;
+                });
+                $head[] = $h;
+            } else $head[] = $h;
         }
         
         if ($useHints) {

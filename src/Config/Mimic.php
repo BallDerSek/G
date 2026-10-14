@@ -10,7 +10,7 @@ trait Mimic {
     protected array $audioFingerprint = [];
     protected array $fontFingerprint = [];
     protected array $behaviorFingerprint = [];
-    
+
     protected function generateFingerprint($userAgent) {
         $this->_nvgator($userAgent);
         $this->_screen($userAgent);
@@ -22,270 +22,268 @@ trait Mimic {
         $this->_bhvior();
         $this->_basic($userAgent);
     }
-    
+
     protected function _nvgator($ua) {
-        $isMobile = $this->_mobile($ua);
-        $isChrome = stripos($ua, 'Chrome') !== false;
+        $isMobile  = $this->_mobile($ua);
+        $isChrome  = stripos($ua, 'Chrome') !== false;
         $isFirefox = stripos($ua, 'Firefox') !== false;
-        $isSafari = stripos($ua, 'Safari') !== false && !$isChrome;
-        
-        $lang = LANGUAGE();
+
+        $lang  = LANGUAGE();
         $langs = [$lang];
         $extra = ['en-US', 'en-GB'];
         shuffle($extra);
         $langs = array_merge($langs, array_slice($extra, 0, rand(0, 1)));
-        
+
         $this->navigatorFingerprint = [
-            'userAgent' => $ua,
-            'platform' => $this->rand_pltform($ua),
-            'vendor' => $this->rand_vendor($ua),
-            'vendorSub' => '',
-            'productSub' => $isChrome ? '20030107' : ($isFirefox ? '20100101' : ''),
-            'product' => 'Gecko',
-            'appName' => $isFirefox ? 'Netscape' : 'Netscape',
-            'appVersion' => $this->rand_appver($ua),
-            'appCodeName' => 'Mozilla',
-            'language' => $lang,
-            'languages' => $langs,
-            'cookieEnabled' => true,
-            'doNotTrack' => $this->get_DNT(),
+            'userAgent'           => $ua,
+            'platform'            => $this->rand_pltform($ua),
+            'vendor'              => $this->rand_vendor($ua),
+            'vendorSub'           => '',
+            'productSub'          => $isChrome ? '20030107' : ($isFirefox ? '20100101' : ''),
+            'product'             => 'Gecko',
+            'appName'             => 'Netscape',
+            'appVersion'          => $this->rand_appver($ua),
+            'appCodeName'         => 'Mozilla',
+            'language'            => $lang,
+            'languages'           => $langs,
+            'cookieEnabled'       => true,
+            'doNotTrack'          => $this->get_DNT(),
             'hardwareConcurrency' => $this->get_concur(),
-            'deviceMemory' => $this->get_Dmem(),
-            'maxTouchPoints' => $isMobile ? $this->get_Touch() : 0,
-            'onLine' => true,
-            'webdriver' => false,
-            'pdfViewerEnabled' => true,
-            'connection' => [
+            'deviceMemory'        => $this->get_Dmem(),
+            'maxTouchPoints'      => $isMobile ? $this->get_Touch() : 0,
+            'onLine'              => true,
+            'webdriver'           => false,
+            'pdfViewerEnabled'    => true,
+            'connection'          => [
                 'effectiveType' => $this->get_NET(),
-                'rtt' => $this->getRTT(),
-                'downlink' => $this->get_Dlink(),
-                'saveData' => false
+                'rtt'           => $this->getRTT(),
+                'downlink'      => $this->get_Dlink(),
+                'saveData'      => false
             ]
         ];
     }
-    
+
     protected function _screen($ua) {
         $isMobile = $this->_mobile($ua);
-        $res = $isMobile ? $this->res_mobiles() : $this->res_desktop();
-        
+        $res      = $isMobile ? $this->res_mobiles() : $this->res_desktop();
+
         $this->screenFingerprint = [
-            'width' => $res['width'],
-            'height' => $res['height'],
-            'availWidth' => $res['availWidth'],
+            'width'       => $res['width'],
+            'height'      => $res['height'],
+            'availWidth'  => $res['availWidth'],
             'availHeight' => $res['availHeight'],
-            'innerWidth' => $res['availWidth'] - 17,
+            'innerWidth'  => $res['availWidth'] - 17,
             'innerHeight' => $res['availHeight'] - 80,
-            'colorDepth' => 24,
-            'pixelDepth' => 24,
+            'colorDepth'  => 24,
+            'pixelDepth'  => 24,
             'orientation' => [
-                'type' => $isMobile ? 'portrait-primary' : 'landscape-primary',
+                'type'  => $isMobile ? 'portrait-primary' : 'landscape-primary',
                 'angle' => 0
             ]
         ];
     }
-    
+
     protected function _tzone() {
         $tz = TIMEZONE();
         $dt = new DateTime('now', new DateTimeZone($tz));
-        
+
         $this->timezoneFingerprint = [
-            'timezone' => $tz,
+            'timezone'       => $tz,
             'timezoneOffset' => $dt->getOffset() / 60,
-            'dstOffset' => $this->get_tzone($tz),
-            'timezoneName' => $dt->format('T'),
+            'dstOffset'      => $this->get_tzone($tz),
+            'timezoneName'   => $dt->format('T'),
             'daylightSaving' => (bool) $dt->format('I')
         ];
     }
-    
+
     protected function _canvas() {
         $this->canvasFingerprint = [
-            'hash' => $this->gen_canvas(),
-            'winding' => true,
+            'hash'     => $this->gen_canvas(),
+            'winding'  => true,
             'geometry' => [
-                'points' => 30,
+                'points'     => 30,
                 'complexity' => 3,
-                'winding' => true
+                'winding'    => true
             ]
         ];
     }
-    
+
     protected function _webGL($ua) {
         $this->webglFingerprint = $this->_mobile($ua) ? $this->wGL_mobiles() : $this->wGL_desktop();
     }
-    
+
     protected function _audio() {
         $this->audioFingerprint = [
-            'hash' => $this->gen_Audio(),
-            'sampleRate' => 44100,
+            'hash'         => $this->gen_Audio(),
+            'sampleRate'   => 44100,
             'channelCount' => 2,
-            'fftSize' => 2048,
+            'fftSize'      => 2048,
             'audioContext' => [
                 'latencyHint' => 'interactive',
-                'sampleRate' => 44100,
-                'state' => 'running'
+                'sampleRate'  => 44100,
+                'state'       => 'running'
             ]
         ];
     }
-    
+
     protected function _fonts($ua) {
         $this->fontFingerprint = [
             'fonts' => $this->get_Fonts($ua),
-            'hash' => $this->gen_Fonts($ua)
+            'hash'  => $this->gen_Fonts($ua)
         ];
     }
-    
+
     protected function _bhvior() {
         $this->behaviorFingerprint = [
-            'mouseMovement' => $this->gen_Mouse(),
-            'typingSpeed' => $this->gen_Type(),
+            'mouseMovement'  => $this->gen_Mouse(),
+            'typingSpeed'    => $this->gen_Type(),
             'scrollBehavior' => $this->gen_Scroll(),
-            'clickPattern' => $this->gen_Click(),
+            'clickPattern'   => $this->gen_Click(),
             'keystrokeDelay' => $this->gen_Kstroke()
         ];
     }
-    
+
     protected function _basic($ua) {
         $this->browserFingerprint = [
             'navigator' => $this->navigatorFingerprint,
-            'screen' => $this->screenFingerprint,
-            'timezone' => $this->timezoneFingerprint,
-            'canvas' => $this->canvasFingerprint,
-            'webgl' => $this->webglFingerprint,
-            'audio' => $this->audioFingerprint,
-            'fonts' => $this->fontFingerprint,
-            'behavior' => $this->behaviorFingerprint,
-            'device' => $this->_device($ua),
-            'network' => $this->_ntwork(),
+            'screen'    => $this->screenFingerprint,
+            'timezone'  => $this->timezoneFingerprint,
+            'canvas'    => $this->canvasFingerprint,
+            'webgl'     => $this->webglFingerprint,
+            'audio'     => $this->audioFingerprint,
+            'fonts'     => $this->fontFingerprint,
+            'behavior'  => $this->behaviorFingerprint,
+            'device'    => $this->_device($ua),
+            'network'   => $this->_ntwork(),
             'permissions' => $this->_permss(),
-            'storage' => $this->_strage(),
-            'media' => $this->_media()
+            'storage'   => $this->_strage(),
+            'media'     => $this->_media()
         ];
-        
-        $this->headersCF = array_merge($this->headersCF, [
+
+        $this->headersCF = array_merge($this->headersCF ?? [], [
             'X-Fingerprint' => base64_encode(json_encode($this->browserFingerprint)),
-            'X-FP-Hash' => $this->gen_fphash(),
-            'X-FP-Data' => $this->gen_fpdata()
+            'X-FP-Hash'     => $this->gen_fphash(),
+            'X-FP-Data'     => $this->gen_fpdata()
         ]);
     }
-    
+
     protected function _device($ua): array {
         $isMobile = $this->_mobile($ua);
-        
+
         return [
-            'deviceType' => $isMobile ? 'mobile' : 'desktop',
-            'deviceMemory' => $this->get_Dmem(),
+            'deviceType'          => $isMobile ? 'mobile' : 'desktop',
+            'deviceMemory'        => $this->get_Dmem(),
             'hardwareConcurrency' => $this->get_concur(),
-            'maxTouchPoints' => $isMobile ? $this->get_Touch() : 0,
-            'userAgentData' => [
-                'brands' => $this->gen_Browser($ua),
-                'mobile' => $isMobile,
+            'maxTouchPoints'      => $isMobile ? $this->get_Touch() : 0,
+            'userAgentData'       => [
+                'brands'   => $this->gen_Browser($ua),
+                'mobile'   => $isMobile,
                 'platform' => $this->rand_pltform($ua)
             ]
         ];
     }
-    
+
     protected function _ntwork(): array {
         return [
             'connectionType' => $this->get_NET(),
-            'rtt' => $this->getRTT(),
-            'downlink' => $this->get_Dlink(),
-            'saveData' => false,
-            'effectiveType' => $this->get_NET()
+            'rtt'            => $this->getRTT(),
+            'downlink'       => $this->get_Dlink(),
+            'saveData'       => false,
+            'effectiveType'  => $this->get_NET()
         ];
     }
-    
+
     protected function _permss(): array {
         return [
-            'geolocation' => 'prompt',
-            'notifications' => 'prompt',
-            'microphone' => 'prompt',
-            'camera' => 'prompt',
-            'clipboard-read' => 'prompt',
+            'geolocation'     => 'prompt',
+            'notifications'   => 'prompt',
+            'microphone'      => 'prompt',
+            'camera'          => 'prompt',
+            'clipboard-read'  => 'prompt',
             'clipboard-write' => 'prompt'
         ];
     }
-    
+
     protected function _strage(): array {
         return [
-            'localStorage' => true,
+            'localStorage'   => true,
             'sessionStorage' => true,
-            'indexedDB' => true,
-            'cookieEnabled' => true
+            'indexedDB'      => true,
+            'cookieEnabled'  => true
         ];
     }
-    
+
     protected function _media(): array {
         return [
-            'audioinput' => 1,
+            'audioinput'  => 1,
             'audiooutput' => 1,
-            'videoinput' => 0
+            'videoinput'  => 0
         ];
     }
-    
+
     protected function _mobile($ua) {
-        return (strpos($ua, 'Mobile') !== false || strpos($ua, 'Android') !== false || strpos($ua, 'iPhone') !== false);
+        return (strpos($ua, 'Mobile') !== false
+             || strpos($ua, 'Android') !== false
+             || strpos($ua, 'iPhone') !== false);
     }
-    
+
     protected function get_concur() {
         $ua = $this->navigatorFingerprint['userAgent'] ?? '';
-        if ($this->_mobile($ua)) return 4;
-        return 8;
+        return $this->_mobile($ua) ? 4 : 8;
     }
-    
+
     protected function get_tzone($timezone) {
-        $now = new DateTime('now', new DateTimeZone($timezone));
+        $now    = new DateTime('now', new DateTimeZone($timezone));
         $future = clone $now;
         $future->modify('+6 months');
-        
         return ($future->getOffset() - $now->getOffset()) / 60;
     }
-    
+
     protected function get_Dmem() {
         $ua = $this->navigatorFingerprint['userAgent'] ?? '';
-        if ($this->_mobile($ua)) return 4;
-        return 16;
+        return $this->_mobile($ua) ? 4 : 16;
     }
-    
+
     protected function get_Touch() {
         return 5;
     }
-    
+
     protected function get_NET() {
         $country = COUNTRY_CODE();
         if (in_array($country, ['ID', 'IN', 'VN', 'PH', 'TH'])) return '4g';
         if (in_array($country, ['US', 'UK', 'DE', 'FR', 'JP'])) return 'wifi';
         return '4g';
     }
-    
+
     protected function getRTT() {
         $country = COUNTRY_CODE();
         if (in_array($country, ['ID', 'IN', 'VN', 'PH', 'TH'])) return rand(150, 300);
         if (in_array($country, ['US', 'UK', 'DE', 'FR', 'JP'])) return rand(50, 150);
         return rand(100, 200);
     }
-    
+
     protected function get_DNT() {
-        return ['unspecified', '1', '0'][array_rand(['unspecified', '1', '0'])];
+        return [null, '1', null][array_rand([null, '1', null])];
     }
-    
+
     protected function get_Dlink() {
         $country = COUNTRY_CODE();
         if (in_array($country, ['ID', 'IN', 'VN', 'PH', 'TH'])) return rand(10, 50) / 10;
         if (in_array($country, ['US', 'UK', 'DE', 'FR', 'JP'])) return rand(50, 100) / 10;
         return rand(30, 70) / 10;
     }
-    
+
     protected function res_desktop(): array {
         $resolutions = [
             ['width' => 1920, 'height' => 1080, 'availWidth' => 1920, 'availHeight' => 1040],
-            ['width' => 1366, 'height' => 768, 'availWidth' => 1366, 'availHeight' => 728],
-            ['width' => 1536, 'height' => 864, 'availWidth' => 1536, 'availHeight' => 824],
-            ['width' => 1440, 'height' => 900, 'availWidth' => 1440, 'availHeight' => 860],
+            ['width' => 1366, 'height' => 768,  'availWidth' => 1366, 'availHeight' => 728],
+            ['width' => 1536, 'height' => 864,  'availWidth' => 1536, 'availHeight' => 824],
+            ['width' => 1440, 'height' => 900,  'availWidth' => 1440, 'availHeight' => 860],
             ['width' => 2560, 'height' => 1440, 'availWidth' => 2560, 'availHeight' => 1400],
         ];
         return $resolutions[array_rand($resolutions)];
     }
-    
+
     protected function res_mobiles(): array {
         $resolutions = [
             ['width' => 375, 'height' => 667, 'availWidth' => 375, 'availHeight' => 647],
@@ -296,42 +294,67 @@ trait Mimic {
         ];
         return $resolutions[array_rand($resolutions)];
     }
-    
+
     protected function wGL_desktop(): array {
         $gpus = [
-            ['renderer' => 'NVIDIA GeForce RTX 3060', 'vendor' => 'NVIDIA', 'version' => 'OpenGL 4.6'],
-            ['renderer' => 'NVIDIA GeForce RTX 3070', 'vendor' => 'NVIDIA', 'version' => 'OpenGL 4.6'],
-            ['renderer' => 'AMD Radeon RX 6700 XT', 'vendor' => 'AMD', 'version' => 'OpenGL 4.6'],
-            ['renderer' => 'Intel Iris Xe Graphics', 'vendor' => 'Intel', 'version' => 'OpenGL 4.6'],
+            [
+                'renderer' => 'ANGLE (NVIDIA, NVIDIA GeForce RTX 3060 Direct3D11 vs_5_0 ps_5_0, D3D11)',
+                'vendor'   => 'Google Inc. (NVIDIA)',
+                'version'  => 'WebGL 2.0 (OpenGL ES 3.0 Chromium)'
+            ],
+            [
+                'renderer' => 'ANGLE (Intel, Intel(R) Iris(R) Xe Graphics (0x00009A49) Direct3D11 vs_5_0 ps_5_0, D3D11)',
+                'vendor'   => 'Google Inc. (Intel)',
+                'version'  => 'WebGL 2.0 (OpenGL ES 3.0 Chromium)'
+            ],
+            [
+                'renderer' => 'ANGLE (AMD, AMD Radeon RX 6700 XT (0x000073DF) Direct3D11 vs_5_0 ps_5_0, D3D11)',
+                'vendor'   => 'Google Inc. (AMD)',
+                'version'  => 'WebGL 2.0 (OpenGL ES 3.0 Chromium)'
+            ]
         ];
         $gpu = $gpus[array_rand($gpus)];
-        
+
         return [
-            'renderer' => $gpu['renderer'],
-            'vendor' => $gpu['vendor'],
-            'version' => $gpu['version'],
-            'shadingLanguageVersion' => 'OpenGL GLSL 4.60',
-            'extensions' => $this->get_extGL(false)
+            'renderer'             => $gpu['renderer'],
+            'vendor'               => $gpu['vendor'],
+            'version'              => $gpu['version'],
+            'shadingLanguageVersion' => 'WebGL GLSL ES 3.00 (OpenGL ES GLSL ES 3.0 Chromium)',
+            'extensions'           => $this->get_extGL(false)
         ];
     }
-    
+
     protected function wGL_mobiles(): array {
         $gpus = [
-            ['renderer' => 'Mali-G57', 'vendor' => 'ARM', 'version' => 'OpenGL ES 3.2'],
-            ['renderer' => 'Adreno (TM) 640', 'vendor' => 'Qualcomm', 'version' => 'OpenGL ES 3.2'],
-            ['renderer' => 'Apple A14 GPU', 'vendor' => 'Apple', 'version' => 'OpenGL ES 3.0'],
+            [
+                'renderer' => 'ANGLE (Qualcomm, Adreno (TM) 640, OpenGL ES 3.2)',
+                'vendor'   => 'Google Inc. (Qualcomm)',
+                'version'  => 'WebGL 2.0 (OpenGL ES 3.0 Chromium)'
+            ],
+            [
+                'renderer' => 'Apple A15 GPU',
+                'vendor'   => 'Apple Inc.',
+                'version'  => 'WebGL 2.0'
+            ]
         ];
         $gpu = $gpus[array_rand($gpus)];
-        
+
         return [
-            'renderer' => $gpu['renderer'],
-            'vendor' => $gpu['vendor'],
-            'version' => $gpu['version'],
-            'shadingLanguageVersion' => 'OpenGL ES GLSL ES 3.20',
-            'extensions' => $this->get_extGL(true)
+            'renderer'             => $gpu['renderer'],
+            'vendor'               => $gpu['vendor'],
+            'version'              => $gpu['version'],
+            'shadingLanguageVersion' => strpos($gpu['vendor'], 'Apple') !== false
+                ? 'WebGL GLSL ES 3.00'
+                : 'WebGL GLSL ES 3.00 (OpenGL ES GLSL ES 3.0 Chromium)',
+            'extensions'           => $this->get_extGL(true)
         ];
     }
-    
+
+    protected function getWebGLString(): string {
+        $wgl = $this->webglFingerprint;
+        return substr(($wgl['vendor'] ?? '') . ' | ' . ($wgl['renderer'] ?? ''), 0, 255);
+    }
+
     protected function get_extGL($isMobile): array {
         $extensions = [
             'EXT_texture_filter_anisotropic',
@@ -345,7 +368,7 @@ trait Mimic {
             'WEBGL_lose_context',
             'WEBGL_multi_draw'
         ];
-        
+
         if (!$isMobile) {
             $extensions = array_merge($extensions, [
                 'ANGLE_instanced_arrays',
@@ -355,18 +378,18 @@ trait Mimic {
                 'OES_texture_float',
                 'OES_texture_float_linear',
                 'OES_texture_half_float',
-                'OES_texture_half_float_linear'
+                'OES_texture_half_float_linear',
+                'OES_vertex_array_object',
+                'EXT_float_blend'
             ]);
         }
-        
+
         return $extensions;
     }
-    
+
     protected function get_Fonts($ua): array {
-        $fonts = [];
-        
         if (stripos($ua, 'Windows') !== false) {
-            $fonts = [
+            return [
                 'Arial', 'Arial Black', 'Calibri', 'Cambria', 'Candara',
                 'Comic Sans MS', 'Consolas', 'Constantia', 'Corbel',
                 'Courier New', 'Georgia', 'Impact', 'Lucida Console',
@@ -374,53 +397,52 @@ trait Mimic {
                 'Palatino Linotype', 'Segoe UI', 'Symbol', 'Tahoma',
                 'Times New Roman', 'Trebuchet MS', 'Verdana'
             ];
-        } elseif (stripos($ua, 'Mac') !== false) {
-            $fonts = [
+        }
+        if (stripos($ua, 'Mac') !== false) {
+            return [
                 'Apple Color Emoji', 'Apple Symbols', 'Arial', 'Arial Black',
                 'Avenir', 'Comic Sans MS', 'Courier New', 'Georgia',
                 'Helvetica', 'Helvetica Neue', 'Impact', 'Lucida Grande',
                 'Symbol', 'Tahoma', 'Times New Roman', 'Trebuchet MS',
                 'Verdana'
             ];
-        } elseif (stripos($ua, 'Linux') !== false) {
-            $fonts = [
+        }
+        if (stripos($ua, 'Linux') !== false) {
+            return [
                 'DejaVu Sans', 'DejaVu Serif', 'Droid Sans', 'Droid Sans Mono',
                 'Ubuntu', 'Arial', 'Courier New', 'Georgia', 'Impact',
                 'Times New Roman', 'Tahoma', 'Verdana'
             ];
-        } else {
-            $fonts = [
-                'Arial', 'Courier New', 'Georgia', 'Times New Roman',
-                'Tahoma', 'Verdana', 'Comic Sans MS', 'Impact'
-            ];
         }
-        
-        return $fonts;
+        return [
+            'Arial', 'Courier New', 'Georgia', 'Times New Roman',
+            'Tahoma', 'Verdana', 'Comic Sans MS', 'Impact'
+        ];
     }
-    
+
     protected function rand_pltform($ua) {
         if (stripos($ua, 'Windows') !== false) return 'Win32';
-        if (stripos($ua, 'Mac') !== false) return 'MacIntel';
-        if (stripos($ua, 'Linux') !== false) return 'Linux x86_64';
-        if (stripos($ua, 'Android') !== false) return 'Android';
-        if (stripos($ua, 'iPhone') !== false) return 'iPhone';
+        if (stripos($ua, 'Mac') !== false)     return 'MacIntel';
+        if (stripos($ua, 'Linux') !== false)   return 'Linux x86_64';
+        if (stripos($ua, 'Android') !== false) return 'Linux aarch64';
+        if (stripos($ua, 'iPhone') !== false)  return 'MacIntel';
         return 'Win32';
     }
-    
+
     protected function rand_vendor($ua) {
-        if (stripos($ua, 'Chrome') !== false) return 'Google Inc.';
+        if (stripos($ua, 'Chrome') !== false)  return 'Google Inc.';
         if (stripos($ua, 'Firefox') !== false) return '';
-        if (stripos($ua, 'Safari') !== false) return 'Apple Computer, Inc.';
+        if (stripos($ua, 'Safari') !== false)  return 'Apple Computer, Inc.';
         return 'Google Inc.';
     }
-    
+
     protected function rand_appver($ua) {
         if (preg_match('/(Chrome|Firefox|Safari)\/(\d+\.\d+)/', $ua, $matches)) {
             return $matches[0];
         }
         return '5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
     }
-    
+
     protected function rand_grphic() {
         $elements = ['rect', 'circle', 'text', 'arc', 'bezier'];
         $data = '';
@@ -429,31 +451,34 @@ trait Mimic {
         }
         return substr($data, 0, -1);
     }
-    
+
     protected function gen_Fonts($ua) {
         return md5(implode('|', $this->get_Fonts($ua)));
     }
-    
+
     protected function gen_canvas() {
+        $seed = hash('sha256', ($this->navigatorFingerprint['userAgent'] ?? '') . '|canvas');
         $data = [
-            'g' => $this->rand_grphic(),
-            't' => time(),
-            'w' => $this->screenFingerprint['width'] ?? 1920,
-            'h' => $this->screenFingerprint['height'] ?? 1080
+            'g'    => $this->rand_grphic(),
+            'seed' => substr($seed, 0, 16),
+            'w'    => $this->screenFingerprint['width']  ?? 1920,
+            'h'    => $this->screenFingerprint['height'] ?? 1080
         ];
         return md5(json_encode($data));
     }
-    
+
     protected function gen_Audio(): string {
-        return md5('audio' . time() . rand(1000, 9999));
+
+        $seed = hash('sha256', ($this->navigatorFingerprint['userAgent'] ?? '') . '|audio');
+        return md5($seed . '|' . ($this->screenFingerprint['width'] ?? 1920));
     }
-    
+
     protected function gen_Mouse(): array {
         $pattern = [];
         $steps = rand(20, 50);
         $x = rand(100, 500);
         $y = rand(100, 300);
-        
+
         for ($i = 0; $i < $steps; $i++) {
             $x += rand(-10, 10);
             $y += rand(-5, 5);
@@ -461,10 +486,9 @@ trait Mimic {
             $y = max(0, min(1080, $y));
             $pattern[] = ['x' => $x, 'y' => $y, 't' => $i * rand(10, 30)];
         }
-        
         return $pattern;
     }
-    
+
     protected function gen_Type(): array {
         return [
             'speed' => rand(100, 300),
@@ -472,7 +496,7 @@ trait Mimic {
             'backspaceFrequency' => rand(0, 5) / 100
         ];
     }
-    
+
     protected function gen_Scroll(): array {
         return [
             'smoothness' => rand(1, 5),
@@ -480,7 +504,7 @@ trait Mimic {
             'randomness' => rand(1, 3)
         ];
     }
-    
+
     protected function gen_Click(): array {
         return [
             'doubleClickSpeed' => rand(200, 500),
@@ -488,7 +512,7 @@ trait Mimic {
             'dragDuration' => rand(100, 300)
         ];
     }
-    
+
     protected function gen_Kstroke(): array {
         return [
             'min' => rand(30, 80),
@@ -496,7 +520,7 @@ trait Mimic {
             'average' => rand(80, 150)
         ];
     }
-    
+
     protected function gen_Browser($ua): array {
         if (preg_match('/Chrome\/(\d+)/', $ua, $m)) {
             $v = $m[1];
@@ -505,23 +529,20 @@ trait Mimic {
                 ['brand' => 'Google Chrome', 'version' => $v],
                 ['brand' => 'Not=A?Brand', 'version' => '99']
             ];
-        } elseif (preg_match('/Firefox\/(\d+)/', $ua, $m)) {
-            return [
-                ['brand' => 'Mozilla Firefox', 'version' => $m[1]]
-            ];
-        } elseif (preg_match('/Version\/(\d+\.\d+)/', $ua, $m)) {
-            return [
-                ['brand' => 'Apple Safari', 'version' => $m[1]]
-            ];
+        }
+        if (preg_match('/Firefox\/(\d+)/', $ua, $m)) {
+            return [['brand' => 'Mozilla Firefox', 'version' => $m[1]]];
+        }
+        if (preg_match('/Version\/(\d+\.\d+)/', $ua, $m)) {
+            return [['brand' => 'Apple Safari', 'version' => $m[1]]];
         }
         return [];
     }
-    
+
     protected function gen_fphash() {
-        $data = json_encode($this->browserFingerprint);
-        return hash('sha256', $data);
+        return hash('sha256', json_encode($this->browserFingerprint));
     }
-    
+
     protected function gen_fpdata() {
         $data = [
             'timestamp' => microtime(true),
