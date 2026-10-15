@@ -163,7 +163,7 @@ return (new class {
                         
                         if (empty($cla) || ($cla === 99)) continue;
                         
-                        if (checkATB($this->atbfail, $cla)) continue;
+                        $this->checkATB($this->atbfail, $cla);
                         
                         $mf = Scraper::_jP($cla, '/type:\s*["\']([^"\']+)["\'],\s*message:\s*["\']([^"\']+)["\']/s');
                         if (!empty($mf[2][0])) {

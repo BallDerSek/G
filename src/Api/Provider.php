@@ -66,7 +66,7 @@ abstract class Provider {
             Logger::X('warn', "{$e->getMessage()}", 1, 1);
             return ['fail' => 71];
         }
-
+        
         return $this->run($method, $params);
     }
 

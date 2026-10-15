@@ -190,7 +190,7 @@ return (new class {
                             
                             if (empty($cla) || ($cla === 99)) continue;
                             
-                            checkATB($this->atbfail, $cla);
+                            $this->checkATB($this->atbfail, $cla);
                             
                             if (stripos($cla, 'rate limited') !== false) goto login;
                             

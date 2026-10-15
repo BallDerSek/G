@@ -30,7 +30,7 @@ final class Links {
 
     public function exec($api) {
         $rules = [
-            #'coinclix' => ['coinclix.co'],
+            'coinclix' => ['coinclix.co'],
             'clk' => ['lnbz.la','tpi.li','oii.la','aii.sh'],
             'low' => ['xut.io','shrinkme.click','link.adlink.click','horrorpay.online','linkpay.top'],
         ];
@@ -284,7 +284,7 @@ final class Links {
                     }
                     break; 
                 }
-                #print_r($_v1);
+                #var_dump($_v1);
                 
                 $matches = Scraper::_jP($_v1['message'] ?? '', '/<code class="link_code">([A-Za-z0-9]+)<\/code>/i') ?? [];
                 if (!empty($matches[1][0])) {

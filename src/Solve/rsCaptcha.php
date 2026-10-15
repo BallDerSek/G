@@ -37,7 +37,14 @@ final class rsCaptcha {
         $img = Net::C($_K, 'GET', null, $this->ck, [], $this->host, $this->ua, ip: $this->ip, ins: $this->in);
         if (empty($img) || $img === 99) return false;
         
-        $co = Solve::img($api, $this->host, $_M, $img);
+        $co = Solve::img($api, $this->host, $_M, $img, ['html' => base64_encode($_J), 'ua' => $this->ua]);
+        if (str_starts_with($co, '@TOKEN:')) {
+            $token = str_replace('@TOKEN::', '', $co);
+            return [
+                'rscaptcha_token' => $_T,
+                'rscaptcha_response' => $token
+            ];
+        }
         if (isset($co['trouble'])) return false;
         
         $coords = Scraper::_jP($co, '/\d+/');
@@ -55,67 +62,6 @@ final class rsCaptcha {
         }
         
         return false;
-    }
-    
-    private function rsc00($rss, $api) {
-        # problematic provider need much parameter
-        $token = null;
-        #print_r($rss); die;
-        
-        $_D = $rss['extra'] ?? null;
-        $_I = $_D['app_id'] ?? null;
-        $_T = $_D['version'] ?? null;
-        $_K = $_D['public_key'] ?? null;
-        
-        $_H = 'https://rscaptcha.com';
-        
-        if (in_array(null, [$_D, $_I, $_T, $_K], true)) return false;
-        $rs_R = null;
-        $rs_T = null;
-        
-        if (strtolower(get_class($api)) === 'skibidixxx') {
-            $res = $api->rss($_D, $this->host);
-            if ($res) {
-                parse_str(str_replace([":", ","], ["=", "&"], $res), $out);
-                $rs_T = $out['rs_token'] ?? null;
-                $rs_R = $out['rs_res'] ?? null;
-            }
-        } else {
-            $_0 = SolveUtils::webkitID($_D, $boundary);
-            $head = ["Content-Type: multipart/form-data; boundary=$boundary"];
-            
-            $_get = json_decode(Net::S($_H."/captcha/$_T/get", 'POST', $_0, $head) ?: '', 1)['data'] ?? null;
-            
-            $coo = null;
-            if (!empty($_get) && isset($_get['captcha_key'])) {
-                $rs_T = $_get['captcha_key'];
-                if (method_exists($api, 'rss')) $coo = $api->rss($_get, $this->host);
-            }
-            if ($coo) {
-                $coords = Scraper::_jP($coo, '/\d+/');
-                $_co = $coords[0] ?? $coords;
-            }
-            if (is_array($_co) && count($_co) >= 2) {
-                [$x, $y] = $_co;
-                $_P = [
-                    'token' => $rs_T,
-                    'response' => "$x,$y",
-                    #'response' => "200,109",
-                ];
-                $_1 = SolveUtils::webkitID(array_merge($_P, $_D), $boundary);
-                $rs_R = json_decode(Net::S($_H."/captcha/$_T/verify", 'POST', $_1, $head) ?: '', 1)['result'] ?? null;
-            }
-        }
-        
-        if ($rs_R && $rs_T) {
-            return [
-                'rscaptcha_token' => $rs_T,
-                'rscaptcha_response' => $rs_R,
-            ];
-        }
-        
-        return null;
-        
     }
     
     private function rsc($rss, $api) {

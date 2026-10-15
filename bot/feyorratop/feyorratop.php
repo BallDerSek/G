@@ -169,6 +169,7 @@ return (new class {
                     }
                     
                     $po = null;
+                    $this->atbforce = $this->atbfail >= 3;
                     if (!empty($fau) && $fau !== 99) {
                         $ret99 = 0;
                         $f = Scraper::payload($fau)[0] ?? [];
@@ -191,7 +192,7 @@ return (new class {
                                 $this->claim = false; break;
                             }
                             
-                            $cap = Solve::exec($fau, $this->host, $this->api, $pa);
+                            $cap = Solve::exec($fau, $this->host, $this->api, $pa, $this->atbforce);
                             
                             if (isset($cap['trouble'])) continue;
                             
@@ -263,6 +264,8 @@ return (new class {
                         #_put('cla.html', $cla);
                         
                         if (empty($cla) || ($cla === 99)) continue;
+                        
+                        $this->checkATB($this->atbfail, $cla);
                         
                         $mf = Scraper::_jP($cla, "/Swal\.fire\(\{.*?title\s*:\s*(['\"])(.*?)\\1.*?\}\)/s")[2][0] ?? Scraper::_xP($cla, "//div[contains(@class, 'alert-danger')]")[0] ?? null;
                         
@@ -358,7 +361,7 @@ return (new class {
                         }
                         
                     }
-                    
+                    /*
                     if (!empty($ptcList['bctt'])) {
                         #print_r($ptcList['bctt']); die;
                         foreach ($ptcList['bctt'] as $ptc) {
@@ -375,7 +378,7 @@ return (new class {
                             
                         }
                     }
-                    
+                    */
                 }
                 
                 
