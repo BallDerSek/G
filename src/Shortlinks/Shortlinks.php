@@ -159,10 +159,11 @@ class Shortlinks {
         if ($noapi) $api = null;
     
         try {
-            return styler(static::class . "=>$url", function() use ($api, $url) {
+            #return styler(static::class . "=>$url", function() use ($api, $url) {
+                Logger::X('info', "Bypassing: ".$url, 1, 1);
                 $f_url = (new Links($url))->exec($api);
                 if ($f_url && is_string($f_url)) return $f_url;
-            });
+            #});
         } catch (Throwable $e) {
             #Logger::X('err', "\rSL Direct failed: " . $e->getMessage());
         }

@@ -155,7 +155,7 @@ return (new class {
                             }
                             
                             $po = $this->nyxCap($frmC, $fa);
-                            
+                            #var_dump($po); die;
                         }
                         
                         if (!empty($po)) {
@@ -195,115 +195,10 @@ return (new class {
         
     }
     
-    
-    private function nyxCap($param, $reff) {
-        
-        #var_dump($param, $reff);
-        
-        _sle(3);
-        $_00 = json_decode(Net::X(
-            $param['pnxc'].'claim', 'POST',
-            array_merge($param, ['website' => '']),
-            Inf::$cookie, $this->headersCF, $reff, Inf::$uagent
-        )?: '', 1)['data'] ?? null;
-        
-        $form = null;
-        if (!empty($_00)) {
-            
-            if (($_00['redirect'] ?? false) && $_00['solve_url']) {
-                
-                $plyn = Net::C($_00['solve_url'], 'GET', null, Inf::$cookie, $this->headersCF, $this->host, Inf::$uagent);
-                
-                if (!empty($plyn) && $plyn !== 99) {
-                    #_put('plyn.html', $plyn);
-                    $form = [
-                        'csrf_token' => Scraper::_var($plyn, 'CSRF'),
-                        'base' => stripslashes(Scraper::_var($plyn, 'BASE')?: ''),
-                    ];
-                }
-                
-            } else {
-                $this->logger('err', "error", 'unknown format or response changed');
-                return null;
-            }
-            
-        }
-        
-        $ans = null;
-        if ($form) {
-            _sle(3);
-            
-            $_get = json_decode(Net::X(
-                $form['base'].'api/captcha', 'POST',
-                array_merge($form, ['action' => 'challenge']),
-                Inf::$cookie, $this->headersCF, $param['pnxc'], Inf::$uagent
-            )?: '', 1);
-            
-            if (($_get['success'] ?? false) && !empty($_get['data'])) {
-                $ans = $this->nyxSolve($_get['data']);
-                #var_dump($ans);
-            } else {
-                $this->logger('err', "error", 'unknown format or response changed');
-                return null;
-            }
-            
-            
-        }
-        
-        $ccver = null;
-        if ($ans) {
-            $_ver = json_decode(Net::X(
-                $form['base'].'api/captcha', 'POST',
-                array_merge($form, ['action' => 'verify', 'antibot_click_ms[]' => (time() * 1000), 'antibot_order[]' => (string)$ans]),
-                Inf::$cookie, $this->headersCF, $param['pnxc'], Inf::$uagent
-            )?: '', 1);
-            #var_dump($_ver);
-            if (($_ver['success'] ?? false) && !empty($_ver['data']['redirect_url'])) {
-                
-                $rdr = stripslashes($_ver['data']['redirect_url']?: '');
-                
-                $ccver = Net::C($rdr, 'GET', null, Inf::$cookie, $this->headersCF, $param['pnxc'], Inf::$uagent);
-                
-            }
-            
-        }
-        
-        if (!empty($ccver) && $ccver !== 99) {
-            #_put('ccver.html', $ccver);
-            
-            parse_str((parse_url($rdr)['query']?: ''), $_p0);
-            $_p1 = $param;
-            
-            #var_dump($_p0, $_p1);
-            $payload = [
-                'csrf' => (Scraper::_var($ccver, 'csrf') ?? $_p1['csrf']),
-                'sub_id' => (Scraper::_var($ccver, 'subId') ?? $_p0['sub_id']),
-                'token' => (Scraper::_var($ccver, 'rtToken') ?? $_p0['token']),
-                'status' => 'success',
-            ];
-            
-            if (in_array(null, $payload, true)) {
-                $this->logger('err', "error", 'unknown format or response changed');
-                return null;
-                
-            }
-            
-            #var_dump($payload);
-            $_01 = Net::X($_p1['pnxc'].'captcha-claim', 'POST',
-                $payload, Inf::$cookie, $this->headersCF, $this->host, Inf::$uagent);
-            
-            if (!empty($_01) && $_01 !== 99) return $_01;
-            
-        }
-        
-        return null;
-        
-    }
-    
     private function nyxSolve($data) {
         static $db = null;
         $prompt = $data['challenge']['prompt'] ?? '';
-        
+        #var_dump($prompt);
         if (!empty($prompt)) {
             if ($db === null) $db = json_decode(_get(LIBDIR . '/nyx.json'), true);
             
@@ -314,6 +209,7 @@ return (new class {
                     break;
                 }
             }
+            #var_dump($ename);
             
             if ($ename && isset($db['hashes'][$ename])) {
                 $bestId = null;
@@ -361,6 +257,192 @@ return (new class {
         return null;
     }
     
+    private function extractDynamicSecretKey(string $html): ?string {
+        if (preg_match_all('/[a-zA-Z0-9_]+\s*=\s*\[(?:\s*\[\s*\d+\s*,\s*\d+\s*,\s*\d+\s*\]\s*,?)+\s*\]/', $html, $matches, PREG_SET_ORDER)) {
+            foreach ($matches as $match) {
+                $arrayStr = $match[0];
+                $pairs = [];
+                
+                if (preg_match_all('/\[\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\]/', $arrayStr, $triplets, PREG_SET_ORDER)) {
+                    foreach ($triplets as $t) {
+                        $idx = (int)$t[1];
+                        $val = (((int)$t[2]) ^ ((int)$t[3])) & 0xFF;
+                        $pairs[$idx] = chr($val);
+                    }
+                    
+                    if (count($pairs) === 16) {
+                        ksort($pairs);
+                        $key = implode('', $pairs);
+                        if (preg_match('/^[0-9a-f]{16}$/i', $key)) {
+                            return $key;
+                        }
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    private function fnv1a_32(string $data, int $seed): string {
+        $h = $seed;
+        $len = strlen($data);
+        for ($i = 0; $i < $len; $i++) {
+            $h ^= ord($data[$i]);
+            $h = ($h * 16777619) & 0xFFFFFFFF;
+        }
+        return sprintf("%08x", $h);
+    }
+
+    private function generateAntibotSig(string $secretKey, string $sigNonce, int $eventMask = 2): string {
+        $payloadStr = $secretKey . "|" . $sigNonce . "|" . $eventMask;
+        $hash1 = $this->fnv1a_32($payloadStr, 2166136261);
+        $hash2 = $this->fnv1a_32($payloadStr, 84696351);
+        return $hash1 . $hash2;
+    }
+
+    private function nyxCap($param, $reff) {
+        _sle(3);
+        
+        $_00 = json_decode(Net::X(
+            $param['pnxc'].'claim', 'POST',
+            array_merge($param, ['website' => '']),
+            Inf::$cookie, $this->headersCF, $reff, Inf::$uagent
+        )?: '', 1)['data'] ?? null;
+        
+        $form = null;
+        $htmlContent = '';
+        
+        if (!empty($_00)) {
+            if (($_00['redirect'] ?? false) && $_00['solve_url']) {
+                $htmlContent = Net::C($_00['solve_url'], 'GET', null, Inf::$cookie, $this->headersCF, $this->host, Inf::$uagent);
+                #_put('plyn.html', $htmlContent); die;
+                
+                $TIER = Scraper::_var($htmlContent, 'TIER');
+                if ($TIER != 'standard') $this->logger('err', "captcha changed", "USED $TIER", true);
+                
+                if (!empty($htmlContent) && $htmlContent !== 99) {
+                    $form = [
+                        'csrf_token' => Scraper::_var($htmlContent, 'CSRF'),
+                        'base' => stripslashes(Scraper::_var($htmlContent, 'BASE') ?: ''),
+                    ];
+                }
+            } else {
+                $this->logger('err', "error", 'unknown format or response changed');
+                return null;
+            }
+        }
+        
+        $ans = null;
+        $sigNonce = null;
+        $secretKey = null;
+        
+        if ($form) {
+            $secretKey = $this->extractDynamicSecretKey($htmlContent);
+            
+            if (!$secretKey) {
+                $this->logger('err', "error", 'Failed to extract valid dynamic secret key from HTML');
+                return null;
+            }
+
+            preg_match('/var\s+HOLD_NONCE\s*=\s*"([a-f0-9]+)";/i', $htmlContent, $holdNonceMatch);
+            $holdNonce = $holdNonceMatch[1] ?? null;
+
+            if ($holdNonce) {
+                $holdSig = $this->generateAntibotSig($secretKey, $holdNonce, 1);
+                _sle(5);
+                
+                $holdResp = json_decode(Net::X(
+                    $form['base'].'api/captcha', 'POST',
+                    array_merge($form, [
+                        'action' => 'hold',
+                        'antibot_sig' => $holdSig
+                    ]),
+                    Inf::$cookie, $this->headersCF, $param['pnxc'], Inf::$uagent
+                )?: '', 1);
+                
+                if (!($holdResp['success'] ?? false)) {
+                    $this->logger('err', "error", 'Hold step failed: ' . ($holdResp['message'] ?? 'unknown'));
+                    return null;
+                }
+            }
+            
+            $_get = json_decode(Net::X(
+                $form['base'].'api/captcha', 'POST',
+                array_merge($form, ['action' => 'challenge']),
+                Inf::$cookie, $this->headersCF, $param['pnxc'], Inf::$uagent
+            )?: '', 1);
+            
+            if (($_get['success'] ?? false) && !empty($_get['data'])) {
+                $sigNonce = $_get['data']['challenge']['k']?? '';
+                
+                $ans = $this->nyxSolve($_get['data']);
+            } else {
+                $this->logger('err', "error", 'Challenge failed: ' . ($_get['message'] ?? 'unknown'));
+                return null;
+            }
+        }
+        
+        $ccver = null;
+        if ($ans && $sigNonce !== null && $secretKey !== null) {
+            $antibot_sig = $this->generateAntibotSig($secretKey, $sigNonce, 3);
+            
+            $realistic_ms = (string)(int)(microtime(true) * 1000);
+
+            $_ver = json_decode(Net::X(
+                $form['base'].'api/captcha', 'POST',
+                array_merge($form, [
+                    'action' => 'verify', 
+                    'antibot_order[]' => (string)$ans,
+                    'antibot_click_ms[]' => $realistic_ms,
+                    'antibot_sig' => $antibot_sig
+                ]),
+                Inf::$cookie, $this->headersCF, $param['pnxc'], Inf::$uagent
+            )?: '', 1);
+            
+            #var_dump("Verify Response:", $_ver); #die; 
+            
+            if (($_ver['success'] ?? false) && !empty($_ver['data']['next_url'])) {
+                $rdr = stripslashes($_ver['data']['next_url'] ?: '');
+                $ccver = Net::C($rdr, 'GET', null, Inf::$cookie, $this->headersCF, $param['pnxc'], Inf::$uagent);
+            } else {
+                $this->logger('err', "error", 'Verify failed: ' . ($_ver['message'] ?? 'unknown'));
+            }
+        }
+        
+        if (!empty($ccver) && $ccver !== 99) {
+            #_put('ccver.html', $ccver);
+            
+            $dataGoArr = Scraper::_xP($ccver, "//a[@data-go]/@data-go");
+            $rdr = $dataGoArr[0] ?? '';
+            
+            $query = parse_url($rdr, PHP_URL_QUERY);
+            $_p0 = [];
+            if ($query) parse_str(html_entity_decode($query), $_p0);
+            
+            $_p1 = $param;
+            
+            $payload = [
+                'csrf' => (Scraper::_var($ccver, 'csrf') ?? $_p1['csrf']),
+                'sub_id' => (Scraper::_var($ccver, 'subId') ?? $_p0['sub_id']),
+                'token' => (Scraper::_var($ccver, 'rtToken') ?? $_p0['token']),
+                'status' => 'success',
+            ];
+            
+            if (in_array(null, $payload, true)) {
+                $this->logger('err', "error", 'Final payload missing required fields');
+                return null;
+            }
+            
+            $_01 = Net::X($_p1['pnxc'].'captcha-claim', 'POST', $payload, Inf::$cookie, $this->headersCF, $this->host, Inf::$uagent);
+            
+            if (!empty($_01) && $_01 !== 99) {
+                return $_01;
+            }
+        }
+        
+        return null;
+    }
+
 
 })->exec();
 

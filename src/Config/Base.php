@@ -2,6 +2,8 @@
 
 trait Base {
     #protected bool $fetched = true;
+    private bool $atbforce = false;
+    private int $atbfail = 0;
     
     protected function logger($info, $state = null, $msg = null, $fatal = false, $mail = null) {
         
@@ -90,7 +92,7 @@ trait Base {
         
         if ($code === 200 || (stripos($html, 'Just a moment') === false)) return $html;
         
-        $result = $this->_cf($hh, $url, $html, true, $ads, $payload);
+        $result = $this->_cf($hh, $url, $html, false, $ads, $payload);
         
         if (!$result) $result = $this->_cf($hh, $url, $html, true, $ads, $payload);
         
@@ -100,7 +102,7 @@ trait Base {
     private function _cf(&$cookieHeader, $url, $html, $force, $ads, $payload) {
         
         $method = (!empty($payload) ? 'POST' : 'GET');
-        
+        #var_dump(Inf::$uagent);
         $cf = Cloudflare::exec($this->api, $url, Inf::$cookie, Inf::$uagent, ['html' => $html, 'payload' => $payload], $force ? 1 : 0);
         
         if (!$cf) return null;
@@ -117,6 +119,7 @@ trait Base {
         Config::resetUA();
         Inf::setup($ua, Inf::$cookie);
         if (empty($hh)) return null;
+        #var_dump(Inf::$uagent);
         
         $cookieHeader = Inf::netHead($hh);
         

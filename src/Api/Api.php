@@ -42,31 +42,22 @@ final class Api {
         ],
 
         gmxch::class => [
-            'shortlink' => true,
+            #'shortlink' => true,
             'cft' => [
-                'k'=>'siteKey','url'=>'domain','api'=>'cloudflare', 'defaults' => ['method' => 'turnstile'], 'map' => ['cdata' => 'cData']
+                'k'=>'websiteKey','url'=>'websiteUrl','api'=>'CloudflareTask', 'defaults' => ['type' => 'turnstile']
                 ],
-
+            
             /*
-            'cf' => [
-                'k'=>'siteKey','url'=>'domain','api'=>'popularcaptcha', 'defaults' => ['method' => 'turnstile']
-                ],
-            'hc' => [
-                'k'=>'siteKey','url'=>'domain','api'=>'popularcaptcha', 'defaults' => ['method' => 'hcaptcha']
-                ],
             'rc2' => [
-                'k'=>'siteKey','url'=>'domain','api'=>'popularcaptcha', 'defaults' => ['method' => 'recaptcha2']
-                ],
-            'rc3' => [
-                'k'=>'siteKey','url'=>'domain','api'=>'popularcaptcha', 'defaults' => ['method' => 'recaptcha3']
+                'k'=>'websiteKey','url'=>'websiteUrl','api'=>'gRecaptchaTask', 'defaults' => ['type' => 'v2']
                 ],
             */
 
             'pcc' => [
-                'k'=>'cpobj','url'=>'domain','api'=>'coinclix', 'defaults' => ['method' => 'pc']
+                'k'=>'websiteSrc','url'=>'domain','api'=>'VisualCaptchaTask', 'defaults' => ['type' => 'coinclix']
                 ],
             'icc' => [
-                'k'=>'cpobj','url'=>'domain','api'=>'coinclix', 'defaults' => ['method' => 'ic']
+                'k'=>'websiteSrc','url'=>'domain','api'=>'VisualCaptchaTask', 'defaults' => ['type' => 'coinclix']
                 ],
         ],
 
@@ -134,7 +125,7 @@ final class Api {
         ],
 
         skibidixxx::class => [
-            'shortlink' => true,
+            #'shortlink' => true,
             'cft' => [
                 'k' => 'sitekey', 'url' => 'domain', 'api' => 'turnstile'
                 ],
@@ -347,32 +338,44 @@ final class Api {
             'zercaptcha' => true,
             
             'fa_icon' => [
-                'api' => 'visual',
-                'img' => 'main',
+                'api' => 'VisualCaptchaTask',
+                'img' => 'websiteImg',
                 'defaults' => [
-                    'method' => 'SL-iconcaptcha',
+                    'type' => 'fontawesome',
                 ],
                 'map' => [
-                    'opt' => 'options',
+                    'opt' => 'optionsList',
                 ],
             ],
-            /*
-            'onlyfans' => [
-                'api' => 'visual',
-                'img' => 'main',
-                'defaults' => [
-                    'method' => 'onlyfans',
-                ],
-                
-            ],
-            */
             'upside' => [
-                'api' => 'visual',
-                'img' => 'main',
+                'api' => 'VisualCaptchaTask',
+                'img' => 'websiteImg',
                 'defaults' => [
-                    'method' => 'upside',
+                    'type' => 'upside',
                 ],
                 
+            ],
+            'rs_icon' => [
+                'api' => 'VisualCaptchaTask',
+                'img' => 'websiteImg',
+                'defaults' => [
+                    'type' => 'rscaptcha',
+                ],
+                'map' => [
+                    'html' => 'websiteSrc',
+                    'ua' => 'user_agent',
+                ],
+            ],
+            'rs_upside' => [
+                'api' => 'VisualCaptchaTask',
+                'img' => 'websiteImg',
+                'defaults' => [
+                    'type' => 'rscaptcha',
+                ],
+                'map' => [
+                    'html' => 'websiteSrc',
+                    'ua' => 'user_agent',
+                ],
             ],
             
         ],
@@ -425,33 +428,13 @@ final class Api {
                 'api' => 'interstitial','url' => 'websiteURL', 'need' => ['proxy'], 
                 
             ],
-            'perimeterx' => [
-                'api'  => 'perimeterx','url'  => 'websiteURL','need' => ['websiteKey'],
-            ],
-            'datadome' => [
-                'api'  => 'datadome','url'  => 'websiteURL','need' => ['captchaUrl'],
-            ],
         ],
         
         gmxch::class => [
             '_proxy_format' => 'uri',
             'interstitial' => [
-                'api' => 'cloudflare','url' => 'domain', 'defaults' => ['method' => 'interstitial']
+                'api' => 'CloudflareTask','url' => 'websiteUrl', 'defaults' => ['type' => 'interstitial'], 'map' => ['body' => 'websiteSrc', ]
             ],
-            'fingerprint' => [
-                'api'  => 'fingerprint','url' => 'domain','need' => ['userAgent'],
-            ],
-            /*
-            'akamai_a' => [
-                'api'  => 'akamai','url' => 'domain','defaults' => ['method' => 'abck']
-            ],
-            'akamai_s' => [
-                'api'  => 'akamai','url' => 'domain','defaults' => ['method' => 'sbsd']
-            ],
-            'akamai_c' => [
-                'api'  => 'akamai','url' => 'domain','defaults' => ['method' => 'censorship']
-            ],
-            */
         ],
         
         tertuyul::class => [
@@ -479,9 +462,6 @@ final class Api {
             'interstitial' => [
                 'api' => 'AntiCloudflareTask','url' => 'domain', 'need' => ['proxy'], 
             ],
-            'datadome' => [
-                'api'  => 'DatadomeSliderTask','url'  => 'websiteURL','need' => ['captchaUrl'],
-            ],
         ],
 
         xevil::class => [
@@ -497,7 +477,7 @@ final class Api {
             'interstitial' => [
                 'api' => 'turnstile','url' => 'pageurl',
                 'defaults' => ['cf_clearance' => 1],
-               # 'need' => ['body'] 
+                'need' => ['body'] 
             ],
         ],
         
@@ -575,7 +555,6 @@ final class Api {
             'ERROR_TASK_FAILED',
             'ERROR_CAPTCHA_TIMEOUT',
             'ERROR_TIMEOUT',
-            'TIMEOUT after',
             'ERROR_TASK_TIMEOUT',
             'WRONG_RESULT',
             'TOTALLY_FAILED',
@@ -585,11 +564,11 @@ final class Api {
             'ERROR_INVALID_RESPONSE1',
             'ERROR_SOLVER_RESPONSE',
             'TASK_NOT_FOUND',
-            'Job not found',
             'ERR_EMPTY_RESPONSE',
             'failed to respond',
             'INVALID_PARAMETERS',
             'SERVICE_BUSY',
+            'NO_QUEUE_AVAILABLE',
             ],
 
         'ret' => [ 
@@ -618,8 +597,6 @@ final class Api {
             'ERROR_PROXY_BANNED',
             'INTERNAL_SERVER_ERROR',
             'INTERNAL_SOLVER_ERROR',
-            'External solver request failed',
-            'returned HTTP 502',
         ],
 
         'err' => [
@@ -658,9 +635,9 @@ final class Api {
             'invalid mode',
             'Missing mode or action',
             'MISSING_FIELDS',
-            'INVALID_TYPE',
-            'INVALID_METHOD',
-            'INVALID_PROXY',
+            'ERROR_INVALID_REQUEST',
+            'NODE_UNREACHABLE',
+            'ERROR_TASK_NOT_FOUND',
             'INVALID_URL',
         ],
 
@@ -671,6 +648,7 @@ final class Api {
             'ERROR_KEY_EXPIRED',
             'ERROR_INSUFFICIENT_BALANCE',
             'ERROR_WRONG_USER_KEY',
+            'ERROR_EMPTY_USER_KEY',
             'ERROR_KEY_DOES_NOT_EXIST',
             'ERROR_ZERO_BALANCE',
             'ERROR_KEY_TEMP_BLOCKED',

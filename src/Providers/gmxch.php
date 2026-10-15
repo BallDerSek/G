@@ -4,75 +4,72 @@ class gmxch extends Provider {
     
     
     
-    #protected $baseUrl = "https://route.up.railway.app";
-    protected $baseUrl = "https://router-api.up.railway.app";
+    protected $baseUrl = "https://api.gsectr.my.id";
 
     /** submit job ke API */
     protected function get_api($method, array $params) {
+        $payload = $this->payload($method, $params);
 
         $s = json_decode(
-            Net::S($this->baseUrl."/v3/initTask", "POST", array_merge(["type"=>$method], $params), ["key:".$this->apiKey], json: true) ?: ''
+            Net::S($this->baseUrl."/v4/getSolution?time=3", "POST", $payload, ["key:".$this->apiKey], json: true) ?: ''
             , 1);
 #var_dump($s);
-#var_dump($this->apiKey);
-        if (!is_array($s) || isset($s['error']) || ($s["status"] ?? '') === 'error') {
-            throw new Exception(is_array($s) ? ($s["message"] ?? $s['error']) : 'unknown');
+
+        if (!is_array($s) || ($s['errorId'] ?? 0) != 0 || ($s["status"] ?? '') === 'error') {
+            throw new Exception(is_array($s) ? ($s["errorCode"]) : 'unknown');
         }
 
-        return $s['taskId'];
+        return [$payload['task']['type'], $s['taskId']];
     }
 
     /** polling hasil job */
-    protected function res_api($jobId) {
+    protected function res_api($task) {
+        
+        [$taskType, $taskId] = $task;
         $start = time();
         do {
             _sle(5); 
             $r = json_decode(
-                Net::S($this->baseUrl."/v3/pollTask", "POST",["taskId" => $jobId], ["key:".$this->apiKey], json: true) ?: ''
+                Net::S($this->baseUrl."/v4/getTaskResult", "POST",["taskId" => $taskId], ["key:".$this->apiKey], json: true) ?: ''
                 , 1);
 #var_dump($r);
             
-            if (($r['status'] ?? '') === 'done') {
-                if (!empty($r['debug'])) {
-                    _put(ROOT.'/atb.png', base64_decode($r['debug']));
-                }
-                return $r['token'] ?? $r['solution'] ?? $r;
+            if (($r['status'] ?? '') === 'ready') {
+                if (!empty($r['debug']['img'])) _put(ROOT.'/img.png', base64_decode($r['debug']['img']));
+                
+                if ($taskType == 'rscaptcha') return "@TOKEN::{$r['solution']['token']}";
+                
+                return $r['solution']['token'] ?? $r['solution']['answer'] ?? $r['solution'];
             }
 
             
             if (!is_array($r) || Api::errType($q = ($r['status'] ?? 'unknown')) === 'ret') 
                 continue;
 
-            throw new Exception($r['message'] ?? 'unknown');
+            throw new Exception($r['errorCode'] ?? 'unknown');
 
         } while (time() - $start < 300);
 
         throw new Exception("ERROR_TIMEOUT");
     }
     
-    /** shortlink resolver */
-    public function shortLink($link) {
-        $params = ["url" => $link];
-        return $this->run('shortlink', $params, true);
-    }
-
     public function zer(array $data) {
-    
+        
         $params = [
-            "method" => "zercaptcha",
-            "main" => $data['main'],
-            "options" => []
+            "type" => "zercaptcha",
+            "websiteImg" => $data['main'],
+            "optionsList" => []
         ];
     
         $map = [];
         $i = 0;
     
         foreach ($data['rels'] as $rel => $b64) {
-            $params['options'][] = $b64;
+            $params['optionsList'][] = $b64;
             $map[$i++] = $rel;
         }
     
-        $res = $this->run('visual', $params);
+        $res = $this->run('VisualCaptchaTask', $params);
     
         if (isset($res['fail'])) return $res;
     
@@ -91,20 +88,20 @@ class gmxch extends Provider {
     public function atb(array $data) {
     
         $params = [
-            "method" => "antibotlinks",
-            "main" => $data['main'],
-            "options" => []
+            "type" => "antibotlinks",
+            "websiteImg" => $data['main'],
+            "optionsList" => []
         ];
     
         $map = [];
         $i = 0;
     
         foreach ($data['rels'] as $rel => $b64) {
-            $params['options'][] = $b64;
+            $params['optionsList'][] = $b64;
             $map[$i++] = $rel;
         }
     
-        $res = $this->run('visual', $params);
+        $res = $this->run('VisualCaptchaTask', $params);
     
         if (isset($res['fail'])) return $res;
     
@@ -124,55 +121,58 @@ class gmxch extends Provider {
         return !empty($links) ? ['done' => ' ' . implode(' ', $links)] : ['fail' => 777];
     }
     
-    public function bct(array $data) {
-        #return ['fail' => 777];
-        
-        $params = [
-            "method" => "SL-iconcaptcha",
-            "main" => $data['main'],
-            "options" => []
+    private function payload(string $api, array $extra): array {
+        $payload = [
+            'method' => (string)$api,
+            'task' => $extra
         ];
     
-        foreach ($data['opsi'] as $rel => $b64) $params['options'][] = $b64;
-    
-        $sol = $this->run('visual', $params);
-        
-        if (isset($sol['fail'])) return $sol;
-        
-        $ans = $sol['done'];
-        
-        $data = [];
-        foreach (explode(', ', $ans) as $item) {
-            [$key, $value] = explode(': ', $item);
-            $data[$key] = $value;
+        if (isset($extra['proxy']) && is_string($extra['proxy'])) {
+            $prx = parse_url($extra['proxy']);
+            
+            if ($prx !== false) {
+                unset($payload['task']['proxy']);
+                
+                $proxyArr = [
+                    'type' => $prx['scheme'] ?? 'http',
+                    'host' => $prx['host'] ?? '',
+                    'port' => $prx['port'] ?? 80,
+                ];
+                
+                if (isset($prx['user'])) $proxyArr['user'] = $prx['user'];
+                if (isset($prx['pass'])) $proxyArr['pass'] = $prx['pass'];
+                
+                $payload['task']['proxy'] = $proxyArr;
+            }
         }
         
-        return [
-            'ans' => $data['class'] ?? null,
-            'idx' => isset($data['index']) ? (int)$data['index'] : null,
-        ];
-        
+        #$payload['data']['debug'] = 1;
+        #var_dump($payload);
+    
+        return $payload;
     }
-
+    
     /** info saldo */
-    public function getInfo(): bool{
+    public function getInfo(): bool {
         $maxRetry = 3;
         $i = null;
+        
         for ($attempt = 1; $attempt <= $maxRetry; $attempt++) {
             $i = json_decode(
-                Net::S($this->baseUrl . "/key","POST",null,["key:" . $this->apiKey],json: true)?: ''
-            , 1);
+                Net::S(
+                    $this->baseUrl . "/v4/getBalance", "POST",
+                    ["key" => $this->apiKey], json: true
+                )?: ''
+            , true);
             
             if ($i !== null) break;
         }
         
-        #var_dump($i); #die;
         if ($i === null) return false;
         
-        if (!empty($i['status']) && isset($i['authorized'])) return (bool) $i['authorized'];
+        Logger::X('info', 'gmxch: ' . ($i['balance'] ?? 'unknown'));
         
-        Logger::X('info', 'gmxch: ' . ($i['message'] ?? 'unknown'));
-        return false;
+        return ($i['errorId'] ?? 1) === 0;
     }
     
 }

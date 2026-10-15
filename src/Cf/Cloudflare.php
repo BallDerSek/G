@@ -7,7 +7,7 @@ class Cloudflare {
         if (!$api) return false;
     
         $param = array_filter([
-            #'body'  => !empty($data['html']) ? base64_encode($data['html']) : null,
+            #'html'  => !empty($data['html']) ? base64_encode($data['html']) : null,
             'proxy' => $GLOBALS['_CTX']['proxy']['src'] ?? null,
             #'userAgent' => $uagent ?? '',
             'payload' => $data['payload']
@@ -93,7 +93,7 @@ class Cloudflare {
     public static function exec($api, $url, $cookiePath, $uagent, array $data = [], $force = false) {
         
         $solution = self::solve($api, $url, $uagent, $data, $force);
-        #var_dump($solution);
+        #var_dump($solution); #die;
         
         /*
         var_dump($url, $data);
