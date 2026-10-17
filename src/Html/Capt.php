@@ -386,8 +386,18 @@ class Capt {
         return $ret;
     }
 
-    private static function cleanB64($uri) {
+    private static function cleanB640($uri) {
         if (!preg_match('~^data:image/[a-z0-9.+-]+;base64,([a-z0-9+/=\s]+)$~i', $uri, $m)) {
+            return null;
+        }
+        return preg_replace('~\s+~', '', $m[1]);
+    }
+    
+    public static function cleanB64($uri) {
+        if (!preg_match('~^data:image/[a-z0-9.+-]+;base64,([a-z0-9+/=\s]+)$~i', $uri, $m)) {
+            if (preg_match('~^[a-z0-9+/=\s]+$~i', $uri)) {
+                return preg_replace('~\s+~', '', $uri);
+            }
             return null;
         }
         return preg_replace('~\s+~', '', $m[1]);

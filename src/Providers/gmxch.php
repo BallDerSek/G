@@ -35,9 +35,9 @@ class gmxch extends Provider {
 #var_dump($r);
             
             if (($r['status'] ?? '') === 'ready') {
-                if (!empty($r['debug']['img'])) _put(ROOT.'/img.png', base64_decode($r['debug']['img']));
-                
-                if ($taskType == 'rscaptcha') return "@TOKEN::{$r['solution']['token']}";
+                if (!empty($r['debug']['img'])) _put(ROOT."/$taskType.png", base64_decode($r['debug']['img']));
+                #var_dump($r);
+                if ($taskType == 'rscaptcha' && isset($r['solution']['token'])) return "@TOKEN::{$r['solution']['token']}";
                 
                 return $r['solution']['token'] ?? $r['solution']['answer'] ?? $r['solution'];
             }
@@ -146,7 +146,7 @@ class gmxch extends Provider {
             }
         }
         
-        #$payload['data']['debug'] = 1;
+        if (!empty(getenv('GMXCH_DEBUG'))) $payload['data']['debug'] = 1;
         #var_dump($payload);
     
         return $payload;

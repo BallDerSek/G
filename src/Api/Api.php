@@ -355,6 +355,14 @@ final class Api {
                 ],
                 
             ],
+            'vie_upside' => [
+                'api' => 'VisualCaptchaTask',
+                'img' => 'websiteImg',
+                'defaults' => [
+                    'type' => 'upside',
+                ],
+                
+            ],
             'rs_icon' => [
                 'api' => 'VisualCaptchaTask',
                 'img' => 'websiteImg',

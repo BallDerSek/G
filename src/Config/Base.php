@@ -21,7 +21,7 @@ trait Base {
     }
     
     protected function checkATB(&$err, $html) {
-        if ($html && (stripos($html, 'nvalid Anti-Bot') !== false || stripos($html, 'Invalid AntiBot') !== false)) {
+        if ($html && (stripos($html, 'nvalid Anti-Bot') !== false || stripos($html, 'nvalid AntiBot') !== false|| stripos($html, 'nvalid antibot') !== false)) {
             $err++;
             return true;
         }
@@ -167,7 +167,7 @@ trait Base {
         $data_cpc = '632-1-' . $cpcTime;
         
         static $cc_pu = null;
-        if (!$cc_pu) $cc_pu = '9a36387661f7b638';
+        if (!$cc_pu) $cc_pu = '313cdddaec1f3af1';
         
         static $bitmedia_fid = null;
         if (!$bitmedia_fid) {

@@ -18,7 +18,7 @@ final class rsCaptcha {
         
     }
     
-    public function exec($rss, $api, $html = null) {
+    public function exec($rss, $api, $html = null, $force = false) {
         
         $_M = $rss['type'] ?? null;
         $_K = $rss['keys'] ?? null;
@@ -37,8 +37,11 @@ final class rsCaptcha {
         $img = Net::C($_K, 'GET', null, $this->ck, [], $this->host, $this->ua, ip: $this->ip, ins: $this->in);
         if (empty($img) || $img === 99) return false;
         
-        $co = Solve::img($api, $this->host, $_M, $img, ['html' => base64_encode($_J), 'ua' => $this->ua]);
-        if (str_starts_with($co, '@TOKEN:')) {
+        $extra = $force ?  [] : ['html' => base64_encode($_J), 'ua' => $this->ua];
+        #var_dump($extra); die;
+        $co = Solve::img($api, $this->host, $_M, $img, $extra);
+        #var_dump($co);
+        if (str_starts_with($co, '@TOKEN::')) {
             $token = str_replace('@TOKEN::', '', $co);
             return [
                 'rscaptcha_token' => $_T,

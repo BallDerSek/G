@@ -143,29 +143,68 @@ return (new class {
                                     'move_entropy' => round(mt_rand(30, 180) / 100, 3),
                                     'canvas_entropy' => round(mt_rand(80, 280) / 1000, 3),
                                 ];
-                                $f_1 = Net::C($fa.'/api/internal.php', 'POST', $p_1, Inf::$cookie, $this->headersCF, $fa, Inf::$uagent);
+                                $f_1 = Net::C(
+                                    $fa.'/api/internal.php',
+                                    'POST', $p_1, Inf::$cookie,
+                                    $this->headersCF,
+                                    $fa, Inf::$uagent
+                                );
                                 var_dump($f_1);
                                 
-                                $f_2 = Net::X($fa.'/api/internal.php', 'GET', ['action' => 'cooldown', 'email' => $this->mail], Inf::$cookie, $this->headersCF, $fa, Inf::$uagent);
+                                /*
+                                */
+                                $f_2 = Net::X(
+                                    $fa.'/api/internal.php',
+                                    'GET', [
+                                        'action' => 'cooldown',
+                                        'email' => $this->mail
+                                    ], Inf::$cookie,
+                                    $this->headersCF,
+                                    $fa, Inf::$uagent
+                                );
                                 var_dump($f_2);
                                 
-                                $f_3 = json_decode(Net::X($fa.'/api/internal.php', 'POST', ['action' => 'check_email', 'email' => $this->mail, 'csrf_token' => $pa['csrf_token']], Inf::$cookie, $this->headersCF, $fa, Inf::$uagent)?: '', 1);
+                                /*
+                                */
+                                $p_3 = [
+                                    'action' => 'check_email',
+                                    'email' => $this->mail,
+                                    'csrf_token' => $pa['csrf_token']
+                                ];
+                                $f_3 = json_decode(Net::X(
+                                    $fa.'/api/internal.php',
+                                    'POST', $p_3, Inf::$cookie,
+                                    $this->headersCF, $fa,
+                                    Inf::$uagent)?: '', 1
+                                );
                                 var_dump($f_3);
                                 
                                 $u_4 = rtrim($this->host, '/') . '/' . ltrim($f['url'], '/');
                                 $cre = ['email' => $this->mail];
                                 $p_4 = array_merge($pa, $cre);
                                 unset($p_4['remember']);
-                                $f_4 = Net::X($u_4, 'POST', $p_4, Inf::$cookie, $this->headersCF, $fa, Inf::$uagent);
+                                $f_4 = Net::X(
+                                    $u_4, 'POST', $p_4,
+                                    Inf::$cookie,
+                                    $this->headersCF, $fa,
+                                    Inf::$uagent
+                                );
                                 _put('f4.html', $f_4);
                                 
                                 $err = Scraper::_xP($f_4, "//*[@data-claim-error][contains(@class,'is-shown')]/text()")[0] ?? null;
                                 var_dump($err);
-                                die;
-                                
-                                if (stripos($err, 'ssion expired')) {
-                                    var_dump(_get(Inf::$cookie));
+                                if ($err) {
+                                    $this->logger('err', "can't claim", $err);
+                                    if (stripos($err, 'ssion expired')) {
+                                        var_dump(_get(Inf::$cookie));
+                                    } elseif (stripos($err, 'not available from your network')) {
+                                        die;
+                                    }
                                 }
+                                
+                                $cla = $this->pageFau($f_4, $fa, $pa['csrf_token']);
+                                
+                                
                                 
                                 
                                 
@@ -194,20 +233,10 @@ return (new class {
                         die;
                     }
                     
-                    
-                    
-                    
-                    
-                    
                     die;
                 }
                 
-                
-                
             }
-            
-            
-            
             die;
         }
         
@@ -216,6 +245,76 @@ return (new class {
     
     
     
+    
+    private function pageFau($html, $reff, $csrf = '') {
+        
+        $obj = $this->confFau($html);
+        
+        if ($obj) {
+            var_dump($obj);
+            $_csrf = $obj['csrf_token'] ?? $csrf;
+            $this->headersCF = Inf::netHead(['fp_csrf' => $_csrf]);
+            
+            $p_1 = [
+                'action' =>'client_signals',
+                'csrf_token' => $_csrf,
+                'webdriver' => false,
+                'callPhantom' => false,
+                '_phantom' => false,
+                '__nightmare' => false,
+                'domAutomation' => false,
+                'selenium' => false,
+                'headless' => false,
+                'no_plugins' => true,
+                'has_canvas' => true,
+                'has_webgl' => true,
+                'has_notification_api' => true,
+                'has_promise' => true,
+                'has_fetch' => true,
+                'no_plugins' => true,
+                'move_count' => rand(50, 150),
+                'move_entropy' => round(mt_rand(30, 180) / 100, 3),
+                'canvas_entropy' => round(mt_rand(80, 280)/1000, 3),
+            ];
+            $f_1 = Net::C(
+                $reff.'/api/internal.php', 'POST', $p_1,
+                Inf::$cookie, $this->headersCF, $reff, Inf::$uagent
+            );
+            
+            _sle(3);
+            $f_2 = Net::C(
+                $reff.'/api/internal.php', 'POST', 
+                [
+                    'action' => 'captcha_new',
+                    'csrf_token' => $_csrf
+                ],
+                Inf::$cookie, $this->headersCF, $reff, Inf::$uagent
+            );
+            var_dump($f_2);
+            
+            
+            
+        }
+        
+        
+        
+    }
+    
+    private function confFau($html) {
+        $script = Scraper::_get($html, 'window.FAUCET');
+        if (!$script) return null;
+        if (preg_match('/Object\.assign\s*\([^,]+,\s*(\{.*?\})\s*\);/s', $script, $matches)) {
+            return json_decode($matches[1], true);
+        }
+        
+        return null;
+    }
+    
+    private function elCAP($res) {
+        
+        
+        
+    }
     
     
 })->exec();

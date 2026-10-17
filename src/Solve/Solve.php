@@ -184,7 +184,7 @@ class Solve {
                     'html' => $html
                 ]);
         
-                $rss_res = (new rsCaptcha($ctx2))->exec($_cap['rss'], $api, $html);
+                $rss_res = (new rsCaptcha($ctx2))->exec($_cap['rss'], $api, $html, $force);
         
                 if (!$rss_res || !is_array($rss_res)) {
                     return ['trouble' => 'reload'];

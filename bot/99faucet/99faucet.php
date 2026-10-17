@@ -102,8 +102,9 @@ return (new class {
                 if ($po) {
                     #print_r($po); die;
                     $ve = Net::X($f['url'], 'POST', $po, Inf::$cookie, $this->headersCF, $this->host.$this->r, Inf::$uagent);
+                    #_put('ve.html', $ve);
                     
-                    $msg_d = Scraper::_jP($ve, "/Swal\.fire\(\s*\{.*?title:\s*'([^']+)'.*?text:\s*'([^']+)'.*?icon:\s*'([^']+)'/s")[2][0] ?? null;
+                    $msg_d = Scraper::_jP($ve, "/Swal\.fire\(\s*\{.*?title:\s*'([^']+)'.*?text:\s*'([^']+)'.*?icon:\s*'([^']+)'/s")[2][0] ?? Scraper::_xP($ve, "//div[contains(@class, 'alert-danger')]")[0] ?? null;
                     if (!empty($msg_d)) {
                         if (stripos($msg_d, 'nvalid Captcha')) continue;
                         $this->logger('err', '', $msg_d, 1);
@@ -147,13 +148,14 @@ return (new class {
                         $po = null;
                         if (!empty($fau) && $fau !== 99) {
                             $f = Scraper::payload($fau)[0] ?? null;
+                            if (str_contains($fau, '/auth/login')) continue 2;
                             
                             if (!empty($f)) {
                                 $pa = $f['payload'];
-                                $cre = ['uf' => md5($this->mail), 'ls' => LANGUAGE(), 'utt' => TIMEZONE()];
+                                $cre = ['uf' => md5($this->mail.Inf::$uagent), 'ls' => LANGUAGE(), 'utt' => TIMEZONE()];
                                 
-                                #$cap = $this->_cp($fau);
-                                $cap = Solve::exec($fau, $this->host, $this->api, $pa);
+                                $cap = $this->_cp($fau);
+                                #$cap = Solve::exec($fau, $this->host, $this->api, $pa);
                                 if (isset($cap['trouble'])) continue;
                                 $po = array_merge($pa, $cap, $cre);
                                 
@@ -167,7 +169,7 @@ return (new class {
                         }
                         
                         if (!empty($po)) {
-                            $cla = Net::C($f['url'], 'POST', $po, Inf::$cookie, $this->headersCF, $this->host, Inf::$uagent);
+                            $cla = Net::X($f['url'], 'POST', $po, Inf::$cookie, $this->headersCF, $fa, Inf::$uagent);
                             #_put('cla.html', $cla);
                             
                             if (empty($cla) || ($cla === 99)) continue;

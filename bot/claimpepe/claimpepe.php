@@ -57,6 +57,7 @@ return (new class {
         login:
             Proxy::load();
             Check::Geo();
+            
         
         while (true) {
             $dash = null;
@@ -90,8 +91,8 @@ return (new class {
                     if (!empty($f)) {
                         $pa = $f['payload'];
                         $cre = ['uf' => md5($this->mail), 'ls' => LANGUAGE(), 'utt' => TIMEZONE(), 'email' => $this->mail];
-                        #$cap = $this->_cp($_0);
-                        $cap = Solve::exec($_0, $this->host, $this->api, $pa);
+                        $cap = $this->_cp($_0);
+                        #$cap = Solve::exec($_0, $this->host, $this->api, $pa);
                         if (isset($cap['trouble'])) continue;
                         
                         $po = array_merge($pa, $cap, $cre);
@@ -102,7 +103,7 @@ return (new class {
                 if ($po) {
                     #print_r($po); die;
                     $ve = Net::X($f['url'], 'POST', $po, Inf::$cookie, $this->headersCF, $this->host.$this->r, Inf::$uagent);
-                    _put('ve.html', $ve);
+                    #_put('ve.html', $ve);
                     $msg_d = Scraper::_jP($ve, "/Swal\.fire\(\s*\{.*?title:\s*'([^']+)'.*?text:\s*'([^']+)'.*?icon:\s*'([^']+)'/s")[2][0] ?? Scraper::_xP($ve, "//div[contains(@class, 'alert-danger')]")[0] ?? null;
                     if (!empty($msg_d)) {
                         if (stripos($msg_d, 'nvalid Captcha')) continue;
@@ -143,22 +144,28 @@ return (new class {
                         $ret99 = 0;
                         
                         $fau = $this->checkCF($this->headersCF, $fa, $fau);
+                        #_put('fau.html', $fau);
                         
                         $po = null;
                         if (!empty($fau) && $fau !== 99) {
+                            _sle(5);
                             $f = Scraper::payload($fau)[0] ?? null;
-                            #var_dump($f); die;
+                            #var_dump($f); #die;
                             
                             if (!empty($f)) {
                                 $pa = $f['payload'];
-                                $cre = ['uf' => md5($this->mail), 'ls' => LANGUAGE(), 'utt' => TIMEZONE(), 'wallet' => $this->mail];
+                                $cre = ['uf' => md5($this->mail), 'ls' => LANGUAGE(), 'utt' => TIMEZONE()];
                                 
                                 #$cap = $this->_cp($fau);
-                                $cap = Solve::exec($fau, $this->host, $this->api, $pa);
+                                $cap = Solve::exec($fau, $this->host, $this->api, $pa, true);
                                 if (isset($cap['trouble'])) continue;
                                 $po = array_merge($pa, $cap, $cre);
                                 
                             } else {
+                                if (stripos($fau, 'auth/login')) {
+                                    @unlink(Inf::$cookie);
+                                    goto login;
+                                }
                                 if (stripos($fau, 'complete atleast 1')) {
                                     if ($this->SLDONE) die;
                                     $curr = $_c;
@@ -168,9 +175,14 @@ return (new class {
                         }
                         
                         if (!empty($po)) {
-                            #print_r($po); die;
-                            $cla = Net::X($f['url'], 'POST', $po, Inf::$cookie, $this->headersCF, $this->host, Inf::$uagent);
+                            #print_r($po); #die;
+                            $claa = Net::X($f['url'], 'POST', $po, Inf::$cookie, $this->headersCF, $fa, Inf::$uagent, d:1);
+                            
+                            
+                            $cla = $claa['body'];
                             #_put('cla.html', $cla);
+                            #unset($claa['body']);
+                            #var_dump($claa);
                             
                             if (empty($cla) || ($cla === 99)) continue;
                             
@@ -355,6 +367,11 @@ return (new class {
         
         return null;
         
+    }
+    
+    private function _ck() {
+        $ccc = $this->adcookie(true);
+        foreach ($ccc as $nn => $vv) Inf::injectCookie(Inf::$cookie, $vv, $this->host, $nn);
     }
     
 })->exec();
