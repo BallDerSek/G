@@ -387,6 +387,20 @@ trait Mimic {
         return $extensions;
     }
 
+    protected function get_OPS($ua) {
+        if (preg_match('/iPhone|iPad|iPod/i', $ua)) return 'iOS';
+        
+        if (preg_match('/Macintosh|MacIntel|MacPPC|Mac68K/i', $ua)) return 'MacOS';
+        
+        if (preg_match('/Win32|Win64|Windows|WinCE/i', $ua)) return 'Windows';
+        
+        if (preg_match('/Android/i', $ua)) return 'Android';
+        
+        if (preg_match('/Linux/i', $ua)) return 'Linux';
+        
+        return 'Windows';
+    }
+
     protected function get_Fonts($ua): array {
         if (stripos($ua, 'Windows') !== false) {
             return [

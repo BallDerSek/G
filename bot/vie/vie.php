@@ -154,8 +154,10 @@ return (new class {
                 $bal = ((float)$_bal);
                 
                 
+                // TODO: auto wd ntar
+                
+                
             }
-            
             $lock = $dash['user']['lockedUntil'] ?? 0;
             
             if ($lock && $lock !== 0) {
@@ -308,6 +310,7 @@ return (new class {
             $ads = json_decode(Net::C("{$this->host}/api/ptc", 'GET', null, Inf::$cookie, $this->headersCF, "{$this->host}/app/ptc/all", Inf::$uagent)?: '', 1)['statistic'] ?? [];
             #var_dump($ads);
             #_put('ads.json', json_encode($ads, JSON_PRETTY_PRINT));
+            
             var_dump(count($ads));
             if (!empty($ads) && $ads !== 99) {
                 
@@ -331,6 +334,7 @@ return (new class {
                     
                     if (!empty($ptcList) && !empty($ptcList['ads'])) {
                         $cla = null;
+                        
                         foreach ($ptcList['ads'] as $data) {
                             $cla = $this->viePTC($data, $ptc);
                             
@@ -340,12 +344,7 @@ return (new class {
                         }
                         
                         
-                        
-                        
-                        
-                        
                     }
-                    
                     
                     die;
                 }
@@ -442,6 +441,7 @@ return (new class {
     }
     
     private function viePTC($data, $type) {
+        
         var_dump($data);
         var_dump($type);
         
