@@ -91,8 +91,8 @@ return (new class {
                     if (!empty($f)) {
                         $pa = $f['payload'];
                         $cre = ['uf' => md5($this->mail), 'ls' => LANGUAGE(), 'utt' => TIMEZONE(), 'email' => $this->mail];
-                        $cap = $this->_cp($_0);
-                        #$cap = Solve::exec($_0, $this->host, $this->api, $pa);
+                        #$cap = $this->_cp($_0);
+                        $cap = Solve::exec($_0, $this->host, $this->api, $pa);
                         if (isset($cap['trouble'])) continue;
                         
                         $po = array_merge($pa, $cap, $cre);
@@ -144,20 +144,24 @@ return (new class {
                         $ret99 = 0;
                         
                         $fau = $this->checkCF($this->headersCF, $fa, $fau);
-                        #_put('fau.html', $fau);
+                        _put('fau.html', $fau);
                         
                         $po = null;
                         if (!empty($fau) && $fau !== 99) {
                             _sle(5);
                             $f = Scraper::payload($fau)[0] ?? null;
-                            #var_dump($f); #die;
+                            var_dump($f); #die;
                             
                             if (!empty($f)) {
                                 $pa = $f['payload'];
-                                $cre = ['uf' => md5($this->mail), 'ls' => LANGUAGE(), 'utt' => TIMEZONE()];
+                                $cre = [
+                                    'uf' => md5($this->mail),
+                                    'ls' => LANGUAGE(),
+                                    'utt' => TIMEZONE()
+                                ];
                                 
                                 #$cap = $this->_cp($fau);
-                                $cap = Solve::exec($fau, $this->host, $this->api, $pa, true);
+                                $cap = Solve::exec($fau, $this->host, $this->api, $pa);
                                 if (isset($cap['trouble'])) continue;
                                 $po = array_merge($pa, $cap, $cre);
                                 
@@ -175,7 +179,7 @@ return (new class {
                         }
                         
                         if (!empty($po)) {
-                            #print_r($po); #die;
+                            print_r($po); die;
                             $claa = Net::X($f['url'], 'POST', $po, Inf::$cookie, $this->headersCF, $fa, Inf::$uagent, d:1);
                             
                             

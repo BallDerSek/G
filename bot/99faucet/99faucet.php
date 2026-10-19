@@ -154,8 +154,8 @@ return (new class {
                                 $pa = $f['payload'];
                                 $cre = ['uf' => md5($this->mail.Inf::$uagent), 'ls' => LANGUAGE(), 'utt' => TIMEZONE()];
                                 
-                                $cap = $this->_cp($fau);
-                                #$cap = Solve::exec($fau, $this->host, $this->api, $pa);
+                                #$cap = $this->_cp($fau);
+                                $cap = Solve::exec($fau, $this->host, $this->api, $pa);
                                 if (isset($cap['trouble'])) continue;
                                 $po = array_merge($pa, $cap, $cre);
                                 
