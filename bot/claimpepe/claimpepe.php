@@ -150,7 +150,7 @@ return (new class {
                         if (!empty($fau) && $fau !== 99) {
                             _sle(5);
                             $f = Scraper::payload($fau)[0] ?? null;
-                            var_dump($f); #die;
+                            #var_dump($f); #die;
                             
                             if (!empty($f)) {
                                 $pa = $f['payload'];
@@ -179,7 +179,7 @@ return (new class {
                         }
                         
                         if (!empty($po)) {
-                            print_r($po); die;
+                            #print_r($po); die;
                             $claa = Net::X($f['url'], 'POST', $po, Inf::$cookie, $this->headersCF, $fa, Inf::$uagent, d:1);
                             
                             
