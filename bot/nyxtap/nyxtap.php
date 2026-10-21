@@ -179,7 +179,7 @@ return (new class {
                             
                         }
                         
-                        styler("waiting for next claim", fn() => _sle(125));
+                        styler("waiting for next claim", fn() => _sle(180));
                         break;
                     }
                }
