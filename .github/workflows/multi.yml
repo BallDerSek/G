@@ -3,7 +3,7 @@ name: Multi Runner
 on:
   workflow_dispatch:
     inputs:
-      bot: { default: satoshifaucet, required: true }
+      bot: { default: 99faucet, required: true }
       accounts: { default: '["0"]', required: true }
       pass: { required: false }
       api:
