@@ -8,7 +8,7 @@ on:
       pass: { required: false }
       api:
         type: choice
-        options: [tertuyul, skibidixxx, capsolver, multibot, solverify, gmxch]
+        options: [tertuyul, xevil, skibidixxx, capsolver, multibot, solverify, gmxch]
         required: true
       key: { default: 'a99dd5e22beff844bb9e503e285245b6',   required: false }
       proxy: { default: '[""]', required: false }
