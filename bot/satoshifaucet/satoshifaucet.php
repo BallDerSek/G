@@ -52,7 +52,7 @@ return (new class {
     
     public function exec() {
         $habis = [];
-        $curr = 'ltc';
+        $curr = 'ton';
         $skipped = [];
         
         login:
@@ -228,7 +228,7 @@ return (new class {
                                 
                             }
                             
-                            styler("waiting for next claim", fn() => _sle(10));
+                            styler("waiting for next claim", fn() => _sle(12));
                             
                         }
                         
