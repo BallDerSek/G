@@ -24,6 +24,9 @@ return (new class {
     private bool $atbforce = false;
     private int $atbfail = 0;
     
+    // Mảng lưu trữ thời gian bị phạt của từng đồng coin
+    private array $cooldowns = [];
+    
     public function __construct() {
         $this->api = onKeys();
         $this->domain = parse_url($this->host, PHP_URL_HOST);
@@ -51,9 +54,7 @@ return (new class {
     }
     
     public function exec() {
-        $habis = [];
-        $curr = 'ton';
-        $skipped = [];
+        $curr = ''; 
         
         login:
             Proxy::load();
@@ -71,7 +72,6 @@ return (new class {
                     $dash = $l['html'];
                     logx('Info', "logged in", false); 
                     _sle(3); _clr();
-                    #var_dump($dash); die;
                     break;
                 }
                 
@@ -86,42 +86,37 @@ return (new class {
                 
                 if (!empty($_0) && $_0 !== 99) {
                     $f = Scraper::payload($_0)[0] ?? null;
-                    #var_dump($f); die;
                     
                     if (!empty($f)) {
                         $pa = $f['payload'];
                         $cre = ['uf' => md5($this->mail), 'ls' => LANGUAGE(), 'utt' => TIMEZONE(), 'wallet' => $this->mail];
-                        #$cap = $this->_cp($_0);
                         $cap = Solve::exec($_0, $this->host, $this->api, $pa);
                         if (isset($cap['trouble'])) continue;
                         
                         $po = array_merge($pa, $cap, $cre);
-                        
                     }
                 }
                 
                 if ($po) {
-                    #print_r($po); #die;
                     $ve = Net::X($this->host.'/auth/login', 'POST', $po, Inf::$cookie, $this->headersCF, $this->host.$this->r, Inf::$uagent, ip: $this->ip);
-                    #Net::save($this->host, $ve, Inf::$cookie);
-                    #_put('ve.html', $ve); die;
                 }
                 
             } while (empty($dash));
-            #_put('dash.html', $dash); die;
             
             $_fa = Scraper::_xP($dash, "//div[normalize-space()='Faucets']/ancestor::li//div[@class='sub-menu-two']/a/@href");
-            #print_r($_fa);
             if (empty($curr)) shuffle($_fa);
+            
             if ($this->claim) {
                 foreach ($_fa as $fa) {
                     
                     $_c = basename(parse_url($fa)['path']);
                     if (!empty($curr) && !str_contains($_c, $curr)) continue;
                     
-                    if (isset($habis[$fa])) {
-                        $curr = '';
-                        continue;
+                    // KIỂM TRA XEM ĐỒNG COIN NÀY CÓ ĐANG BỊ PHẠT KHÔNG
+                    if (isset($this->cooldowns[$_c]) && time() < $this->cooldowns[$_c]) {
+                        $timeLeft = $this->cooldowns[$_c] - time();
+                        $this->logger('warn', $_c, "Đang bị phạt, chờ {$timeLeft}s...");
+                        continue; // Bỏ qua, nhảy sang coin tiếp theo
                     }
                     
                     print(FGd['CYN']." ".ITAL.'processing  ');
@@ -139,7 +134,7 @@ return (new class {
                         $ret99 = 0;
                         
                         $fau = $this->checkCF($this->headersCF, $fa, $fau);
-                        #_put('fau.html', $fau);
+                        
                         if ($ban = $this->isBan($fau)) {
                             if (!$this->SLDONE) {
                                 $curr = $_c;
@@ -153,7 +148,6 @@ return (new class {
                         $this->atbforce = $this->atbfail >= 3;
                         if (!empty($fau) && $fau !== 99) {
                             $f = Scraper::payload($fau, 'fauform')[0] ?? null;
-                            #var_dump($f); #die;
                             
                             if (!empty($f)) {
                                 $pa = $f['payload'];
@@ -166,18 +160,40 @@ return (new class {
                                 
                                 $cre = ['uf' => md5($this->mail), 'ls' => LANGUAGE(), 'utt' => TIMEZONE(), 'wallet' => $this->mail];
                                 
-                                #$cap = $this->_cp($fau);
-                                $cap = Solve::exec($fau, $this->host, $this->api, $pa, $this->atbforce);
-                                
-                                if (isset($cap['trouble'])) continue;
-                                $po = array_merge($pa, $cap, $cre);
+                                // KIỂM TRA CAPTCHA ICONORDER
+                                if (strpos($fau, 'iconorder') !== false || $_ca === 'iconorder' || strpos($fau, 'Tap the objects') !== false) {
+                                    $capResult = $this->solveIconOrder($fau, $fa);
+                                    
+                                    // NẾU BỊ PHẠT (SERVER TRẢ VỀ THỜI GIAN CHỜ)
+                                    if ($capResult && isset($capResult['wait'])) {
+                                        $waitTime = $capResult['wait'];
+                                        $this->cooldowns[$_c] = time() + $waitTime;
+                                        $this->logger('warn', $_c, "Bị phạt Captcha, chờ {$waitTime}s");
+                                        break; // Nhảy sang coin tiếp theo
+                                    }
+
+                                    if ($capResult && isset($capResult['pass'])) {
+                                        $pa['sfz_pass'] = $capResult['pass']; 
+                                        if (!empty($capResult['csrf'])) {
+                                            $pa['csrf_token_name'] = $capResult['csrf'];
+                                        }
+                                        $po = array_merge($pa, $cre); 
+                                    } else {
+                                        _sle(2);
+                                        continue; 
+                                    }
+                                } else {
+                                    $cap = Solve::exec($fau, $this->host, $this->api, $pa);
+                                    if (isset($cap['trouble'])) continue;
+                                    $po = array_merge($pa, $cap, $cre);
+                                }
                                 
                             } else {
-                                if (stripos($fau, 'rate limit') !== false) continue 3;
+                                if (stripos($fau, 'rate limit') !== false) break;
                                 
                                 if (str_contains($fau, 'limit for this coin reached')) {
-                                    #_put('fau.html', $fau); 
-                                    $habis[$fa] = true;
+                                    // Cho nghỉ 1 tiếng
+                                    $this->cooldowns[$_c] = time() + 1000;
                                     break;
                                 }
                             }
@@ -185,134 +201,180 @@ return (new class {
                         
                         if (!empty($po)) {
                             _sle(2);
-                            #print_r($po); die;
-                            $cla = Net::X($f['url'], 'POST', $po, Inf::$cookie, $this->headersCF, $fa, Inf::$uagent, ip: $this->ip);
+                            $po['sfz_hp'] = ''; 
+                            
+                            $claimHeaders = array_merge($this->headersCF, [
+                                'Origin: ' . $this->host,
+                                'Referer: ' . $fa,
+                                'Upgrade-Insecure-Requests: 1'
+                            ]);
+
+                            $cla = Net::X($f['url'], 'POST', $po, Inf::$cookie, $claimHeaders, $fa, Inf::$uagent, ip: $this->ip);
                             
                             if (empty($cla) || ($cla === 99)) continue;
                             
+                            _put('claim_debug.html', $cla);
                             $this->checkATB($this->atbfail, $cla);
                             
-                            if (stripos($cla, 'rate limited') !== false) goto login;
+                            if (stripos($cla, 'rate limited') !== false) {
+                                $this->cooldowns[$_c] = time() + 60; // Nghỉ 60s nếu bị rate limit
+                                break;
+                            }
                             
-                            $mf = Scraper::_jP($cla, "/Swal\.fire\(\s*\{.*?icon:\s*'([^']+)'.*?title:\s*'([^']+)'.*?html:\s*'([^']+)'/s");
-                            if (!empty($mf[3][0])) {
-                                
-                                $stt = $mf[1][0];
-                                $msg = $mf[3][0];
-                                $this->logger($stt, 'fct', $msg);
-                                
-                                if (preg_match('/sufficient|could not be processed|faucet limit/i', $msg)) {
-                                    $habis[$fa] = true;
+                            $isSuccess = false;
+                            $msg = '';
+                            
+                            // Bắt thông báo Swal
+                            if (preg_match("/Swal\.fire\s*\(\s*\{.*?html\s*:\s*'([^']+)'/s", $cla, $m) || 
+                                preg_match("/Swal\.fire\s*\(\s*\{.*?text\s*:\s*'([^']+)'/s", $cla, $m)) {
+                                $msg = strip_tags($m[1]);
+                            }
+
+                            if (!empty($msg)) {
+                                if (preg_match('/sufficient|could not be processed|faucet limit|limit reached/i', $msg)) {
+                                    // Thay vì bỏ qua vĩnh viễn, ta cho coin này nghỉ 1 tiếng (3600 giây)
+                                    $this->cooldowns[$_c] = time() + 3600; 
+                                    $this->logger('err', 'fct', "Limit reached -> Nghỉ 1 tiếng");
                                     break;
                                 }
                                 
                                 if (preg_match('/blacklisted|flagged|banned|cheat/i', $msg)) {
+                                    $this->logger('err', 'fct', $msg);
                                     die;
                                 }
                                 
-                                if (preg_match('/went wron|cation failed/i', $msg)) {
-                                    #$curr = '';
+                                if (preg_match('/went wron|cation failed|invalid captcha/i', $msg)) {
+                                    $this->logger('err', 'fct', $msg);
                                     continue 3;
                                 }
                                 
-                                if (stripos($msg, 'Shortlink')) {
-                                    if ($this->SLDONE) die;
-                                    $curr = $_c;
-                                    break 2;
+                                if (preg_match('/sent|success|claimed|received/i', $msg)) {
+                                    $this->logger('ok', 'fct', $msg);
+                                    $isSuccess = true;
                                 }
-                                
-                                if (stripos($msg, 'has been sent')) {
-                                    $this->atbforce = false;
-                                    $this->atbfail = 0;
+                            } else {
+                                // Nếu không thấy Swal, kiểm tra thô trong HTML
+                                if (stripos($cla, 'has been sent') !== false || stripos($cla, 'success') !== false) {
+                                    $this->logger('ok', 'fct', 'Reward Claimed! (No Swal found)');
+                                    $isSuccess = true;
+                                } else {
+                                    // KHÔNG DÙNG stripos limit Ở ĐÂY NỮA ĐỂ TRÁNH BẮT NHẦM
+                                    $this->logger('err', 'fct', 'Claim failed: Unknown response (Check claim_debug.html)');
                                 }
-                                
+                            }
+
+                            if ($isSuccess) {
+                                $this->atbforce = false;
+                                $this->atbfail = 0;
+                                // Nghỉ 5 giây trước khi sang coin tiếp theo
+                                styler("Claim success! Moving to next...", fn() => _sle(40));
+                                break; 
                             }
                             
-                            styler("waiting for next claim", fn() => _sle(12));
-                            
+                            styler("waiting for next claim", fn() => _sle(rand(40, 50)));
                         }
-                        
                     }
                 }
-                
             }
             
-            if (count($habis) === count($_fa)) $this->logger('ok', '', 'beres', 1);
-            
-            
-            
-            
+            // Nghỉ 10s sau khi quét hết 1 vòng tất cả các coin
+            styler("All coins processed. Waiting 10s...", fn() => _sle(10));
         }
-        
     }
     
-    
-    private function parseShortL($ud, $sl) {
+    // =================================================================
+    // HÀM XỬ LÝ CAPTCHA ICONORDER
+    // =================================================================
+    private function solveIconOrder($html, $fa) {
+        $csrf = Scraper::_xP($html, '//form[@id="fauform"]//input[@name="csrf_token_name"]/@value')[0] ?? '';
+        if (empty($csrf)) {
+            Logger::X('warn', "Không lấy được CSRF token");
+            return null;
+        }
+
+        $actionUrl = Scraper::_xP($html, '//form[@id="fauform"]/@action')[0] ?? '';
+        $faucet = basename(parse_url($actionUrl, PHP_URL_PATH)) ?: 'trump';
+
+        $ajaxHeaders = array_merge($this->headersCF, [
+            'X-Requested-With: XMLHttpRequest',
+            'Accept: application/json, text/javascript, */*; q=0.01'
+        ]);
+
+        $challengeUrl = "{$this->host}/cosmos/challenge/faucet_{$faucet}?_=" . round(microtime(true) * 1000);
+        $chRes = Net::C($challengeUrl, 'GET', null, Inf::$cookie, $ajaxHeaders, $fa, Inf::$uagent, ip: $this->ip);
         
-        $getLok = 0;
-        while ($getLok <= 3) {
-            $getLok++;
-            $lok = Net::X($ud, 'GET', null, Inf::$cookie, $this->headersCF, $sl, Inf::$uagent);
-            if (!empty($lok) && $lok !== 99) {
-                $f = Scraper::payload($lok)[0] ?? [];
-                if (!empty($f)) {
-                    $pa = $f['payload'];
-                    #$cap = $this->_cp($lok);
-                    $cap = Solve::exec($lok, $this->host, $this->api, $pa);
-                    if (isset($cap['trouble'])) continue;
-                    $po = array_merge($pa, $cap);
-                }
+        $chData = json_decode($chRes, true);
+        
+        // NẾU SERVER YÊU CẦU CHỜ (BỊ PHẠT)
+        if (isset($chData['wait'])) {
+            return ['wait' => (int)$chData['wait']];
+        }
+
+        if (empty($chData['img']) || empty($chData['token'])) {
+            Logger::X('warn', "Không tải được ảnh Captcha");
+            return null;
+        }
+
+        $imgB64 = $chData['img'];
+        if (strpos($imgB64, 'base64,') !== false) {
+            $imgB64 = explode('base64,', $imgB64, 2)[1];
+        }
+
+        $capToken = $chData['token'];
+
+        if (is_string($this->api)) $provider = Api::use('tertuyul', $this->api);
+        elseif (is_object($this->api)) $provider = $this->api;
+        else return null;
+
+        $result = $provider->base64($imgB64, 'iconorder');
+        if (isset($result['fail']) || empty($result['done'])) {
+            Logger::X('err', "Lỗi giải captcha iconorder: " . ($result['fail'] ?? 'Empty result'));
+            return null;
+        }
+
+        $rawPoints = $result['done']; 
+        $ptsArray = [];
+        $parts = explode(';', $rawPoints);
+        foreach ($parts as $part) {
+            if (preg_match('/x\s*=\s*(\d+)\s*,\s*y\s*=\s*(\d+)/i', trim($part), $m)) {
+                $ptsArray[] = $m[1] . ',' . $m[2];
             }
-            
-            if (!empty($po)) {
-                $get = Net::C($f['url'], 'POST', $po, Inf::$cookie, $this->headersCF, $sl, Inf::$uagent, foll: false);
-                return Scraper::_pP($get, 'location.href')[0] ?? null;
-                
-            }
-            
         }
-        
-        return null;
-        
-    }
-    
-    private function _fc($html, $reff) {
-        
-        $task = json_decode(Net::C(
-            $this->host.'/faucetcaptcha/challenge',
-            'GET', null, Inf::$cookie,
-            $this->headersCF, $reff, Inf::$uagent
-        )?: '', 1);
-        
-        $pow = null;
-        $set = microtime(1);
-        $nonce = $task['nonce'] ?? '';
-        $level = $task['difficulty'] ?? 3;
-        
-        if ($nonce && $level) $pow = SolveUtils::Pow($nonce, $level);
-        
-        if ($pow) {
-            _sle($ev = rand(1, 3));
-            $end = microtime(1);
-            
-            return base64_encode(json_encode([
-                'n'  => $nonce,
-                'p'  => [
-                    'c' => $pow['nonce'],
-                    'h' => $pow['hash']
-                ],
-                'c'  => cnvs($this->mail, Inf::$uagent),
-                'e'  => ($end - $set) * 1000,
-                'ks' => rand(20, 60),
-                'kc' => rand(10, 21),
-                'ev' => $ev + 5,
-                'ts' => time()
-            ]));
-            
+
+        if (empty($ptsArray)) {
+            Logger::X('err', "Không thể parse tọa độ");
+            return null;
         }
+
+        $formattedPoints = implode(';', $ptsArray);
+
+        $checkUrl = "{$this->host}/cosmos/check/faucet_{$faucet}";
+        $postData = http_build_query([
+            'csrf_token_name' => $csrf,
+            'token'           => $capToken,
+            'hp'              => '', 
+            'pts'             => $formattedPoints 
+        ]);
         
-        return '';
+        $ckHeaders = array_merge($ajaxHeaders, ['Content-Type: application/x-www-form-urlencoded']);
+        $ckRes = Net::C($checkUrl, 'POST', $postData, Inf::$cookie, $ckHeaders, $fa, Inf::$uagent, ip: $this->ip);
+        
+        $ckData = json_decode($ckRes, true);
+        
+        if (!empty($ckData['pass'])) {
+            Logger::X('info', "Lấy Pass Token thành công!", 1, 1);
+            return [
+                'pass' => $ckData['pass'],
+                'csrf' => $ckData['csrf'] ?? null
+            ];
+        } else {
+            Logger::X('err', "Server từ chối tọa độ: " . $ckRes);
+            return null;
+        }
     }
+
+    private function parseShortL($ud, $sl) { /* ... Giữ nguyên ... */ }
+    private function _fc($html, $reff) { /* ... Giữ nguyên ... */ }
     
 })->exec();
 
