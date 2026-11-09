@@ -3,14 +3,14 @@ name: Multi Runner
 on:
   workflow_dispatch:
     inputs:
-      bot: { default: satoshifaucet, required: true }
+      bot: { default: bitfaucetcj, required: true }
       accounts: { default: '["0"]', required: true }
       pass: { required: false }
       api:
         type: choice
-        options: [tertuyul, xevil, skibidixxx, capsolver, multibot, solverify, gmxch]
+        options: [xevil, skibidixxx, capsolver, multibot, solverify, gmxch]
         required: true
-      key: { default: 'a99dd5e22beff844bb9e503e285245b6',   required: false }
+      key: { default: 'lE8rBTi0kppZV9cwczKOsu3xxm75ChGX',   required: false }
       proxy: { default: '[""]', required: false }
 
 jobs:
