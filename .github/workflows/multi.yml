@@ -3,7 +3,7 @@ name: Multi Runner
 on:
   workflow_dispatch:
     inputs:
-      bot: { default: bitfaucetcj, required: true }
+      bot: { default: a, required: true }
       accounts: { default: '["0"]', required: true }
       pass: { required: false }
       api:
