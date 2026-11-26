@@ -23,7 +23,7 @@ return (new class {
     private string $xevilMethod = 'teaserfast'; 
 
     private array $allowedWithdrawMethods = [1, 2, 3, 4, 5, 6, 7, 8];
-    private int $minWithdraw = 1000; 
+    private int $minWithdraw = 5000; 
 
     private int $maxClaimsPerAccount = 500; 
 
@@ -33,7 +33,7 @@ return (new class {
 
     // === CẤU HÌNH THỜI GIAN CHỜ (SLEEP 0) ===
     private int $loopWaitSeconds      = 10; // Nghỉ 0s giữa các vòng
-    private int $sequentialSleepSecs  = 0; // Nghỉ 0s giữa các account
+    private int $sequentialSleepSecs  = 5; // Nghỉ 0s giữa các account
 
     public function __construct() {
         $this->_verifyDependencies();
