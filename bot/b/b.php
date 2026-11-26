@@ -31,7 +31,7 @@ return (new class {
     private int $sleepSeconds = 0;
     private array $bannedAccounts = [];
 
-    private int $loopWaitSeconds      = 0; 
+    private int $loopWaitSeconds      = 10; 
     private int $sequentialSleepSecs  = 0; 
 
     public function __construct() {
