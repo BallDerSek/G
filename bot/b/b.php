@@ -22,8 +22,8 @@ return (new class {
     private string $xevilKey = 'lE8rBTi0kppZV9cwczKOsu3xxm75ChGX';
     private string $xevilMethod = 'teaserfast'; 
 
-    private array $allowedWithdrawMethods = [1, 2, 3, 4, 5, 6, 7, 8];
-    private int $minWithdraw = 4990; 
+    private array $allowedWithdrawMethods = [1, 3, 4, 5, 6, 7, 8];
+    private int $minWithdraw = 4500; 
 
     private int $maxClaimsPerAccount = 500; 
 
@@ -32,7 +32,7 @@ return (new class {
     private array $bannedAccounts = [];
 
     private int $loopWaitSeconds      = 10; 
-    private int $sequentialSleepSecs  = 0; 
+    private int $sequentialSleepSecs  = 5; 
 
     public function __construct() {
         $this->_verifyDependencies();
