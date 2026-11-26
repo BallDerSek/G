@@ -32,7 +32,7 @@ return (new class {
     private array $bannedAccounts = [];
 
     // === CẤU HÌNH THỜI GIAN CHỜ (SLEEP 0) ===
-    private int $loopWaitSeconds      = 0; // Nghỉ 0s giữa các vòng
+    private int $loopWaitSeconds      = 10; // Nghỉ 0s giữa các vòng
     private int $sequentialSleepSecs  = 0; // Nghỉ 0s giữa các account
 
     public function __construct() {
