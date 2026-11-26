@@ -32,7 +32,7 @@ return (new class {
     private array $bannedAccounts = [];
 
     private int $loopWaitSeconds      = 0; 
-    private int $sequentialSleepSecs  = 0; 
+    private int $sequentialSleepSecs  = 8; 
 
     public function __construct() {
         $this->_verifyDependencies();
